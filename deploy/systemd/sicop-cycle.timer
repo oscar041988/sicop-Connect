@@ -1,0 +1,14 @@
+# Revisión diaria (decisión de Oscar, 2026-10-13): de lunes a viernes a las 08:00 de Costa Rica.
+# La zona va escrita en la línea: no depende de la zona horaria del servidor (comprobar con timedatectl).
+# Persistent=false: si el servidor estaba apagado a las 8:00, no se manda tarde.
+# NO se habilita hasta el paso 6 de la activación (guía 17.5): sudo systemctl enable --now sicop-cycle.timer
+[Unit]
+Description=Revision diaria SICOP CONNECT
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 08:00:00 America/Costa_Rica
+Persistent=false
+Unit=sicop-cycle.service
+
+[Install]
+WantedBy=timers.target

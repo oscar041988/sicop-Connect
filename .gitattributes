@@ -1,0 +1,6 @@
+# git archive (paquete para el servidor, guía 17.2 paso 4) escribe el commit dentro de app/COMMIT.
+# Así el manifiesto de un respaldo dice con qué código se hizo, aunque el servidor no tenga git.
+app/COMMIT export-subst
+
+# Los archivos de systemd van al servidor Linux: siempre con fin de línea LF, aunque se editen en Windows.
+deploy/** text eol=lf

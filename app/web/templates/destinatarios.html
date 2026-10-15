@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Destinatarios{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Destinatarios de los avisos</h1>
+  <p class="sub">Quienes reciben por correo el resumen de oportunidades nuevas o con cambios. Agregar a alguien no
+    envía nada en ese momento. Quitar a alguien no borra lo que ya se le envió.</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% for d in destinatarios %}
+  <div class="tarjeta usuario{% if not d.activo %} inactivo{% endif %}">
+    <form class="fila-destinatario" method="post" action="/destinatarios/{{ d.id }}/estado">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="activo" value="{{ '0' if d.activo else '1' }}">
+      <p><strong>{{ d.nombre }}</strong> · {{ d.email }} · {{ "recibe avisos" if d.activo else "quitado" }}</p>
+      <button type="submit" class="btn o">{{ "Quitar" if d.activo else "Volver a agregar" }}</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="vacio">Todavía no hay destinatarios: los avisos no tienen a quién llegar.</p>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Agregar destinatario</h2>
+  <form class="revision acceso" method="post" action="/destinatarios">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Correo
+      <input type="email" name="email" required maxlength="254" value="{{ formulario.get('email', '') }}">
+    </label>
+    <label>Nombre
+      <input type="text" name="nombre" required maxlength="100" value="{{ formulario.get('nombre', '') }}">
+    </label>
+    <button type="submit">Agregar</button>
+  </form>
+</section>
+
+<section>
+  <h2>Historial de cambios</h2>
+  {% if historial %}
+  <ol class="historial">
+    {% for e in historial %}
+    <li>{{ acciones.get(e.accion, e.accion) }}: {{ e.detalle }} · {{ e.actor }} · {{ e.fecha | fecha }}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin cambios registrados todavía.</p>
+  {% endif %}
+</section>
+{% endblock %}

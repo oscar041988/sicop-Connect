@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Usuarios del panel</h1>
+  <p class="sub">Encargado: ve oportunidades, guarda revisiones y sube archivos. Administrador: además gestiona
+    usuarios. Un usuario no se borra, se desactiva: sus revisiones lo siguen nombrando.</p>
+  <p class="sub">Contraseñas de al menos {{ min_contrasena }} caracteres. Consejo: {{ consejo }}.</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% for u in usuarios %}
+  <div class="tarjeta usuario{% if not u.activo %} inactivo{% endif %}">
+    <p><strong>{{ u.nombre }}</strong> · {{ u.email }}
+      {% if u.id == usuario.id %}<small>(tú)</small>{% endif %}</p>
+    <p><span class="nivel">{{ niveles[u.rol] }}</span> · {{ "activo" if u.activo else "desactivado" }}
+      · <small>creado {{ u.creado | fecha }}</small></p>
+    <details>
+      <summary>Cambiar</summary>
+      <div class="acciones">
+        <form method="post" action="/usuarios/{{ u.id }}/nivel">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label>Nivel
+            <select name="rol">
+              {% for valor, texto in niveles.items() %}
+              <option value="{{ valor }}" {% if u.rol == valor %}selected{% endif %}>{{ texto }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <button type="submit" class="btn o">Guardar nivel</button>
+        </form>
+        <form method="post" action="/usuarios/{{ u.id }}/estado">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="activo" value="{{ '0' if u.activo else '1' }}">
+          <button type="submit" class="btn o">{{ "Desactivar" if u.activo else "Activar" }}</button>
+        </form>
+        <form method="post" action="/usuarios/{{ u.id }}/contrasena">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label>Contraseña nueva (mín. {{ min_contrasena }} caracteres)
+            <input type="password" name="contrasena" minlength="{{ min_contrasena }}" maxlength="128" required autocomplete="new-password">
+          </label>
+          <label>Repítela
+            <input type="password" name="repetir" required autocomplete="new-password">
+          </label>
+          <button type="submit" class="btn o">Poner contraseña</button>
+        </form>
+      </div>
+    </details>
+  </div>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Crear usuario</h2>
+  <form class="revision acceso" method="post" action="/usuarios">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Correo
+      <input type="email" name="email" required maxlength="254" value="{{ formulario.get('email', '') }}">
+    </label>
+    <label>Nombre
+      <input type="text" name="nombre" required maxlength="100" value="{{ formulario.get('nombre', '') }}">
+    </label>
+    <label>Nivel
+      <select name="rol" required>
+        {% for valor, texto in niveles.items() %}
+        <option value="{{ valor }}" {% if formulario.get("rol", "encargado") == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Contraseña (mín. {{ min_contrasena }} caracteres; entrégala en persona, no por correo)
+      <input type="password" name="contrasena" minlength="{{ min_contrasena }}" maxlength="128" required autocomplete="new-password">
+    </label>
+    <label>Repítela
+      <input type="password" name="repetir" required autocomplete="new-password">
+    </label>
+    <button type="submit">Crear usuario</button>
+  </form>
+</section>
+
+<section>
+  <h2>Historial de cambios</h2>
+  {% if historial %}
+  <ol class="historial">
+    {% for e in historial %}
+    <li>{{ acciones.get(e.accion, e.accion) }}: {{ e.detalle }} · {{ e.actor }} · {{ e.fecha | fecha }}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin cambios registrados todavía.</p>
+  {% endif %}
+</section>
+{% endblock %}

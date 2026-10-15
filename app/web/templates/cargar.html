@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block titulo %}Cargar archivo{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Cargar un reporte de SICOP</h1>
+  <p class="sub">Se guarda en la carpeta de entrada y se importa igual que con <code>python -m app.cli import</code>.
+    Importa primero los carteles y después sus líneas. El mismo archivo no se importa dos veces.</p>
+  <form class="revision acceso" method="post" action="/cargar" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <label>Tipo de reporte
+      <select name="reporte" required>
+        <option value="">—</option>
+        {% for r in reportes %}
+        <option value="{{ r }}" {% if formulario.get("reporte") == r %}selected{% endif %}>{{ r }} ({{ extensiones[r] | join(" o ") }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Origen de los datos
+      <select name="origen" required>
+        <option value="">—</option>
+        {% for o in origenes %}
+        <option value="{{ o }}" {% if formulario.get("origen") == o %}selected{% endif %}>{{ o }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Archivo (máximo {{ limite_mb }} MB; sin abrirlo antes en Excel)
+      <input type="file" name="archivo" accept=".csv,.zip" required>
+    </label>
+    <button type="submit">Subir e importar</button>
+  </form>
+</section>
+
+{% if resultado %}
+{% set r = resultado %}
+<section class="ficha resumen">
+  <h2>Resumen de la importación</h2>
+  <p>Archivo: <strong>{{ nombre_original }}</strong> · reporte {{ formulario.reporte }} · origen {{ formulario.origen }}</p>
+  <p><small>Hash SHA-256 {{ r.file_hash[:16] }}… · codificación {{ r.encoding }} · separador
+    {{ separadores.get(r.delimiter, r.delimiter) }}</small></p>
+  {% for aviso in r.avisos_archivo %}<p class="aviso">{{ aviso }}</p>{% endfor %}
+  {% if r.ya_importado is not none %}
+  <p class="aviso">Este archivo ya se importó (importación #{{ r.ya_importado }}{% if anterior %}: {{ anterior[0] }},
+    {{ anterior[2] | fecha }}{% endif %}): 0 filas nuevas, no se cambió nada.</p>
+  {% if anterior %}<p><small>Se importó con el nombre «{{ anterior[1] }}». El programa lo reconoce por su contenido
+    (hash), no por el nombre.</small></p>{% endif %}
+  {% else %}
+  <dl class="meta">
+    <div><dt>Filas leídas</dt><dd>{{ r.leidas }}</dd></div>
+    <div><dt>Aceptadas</dt><dd>{{ r.aceptadas }}</dd></div>
+    <div><dt>Rechazadas</dt><dd>{{ r.rechazos | length }}</dd></div>
+  </dl>
+  <p>Aceptadas: nuevas {{ r.nuevas }} · actualizadas {{ r.actualizadas }} · sin cambios {{ r.sin_cambios }}
+    · huérfanas {{ r.huerfanas }}</p>
+  {% if r.rechazos %}
+  <h3>Rechazadas</h3>
+  <ul>
+    {% for x in r.rechazos[:max_rechazos] %}<li>Línea {{ x.linea }}: {{ x.motivo }}</li>{% endfor %}
+    {% if r.rechazos | length > max_rechazos %}<li>… y {{ r.rechazos | length - max_rechazos }} más</li>{% endif %}
+  </ul>
+  {% endif %}
+  {% if r.advertencias %}
+  <h3>Advertencias (las filas se aceptaron)</h3>
+  <ul>
+    {% for tipo, lineas in r.advertencias.items() %}
+    <li>{{ tipo }}: {{ lineas | length }} (p. ej. líneas {{ lineas[:ejemplos] | join(", ") }})</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p>Importación #{{ r.import_id }} registrada.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

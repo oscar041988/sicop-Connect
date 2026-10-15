@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block contenido %}
+{# Chips de estado de la revisión + búsqueda (diseño del prototipo de Hermatix) #}
+<div class="tools">
+  {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos")] %}
+  <a class="chip" href="{{ url_chip(valor) }}" aria-pressed="{{ 'true' if filtros.revisado == valor else 'false' }}">{{ texto }}</a>
+  {% endfor %}
+  <form class="buscar" method="get" action="/oportunidades">
+    {% for campo in ["prioridad", "familia", "institucion", "plazo", "revisado", "tipo"] %}
+      {% if filtros[campo] and filtros[campo] != "candidatos" %}<input type="hidden" name="{{ campo }}" value="{{ filtros[campo] }}">{% endif %}
+    {% endfor %}
+    <input type="search" name="q" value="{{ filtros.q }}" placeholder="Buscar por institución, objeto o N.º SICOP" aria-label="Buscar carteles">
+  </form>
+</div>
+
+<details class="filtros-caja" {% if filtros.familia or filtros.institucion or filtros.plazo or filtros.tipo or filtros.prioridad != "candidatos" %}open{% endif %}>
+  <summary>Más filtros</summary>
+  <form class="filtros" method="get" action="/oportunidades">
+    <label>Prioridad
+      <select name="prioridad">
+        {% for valor in prioridades %}
+        <option value="{{ valor }}" {% if filtros.prioridad == valor %}selected{% endif %}>
+          {% if valor == "candidatos" %}Candidatos (Alta y Media){% elif valor == "todas" %}Todas{% else %}{{ ENCAJES[valor] }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Familia
+      <select name="familia">
+        <option value="">Todas</option>
+        {% for valor, texto in opciones.familias %}
+        <option value="{{ valor }}" {% if filtros.familia == valor %}selected{% endif %}>{{ NOMBRES_FAMILIA.get(valor, texto) }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Institución
+      <select name="institucion">
+        <option value="">Todas</option>
+        {% for valor, texto in opciones.instituciones %}
+        <option value="{{ valor }}" {% if filtros.institucion == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Plazo
+      <select name="plazo">
+        <option value="">Todos</option>
+        {% for valor, texto in PLAZOS.items() %}
+        <option value="{{ valor }}" {% if filtros.plazo == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tipo de procedimiento
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for valor, texto in opciones.tipos %}
+        <option value="{{ valor }}" {% if filtros.tipo == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if filtros.revisado %}<input type="hidden" name="revisado" value="{{ filtros.revisado }}">{% endif %}
+    {% if filtros.q %}<input type="hidden" name="q" value="{{ filtros.q }}">{% endif %}
+    <div class="acciones">
+      <button class="btn p" type="submit">Filtrar</button>
+      <a href="/oportunidades">Limpiar</a>
+    </div>
+  </form>
+</details>
+
+<p class="sub">{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %} (un cartel puede coincidir con más de una familia) · ordenados por cierre más próximo (los vencidos al final)</p>
+
+{% if pagina.filas %}
+<div class="list">
+  {% for f in pagina.filas %}
+  {% set estado = {"interesa": "si", "no_interesa": "no"}.get(f.decision, "") %}
+  <article class="card {{ estado }} {% if f.plazo == 'vencido' %}vencido{% endif %}">
+    <div class="row">
+      <div>
+        <div class="tags">
+          {% if f.es_nuevo %}<span class="tag new">Nuevo</span>{% endif %}
+          <span class="tag">{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</span>
+          {% if f.plazo == "cierra_7_dias" %}<span class="tag w">{{ regresiva(f.fecha_cierre) }}</span>
+          {% elif f.plazo == "vencido" %}<span class="tag g">Vencido</span>
+          {% elif f.plazo == "por_verificar" %}<span class="tag w">Plazo por verificar</span>{% endif %}
+          {% if f.decision == "interesa" %}<span class="tag">Interesa</span>
+          {% elif f.decision == "no_interesa" %}<span class="tag g">No interesa</span>
+          {% elif f.decision == "revisar_requisitos" %}<span class="tag r">Revisar requisitos</span>{% endif %}
+        </div>
+        <h3><a href="/oportunidades/{{ f.nro_sicop }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
+        <div class="inst">{{ f.institucion | legible or "Sin datos de la institución" }}</div>
+      </div>
+      <div class="score score-{{ f.encaje }}"><b>{{ ENCAJES[f.encaje] }}</b><span>prioridad</span></div>
+    </div>
+
+    <dl class="meta">
+      <div><dt>Monto estimado</dt><dd>{% for moneda, m in f.estimado.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}Sin dato{% endfor %}</dd></div>
+      <div><dt>Cierre de ofertas</dt><dd>{{ f.fecha_cierre | fecha }}{% if f.plazo in ("abierto", "cierra_7_dias") %}<br><small>{{ regresiva(f.fecha_cierre) }}</small>{% endif %}</dd></div>
+      <div><dt>Modalidad</dt><dd>{{ f.tipo_procedimiento or "Sin dato" }}</dd></div>
+    </dl>
+
+    <details>
+      <summary>Ver toda la información</summary>
+      <p>Coincide con la familia <b>{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</b> por la regla: {{ f.regla | legible or "—" }}.</p>
+      <dl>
+        <div><dt>N.º SICOP</dt><dd>{{ f.nro_sicop }}</dd></div>
+        <div><dt>N.º de procedimiento</dt><dd>{{ f.nro_procedimiento or "—" }}</dd></div>
+        <div><dt>Institución</dt><dd>{{ f.institucion | legible or "—" }}</dd></div>
+        <div><dt>Fecha de publicación</dt><dd>{{ f.fecha_publicacion | fecha }}</dd></div>
+        <div><dt>Palabras clave detectadas</dt><dd>{{ f.frases | join(", ") | legible or "—" }}</dd></div>
+        <div><dt>Servicio de Hermatix</dt><dd>{{ f.producto or "—" }}</dd></div>
+      </dl>
+      <p><a class="enlace" href="/oportunidades/{{ f.nro_sicop }}">Ver detalle, líneas y revisión →</a></p>
+    </details>
+  </article>
+  {% endfor %}
+</div>
+
+{% if pagina.paginas > 1 %}
+<nav class="paginas">
+  {% if pagina.pagina > 1 %}<a class="btn o" href="{{ url_pagina(pagina.pagina - 1) }}">← Anterior</a>{% endif %}
+  <span>Página {{ pagina.pagina }} de {{ pagina.paginas }}</span>
+  {% if pagina.pagina < pagina.paginas %}<a class="btn o" href="{{ url_pagina(pagina.pagina + 1) }}">Siguiente →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="empty">No hay carteles con estos filtros.</div>
+{% endif %}
+{% endblock %}

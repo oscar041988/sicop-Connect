@@ -1,0 +1,17 @@
+# Ciclo completo (guía 17.4, lección 8): recoger INCOMING_DIR → importar → evaluar → avisar.
+# EMPIEZA EN DRY-RUN: prepara los avisos y la vista previa, no envía nada.
+# Pasar a --send solo con autorización de Oscar y en el orden de la guía 17.5 (ver docs/DESPLIEGUE.md).
+# Códigos de salida: 0 = ok · 1 = fallo (queda en source_runs) · 2 = ya había otro ciclo en curso.
+[Unit]
+Description=Ciclo SICOP CONNECT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=sicop
+Group=sicop
+WorkingDirectory=/opt/sicop-connect
+EnvironmentFile=/etc/sicop-connect/app.env
+ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli run-cycle --origen real --dry-run
+UMask=0077

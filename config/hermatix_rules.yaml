@@ -1,0 +1,242 @@
+# Reglas de familias comerciales de Hermatix para SICOP CONNECT.
+# Fuente: docs/Diccionario_palabras_clave_v2_aprobado.pdf (aprobado por Oscar el 2026-10-07).
+# Primer borrador escrito a mano por Ivania; corregido por Claude el 2026-10-09
+# (formato YAML, tipeo, normalización y conflictos señalados en la revisión).
+#
+# Cómo se usa (sección 1 del diccionario):
+#   senales_alta  -> basta sola para marcar el cartel como candidato de la familia.
+#   senales_media -> solo cuenta junto a otra señal de la misma familia.
+#   contexto      -> no crea coincidencia; sube la prioridad si acompaña a una señal.
+#   exclusiones   -> si aparece, anula la coincidencia de esa familia.
+# Todos los términos en minúsculas y sin tildes. Las variantes con «/» van por separado.
+# Lo que estaba entre paréntesis en el diccionario quedó como comentario (#).
+# Las 9 familias del diccionario están incluidas.
+
+familias:
+
+  gps_flotas:
+    producto: fleetmatix
+    senales_alta: [
+      "rastreo vehicular", "monitoreo satelital de vehiculos", "localizacion satelital de vehiculos",
+      "gps vehicular", "avl", "rastreo satelital", "monitoreo vehicular", "monitoreo gps",
+      "servicio de gps", "geolocalizacion de vehiculos", "geocercas", "monitoreo de flotilla",
+      "monitoreo de la flotilla", "sistema de monitoreo gps", "monitoreo de flota", "wialon",
+      "localizacion vehicular", "dispositivo de rastreo",
+      "localizacion satelital",     # nombre del catálogo SICOP del servicio GPS (20260902620; Ivania, 2026-10-09)
+      "rastreo gps",                # «servicio de rastreo GPS para la flotilla» (20260802605), 2026-10-09
+    ]
+    senales_media: [
+      "gestion de flota", "control de combustible", "control de flotilla",
+      "flota institucional", "telemetria", "comportamiento del conductor", "optimizacion de rutas",
+      "gps", "sistema de posicionamiento global", "administracion de combustible", "localizador",
+      "historial de recorridos", "consumo de combustible", "bloqueo remoto de motor", "boton de panico",
+    ]
+    contexto: [
+      # "flotilla vehicular" era señal media: junto a "vehiculos" sumaba Media en talleres (2026-10-09).
+      "vehiculos", "flotilla", "flotilla vehicular", "unidades", "camiones", "ambulancias", "patrullas", "maquinaria",
+      "24 meses", "36 meses", "por demanda",
+      "navegacion",                 # antes exclusión «(didáctico)»; pasa a contexto (Ivania, 2026-10-09)
+    ]
+    exclusiones: [
+      "topografico", "levantamiento", "catastral", "gps de mano", "geodesico", "agrimensura",
+      "estacion total", "gnss", "rtk", "drones", "lidar", "slam",
+      "hidrometrica",
+      # Taller sin software. Antes decía "...de vehiculos" y no cubría "...de la flotilla vehicular"
+      # (20261000101; decisión de Ivania, 2026-10-09).
+      "mantenimiento preventivo y correctivo",
+      "repuestos", "llantas", "aceite",
+      "reparacion",                 # talleres (20260803580; decisión de Ivania, 2026-10-09)
+      "didactico",                  # equipo educativo, p. ej. «GPS de navegación» didáctico (Ivania, 2026-10-09)
+      "compra de combustible",      # no "combustible" solo: anularía "control de combustible"
+      "tapizado",
+    ]
+
+  videotelematica:
+    producto: fenova_ia
+    senales_alta: [
+      "camaras vehiculares", "dashcam", "mdvr", "video a bordo", "grabacion en unidades",
+      "videotelematica", "video telematica", "dvr movil", "camaras a bordo", "camara para vehiculo",
+      "videovigilancia vehicular", "camaras para flotilla", "grabacion a bordo",
+    ]
+    senales_media: [
+      "camaras", "dvr", "video en tiempo real", "grabacion de video", "camaras hd", "audio bidireccional",
+    ]
+    contexto: [
+      "buses", "autobuses", "transporte", "ambulancias", "patrullas", "camiones recolectores", "flotilla",
+    ]
+    exclusiones: [
+      "edificio", "cctv perimetral", "perimetral", "videovigilancia urbana fija", "cctv urbano",
+      "camara fotografica", "camara de refrigeracion", "camara hiperbarica",
+      "camara de video para endoscopia", "camara medica", "camara lidar", "dron",
+      "camara termica para edificio", "camara de diputados", "camara de comercio", "cctv",
+      "videovigilancia de edificios", "videovigilancia de sedes", "camara de conservacion de cadaveres",
+      "camara de vacio", "camara de flujo laminar", "camara gastrica", "camara fotografica digital",
+    ]
+
+  seguridad_vial:
+    producto: fenova_ia
+    senales_alta: [
+      "adas", "dms", "fatiga del conductor", "somnolencia", "distraccion del conductor", "anticolision",
+      "puntos ciegos", "deteccion de fatiga", "alerta de colision", "cambio de carril",
+      "monitoreo de conductores",
+    ]
+    senales_media: [
+      "dsm", "seguridad vial", "conduccion riesgosa", "exceso de velocidad", "frenado brusco",
+      "uso de celular al conducir", "cinturon de seguridad", "capacitacion de conductores",
+      "prevencion de accidentes",
+    ]
+    contexto: ["flotilla", "conductores", "choferes", "transporte"]
+    exclusiones: [
+      "radar meteorologico",
+      "radar de velocidad fijo de transito",   # (revisar)
+      "fatiga de materiales", "senalizacion vial", "demarcacion",
+      "curso de manejo",                        # (sin tecnología)
+      "alcoholimetro",
+      "aire acondicionado",                     # no "ac" solo: aparece dentro de "vacunas", "acceso"
+    ]
+
+  transporte_corporativo:
+    producto: moveon
+    senales_alta: [
+      "transporte de personal", "rutas de colaboradores", "gestion de transporte institucional",
+      "transporte de funcionarios", "transporte de empleados",
+    ]
+    senales_media: [
+      "transporte corporativo", "buses de personal", "rutas de transporte", "control de abordaje",
+      "reserva de asientos",
+    ]
+    contexto: ["colaboradores", "funcionarios", "turnos"]
+    exclusiones: [
+      "servicio de taxi individual", "taxi",
+      "transporte de estudiantes",              # (sin gestión)
+      "transporte de carga", "transporte de valores", "transporte de residuos", "transporte de desechos",
+      "transporte de muestras", "viaticos", "boletos aereos",
+    ]
+
+  rastreo_activos:
+    producto: smarttags
+    senales_alta: [
+      "rastreo de activos", "etiquetas ble", "ble", "trazabilidad de equipos", "rastreo de contenedores",
+      "beacons", "localizacion de activos", "tags de rastreo",
+      # Contenedores y carga solo cuentan si lo que se compra es el rastreo (decisión de Ivania, 2026-10-09):
+      "gps para contenedores", "monitoreo de contenedores", "rastreo de carga", "monitoreo de carga",
+    ]
+    senales_media: [
+      "trazabilidad", "contenedores", "etiquetas", "rfid", "tags rfid", "etiquetas inteligentes",
+      "inventario en tiempo real", "localizacion en interiores",
+    ]
+    contexto: [
+      # "carga" sola salió en compras de basura («carga trasera y carga lateral»): se quitó.
+      "equipo medico", "activos fijos", "activos institucionales", "plaqueo de activos", "herramientas",
+    ]
+    exclusiones: [
+      "etiquetas de inventario impresas", "etiquetas impresas", "codigo de barras", "etiquetas adhesivas",
+      "contenedores de basura", "contenedores de desechos",
+      "trazabilidad de alimentos",              # (papelería)
+      "toner", "impresora de etiquetas",
+      "compra de contenedores", "adquisicion de contenedores",   # el contenedor es lo que se compra
+      "impresora termica",
+    ]
+
+  iot_frio:
+    producto: osmia_iot
+    senales_alta: [
+      "sensores de temperatura", "telemetria", "lorawan", "monitoreo remoto", "can bus",
+      "identificacion de conductor rfid", "cadena de frio", "sensores remotos", "monitoreo de temperatura",
+      "monitoreo de humedad", "data logger", "registrador de datos", "registrador de temperatura",
+      "termorregistrador", "alarma de temperatura", "sensor de puerta", "internet de las cosas", "iot",
+    ]
+    senales_media: [
+      "cuarto frio", "camara fria",
+      "sensor de humedad", "gateway", "lora", "sensor de combustible", "sensor de nivel", "m2m",
+      "sim m2m", "conectividad m2m",
+    ]
+    contexto: [
+      "vacunas", "medicamentos", "farmacia", "banco de sangre", "red de frio", "carnicos", "lacteos",
+      "alimentos perecederos", "archivo institucional", "ministerio de salud", "ccss",
+      # Un termohigrómetro portátil solo no interesa (Oscar, 20260900951): sube la prioridad, no crea coincidencia.
+      # "humedad relativa" viene en la ficha de cualquier higrómetro: también es solo contexto.
+      "termohigrometro", "humedad relativa",
+      # Hermatix no vende la cámara; solo cuenta si se pide monitoreo (20261000163; Ivania, 2026-10-09).
+      "camara de refrigeracion",
+    ]
+    exclusiones: [
+      "sensores de laboratorio sin monitoreo remoto",
+      "refrigeradora", "microondas", "electrodomesticos", "humedad del suelo", "humedad de granos",
+      "sensor de pulsioximetria", "sensor neonatal", "sensor anestesico", "sensor de flujo",
+      "telemetria cardiaca", "rehabilitacion", "calibradores de proceso",
+      "indicadores biologicos para autoclave",
+      "compra de vacunas",          # compra del biológico; confirmada como exclusión (Ivania, 2026-10-09).
+                                    # No "vacunas" solo: es contexto.
+      "mantenimiento de cuarto frio",           # (sin monitoreo) (revisar)
+      "de mano",                    # aparato de mano: no interesa nunca, aunque tenga pantalla (Ivania, 2026-10-09)
+    ]
+
+  camaras_corporales:
+    producto: bodycams
+    senales_alta: [
+      "bodycam", "body cam", "camara corporal", "camaras corporales", "camaras de uso corporal",
+      "camara de solapa", "videograbacion de procedimientos",
+    ]
+    senales_media: [
+      "camaras portatiles", "estacion de carga", "docking", "gestion de evidencia", "evidencia en video",
+      "transmision 4g", "lte", "vision nocturna",
+    ]
+    contexto: [
+      "policia", "fuerza publica", "policia de transito", "policia municipal", "inspectores", "oficiales",
+      "seguridad privada", "aduanas", "migracion", "oij",
+    ]
+    exclusiones: [
+      "camara fotografica", "camara de casco deportiva", "camara de seguridad fija", "cctv", "camara web",
+      "videoconferencia",
+    ]
+
+  conteo_pasajeros:
+    producto: passengeriq
+    senales_alta: [
+      "conteo de pasajeros", "contador de pasajeros", "contador automatico", "ocupacion de buses",
+      "validacion de pasajeros", "conteo automatico de pasajeros", "apc", "subidas y bajadas",
+      "ascenso y descenso de pasajeros",
+    ]
+    senales_media: [
+      "transporte publico", "aforo", "ocupacion", "estudio de demanda", "recaudacion", "pasajeros",
+      "vision artificial", "paradas",
+    ]
+    contexto: [
+      "autobuses", "buses", "rutas", "concesionario", "aresep", "ctp", "consejo de transporte publico",
+      "tren", "incofer",
+    ]
+    exclusiones: [
+      "conteo de inventario", "inventario", "control de asistencia de personal", "asistencia de personal",
+      "conteo de votos", "contador publico", "contador privado", "conteo de celulas", "hematologia",
+      "contador de agua", "medidor", "contador de billetes", "contador de monedas",
+      # "capacidad de X pasajeros" (compra de vehículo): la X varía, no sirve como frase fija;
+      # esas compras quedan cubiertas por los tipos de vehículo de abajo.
+      "pick-up", "suv", "microbus",
+    ]
+
+  mantenimiento_flotas:
+    producto: fleetrun
+    senales_alta: [
+      "software de mantenimiento vehicular", "ordenes de taller",
+      "sistema de gestion de mantenimiento de flota", "control de mantenimiento vehicular", "fleetrun",
+    ]
+    senales_media: [
+      "control de flota",
+      "mantenimiento preventivo",               # solo sube a Media con contexto de software (abajo)
+      "checklists digitales", "inspeccion vehicular", "historial de mantenimiento", "control de llantas",
+    ]
+    # «sistema» y «plataforma» solos coincidían con bombeo, A/C, etc. Solo cuentan si son de software o
+    # digitales (decisión de Ivania, 2026-10-09).
+    contexto: [
+      "software", "plataforma digital", "plataforma de software", "sistema de software", "sistema digital",
+    ]
+    exclusiones: [
+      "repuestos",
+      "reparacion mecanica",                    # (sin software)
+      "mantenimiento preventivo y correctivo",  # (servicio de taller)
+      "enderezado y pintura",
+      "compra de llantas",          # no "llantas" solo: anularía la señal "control de llantas"
+      "lubricantes", "aceite", "lavado de vehiculos",
+      "asesoria rfid",                          # (sin rastreo)
+    ]

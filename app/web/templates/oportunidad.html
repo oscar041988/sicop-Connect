@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% set c = d.compra %}
+{% block titulo %}{{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="/oportunidades">← Oportunidades</a></p>
+
+<section class="ficha">
+  <div class="op-etiquetas">
+    {% for e in d.evaluaciones if e.encaje in ("alta", "media") %}
+    <span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span>
+    <span class="familia">{{ NOMBRES_FAMILIA.get(e.familia, e.familia) }}{% if e.producto %} · {{ e.producto }}{% endif %}</span>
+    {% endfor %}
+    {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>
+    {% else %}<span class="sin-revisar">Sin revisar</span>{% endif %}
+  </div>
+  <h1 class="titulo-cartel">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
+  <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
+  <div class="regresiva plazo-{{ d.plazo }}">
+    <strong>{{ regresiva }}</strong>
+    <span>{{ PLAZOS[d.plazo] }} · cierre {{ c.fecha_cierre_recepcion | fecha }}</span>
+  </div>
+</section>
+
+<dl class="datos">
+  <div><dt>Número SICOP</dt><dd><strong>{{ c.nro_sicop }}</strong><br><small>Búscalo con este número en el portal de SICOP (no hay un enlace directo estable).</small></dd></div>
+  <div><dt>Procedimiento</dt><dd>{{ c.nro_procedimiento or "—" }}<br><small>{{ d.tipo_procedimiento or "Tipo sin dato" }}</small></dd></div>
+  <div><dt>Comprador</dt><dd>{{ c.institucion or "Sin datos (la cédula no está en instituciones)" }}<br><small>Cédula {{ c.institution_cedula or "—" }}</small></dd></div>
+  <div><dt>Estimado</dt><dd>{% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}<br><small>Publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
+</dl>
+
+<section>
+  <h2>Por qué aparece</h2>
+  {% for e in d.evaluaciones %}
+  <article class="tarjeta">
+    <p><span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span>
+       <strong>{{ e.familia }}</strong>{% if e.producto %} · {{ e.producto }}{% endif %}
+       {% if e.calidad_datos %} · <small>Calidad de datos: {{ CALIDADES.get(e.calidad_datos, e.calidad_datos) }}</small>{% endif %}</p>
+    <p><small>Regla:</small> {{ e.regla or "—" }}</p>
+    <p><small>Evidencia:</small> {{ e.evidencia | legible }}</p>
+  </article>
+  {% else %}
+  <p class="vacio">Este cartel no tiene coincidencias con las reglas vigentes.</p>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Líneas ({{ c.lineas | length }})</h2>
+  {% if c.lineas %}
+  <table class="lista">
+    <thead><tr><th>#</th><th>Código</th><th>Descripción del catálogo</th><th>Cantidad × precio</th><th>Estimado</th></tr></thead>
+    <tbody>
+      {% for l in c.lineas %}
+      <tr>
+        <td>{{ l.numero_linea }}</td>
+        <td><small>{{ l.codigo_identificacion }}</small></td>
+        <td>{% if l.nombre_catalogo %}{{ resaltar(l.nombre_catalogo, d.frases.get("línea " ~ l.numero_linea)) }}{% else %}<small class="falta">Sin catálogo descargado para este código</small>{% endif %}</td>
+        <td><small>{{ l.cantidad }} × {{ l.precio_unitario }}</small></td>
+        <td>{{ monto(l.estimado.valor, l.estimado.moneda) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>Estimado por moneda (cantidad × precio; no es presupuesto ni adjudicación):
+    {% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}</p>
+  {% else %}
+  <p class="vacio">Sin líneas importadas para este cartel.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Cobertura de la fuente</h2>
+  <p>Datos <strong>{{ d.cobertura.origen or "de origen desconocido" }}</strong>
+    · archivo {{ d.cobertura.archivo or "—" }} (importado {{ d.cobertura.importado | fecha }})
+    · visto por primera vez {{ d.cobertura.primera_vez | fecha }}, última {{ d.cobertura.ultima_vez | fecha }}.</p>
+</section>
+
+<section id="revisiones">
+  <h2>Revisión</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/revision">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <fieldset>
+      <legend>Decisión</legend>
+      {% for valor, texto in DECISIONES.items() %}
+      <label><input type="radio" name="decision" value="{{ valor }}" required {% if formulario.get("decision") == valor %}checked{% endif %}> {{ texto }}</label>
+      {% endfor %}
+    </fieldset>
+    <label>Motivo (obligatorio si «No interesa»)
+      <select name="motivo">
+        <option value="">—</option>
+        {% for valor, texto in MOTIVOS.items() %}
+        <option value="{{ valor }}" {% if formulario.get("motivo") == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Comentario
+      <textarea name="comentario" rows="3" maxlength="2000">{{ formulario.get("comentario", "") }}</textarea>
+    </label>
+    <p class="sub">Se guarda a nombre de <strong>{{ usuario.nombre }}</strong>. Si registras la decisión de otra
+      persona, dilo en el comentario (p. ej. «decisión de Oscar»).</p>
+    <button type="submit">Guardar revisión</button>
+  </form>
+
+  <h3>Historial</h3>
+  {% if d.revisiones %}
+  <ol class="historial">
+    {% for r in d.revisiones %}
+    <li>
+      <span class="decision decision-{{ r.decision }}">{{ DECISIONES[r.decision] }}</span>
+      {% if r.motivo %}· {{ MOTIVOS[r.motivo] }}{% endif %}
+      · {{ r.responsable }}{% if r.escrito_a_mano %} <small>(escrito a mano)</small>{% endif %} · {{ r.fecha | fecha }}
+      {% if loop.first %}<small>(vigente)</small>{% endif %}
+      {% if r.comentario %}<p>{{ r.comentario }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin revisiones todavía.</p>
+  {% endif %}
+</section>
+{% endblock %}

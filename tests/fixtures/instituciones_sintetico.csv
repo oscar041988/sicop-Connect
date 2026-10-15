@@ -1,0 +1,4 @@
+﻿Cédula;Institución;Dirección;Telefono;Representante;Codigo Postal;Provincia;Cantón;Distrito
+9999999999;INSTITUCION SINTETICA DE PRUEBA;Direccion sintetica;0000-0000;PERSONA SINTETICA;10101;San José;San José;Carmen
+0009999999;INSTITUCION SINTETICA CON CEROS;Direccion sintetica;0000-0000;PERSONA SINTETICA;10101;San José;San José;Carmen
+3.00704E+09;INSTITUCION DAÑADA POR EXCEL;Direccion sintetica;0000-0000;PERSONA SINTETICA;10101;San José;San José;Carmen

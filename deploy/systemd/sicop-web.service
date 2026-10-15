@@ -1,0 +1,19 @@
+# Panel SICOP CONNECT (guía 17.4). Un solo proceso: lo correcto con SQLite en el piloto.
+# Escucha solo dentro del servidor (127.0.0.1:8000); desde afuera se entra por el proxy HTTPS.
+[Unit]
+Description=Panel SICOP CONNECT
+After=network.target
+
+[Service]
+Type=simple
+User=sicop
+Group=sicop
+WorkingDirectory=/opt/sicop-connect
+EnvironmentFile=/etc/sicop-connect/app.env
+ExecStart=/opt/sicop-connect/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

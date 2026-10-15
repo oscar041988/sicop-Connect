@@ -1,0 +1,14 @@
+# Migraciones de la base (guía 17.4). Se lanza a mano en cada instalación o actualización:
+#   sudo systemctl start sicop-migrate.service
+# Al terminar bien queda «inactive»: revisar el código de salida y journalctl, no solo esa palabra.
+[Unit]
+Description=Migraciones SICOP CONNECT
+
+[Service]
+Type=oneshot
+User=sicop
+Group=sicop
+WorkingDirectory=/opt/sicop-connect
+EnvironmentFile=/etc/sicop-connect/app.env
+ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli migrate
+UMask=0077

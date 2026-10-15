@@ -1,0 +1,20 @@
+{{ asunto }}
+
+Hola, equipo. Estas oportunidades encajan con el portafolio de Hermatix.
+La prioridad indica encaje, no que se pueda participar: confirma los requisitos en el panel.
+{% for o in oportunidades %}
+
+{{ loop.index }}. {{ o.titulo | titulo | legible }}
+   Prioridad {{ ENCAJES[o.encaje] }} · {{ MOTIVOS[o.motivo] }} · {{ o.familias | join(", ") }}
+   Institución: {{ o.institucion | legible }}
+   Cierre: {{ o.cierre | fecha }} ({{ o.regresiva }}) · Número SICOP {{ o.nro_sicop }}
+{% if o.frases %}
+   Evidencia: {% for f in o.frases %}«{{ f | legible }}»{{ ", " if not loop.last }}{% endfor %}
+
+{% endif %}
+   Ver en el panel: {{ o.enlace }}
+{% endfor %}
+
+--
+Fuente: datos abiertos de SICOP. Recibes este aviso porque estás en la lista de destinatarios
+del panel ({{ panel }}/destinatarios). Generado {{ ahora | fecha }}.

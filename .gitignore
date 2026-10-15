@@ -1,0 +1,27 @@
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+# Credenciales de Google (deben vivir fuera del proyecto; esto es solo una red de seguridad)
+client_secret*.json
+google_cliente*.json
+google_token*.json
+
+# Entorno virtual y cachés de Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Datos (fuera de Git)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Respaldos
+backups/
+*.bak
+*.backup
