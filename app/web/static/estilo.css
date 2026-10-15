@@ -1,21 +1,26 @@
-/* Panel de SICOP CONNECT con el diseño del prototipo de Hermatix (paleta verde, tarjetas). */
+/* Panel de SICOP CONNECT con la paleta de Fenova IA (Hermatix corporativo) y el logo de Hermatix. */
 
 /* 1. Variables de color: cambiar aquí actualiza todo el panel */
 :root {
-  --g9: #073B24;      /* verde más oscuro */
-  --g7: #0A5C36;      /* verde principal: marca, títulos, activos */
-  --g5: #16A05A;      /* verde medio: acentos, prioridad Alta */
-  --g1: #E7F6EC;      /* verde muy claro: fondos de etiquetas */
-  --g0: #F5FBF7;      /* fondo general */
-  --ink: #12261C;     /* texto */
-  --mut: #5B6F63;     /* texto secundario */
-  --line: #DCE8E0;    /* bordes y separadores */
+  /* Paleta Fenova (PALETA_COLORES_FENOVA.html) */
+  --hx-azul: #0780EE;         /* primary-blue: enlaces, foco, «revisar requisitos» */
+  --hx-azul-osc: #103050;     /* secondary-blue: títulos, activos */
+  --hx-verde: #30a068;        /* color-accent: botones, prioridad Alta */
+  --hx-cabecera: linear-gradient(135deg, #0a1628 0%, #162a4a 100%);  /* gradient-footer */
+  --g9: var(--hx-azul-osc);   /* títulos */
+  --g7: #1E7A4E;      /* verde acento oscurecido: texto verde legible sobre fondo claro (Alta, interesa) */
+  --g5: var(--hx-verde);      /* acentos, prioridad Alta */
+  --g1: #E3F3EA;      /* verde muy claro: fondos de etiquetas */
+  --g0: #F5F5F5;      /* bg-gray: fondo general */
+  --ink: #1C1C1C;     /* text-dark */
+  --mut: #5A6B7B;     /* texto secundario (gris azulado) */
+  --line: #e0e8f0;    /* light-blue: bordes y separadores */
   --warn: #B45309;    /* ámbar: cierre cercano, prioridad Media */
   --warn-bg: #FEF3C7;
-  --no: #6B7A71;      /* gris: no interesa, vencido */
-  --no-bg: #EDF1EE;
-  --azul: #1D4ED8;    /* foco y «revisar requisitos» */
-  --azul-bg: #E6EDFB;
+  --no: #6B7480;      /* gris: no interesa, vencido */
+  --no-bg: #EEF1F4;
+  --azul: var(--hx-azul);
+  --azul-bg: #E1EFFD;
   --rojo: #B42318;
   --rojo-bg: #FDE9E7;
 }
@@ -27,24 +32,30 @@ body { margin: 0; font-family: Manrope, system-ui, "Segoe UI", sans-serif; backg
 h1, h2, h3, p, dd, td, li, .inst, .tag { overflow-wrap: anywhere; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
-a { color: var(--g7); }
+a { color: var(--azul); }
 small { color: var(--mut); }
 :focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
 
 /* 3. Encabezado */
-header { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+header { background: var(--hx-cabecera); border-bottom: 3px solid var(--hx-verde); position: sticky; top: 0; z-index: 5; }
 .bar { max-width: 1080px; margin: 0 auto; padding: 12px 20px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.brand { display: flex; gap: 10px; align-items: center; font-weight: 800; font-size: 1.25rem; color: var(--g7); letter-spacing: -.02em; text-decoration: none; }
-.brand small { display: block; font-weight: 500; font-size: .75rem; color: var(--mut); letter-spacing: 0; }
-header nav { display: flex; gap: 4px; margin-left: auto; }
-header nav a { padding: 8px 14px; border-radius: 8px; font-weight: 600; color: var(--mut); text-decoration: none; }
-header nav a[aria-current="page"] { background: var(--g1); color: var(--g7); }
+.brand { display: flex; gap: 14px; align-items: center; text-decoration: none; }
+.brand img { height: 38px; width: auto; display: block; }
+.brand span { border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 14px; color: #fff; font-weight: 700; font-size: .95rem; line-height: 1.2; }
+.brand small { display: block; font-weight: 500; font-size: .75rem; color: #A9C1D9; }
+header nav { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+header nav a { padding: 8px 14px; border-radius: 8px; font-weight: 600; color: #CFDDEA; text-decoration: none; }
+header nav a:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+header nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 0 -2px 0 var(--hx-verde); }
+header .salir small { color: #CFDDEA; }
+header .btn.o { background: transparent; border-color: rgba(255, 255, 255, .35); color: #fff; }
+header .btn.o:hover { border-color: var(--hx-verde); background: transparent; }
 
 /* 4. Contenedor y textos */
 main { max-width: 1080px; margin: 0 auto; padding: 24px 20px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 main > * { min-width: 0; }  /* en una cuadrícula, un hijo no se encoge por debajo de su contenido sin esto */
 footer { max-width: 1080px; margin: 0 auto; padding: 0 20px 32px; color: var(--mut); font-size: .82rem; }
-h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--g9); }
 h2 { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; margin: 8px 0 0; color: var(--g9); }
 h3 { margin: 0; }
 .sub { color: var(--mut); font-size: .95rem; margin: 0; }
@@ -57,19 +68,19 @@ h3 { margin: 0; }
 /* 5. Botones */
 .btn, button { border: 2px solid transparent; border-radius: 10px; padding: 10px 18px; font-weight: 700; text-decoration: none; display: inline-block; }
 .btn.p, button { background: var(--g5); color: #fff; }
-.btn.p:hover, button:hover { background: #12894C; }
+.btn.p:hover, button:hover { background: var(--hx-azul); }
 .btn.o { background: #fff; border-color: var(--line); color: var(--ink); }
 .btn.o:hover { border-color: var(--g5); }
 
 /* 6. Chips de estado, búsqueda y filtros */
 .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: .9rem; color: var(--mut); text-decoration: none; }
-.chip:hover { border-color: var(--g5); }
-.chip[aria-pressed="true"] { background: var(--g7); border-color: var(--g7); color: #fff; }
+.chip:hover { border-color: var(--azul); }
+.chip[aria-pressed="true"] { background: var(--g9); border-color: var(--g9); color: #fff; }
 .buscar { margin-left: auto; flex: 0 1 320px; min-width: 0; }
 .buscar input { padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; width: 100%; background: #fff; }
 .filtros-caja { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
-.filtros-caja summary { cursor: pointer; padding: 12px 18px; font-weight: 700; color: var(--g7); }
+.filtros-caja summary { cursor: pointer; padding: 12px 18px; font-weight: 700; color: var(--g9); }
 .filtros { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; padding: 0 18px 18px; }
 .filtros label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--mut); font-weight: 600; }
 .filtros select, .revision select, .revision input[type="text"], .revision textarea,
@@ -90,7 +101,7 @@ h3 { margin: 0; }
 .score { flex: 0 0 auto; }
 .card h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.35; max-width: 70ch; margin-top: 8px; }
 .card h3 a { color: var(--ink); text-decoration: none; }
-.card h3 a:hover { color: var(--g7); text-decoration: underline; }
+.card h3 a:hover { color: var(--azul); text-decoration: underline; }
 .inst { color: var(--mut); font-size: .9rem; }
 .tags { display: flex; gap: 8px; flex-wrap: wrap; }
 .tag { padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; background: var(--g1); color: var(--g7); }
@@ -106,7 +117,7 @@ h3 { margin: 0; }
 .meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 0; border-block: 1px solid var(--line); margin: 0; }
 dt { font-size: .8rem; color: var(--mut); }
 dd { font-weight: 600; overflow-wrap: anywhere; margin: 0; }
-summary { cursor: pointer; font-weight: 700; color: var(--g7); }
+summary { cursor: pointer; font-weight: 700; color: var(--g9); }
 .card details dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .card details p { margin: 12px 0 0; max-width: 70ch; }
 .enlace { font-weight: 700; }
@@ -136,7 +147,7 @@ mark { background: #C8F0D6; color: var(--g9); padding: 0 .15em; border-radius: 4
 
 table.lista { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 10px; }
 table.lista th, table.lista td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-table.lista th { background: var(--g1); color: var(--g7); font-size: .8rem; }
+table.lista th { background: var(--line); color: var(--g9); font-size: .8rem; }
 
 .revision { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 660px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-top: 10px; }
 .revision fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 18px; flex-wrap: wrap; }
@@ -150,7 +161,7 @@ table.lista th { background: var(--g1); color: var(--g7); font-size: .8rem; }
 .salir .btn { padding: 6px 12px; }
 .hecho { background: var(--g1); color: var(--g7); border-radius: 12px; padding: 12px 16px; margin: 0 0 10px; font-weight: 600; }
 .usuario.inactivo { opacity: .65; }
-.usuario .nivel { font-weight: 700; color: var(--g7); }
+.usuario .nivel { font-weight: 700; color: var(--g9); }
 .usuario .acciones { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-top: 10px; }
 .usuario .acciones form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
 .usuario .acciones label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; }

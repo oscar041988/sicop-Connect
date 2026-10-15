@@ -12,9 +12,9 @@
   <header>
     <div class="bar">
       <a class="brand" href="/oportunidades">
-        <!-- Logo provisional del prototipo de Hermatix: reemplazar por el oficial -->
-        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2l13 7.5v15L17 32 4 24.5v-15z" fill="#0A5C36"/><circle cx="17" cy="19" r="2.5" fill="#fff"/><path d="M11.5 14.5a8 8 0 0 1 11 0M8.5 11.5a12 12 0 0 1 17 0" stroke="#7FE0A8" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-        <span>Hermatix<small>Oportunidades SICOP</small></span>
+        <!-- Logo oficial de Hermatix (letras blancas: va sobre el encabezado oscuro) -->
+        <img src="{{ url_for('static', path='logo-hermatix.png') }}" alt="Hermatix M2M communication" width="176" height="38">
+        <span>SICOP Connect<small>Oportunidades SICOP</small></span>
       </a>
       {% if usuario %}
       <nav>

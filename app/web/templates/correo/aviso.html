@@ -6,17 +6,17 @@
 <title>{{ asunto }}</title>
 </head>
 <!-- Correo: estilos en línea (muchos programas de correo ignoran <style>) y sin imágenes ni scripts. -->
-<body style="margin:0;padding:0;background:#F4F7F5;font-family:Arial,Helvetica,sans-serif;color:#13261B;">
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:Arial,Helvetica,sans-serif;color:#1C1C1C;">
 <div style="max-width:640px;margin:0 auto;padding:20px 16px;">
-  <p style="margin:0 0 4px;font-size:13px;color:#5B6F63;">Hermatix · Oportunidades SICOP</p>
-  <h1 style="margin:0 0 12px;font-size:20px;">{{ asunto }}</h1>
+  <p style="margin:0 0 4px;font-size:13px;color:#5A6B7B;">Hermatix · Oportunidades SICOP</p>
+  <h1 style="margin:0 0 12px;font-size:20px;color:#103050;">{{ asunto }}</h1>
   <p style="margin:0 0 16px;font-size:14px;">Hola, equipo. Estas oportunidades encajan con el portafolio de
     Hermatix. La prioridad indica encaje, no que se pueda participar: confirma los requisitos en el panel.</p>
 
   {% for o in oportunidades %}
-  <div style="background:#FFFFFF;border:1px solid #DCE5DF;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
     <p style="margin:0 0 6px;font-size:12px;">
-      <strong style="color:{{ '#0A5C36' if o.encaje == 'alta' else '#8A5A00' }};">Prioridad {{ ENCAJES[o.encaje] }}</strong>
+      <strong style="color:{{ '#1E7A4E' if o.encaje == 'alta' else '#8A5A00' }};">Prioridad {{ ENCAJES[o.encaje] }}</strong>
       · {{ MOTIVOS[o.motivo] }} · {{ o.familias | join(", ") }}
     </p>
     <p style="margin:0 0 6px;font-size:15px;font-weight:bold;">{{ o.titulo | titulo | legible }}</p>
@@ -24,13 +24,13 @@
     <p style="margin:0 0 6px;font-size:14px;">Cierre: <strong>{{ o.cierre | fecha }}</strong> ({{ o.regresiva }})
       · Número SICOP {{ o.nro_sicop }}</p>
     {% if o.frases %}
-    <p style="margin:0 0 8px;font-size:13px;color:#5B6F63;">Evidencia: {% for f in o.frases %}«{{ f | legible }}»{{ ", " if not loop.last }}{% endfor %}</p>
+    <p style="margin:0 0 8px;font-size:13px;color:#5A6B7B;">Evidencia: {% for f in o.frases %}«{{ f | legible }}»{{ ", " if not loop.last }}{% endfor %}</p>
     {% endif %}
-    <p style="margin:0;"><a href="{{ o.enlace }}" style="color:#0A5C36;font-weight:bold;">Ver en el panel</a></p>
+    <p style="margin:0;"><a href="{{ o.enlace }}" style="color:#0780EE;font-weight:bold;">Ver en el panel</a></p>
   </div>
   {% endfor %}
 
-  <p style="margin:16px 0 0;font-size:12px;color:#5B6F63;">Fuente: datos abiertos de SICOP. Recibes este aviso
+  <p style="margin:16px 0 0;font-size:12px;color:#5A6B7B;">Fuente: datos abiertos de SICOP. Recibes este aviso
     porque estás en la lista de destinatarios del panel ({{ panel }}/destinatarios). Generado {{ ahora | fecha }}.</p>
 </div>
 </body>
