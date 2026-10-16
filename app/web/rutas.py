@@ -1,4 +1,5 @@
-"""Rutas del panel: inicio y cierre de sesión, lista de oportunidades, detalle, revisión y carga de archivos.
+"""Rutas del panel: inicio y cierre de sesión, lista de oportunidades, detalle, revisión y carga de archivos;
+para administradores, usuarios, destinatarios y avisos fallidos o inciertos.
 
 Todas, salvo /login, exigen sesión (middleware en app/web/seguridad.py) y todo POST lleva token CSRF.
 """
@@ -22,7 +23,7 @@ from app.config import load_settings
 from app.database import check_database, connect
 from app.importers.comun import ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import destinatarios, historial, panel, usuarios
+from app import avisos, destinatarios, historial, panel, reintentos, usuarios
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -386,3 +387,50 @@ def cambiar_estado_destinatario(request: Request, destinatario_id: int, activo: 
     return _cambio_de_destinatario(request, cambio,
                                    "Destinatario activado." if activo == "1" else
                                    "Destinatario quitado: ya no recibirá avisos (lo enviado antes se conserva).")
+
+
+# --- Avisos fallidos o inciertos (solo administradores) ------------------------------------------------------
+
+def _render_avisos(request: Request, conn, status_code: int = 200, **contexto) -> Response:
+    return PLANTILLAS.TemplateResponse(request, "avisos.html", {
+        "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()), "motivos_aviso": avisos.MOTIVOS,
+        "historial": historial.ultimos(conn, historial.DE_AVISOS), "acciones": historial.ACCIONES,
+        "hecho": request.session.pop("hecho", None), **contexto,
+    }, status_code=status_code)
+
+
+def _cambio_de_aviso(request: Request, cambio) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            mensaje = cambio(conn)
+        except reintentos.AvisoInvalido as exc:
+            return _render_avisos(request, conn, 400, error=str(exc))
+    request.session["hecho"] = mensaje
+    return RedirectResponse("/avisos", status_code=303)
+
+
+@router.get("/avisos", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
+def pagina_avisos(request: Request) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_avisos(request, conn)
+
+
+@router.post("/avisos/{outbox_id}/reintentar", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def reintentar_aviso(request: Request, outbox_id: int, revise_enviados: str = Form("")) -> Response:
+    def cambio(conn):
+        a = reintentos.reintentar(conn, outbox_id, _ahora(), _quien(request), revise_enviados == "1")
+        return (f"Aviso del cartel {a.nro_sicop} para {a.para} preparado otra vez: sale en el siguiente envío"
+                " de avisos.")
+    return _cambio_de_aviso(request, cambio)
+
+
+@router.post("/avisos/{outbox_id}/confirmar", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def confirmar_aviso(request: Request, outbox_id: int) -> Response:
+    def cambio(conn):
+        a = reintentos.confirmar_salida(conn, outbox_id, _ahora(), _quien(request))
+        return f"Aviso del cartel {a.nro_sicop} para {a.para} marcado como enviado: no se reenviará."
+    return _cambio_de_aviso(request, cambio)

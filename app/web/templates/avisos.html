@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Avisos por revisar{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Avisos por revisar</h1>
+  <p class="sub">Avisos por correo que Gmail rechazó («fallido») o que quedaron sin respuesta clara («incierto»).
+    Ninguno se reenvía solo. Reintentar no envía en este momento: el aviso sale en el siguiente envío de avisos.</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% for a in avisos %}
+  <div class="tarjeta usuario">
+    <p><strong>{{ a.estado | capitalize }}</strong> · {{ a.para }} ·
+      <a href="/oportunidades/{{ a.nro_sicop }}">{{ a.nro_sicop }}</a>
+      {% if a.titulo %}· {{ a.titulo | titulo }}{% endif %}</p>
+    <p class="sub">{{ motivos_aviso.get(a.motivo, a.motivo) }} · preparado {{ a.creado | fecha }}
+      {% if a.actualizado %}· último intento {{ a.actualizado | fecha }}{% endif %}<br>
+      Respuesta: {{ a.detalle or "sin detalle" }}</p>
+    {% if a.superado %}
+    <p class="vacio">Ya le llegó una versión más nueva de este cartel: no hace falta reenviarlo.</p>
+    {% elif a.vencido %}
+    <p class="vacio">El cartel ya cerró: no se puede reenviar.</p>
+    {% elif not a.destinatario_activo %}
+    <p class="vacio">{{ a.para }} ya no recibe avisos (ver «Destinatarios»).</p>
+    {% else %}
+    {% if a.estado == "incierto" %}
+    <p>Puede que sí haya salido. Antes de decidir, búscalo en Gmail › Enviados de la cuenta que envía los avisos.</p>
+    <form method="post" action="/avisos/{{ a.id }}/confirmar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn o">Sí salió (está en Enviados)</button>
+    </form>
+    {% endif %}
+    <form method="post" action="/avisos/{{ a.id }}/reintentar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if a.estado == "incierto" %}
+      <label><input type="checkbox" name="revise_enviados" value="1" required>
+        Revisé Gmail › Enviados y no está</label>
+      {% endif %}
+      <button type="submit">Reintentar</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="vacio">No hay avisos fallidos ni inciertos.</p>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Historial de cambios</h2>
+  {% if historial %}
+  <ol class="historial">
+    {% for e in historial %}
+    <li>{{ acciones.get(e.accion, e.accion) }}: {{ e.detalle }} · {{ e.actor }} · {{ e.fecha | fecha }}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin cambios registrados todavía.</p>
+  {% endif %}
+</section>
+{% endblock %}
