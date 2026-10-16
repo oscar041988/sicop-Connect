@@ -1,8 +1,19 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-13 · Día / tarea: lección 8 cerrada; siguiente: lección 9 (servidor) · Commit probado: `5b3eff9`
+Última actualización: 2026-10-16 · Día / tarea: lección 9: código en GitHub, conexión de Ivania lista · Commit probado: `02b569b`
 
 ## Último resultado
+
+- **Lección 9, GitHub (2026-10-16).**
+  - Repositorio privado `git@github.com:oscar041988/sicop-Connect.git` (dueño: Oscar). Ivania entra con su
+    cuenta `licitaciones-byte` y una llave SSH con frase (agente SSH de Windows; `core.sshCommand` en este
+    repositorio apunta al ssh de Windows porque el de Git no ve ese agente).
+  - Lo que subió Oscar: historia nueva. `3b2f0b2` = mismo contenido que `cc4da46`, pero con fin de línea CRLF;
+    luego `7ded3f1` (paleta Fenova y logo de Hermatix) y `02b569b` (mostrar/ocultar contraseña en el login).
+    La rama `diseno-fenova` tiene solo el primero.
+  - Local: la historia anterior queda en la rama `historial-local` (`cc4da46`); se trabaja en `main`, que sigue
+    a `origin/main`. 337 passed en `02b569b`; golden set 33/33.
+  - Servidor: Oscar subió la app; queda por confirmar si ya está instalada y funcionando en sicop.hermatix.com.
 
 - **Lección 8, encargo B (2026-10-13): preparación del despliegue.** 337 passed (15 nuevas en
   `tests/test_respaldo.py` y `tests/test_despliegue.py`).
@@ -182,10 +193,14 @@
 
 - Obtención: manual verificada en el portal (2026-10-06, 2026-10-07 y 2026-10-08; ver `docs/ACCESO_SICOP.md`)
 - Correo: sin configurar. Decidido con Oscar (2026-10-12): API de Google, desde licitaciones@hermatix.com
-- Servidor: local. Destino: VPS Ubuntu 24.04 en Hostinger, https://sicop.hermatix.com (ver `docs/DESPLIEGUE.md`)
+- Servidor: local. Destino: VPS Ubuntu 24.04 en Hostinger, https://sicop.hermatix.com (ver `docs/DESPLIEGUE.md`).
+  Código en GitHub (privado, de Oscar) desde 2026-10-16; instalación en el VPS por confirmar con Oscar.
 
 ## Pendientes
 
+- Fin de línea CRLF vs LF en el repositorio · Oscar (recomendación: LF, normalizado con `.gitattributes`).
+- Forma de trabajo con GitHub: quién sube y cómo (directo a `main` o por ramas) · Ivania con Oscar.
+- Confirmar el estado del servidor (instalado, HTTPS, panel en línea) · Oscar.
 - ~~Golden set: 4 provisionales~~ **Cerrado 2026-10-12 (Ivania):** confirmados sin el pliego (concursos cerrados);
   medición 33/33 = 100 %, sin provisionales. 33 carteles reales (17 interesan, 6 no interesan, 10 falsos positivos conocidos), etiquetas de Oscar del 2026-10-08;
   el 2026-10-09 se agregaron 2 data loggers de laboratorio (Oscar) y se confirmó `20260800233` como «interesa»
