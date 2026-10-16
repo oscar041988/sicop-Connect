@@ -234,7 +234,8 @@
   (GPS/flotas), `41112301` (IoT/frío), `45121515` (BodyCams). Pendiente: buscar por nombre los de las otras 6 familias.
 - Línea huérfana (cartel no importado): queda en `raw_snapshots`; para que entre a `tender_lines` hay que importar
   un archivo de líneas nuevo después de los carteles (el mismo archivo no se reimporta). Hoy hay 0 huérfanas.
-- Docs restantes de 15.3 (OPERACION, ARQUITECTURA) · se crean en su fase. `REGLAS.md` ya existe;
+- Docs restantes de 15.3 (ARQUITECTURA) · se crea en su fase. `OPERACION.md`: borrador (2026-10-16) con
+  importar, revisar, ciclo, avisos, diagnosticar y recuperar; falta probarlo literalmente y los simulacros. `REGLAS.md` ya existe;
   `DESPLIEGUE.md` es un borrador con los datos del servidor (los pasos de instalación, en la lección 9).
 - Bloqueos del despliegue (`docs/DESPLIEGUE.md`, sección 7) · Oscar · antes del mié 14/10: usuario SSH, HTTPS
   (sin proxy con certificado no se puede iniciar sesión en el servidor), GitHub privado, versión de Python y
