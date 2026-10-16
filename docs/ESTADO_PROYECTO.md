@@ -269,7 +269,11 @@
 - Lección 7, encargo B: prueba real hecha (2026-10-13). En `.env` se vuelven a poner
   `NOTIFICATIONS_ENABLED=false` y `NOTIFICATIONS_DRY_RUN=true`; el envío diario solo se activa en la lección 9.
 - Pendiente nuevo: forma de revisar y reintentar a mano un aviso «fallido» o «incierto» (hoy solo se ve en la
-  outbox y en la salida de `notify`). Pendiente con Oscar: cartel que cierra el fin de semana.
+  outbox y en la salida de `notify`). **En curso (2026-10-16):** página «Avisos» en la rama `reintento-avisos`.
+- **Decisión 2026-10-16 (Ivania): un cartel que cierra el fin de semana se procesa y se recomienda como cualquier
+  otro.** Ya era así (`plazo_estado` no distingue días). Efecto conocido: el ciclo corre de lunes a viernes a las
+  8:00, así que uno cargado el viernes después de las 8:00 que cierra el sábado o el domingo no llega a avisarse
+  por correo (el lunes ya venció); sí aparece en el panel.
 
 - **Lección 5 (Hito 1) cerrada** (2026-10-09): demo del viaje del dato ensayada y reto de comprensión de la semana 1
   superado (Ivania). Comprobación de la guía: ☑ caracteres especiales como texto · ☑ revisión conservada al
