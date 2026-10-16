@@ -13,7 +13,7 @@
     La rama `diseno-fenova` tiene solo el primero.
   - Local: la historia anterior queda en la rama `historial-local` (`cc4da46`); se trabaja en `main`, que sigue
     a `origin/main`. 337 passed en `02b569b`; golden set 33/33.
-  - Servidor: Oscar subió la app; queda por confirmar si ya está instalada y funcionando en sicop.hermatix.com.
+  - Servidor (confirmado por Ivania, 2026-10-16): la app está instalada y funciona desde su enlace, con HTTPS.
 
 - **Lección 8, encargo B (2026-10-13): preparación del despliegue.** 337 passed (15 nuevas en
   `tests/test_respaldo.py` y `tests/test_despliegue.py`).
@@ -194,13 +194,13 @@
 - Obtención: manual verificada en el portal (2026-10-06, 2026-10-07 y 2026-10-08; ver `docs/ACCESO_SICOP.md`)
 - Correo: sin configurar. Decidido con Oscar (2026-10-12): API de Google, desde licitaciones@hermatix.com
 - Servidor: local. Destino: VPS Ubuntu 24.04 en Hostinger, https://sicop.hermatix.com (ver `docs/DESPLIEGUE.md`).
-  Código en GitHub (privado, de Oscar) desde 2026-10-16; instalación en el VPS por confirmar con Oscar.
+  Código en GitHub (privado, de Oscar) desde 2026-10-16; app instalada en el VPS y funcionando con HTTPS (Ivania, 2026-10-16).
 
 ## Pendientes
 
 - Fin de línea CRLF vs LF en el repositorio · Oscar (recomendación: LF, normalizado con `.gitattributes`).
 - Forma de trabajo con GitHub: quién sube y cómo (directo a `main` o por ramas) · Ivania con Oscar.
-- Confirmar el estado del servidor (instalado, HTTPS, panel en línea) · Oscar.
+- ~~Confirmar el estado del servidor~~ **Cerrado 2026-10-16 (Ivania):** instalada, funcionando y con HTTPS.
 - ~~Golden set: 4 provisionales~~ **Cerrado 2026-10-12 (Ivania):** confirmados sin el pliego (concursos cerrados);
   medición 33/33 = 100 %, sin provisionales. 33 carteles reales (17 interesan, 6 no interesan, 10 falsos positivos conocidos), etiquetas de Oscar del 2026-10-08;
   el 2026-10-09 se agregaron 2 data loggers de laboratorio (Oscar) y se confirmó `20260800233` como «interesa»
@@ -239,6 +239,8 @@
 - Bloqueos del despliegue (`docs/DESPLIEGUE.md`, sección 7) · Oscar · antes del mié 14/10: usuario SSH, HTTPS
   (sin proxy con certificado no se puede iniciar sesión en el servidor), GitHub privado, versión de Python y
   acceso a la API de Google (este último para el mar 13/10).
+  **2026-10-16:** resueltos HTTPS, GitHub privado y Python (la app funciona en el servidor). Siguen abiertos:
+  cómo pasar los JSON de Google y destino/retención de los respaldos.
 - **Pedido de Oscar para la lección 7:** destinatarios de los avisos editables desde el panel, no fijos en
   `MAIL_TO` (al inicio: Anabelle y Oscar). Solo el administrador cambia la lista, con historial (`audit_log`).
 - **Niveles de acceso aprobados por Oscar (2026-10-12):** 2 niveles, los que ya admite `users.role`.
