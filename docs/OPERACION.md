@@ -157,7 +157,7 @@ Un fallido o un incierto **nunca se reenvía solo**.
 
 ### 4.4 Revisar un aviso fallido o incierto
 
-> Página en el PR #2 (`reintento-avisos-lf`), todavía sin unir a `main` (2026-10-19).
+> Página en `main` desde el 2026-10-19 (PR #2). El servidor la tendrá cuando se actualice a esa versión.
 
 Panel → «Avisos» (solo administradores):
 
