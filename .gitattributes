@@ -4,6 +4,10 @@
 *.pdf binary
 *.png binary
 
+# Excepción: los CSV se guardan byte por byte, sin convertir. Los de SICOP vienen con CRLF
+# (docs/ACCESO_SICOP.md) y los de prueba imitan ese formato a propósito (tests/fixtures/README.md).
+*.csv -text
+
 # git archive (paquete para el servidor, guía 17.2 paso 4) escribe el commit dentro de app/COMMIT.
 # Así el manifiesto de un respaldo dice con qué código se hizo, aunque el servidor no tenga git.
 app/COMMIT export-subst

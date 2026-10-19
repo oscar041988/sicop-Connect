@@ -198,8 +198,9 @@
 
 ## Pendientes
 
-- ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. Falta hacerlo
-  (hoy 92 archivos con CRLF) · Ivania / Claude.
+- ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. **Hecho en la
+  rama `fin-de-linea-lf` (2026-10-19), sin subir:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
+  con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
   `main`). Pendiente subir: 5 commits de `main` y la rama `reintento-avisos`.
 - Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
