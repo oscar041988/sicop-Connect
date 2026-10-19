@@ -15,11 +15,13 @@ Aquí **nunca** van contraseñas, llaves, `SESSION_SECRET`, el contenido de `app
 | Servidor | VPS Ubuntu 24.04 en Hostinger (`DESPLIEGUE.md`, sección 1) | `DESPLIEGUE.md` |
 | Servidor compartido | sí: junto con Nexus y otras apps web de la empresa | Ivania (2026-10-19) |
 | Dirección del panel | https://sicop.hermatix.com | `ESTADO_PROYECTO.md` |
-| Cómo llegó el código | paquete `git archive` hecho en la Mac de Oscar (pasos 9.2–9.3) | Ivania |
+| Cómo se instaló | **Oscar no ejecutó comandos a mano:** usó un asistente de programación con IA (parecido a Claude Code), le dio las direcciones y la guía, y el asistente hizo la instalación y lo relacionado con GitHub. Qué comandos corrió y en qué orden: ☐ sin registro; la fuente es el historial de esa sesión del asistente. (El 19/10 Ivania había dicho «paquete `git archive` desde la Mac»; lo corrigió el mismo día.) | Ivania (2026-10-19) |
+| Sentido de GitHub | **del servidor a GitHub**: el código ya estaba en el servidor y el asistente lo subió a GitHub (la historia nueva del 16/10, con fin de línea CRLF). Es al revés de lo planeado (GitHub → Mac → servidor). Cómo llegó el código al servidor: ☐ sin registro | Ivania (2026-10-19) |
+| Secretos en GitHub | revisado el 19/10 (`main`, `diseno-fenova` y toda la historia): **ningún archivo secreto** (`.env`, `app.env`, base, JSON de Google, llaves) ni secretos dentro de archivos; solo valores de prueba inventados | Claude (2026-10-19) |
 | Commit instalado | ☐ sin registro: Oscar lo lee con `cat /opt/sicop-connect/app/COMMIT` | — |
 | Hash del paquete (SHA-256) | ☐ sin registro: no se recuerda si se comparó en la Mac y en el servidor | Ivania |
 | Versión de Python | ☐ sin registro (se necesita 3.12 o más; Oscar dijo que la cumple) | — |
-| Base inicial | **no parece ser el respaldo de Windows**: el 19/10 el panel dice «Todavía no hay evaluaciones», y ese mensaje solo sale si la tabla de evaluaciones está vacía (la base de Windows tiene evaluaciones desde la lección 4). Los usuarios sí existen. ☐ Oscar confirma | Ivania (2026-10-19) |
+| Base inicial | **no parece ser el respaldo de Windows**: el 19/10 el panel dice «Todavía no hay evaluaciones», y ese mensaje solo sale si la tabla de evaluaciones está vacía (la base de Windows tiene evaluaciones desde la lección 4). Los usuarios sí existen. ☐ Oscar confirma. Para comparar: la base de Windows tiene 4 usuarios, 5 revisiones, 11 215 carteles y 12 avisos en la outbox, y su huella es `f32a31689f3e…` en los respaldos del 13/10, del 16/10 (11:59) y del 19/10 (no cambió desde el 13/10). Si la base del servidor es una copia de esta, `sha256sum` da esa misma huella, hasta que alguien la use. **El respaldo del 16/10 (11:59) se lo pasó Ivania a Oscar, un día después de la instalación (15/10)**: lo probable es que el servidor arrancara con una base nueva y que el respaldo no se colocara, o quedara en otra carpeta. ☐ Oscar busca dónde quedó | Ivania y Claude (2026-10-19) |
 | HTTPS | lo configuró Oscar con las herramientas de Hostinger | Ivania |
 
 ## Pasos (`DESPLIEGUE.md`, sección 9)
@@ -27,10 +29,10 @@ Aquí **nunca** van contraseñas, llaves, `SESSION_SECRET`, el contenido de `app
 | Paso | Máquina | Responsable | Resultado |
 |---|---|---|---|
 | 9.1 Publicar el commit revisado | Windows | Ivania | ☐ sin registro: el código salió del repositorio de Oscar |
-| 9.2 Empaquetar con `git archive` y copiar | Mac | Oscar con Ivania | hecho (Ivania) |
-| 9.3 Verificar el hash, usuario `sicop`, carpetas, instalar | Servidor | Oscar | ☐ sin registro |
-| 9.4 Configuración privada (`app.env`, sin envíos) | Servidor | Oscar | ☐ sin registro |
-| 9.5 Servicios, migración, `sicop-web` | Servidor | Oscar | la app funciona (ver abajo); ☐ falta confirmar que es el servicio |
+| 9.2 Empaquetar con `git archive` y copiar | Mac | asistente de IA de Oscar | ☐ sin registro: no se sabe si se usó `git archive` |
+| 9.3 Verificar el hash, usuario `sicop`, carpetas, instalar | Servidor | asistente de IA de Oscar | ☐ sin registro |
+| 9.4 Configuración privada (`app.env`, sin envíos) | Servidor | asistente de IA de Oscar | ☐ sin registro |
+| 9.5 Servicios, migración, `sicop-web` | Servidor | asistente de IA de Oscar | la app funciona (ver abajo); ☐ falta confirmar que es el servicio |
 | Proxy con HTTPS | Hostinger | Oscar | hecho: el panel abre con HTTPS (Ivania, 2026-10-16) |
 | 9.6 Activar el ciclo diario | Servidor | — | **no se hizo**, como estaba previsto (lección 10) |
 
@@ -70,6 +72,8 @@ El hash del paquete ya no se puede comparar si se borró `/tmp/sicop-connect-rel
 | Pendiente | Responsable |
 |---|---|
 | Completar los ☐ de esta acta con los comandos de arriba | Oscar, con Ivania |
+| Pedir el historial de la sesión del asistente de IA que hizo la instalación (sin contraseñas ni llaves) para reconstruir los pasos | Oscar |
+| Como se subió a GitHub desde el servidor: en qué carpeta está ese repositorio y con qué permiso entra el servidor a GitHub (llave o token, y de qué cuenta). Un permiso para escribir en GitHub guardado en un servidor compartido es un riesgo: si no se va a usar, quitarlo | Oscar |
 | Base del servidor sin evaluaciones: restaurar el respaldo de Windows (lo acordado el 13/10) o importar archivos reales en el servidor y evaluar | Oscar con Ivania |
 | Revisar una oportunidad real desde otra computadora y anotarla | Ivania |
 | Confirmar que el proxy de Hostinger pasa la IP real del visitante (límite de intentos de login) | Oscar |

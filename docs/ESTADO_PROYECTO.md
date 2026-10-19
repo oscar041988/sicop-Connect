@@ -23,6 +23,28 @@
     parece ser el respaldo de Windows** acordado el 13/10. Se le plantearon a Oscar dos caminos: A, restaurar el
     respaldo de Windows (recomendado: conserva revisiones, usuarios, destinatarios y avisos enviados); B, importar
     archivos reales en el servidor y evaluar. Se le pidió `list-users` para decidir.
+  - Corrección (Ivania, 2026-10-19): Oscar no ejecutó comandos; un asistente de IA hizo la instalación y subió el
+    código **del servidor a GitHub** (por eso la historia nueva con CRLF). Revisado: en GitHub no hay secretos.
+    Pendiente: el historial de esa sesión y quitar del servidor el permiso para escribir en GitHub si no se usa.
+  - **Datos al día (2026-10-19, Ivania, panel local):** importaciones #12 (10 714 carteles, 614 nuevos, publicados
+    hasta el 19/10 10:34) y #13 (77 434 líneas), 0 rechazos; `evaluate` (reglas `92aef8277e2e`): 19 filas nuevas.
+    Abiertos sin revisar: Corredores GPS (`20261001497`, cierra mié 21/10 10:00, llegó el 13/10 y nadie lo vio),
+    Puriscal bodycams (`20261002246`, mié 21/10 15:00), OIJ cámara para vehículo (`20260903798`, jue 22/10).
+    Falso positivo: CCSS «Cámaras intraorales…» (`20261001749`, Media por «cámaras» + «transporte»). Ivania avisó a
+    Oscar y Anabelle a mano. Respaldo `sicop_20261019-114809` (huella `1e461b55…`): reemplaza al del 16/10 para
+    el camino A.
+  - **`OPERACION.md` probado paso a paso, secciones 1–6 (2026-10-19, Windows):** 13 hallazgos, corregidos en el
+    manual (ZIP del reporte, `INCOMING_DIR` en Windows, ciclo sin archivo = FALLO código 1, la revisión no saca un
+    cartel de los avisos, restauración en Windows, respaldos en el mismo disco…). Simulacros #3 y #4 hechos en
+    Windows. `run-cycle --dry-run` (#22) y `notify --dry-run`: el aviso habría traído las mismas 3 oportunidades
+    que Ivania mandó a mano; 12 avisos quedan «preparado» en la base local.
+  - **Autoevaluación de la lección 9 (2026-10-19, Ivania): las tres correctas.**
+    - Mac / servidor: Windows desarrolla y prueba, la Mac empaqueta y transfiere lo revisado, el servidor solo
+      instala y ejecuta; responsables claros, lo revisado llega igual y las credenciales quedan protegidas.
+      Se agregó: el hash es lo que comprueba que llegó igual.
+    - Sin `root`: un fallo como `root` pone en riesgo todo el servidor; como `sicop`, solo la app.
+    - Código y datos aparte: el código se reemplaza y se puede reconstruir; los datos son únicos. Permite
+      actualizar, respaldar y proteger cada uno sin arriesgar el otro.
 
 - **Lección 9, GitHub (2026-10-16).**
   - Repositorio privado `git@github.com:oscar041988/sicop-Connect.git` (dueño: Oscar). Ivania entra con su
@@ -227,6 +249,14 @@
   vieja `reintento-avisos` sobra (borrarla solo si Ivania lo pide).
 - Cerrar la lección 9 · Oscar con Ivania: comandos del acta (`docs/ACTA_DESPLIEGUE.md`), decidir la base del
   servidor (camino A o B), revisar una oportunidad real desde otra computadora, bitácora y autoevaluación.
+- Salieron de la prueba de `OPERACION.md` (2026-10-19), cada uno es un cambio aparte y no se hace sin pedirlo:
+  - Regla de «cámaras»: que no cuente con «intraorales» o equipo médico (falso positivo CCSS `20261001749`);
+    agregarlo al golden set · Ivania / Claude.
+  - El panel no avisa de carteles nuevos sin evaluar · Claude (mejora pequeña).
+  - `doctor` marca `MAIL_TO` como pendiente aunque ya no se usa · Claude (arreglo pequeño).
+  - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
+    él: confirmar que son los correctos · Ivania con Oscar.
+  - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.
 - Servidor compartido con Nexus y otras apps · Oscar: confirmar que el puerto 8000 es solo de SICOP, que el
   proxy pasa la IP real del visitante y que los respaldos incluyen la base de SICOP (con `app.cli backup`).
 - Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
@@ -267,7 +297,8 @@
 - Línea huérfana (cartel no importado): queda en `raw_snapshots`; para que entre a `tender_lines` hay que importar
   un archivo de líneas nuevo después de los carteles (el mismo archivo no se reimporta). Hoy hay 0 huérfanas.
 - Docs restantes de 15.3 (ARQUITECTURA) · se crea en su fase. `OPERACION.md`: borrador (2026-10-16) con
-  importar, revisar, ciclo, avisos, diagnosticar y recuperar; falta probarlo literalmente y los simulacros. `REGLAS.md` ya existe;
+  importar, revisar, ciclo, avisos, diagnosticar y recuperar; **probado en Windows el 2026-10-19** y corregido.
+  Falta: partes 🐧 en el servidor y simulacros #1, #2 y #5. `REGLAS.md` ya existe;
   `DESPLIEGUE.md` es un borrador con los datos del servidor (los pasos de instalación, en la lección 9).
 - Bloqueos del despliegue (`docs/DESPLIEGUE.md`, sección 7) · Oscar · antes del mié 14/10: usuario SSH, HTTPS
   (sin proxy con certificado no se puede iniciar sesión en el servidor), GitHub privado, versión de Python y
