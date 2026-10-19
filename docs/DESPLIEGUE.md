@@ -257,7 +257,6 @@ NOTIFICATIONS_DRY_RUN=true
 SCHEDULER_ENABLED=false
 MAIL_PROVIDER=unconfigured
 MAIL_FROM=
-MAIL_TO=
 SESSION_SECRET=
 GOOGLE_CLIENT_FILE=/etc/sicop-connect/google_cliente.json
 GOOGLE_TOKEN_FILE=/etc/sicop-connect/google_token.json

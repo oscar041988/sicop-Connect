@@ -17,6 +17,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
 
 # Valores por defecto: los mismos de .env.example (seguros: sin envíos ni tareas programadas).
+# Solo se leen estas claves: una que ya no está (como MAIL_TO, reemplazada por los destinatarios del panel en la
+# lección 7) se ignora aunque siga en un .env o app.env viejo.
 DEFAULTS: dict[str, str] = {
     "APP_ENV": "development",
     "APP_TIMEZONE": "America/Costa_Rica",
@@ -30,7 +32,6 @@ DEFAULTS: dict[str, str] = {
     "SCHEDULER_ENABLED": "false",
     "MAIL_PROVIDER": "unconfigured",
     "MAIL_FROM": "",
-    "MAIL_TO": "",
     "SESSION_SECRET": "",
     "SESSION_MAX_AGE_HOURS": "8",
     "UPLOAD_MAX_MB": "25",
@@ -42,7 +43,7 @@ DEFAULTS: dict[str, str] = {
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "MAIL_TO"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM"})
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
