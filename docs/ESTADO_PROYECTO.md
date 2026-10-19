@@ -1,8 +1,28 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-16 · Día / tarea: lección 9: código en GitHub, conexión de Ivania lista · Commit probado: `02b569b`
+Última actualización: 2026-10-19 · Día / tarea: lección 9 (por calendario, lección 11): fin de línea LF, PR #1 y #2, acta de despliegue en borrador · Commit probado: `72d1d8a` (`fin-de-linea-lf`)
 
 ## Último resultado
+
+- **Lección 9, cierre en curso (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
+  - Respuestas de Oscar: LF; trabajar por ramas (nada directo a `main`); revisa si el repositorio quedó público;
+    los respaldos del servidor los hace él; aprueba el ciclo diario (primero dry-run). No entendió la pregunta de
+    los JSON de Google: se le explicó de nuevo.
+  - Fin de línea LF en la rama `fin-de-linea-lf` (ver Pendientes). 337 passed.
+  - Primer push a GitHub (Ivania lo pidió), después de un `fetch`: Oscar no había subido nada nuevo.
+    `reintento-avisos` se copió sobre la rama LF como `reintento-avisos-lf` (mismo commit, sin conflictos de fin
+    de línea); 348 passed.
+  - Pull requests creados por Ivania en la web (`gh` no está instalado): **#1** `main` ← `fin-de-linea-lf` y **#2**
+    `fin-de-linea-lf` ← `reintento-avisos-lf` (apilado: unir primero el #1). Esperan la revisión de Oscar.
+  - `docs/ACTA_DESPLIEGUE.md` (borrador): instalación el jueves 15/10 desde las 15:00, Ivania y Oscar presentes,
+    paquete `git archive` desde la Mac, HTTPS con las herramientas de Hostinger. El servidor es compartido con
+    Nexus y otras apps de la empresa. Sin registro: commit instalado, hash del paquete, `health`, servicio y
+    usuario `sicop`. Oscar tiene los comandos para completarlo.
+  - Panel en el servidor (2026-10-19, Ivania desde el celular): el inicio de sesión funciona, pero dice «Todavía no
+    hay evaluaciones». Ese mensaje solo sale con la tabla de evaluaciones vacía, así que la base del servidor **no
+    parece ser el respaldo de Windows** acordado el 13/10. Se le plantearon a Oscar dos caminos: A, restaurar el
+    respaldo de Windows (recomendado: conserva revisiones, usuarios, destinatarios y avisos enviados); B, importar
+    archivos reales en el servidor y evaluar. Se le pidió `list-users` para decidir.
 
 - **Lección 9, GitHub (2026-10-16).**
   - Repositorio privado `git@github.com:oscar041988/sicop-Connect.git` (dueño: Oscar). Ivania entra con su
@@ -199,10 +219,16 @@
 ## Pendientes
 
 - ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. **Hecho en la
-  rama `fin-de-linea-lf` (2026-10-19), sin subir:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
+  rama `fin-de-linea-lf` (2026-10-19), en el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
   con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
-  `main`). Pendiente subir: 5 commits de `main` y la rama `reintento-avisos`.
+  `main`). Subidos el 2026-10-19: PR #1 (`fin-de-linea-lf`, incluye los 5 commits locales de `main`) y PR #2
+  (`reintento-avisos-lf`). · Oscar revisa y une: primero #1, luego #2. Después, actualizar `main` local; la rama
+  vieja `reintento-avisos` sobra (borrarla solo si Ivania lo pide).
+- Cerrar la lección 9 · Oscar con Ivania: comandos del acta (`docs/ACTA_DESPLIEGUE.md`), decidir la base del
+  servidor (camino A o B), revisar una oportunidad real desde otra computadora, bitácora y autoevaluación.
+- Servidor compartido con Nexus y otras apps · Oscar: confirmar que el puerto 8000 es solo de SICOP, que el
+  proxy pasa la IP real del visitante y que los respaldos incluyen la base de SICOP (con `app.cli backup`).
 - Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
 - Respaldos en el servidor (destino, retención, diario) · **Oscar los hace él** (2026-10-19).
 - Ciclo diario en el servidor: **aprobado por Oscar (2026-10-19)**, primero en dry-run; el envío real después.
