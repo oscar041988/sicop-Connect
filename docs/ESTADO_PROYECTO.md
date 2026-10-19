@@ -1,10 +1,17 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-19 · Día / tarea: lección 9 (por calendario, lección 11): fin de línea LF, PR #1 y #2, acta de despliegue en borrador · Commit probado: `72d1d8a` (`fin-de-linea-lf`)
+Última actualización: 2026-10-19 · Día / tarea: **lección 9 cerrada**; siguiente, lección 10 (por calendario, lección 11) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
-- **Lección 9, cierre en curso (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
+- **Lección 9 cerrada (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
+  - Cierre: autoevaluación ☑, `health` ☑, HTTPS con login ☑, oportunidad real revisada en el servidor desde otra
+    computadora ☑ (Corredores y otras 4), acta cerrada (`docs/ACTA_DESPLIEGUE.md`) y bitácora. Hash del paquete:
+    no se comparó; se hace en la próxima actualización. Sin registro: salida del `evaluate` del servidor y reporte
+    de la herramienta que instaló los archivos de Google.
+  - Oscar unió los PR #1 y #2: `main` de GitHub = `162afe8` (LF + página «Avisos»). El servidor sigue en `02b569b`.
+  - Servidor (camino B): tenía carteles sin evaluar; Oscar corrió `evaluate` y el panel muestra las oportunidades.
+    Archivos de Google instalados por la herramienta de Oscar: falta confirmar que los avisos siguen en dry-run.
   - Respuestas de Oscar: LF; trabajar por ramas (nada directo a `main`); revisa si el repositorio quedó público;
     los respaldos del servidor los hace él; aprueba el ciclo diario (primero dry-run). No entendió la pregunta de
     los JSON de Google: se le explicó de nuevo.
@@ -31,7 +38,9 @@
     Abiertos sin revisar: Corredores GPS (`20261001497`, cierra mié 21/10 10:00, llegó el 13/10 y nadie lo vio),
     Puriscal bodycams (`20261002246`, mié 21/10 15:00), OIJ cámara para vehículo (`20260903798`, jue 22/10).
     Falso positivo: CCSS «Cámaras intraorales…» (`20261001749`, Media por «cámaras» + «transporte»). Ivania avisó a
-    Oscar y Anabelle a mano. Respaldo `sicop_20261019-114809` (huella `1e461b55…`): reemplaza al del 16/10 para
+    Oscar y Anabelle a mano. **Decisiones (Oscar y Anabelle, 2026-10-19):** Corredores no (vista la descripción,
+    no es para la empresa) · Puriscal sí interesa · OIJ interesa, pero se descartó. Las tres Alta: la prioridad
+    mide encaje con el portafolio, no si conviene participar. Respaldo `sicop_20261019-114809` (huella `1e461b55…`): reemplaza al del 16/10 para
     el camino A.
   - **`OPERACION.md` probado paso a paso, secciones 1–6 (2026-10-19, Windows):** 13 hallazgos, corregidos en el
     manual (ZIP del reporte, `INCOMING_DIR` en Windows, ciclo sin archivo = FALLO código 1, la revisión no saca un
@@ -244,11 +253,15 @@
   rama `fin-de-linea-lf` (2026-10-19), en el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
   con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
-  `main`). Subidos el 2026-10-19: PR #1 (`fin-de-linea-lf`, incluye los 5 commits locales de `main`) y PR #2
-  (`reintento-avisos-lf`). · Oscar revisa y une: primero #1, luego #2. Después, actualizar `main` local; la rama
-  vieja `reintento-avisos` sobra (borrarla solo si Ivania lo pide).
-- Cerrar la lección 9 · Oscar con Ivania: comandos del acta (`docs/ACTA_DESPLIEGUE.md`), decidir la base del
-  servidor (camino A o B), revisar una oportunidad real desde otra computadora, bitácora y autoevaluación.
+  `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas que sobran: `reintento-avisos`,
+  `fin-de-linea-lf` y `reintento-avisos-lf` (borrarlas solo si Ivania lo pide).
+- ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta: confirmar avisos en dry-run en el servidor,
+  borrar los JSON de Google de la USB y la Mac, quién cargó archivos en el servidor el 16/10 y el 19/10, el
+  historial del asistente, y actualizar el servidor a `main` comparando el hash (9.8) · Oscar.
+- **Siguiente: lección 10** (ciclo de las 8:00 y envío real) · Ivania con Oscar, en orden: confirmar
+  destinatarios → `run-cycle --dry-run` en el servidor → envío supervisado con `notify --send --solo` → activar
+  `sicop-cycle.timer` → comprobar que sobrevive a un reinicio. Decidir quién deja los archivos de SICOP antes de
+  las 8:00 (sin archivo, el ciclo sale en «fallo»).
 - Salieron de la prueba de `OPERACION.md` (2026-10-19), cada uno es un cambio aparte y no se hace sin pedirlo:
   - Regla de «cámaras»: que no cuente con «intraorales» o equipo médico (falso positivo CCSS `20261001749`);
     agregarlo al golden set · Ivania / Claude.
@@ -257,8 +270,9 @@
   - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
     él: confirmar que son los correctos · Ivania con Oscar.
   - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.
-- Servidor compartido con Nexus y otras apps · Oscar: confirmar que el puerto 8000 es solo de SICOP, que el
-  proxy pasa la IP real del visitante y que los respaldos incluyen la base de SICOP (con `app.cli backup`).
+- Servidor compartido con Nexus y otras apps: puerto 8000 solo de SICOP ☑ y el proxy pasa la IP real ☑
+  (2026-10-19). Falta · Oscar: respaldos que incluyan la base de SICOP (con `app.cli backup`) y quitar del
+  servidor el permiso para escribir en GitHub.
 - Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
 - Respaldos en el servidor (destino, retención, diario) · **Oscar los hace él** (2026-10-19).
 - Ciclo diario en el servidor: **aprobado por Oscar (2026-10-19)**, primero en dry-run; el envío real después.

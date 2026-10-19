@@ -405,3 +405,43 @@ entiende en 30 s?, ¿falta o sobra algo?, ¿incluir los «No interesa»?, ¿a qu
 Oscar da el acceso y pone las credenciales en el `.env`. Bloqueos del despliegue · Oscar · antes del mié 14/10.
 Commit: `50e7b7e` Niveles de acceso, usuarios e historial · `6983336` Lección 7, encargo A · `b80d33e` Contraseñas
 de mínimo 10.
+
+## 2026-10-19 — cierre de la lección 9 (por calendario, lección 11)
+
+Horas realizadas: (completar, Ivania)
+Objetivo acordado en la reunión: cerrar la lección 9 (app en el servidor) y destrabar la 10 (avisos de cada mañana).
+Trabajo y archivos cambiados:
+- Fin de línea LF en todo el repositorio (decisión de Oscar); los CSV se guardan byte por byte con el CRLF de SICOP.
+  Primer push y primeros PR: #1 (LF) y #2 (página «Avisos»). Oscar los unió a `main`.
+- `docs/ACTA_DESPLIEGUE.md` (nuevo): la instalación del 15/10 la hizo un asistente de IA de Oscar y el código fue
+  del servidor a GitHub. Revisado: en GitHub no hay secretos. En la consola: app como `sicop`, permisos de la guía,
+  `health` ok, puerto 8000 solo de SICOP, el proxy pasa la IP real, ciclo diario `disabled`.
+- Base del servidor: tenía carteles cargados pero nunca evaluados. Oscar corrió `evaluate` (camino B) y el panel
+  del servidor mostró las oportunidades.
+- Datos al día en Windows (importaciones #12 y #13, 614 carteles nuevos) y prueba paso a paso de `OPERACION.md`,
+  secciones 1–6: 13 hallazgos corregidos en el manual. Simulacros #3 (restaurar) y #4 (ciclo sin datos) en Windows.
+- Archivos de Google instalados en el servidor por la herramienta de Oscar (sin registro de los comandos).
+Evidencia y comando de comprobación:
+- `python -m pytest -q` → 337 passed (rama LF) y 348 passed (con «Avisos»).
+- `run-cycle --origen real --dry-run` → ciclo #22 «FALLO · no llegó ningún archivo nuevo», código 1, no avisó.
+- `notify --dry-run` → 3 destinatarios, las mismas 3 oportunidades que se avisaron a mano.
+- `backup` → `sicop_20261019-114809` (huella igual al manifiesto); restaurado en una carpeta aparte, revisiones #1–#5.
+- En el servidor: revisiones de Corredores, Puriscal, OIJ, Santa Ana y CCSS desde otra computadora.
+Datos: reales (SICOP, 19/10) en Windows y en el servidor; ningún correo enviado.
+Claude: (completar, Ivania, según /usage)
+Estimado vs. real (horas humanas por tarea): (completar, Ivania)
+Autoevaluación de la lección 9: las tres correctas (Mac / servidor, por qué no `root`, código y datos aparte).
+Concepto aprendido (redactado por Claude a pedido de Ivania): separar código, datos y configuración. El código va en
+`/opt/sicop-connect` y se puede reemplazar en cada versión o volver a sacar de GitHub; los datos van en
+`/var/lib/sicop-connect` y son únicos; los secretos van en `/etc/sicop-connect`, solo legibles por `sicop`. Como
+cambiar el motor de un carro sin vaciar la maleta: se actualiza el código sin tocar las revisiones, y un respaldo
+solo necesita la carpeta de datos.
+Error encontrado y cómo se resolvió: en la consola del servidor, `python -m app.cli evaluate` dio «Command 'python'
+not found». En el servidor no se usa `python` suelto: se corre con `systemd-run` como `sicop`, con el `.venv` y
+`app.env` del panel (`OPERACION.md`, «Cómo se corre un comando»). Con `python3` desde `~` habría usado otra base.
+También: marqué «Interesa» por error en la CCSS (`20261001749`) en vez de Puriscal (`20261002246`); se corrigió
+con una revisión nueva. Lección: mirar el título, no solo el número.
+Bloqueo, responsable y próximo paso: lección 10 (ciclo de las 8:00 y envío real) · Ivania con Oscar · confirmar que
+los avisos del servidor siguen en dry-run, confirmar destinatarios, envío supervisado y activar el temporizador.
+Commit: rama `acta-despliegue` (ver su PR).
+Demo para mañana: el panel del servidor con las oportunidades de hoy y sus revisiones.
