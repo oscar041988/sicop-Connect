@@ -253,8 +253,8 @@
   rama `fin-de-linea-lf` (2026-10-19), en el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
   con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
-  `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas que sobran: `reintento-avisos`,
-  `fin-de-linea-lf` y `reintento-avisos-lf` (borrarlas solo si Ivania lo pide).
+  `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas `reintento-avisos`,
+  `fin-de-linea-lf` y `reintento-avisos-lf` borradas (Ivania lo pidió, 2026-10-19).
 - ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta:
   borrar los JSON de Google de la USB y la Mac, quién cargó archivos en el servidor el 16/10 y el 19/10, el
   historial del asistente, y actualizar el servidor a `main` comparando el hash (9.8) · Oscar.
