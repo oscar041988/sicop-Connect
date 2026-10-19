@@ -198,8 +198,13 @@
 
 ## Pendientes
 
-- Fin de línea CRLF vs LF en el repositorio · Oscar (recomendación: LF, normalizado con `.gitattributes`).
-- Forma de trabajo con GitHub: quién sube y cómo (directo a `main` o por ramas) · Ivania con Oscar.
+- ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. Falta hacerlo
+  (hoy 92 archivos con CRLF) · Ivania / Claude.
+- ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
+  `main`). Pendiente subir: 5 commits de `main` y la rama `reintento-avisos`.
+- Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
+- Respaldos en el servidor (destino, retención, diario) · **Oscar los hace él** (2026-10-19).
+- Ciclo diario en el servidor: **aprobado por Oscar (2026-10-19)**, primero en dry-run; el envío real después.
 - ~~Confirmar el estado del servidor~~ **Cerrado 2026-10-16 (Ivania):** instalada, funcionando y con HTTPS.
 - ~~Golden set: 4 provisionales~~ **Cerrado 2026-10-12 (Ivania):** confirmados sin el pliego (concursos cerrados);
   medición 33/33 = 100 %, sin provisionales. 33 carteles reales (17 interesan, 6 no interesan, 10 falsos positivos conocidos), etiquetas de Oscar del 2026-10-08;
@@ -242,6 +247,8 @@
   acceso a la API de Google (este último para el mar 13/10).
   **2026-10-16:** resueltos HTTPS, GitHub privado y Python (la app funciona en el servidor). Siguen abiertos:
   cómo pasar los JSON de Google y destino/retención de los respaldos.
+  **2026-10-19:** los respaldos los hace Oscar en el servidor. Los JSON de Google siguen abiertos (Oscar no
+  entendió la pregunta; se le explica de nuevo).
 - **Pedido de Oscar para la lección 7:** destinatarios de los avisos editables desde el panel, no fijos en
   `MAIL_TO` (al inicio: Anabelle y Oscar). Solo el administrador cambia la lista, con historial (`audit_log`).
 - **Niveles de acceso aprobados por Oscar (2026-10-12):** 2 niveles, los que ya admite `users.role`.
