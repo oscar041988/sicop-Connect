@@ -11,7 +11,7 @@
     de la herramienta que instaló los archivos de Google.
   - Oscar unió los PR #1 y #2: `main` de GitHub = `162afe8` (LF + página «Avisos»). El servidor sigue en `02b569b`.
   - Servidor (camino B): tenía carteles sin evaluar; Oscar corrió `evaluate` y el panel muestra las oportunidades.
-    Archivos de Google instalados por la herramienta de Oscar: falta confirmar que los avisos siguen en dry-run.
+    Archivos de Google instalados por la herramienta de Oscar; avisos en dry-run (confirmado por Oscar).
   - Respuestas de Oscar: LF; trabajar por ramas (nada directo a `main`); revisa si el repositorio quedó público;
     los respaldos del servidor los hace él; aprueba el ciclo diario (primero dry-run). No entendió la pregunta de
     los JSON de Google: se le explicó de nuevo.
@@ -255,7 +255,7 @@
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
   `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas que sobran: `reintento-avisos`,
   `fin-de-linea-lf` y `reintento-avisos-lf` (borrarlas solo si Ivania lo pide).
-- ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta: confirmar avisos en dry-run en el servidor,
+- ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta:
   borrar los JSON de Google de la USB y la Mac, quién cargó archivos en el servidor el 16/10 y el 19/10, el
   historial del asistente, y actualizar el servidor a `main` comparando el hash (9.8) · Oscar.
 - **Siguiente: lección 10** (ciclo de las 8:00 y envío real) · Ivania con Oscar, en orden: confirmar

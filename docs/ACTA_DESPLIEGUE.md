@@ -89,7 +89,7 @@ lean la base o `app.env`, y que SICOP toque las suyas. Confirmado el 19/10.
 | Quién cargó archivos en el servidor el 16/10 y el 19/10 | Oscar |
 | Pasar la salida del `evaluate` del servidor y el reporte de la herramienta que instaló los archivos de Google (comandos y salida de `doctor`) | Oscar / Ivania |
 | Que los respaldos del servidor incluyan `/var/lib/sicop-connect/sicop.db` (con `app.cli backup`, no copiando el archivo) | Oscar |
-| ~~Pasar al servidor los dos JSON de Google~~ | hecho 2026-10-19 por la herramienta de Oscar, según Ivania («ya pudimos habilitar la parte de avisos»). Sin registro de los comandos ni de `doctor`: ☐ confirmar que los avisos siguen **deshabilitados y en dry-run** hasta la lección 10, y que `sicop-cycle.timer` sigue `disabled` |
+| ~~Pasar al servidor los dos JSON de Google~~ | hecho 2026-10-19 por la herramienta de Oscar, según Ivania («ya pudimos habilitar la parte de avisos»). Sin registro de los comandos ni de `doctor`. ☑ Oscar confirmó (2026-10-19) que los avisos quedaron **en dry-run**: no se envía nada hasta la lección 10 |
 | Borrar los JSON de Google de la memoria USB y de la Mac | Oscar |
 | Respaldos en el servidor: destino, retención, diario | Oscar (2026-10-19) |
 | Repositorio de GitHub a privado | Oscar (2026-10-19) |
