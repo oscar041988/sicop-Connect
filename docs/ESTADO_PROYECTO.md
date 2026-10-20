@@ -273,7 +273,13 @@
     Oscar): exclusión «intraoral» en `videotelematica` (decisión de Ivania; «equipo medico» se descartó por el
     riesgo con ambulancias). Reglas `b880e0d350e1`; golden set 34/34 = 100 %; 348 passed. En la base de Windows
     la CCSS pasó a «sin coincidencia» y el OIJ sigue Alta. En el servidor aplica al actualizar y correr `evaluate`.
-  - El panel no avisa de carteles nuevos sin evaluar · Claude (mejora pequeña).
+  - ~~El panel no avisa de carteles nuevos sin evaluar~~ **Hecho 2026-10-20** en la rama
+    `panel-aviso-sin-evaluar` (`b734ccc`, PR para Oscar; opción elegida por Ivania: aviso en el panel).
+    Migración 0008 (`evaluation_runs`): cada evaluación completa queda anotada; si hay una importación de
+    carteles, líneas o catálogo posterior, la lista y el detalle dicen «Hay datos importados después de la última
+    evaluación… ejecuta evaluate». 351 passed (3 nuevas). Base de Windows: respaldo `sicop_20261020-094004`,
+    `migrate` → 0008, aviso antes de `evaluate` y sin aviso después. **Al actualizar el servidor:** `migrate` y
+    luego `evaluate` (una base existente pide la primera evaluación).
   - ~~`doctor` marca `MAIL_TO` como pendiente aunque ya no se usa~~ Hecho en la rama `doctor-sin-mail-to`
     (`69172a0`, PR esperando a Oscar).
   - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
