@@ -309,6 +309,19 @@
     de importación.
   - Repasar antes del reto oficial: huella del archivo vs. huella del cartel; para qué sirve la ventana de 7 días.
   - Pendiente: reto oficial en la revisión semanal con Oscar (sin Claude). Hoja de la sesión: `docs/ACTA_LECCION_10.md`.
+- **Autoevaluación de la lección 10 (2026-10-20, Ivania, antes de la sesión con Oscar): las tres correctas.**
+  - Si apaga su computadora: sigue lo que vive en el servidor (panel, base con las revisiones, ciclo); no está lo
+    que solo existe en su Windows. *Ajustes:* el ciclo automático todavía no corre (temporizador apagado hasta la
+    sesión); las ramas ya están todas en GitHub, así que solo la base local y los respaldos sin copiar a la USB
+    dependen de su disco.
+  - A las 8:00: `sicop-cycle.timer` lanza `sicop-cycle.service` (`run-cycle`): recoger → importar → evaluar →
+    avisar; sin archivo nuevo registra «FALLO» y la outbox impide reenviar una versión ya avisada. *Ajustes:* es
+    **de lunes a viernes** (`Mon..Fri 08:00 America/Costa_Rica`, `Persistent=false`), no todos los días; sin archivo
+    nuevo igual evalúa (los plazos cambian), solo no avisa; se avisa solo Alta/Media con plazo abierto y vistos en
+    los últimos 7 días, en un resumen por destinatario.
+  - El temporizador va al final: dry-run y envío supervisado confirman cada paso; activado antes, un error se
+    repetiría cada mañana sin nadie mirando.
+  - Repasar: días y hora exactos del temporizador; condiciones para que un cartel se avise.
 - ~~Confirmar el estado del servidor~~ **Cerrado 2026-10-16 (Ivania):** instalada, funcionando y con HTTPS.
 - ~~Golden set: 4 provisionales~~ **Cerrado 2026-10-12 (Ivania):** confirmados sin el pliego (concursos cerrados);
   medición 33/33 = 100 %, sin provisionales. 33 carteles reales (17 interesan, 6 no interesan, 10 falsos positivos conocidos), etiquetas de Oscar del 2026-10-08;
