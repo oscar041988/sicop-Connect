@@ -173,6 +173,24 @@ def version_vigente(conn: sqlite3.Connection) -> str | None:
     return fila[0] if fila else None
 
 
+# Los reportes que cambian lo que evalúa evaluate: título, líneas y nombre de catálogo.
+REPORTES_EVALUADOS = ("carteles", "lineas", "catalogo")
+
+
+def importado_sin_evaluar(conn: sqlite3.Connection) -> bool:
+    """¿Hay una importación con filas aceptadas posterior a la última evaluación completa?
+
+    Las fechas se comparan con julianday: unas vienen en hora de Costa Rica (-06:00) y otras en UTC.
+    """
+    marcas = ", ".join("?" for _ in REPORTES_EVALUADOS)
+    fila = conn.execute(
+        f"SELECT 1 FROM imports WHERE report IN ({marcas}) AND rows_accepted > 0"
+        "   AND julianday(imported_at) > COALESCE("
+        "       (SELECT MAX(julianday(evaluated_at)) FROM evaluation_runs), 0) LIMIT 1",
+        REPORTES_EVALUADOS).fetchone()
+    return fila is not None
+
+
 def _base_sql() -> str:
     return f"""
         WITH base AS (
