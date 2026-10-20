@@ -255,8 +255,9 @@
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
   `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas `reintento-avisos`,
   `fin-de-linea-lf` y `reintento-avisos-lf` borradas (Ivania lo pidió, 2026-10-19).
-  **2026-10-20:** `main` local = `origin/main`. Ramas con pull request, esperando a Oscar: `acta-despliegue`,
-  `doctor-sin-mail-to` y `leccion-10` (va encima de `acta-despliegue`: unir esa primero).
+  **2026-10-20:** `main` local = `origin/main`. Ramas esperando a Oscar: `acta-despliegue` y `leccion-10` (va
+  encima de `acta-despliegue`: unir esa primero); independientes, desde `main`: `doctor-sin-mail-to`,
+  `regla-camaras-intraorales`, `panel-aviso-sin-evaluar` y `zip-pliegos` (sus PR los crea Ivania en la web).
 - ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta:
   borrar los JSON de Google de la USB y la Mac, quién cargó archivos en el servidor el 16/10 y el 19/10, el
   historial del asistente, y actualizar el servidor a `main` comparando el hash (9.8) · Oscar.
@@ -282,6 +283,12 @@
     luego `evaluate` (una base existente pide la primera evaluación).
   - ~~`doctor` marca `MAIL_TO` como pendiente aunque ya no se usa~~ Hecho en la rama `doctor-sin-mail-to`
     (`69172a0`, PR esperando a Oscar).
+  - **ZIP de pliegos sin descomprimir (A1, opción O4a de `docs/DECISION_OBTENCION.md`): hecho 2026-10-20** en la
+    rama `zip-pliegos` (`41cf4db`, PR para Oscar; Ivania pidió adelantarlo). El ciclo y el panel («pliegos
+    (.zip)») importan los dos CSV del ZIP tal como llega; el ZIP se mueve entero a `procesados` o `con_error`.
+    356 passed (8 nuevas). Con el ZIP real del 9/10 sobre una copia de la base: «YA IMPORTADO» #7 y #8, sin
+    duplicar. El paso 1 de `docs/ACTA_LECCION_10.md` tiene los dos caminos (A: ZIP · B: CSV) según la versión
+    del servidor.
   - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
     él: confirmar que son los correctos · Ivania con Oscar.
   - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.

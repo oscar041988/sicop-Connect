@@ -31,7 +31,8 @@ Descargas del 6, 7, 8, 9, 13 y 19/10, con Oscar, Anabelle e Ivania. Siempre el m
 - Sin filtros, el portal entrega ≈ 3 meses de publicaciones.
 - **No se ha verificado ninguna API pública documentada** (guía 16.1). Las llamadas internas que hace el
   navegador no son una API autorizada ni estable.
-- El ciclo no acepta el ZIP de «Detalle pliego de condiciones»: hay que descomprimirlo (paso 7).
+- El ciclo no aceptaba el ZIP de «Detalle pliego de condiciones» y había que descomprimirlo (paso 7). Ya no hace
+  falta desde la rama `zip-pliegos` (ver O4a).
 
 **Conclusión de la evidencia:** el paso 4 es una validación pensada para una persona. Automatizarlo sería
 eludirla, y la guía lo prohíbe. Por lo tanto, **ninguna opción permitida elimina a la persona en cada solicitud**.
@@ -76,14 +77,19 @@ Un programa que abre el portal, llena la ventana, lee el código del correo y lo
 ### O4 · Mejorar el modo asistido, sin permisos nuevos
 
 - **a. Aceptar el ZIP de pliegos tal como llega**, en la carpeta de entrada y en el panel: elimina el paso 7.
-  Riesgo bajo; reutiliza la revisión de ZIP dañado que ya existe para el catálogo.
+  **Hecho 2026-10-20** en la rama `zip-pliegos` (`41cf4db`, PR para Oscar); en el servidor aplica al
+  actualizarlo. El ciclo importa los dos CSV del ZIP (carteles y luego líneas) y mueve el ZIP entero a
+  `procesados`, o a `con_error` si está dañado, le falta o le sobra un archivo, o un CSV viene cortado. El panel
+  tiene el tipo de reporte «pliegos (.zip)». Con el ZIP real del 9/10, los dos CSV salieron «YA IMPORTADO»
+  (#7 y #8): subir el ZIP o descomprimirlo a mano no duplica nada.
 - **b. Recordatorio** a quien descarga si a cierta hora (por ejemplo, 7:30) no hay archivo nuevo. Usa el envío
   que ya funciona (`gmail.send`). Hay que decidir a quién y a qué hora.
 - **c. Instrucciones cortas** en `docs/OPERACION.md` para la persona que descarga (ya existen en buena parte).
 
 ## 4. Recomendación provisional
 
-1. **O4a y O4b ahora**: quitan fricción sin permisos nuevos ni riesgos con los términos.
+1. **O4a y O4b ahora**: quitan fricción sin permisos nuevos ni riesgos con los términos. O4a ya está hecho
+   (2026-10-20, falta unirlo y actualizar el servidor); queda O4b.
 2. **O2 solo si Oscar lo pide**, después de revisar los términos de uso y aceptar a conciencia el permiso de
    lectura del buzón. Aun así, sigue siendo asistido.
 3. **O1**: preguntarle a soporte de SICOP si existe una API, si Hermatix lo decide.
@@ -96,7 +102,7 @@ Nivel que se declara hoy: **obtención asistida; análisis y avisos automáticos
 
 - ¿Qué dicen los términos de uso del portal sobre descargas con programas? (Revisarlos juntos.)
 - ¿Quién descarga cada día hábil y a qué hora? ¿Qué buzón usa?
-- ¿O4a y O4b le parecen bien? ¿A quién va el recordatorio y a qué hora?
+- O4a ya está hecho (rama `zip-pliegos`): ¿lo une? ¿O4b le parece bien? ¿A quién va el recordatorio y a qué hora?
 - ¿Le interesa O2 a cambio de dar permiso de lectura del buzón?
 - ¿Se le pregunta a soporte de SICOP si hay una API (O1)?
 

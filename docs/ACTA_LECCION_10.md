@@ -54,18 +54,31 @@ cuándo antes de seguir.
 **Para que el ciclo tenga algo que procesar** hace falta un archivo nuevo de SICOP en `INCOMING_DIR`. Subirlo
 desde el panel **no sirve** para esta prueba: el panel lo importa enseguida y el ciclo ya no lo ve como nuevo.
 
-1. Descargar hoy de SICOP el ZIP de «Detalle pliego de condiciones» y **descomprimirlo** sin abrir los CSV en
-   Excel. El ciclo no acepta ese ZIP (solo acepta ZIP para el catálogo): van los dos CSV,
-   `Detalle de pliegos de condiciones.csv` y `Detalles lineas.csv`. No importa el orden: el ciclo reconoce
-   cada reporte por su encabezado e importa los carteles antes que las líneas.
-2. 🍎 MAC: `scp "Detalle de pliegos de condiciones.csv" "Detalles lineas.csv" USUARIO_SSH@HOST_SERVIDOR:/tmp/`
-3. 🐧 SERVIDOR: colocarlos con el propietario correcto y **esperar al menos 60 segundos** (si no, quedan
-   «EN ESPERA»):
-   ```bash
-   sudo install -o sicop -g sicop -m 640 "/tmp/Detalle de pliegos de condiciones.csv" "/tmp/Detalles lineas.csv" \
-        /var/lib/sicop-connect/incoming/
-   rm "/tmp/Detalle de pliegos de condiciones.csv" "/tmp/Detalles lineas.csv"
-   ```
+**¿ZIP o CSV?** Depende de la versión instalada (commit del paso 0). Desde la rama `zip-pliegos` (`41cf4db`), el
+ciclo acepta el ZIP de «Detalle pliego de condiciones» tal como llega; antes, solo los dos CSV.
+
+1. Descargar hoy de SICOP el ZIP de «Detalle pliego de condiciones», **sin abrir los CSV en Excel**.
+2. Elegir el camino y anotarlo en la tabla:
+
+   **A · El servidor ya tiene `zip-pliegos`:** se copia el ZIP tal cual.
+   - 🍎 MAC: `scp "ARCHIVO.zip" USUARIO_SSH@HOST_SERVIDOR:/tmp/`
+   - 🐧 SERVIDOR:
+     ```bash
+     sudo install -o sicop -g sicop -m 640 "/tmp/ARCHIVO.zip" /var/lib/sicop-connect/incoming/
+     rm "/tmp/ARCHIVO.zip"
+     ```
+
+   **B · El servidor todavía no tiene `zip-pliegos`:** se descomprime y van los dos CSV,
+   `Detalle de pliegos de condiciones.csv` y `Detalles lineas.csv`. No importa el orden: el ciclo reconoce cada
+   reporte por su encabezado e importa los carteles antes que las líneas.
+   - 🍎 MAC: `scp "Detalle de pliegos de condiciones.csv" "Detalles lineas.csv" USUARIO_SSH@HOST_SERVIDOR:/tmp/`
+   - 🐧 SERVIDOR:
+     ```bash
+     sudo install -o sicop -g sicop -m 640 "/tmp/Detalle de pliegos de condiciones.csv" "/tmp/Detalles lineas.csv" \
+          /var/lib/sicop-connect/incoming/
+     rm "/tmp/Detalle de pliegos de condiciones.csv" "/tmp/Detalles lineas.csv"
+     ```
+3. **Esperar al menos 60 segundos** después de colocarlos (si no, quedan «EN ESPERA»).
 4. Correr el ciclo y leer su salida:
    ```bash
    sudo systemctl start sicop-cycle.service
@@ -77,12 +90,15 @@ desde el panel **no sirve** para esta prueba: el panel lo importa enseguida y el
 
 Qué debe decir el registro:
 - `Ciclo #N · DRY-RUN · no se envía nada · origen de los datos: real`
-- `IMPORTADO (carteles) …` con aceptadas y rechazadas, y la línea `Cobertura: …`
+- `IMPORTADO (carteles) …` y `IMPORTADO (lineas) …`, con aceptadas y rechazadas, y la línea `Cobertura: …`.
+  Con el camino A llevan el nombre del ZIP delante (`ARCHIVO.zip › Detalle de pliegos de condiciones.csv`) y
+  el ZIP pasa entero a `incoming/procesados/<fecha>/`.
 - `Evaluación: …` y `Preparados esperando envío: …` (o «Nada que avisar»)
 - `Ciclo #N: OK.`
 
 | Dato | Resultado |
 |---|---|
+| Camino usado (A: ZIP · B: CSV) | |
 | Archivo y hora en que se colocó | |
 | Ciclo # y código de salida | |
 | Importación # · aceptadas · rechazadas | |
