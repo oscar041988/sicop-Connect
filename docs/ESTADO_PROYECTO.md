@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-19 · Día / tarea: **lección 9 cerrada**; siguiente, lección 10 (por calendario, lección 11) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-20 · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -250,11 +250,13 @@
 ## Pendientes
 
 - ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. **Hecho en la
-  rama `fin-de-linea-lf` (2026-10-19), en el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
+  rama `fin-de-linea-lf` (2026-10-19), unido a `main` con el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
   con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.
 - ~~Forma de trabajo con GitHub~~ **Decidido 2026-10-19 (Oscar): por ramas** (Ivania sube ramas; nada directo a
   `main`). PR #1 y #2 **unidos por Oscar el 2026-10-19** (`main` = `162afe8`). Ramas `reintento-avisos`,
   `fin-de-linea-lf` y `reintento-avisos-lf` borradas (Ivania lo pidió, 2026-10-19).
+  **2026-10-20:** `main` local = `origin/main`. Ramas con pull request, esperando a Oscar: `acta-despliegue`,
+  `doctor-sin-mail-to` y `leccion-10` (va encima de `acta-despliegue`: unir esa primero).
 - ~~Cerrar la lección 9~~ **Cerrada 2026-10-19.** Queda del acta:
   borrar los JSON de Google de la USB y la Mac, quién cargó archivos en el servidor el 16/10 y el 19/10, el
   historial del asistente, y actualizar el servidor a `main` comparando el hash (9.8) · Oscar.
@@ -262,11 +264,15 @@
   destinatarios → `run-cycle --dry-run` en el servidor → envío supervisado con `notify --send --solo` → activar
   `sicop-cycle.timer` → comprobar que sobrevive a un reinicio. Decidir quién deja los archivos de SICOP antes de
   las 8:00 (sin archivo, el ciclo sale en «fallo»).
+  **2026-10-20:** JSON de Google en el servidor y `notify --send` desde el servidor entregó el correo (ver
+  «Bloqueos del despliegue»). Hoja de la sesión y acta: `docs/ACTA_LECCION_10.md`. Propuesta de ampliaciones
+  para Oscar: `docs/AMPLIACIONES.md`.
 - Salieron de la prueba de `OPERACION.md` (2026-10-19), cada uno es un cambio aparte y no se hace sin pedirlo:
   - Regla de «cámaras»: que no cuente con «intraorales» o equipo médico (falso positivo CCSS `20261001749`);
     agregarlo al golden set · Ivania / Claude.
   - El panel no avisa de carteles nuevos sin evaluar · Claude (mejora pequeña).
-  - `doctor` marca `MAIL_TO` como pendiente aunque ya no se usa · Claude (arreglo pequeño).
+  - ~~`doctor` marca `MAIL_TO` como pendiente aunque ya no se usa~~ Hecho en la rama `doctor-sin-mail-to`
+    (`69172a0`, PR esperando a Oscar).
   - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
     él: confirmar que son los correctos · Ivania con Oscar.
   - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.
