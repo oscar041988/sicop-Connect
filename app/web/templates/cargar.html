@@ -4,7 +4,8 @@
 <section>
   <h1>Cargar un reporte de SICOP</h1>
   <p class="sub">Se guarda en la carpeta de entrada y se importa igual que con <code>python -m app.cli import</code>.
-    Importa primero los carteles y después sus líneas. El mismo archivo no se importa dos veces.</p>
+    Importa primero los carteles y después sus líneas. El mismo archivo no se importa dos veces.
+    El ZIP de «Detalle pliego de condiciones» se sube tal como llega, con el tipo «pliegos»: trae los dos.</p>
   <form class="revision acceso" method="post" action="/cargar" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
@@ -31,11 +32,12 @@
   </form>
 </section>
 
-{% if resultado %}
-{% set r = resultado %}
+{% for parte in partes or [] %}
+{% set r = parte.resultado %}
+{% set anterior = parte.anterior %}
 <section class="ficha resumen">
   <h2>Resumen de la importación</h2>
-  <p>Archivo: <strong>{{ nombre_original }}</strong> · reporte {{ formulario.reporte }} · origen {{ formulario.origen }}</p>
+  <p>Archivo: <strong>{{ parte.nombre }}</strong> · reporte {{ parte.reporte }} · origen {{ formulario.origen }}</p>
   <p><small>Hash SHA-256 {{ r.file_hash[:16] }}… · codificación {{ r.encoding }} · separador
     {{ separadores.get(r.delimiter, r.delimiter) }}</small></p>
   {% for aviso in r.avisos_archivo %}<p class="aviso">{{ aviso }}</p>{% endfor %}
@@ -70,5 +72,5 @@
   <p>Importación #{{ r.import_id }} registrada.</p>
   {% endif %}
 </section>
-{% endif %}
+{% endfor %}
 {% endblock %}

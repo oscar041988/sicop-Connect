@@ -5,6 +5,7 @@ relativas a hoy para que el plazo siga abierto. Nunca toca data/ ni envía corre
 SIMULADO.
 """
 
+import io
 import json
 import os
 import sqlite3
@@ -285,3 +286,90 @@ def test_zip_del_catalogo_se_reconoce(entorno, tmp_path):
         zf.write(fuente, "Codigos Identificacion.csv")
 
     assert ciclo.tipo_de_reporte(zip_path) == "catalogo"
+
+
+# --- ZIP de pliegos tal como llega del portal (DECISION_OBTENCION.md, O4a) ----------------------------------
+
+ENCABEZADO_LINEAS = ("Número SICOP;Numero de linea;Numero partida;Cantidad;Precio Unitario Estimado;Moneda;"
+                     "Tipo Cambio USD;Código identificación")
+ZIP_PLIEGOS = "Reporte de detalle pliego de condiciones.zip"
+
+
+def _lineas(nro):
+    return ("﻿" + "\r\n".join([ENCABEZADO_LINEAS, f"{nro};1;1;3;150000.00;CRC;;8311160200000001"]) + "\r\n"
+            ).encode("utf-8")
+
+
+def _zip_pliegos(miembros):
+    contenido = io.BytesIO()
+    with zipfile.ZipFile(contenido, "w", zipfile.ZIP_DEFLATED) as zf:
+        for nombre, datos in miembros.items():
+            zf.writestr(nombre, datos)
+    return contenido.getvalue()
+
+
+def _importaciones(settings):
+    with closing(sqlite3.connect(settings.database_path)) as conn:
+        return conn.execute("SELECT report, file_name FROM imports ORDER BY id").fetchall()
+
+
+def test_zip_de_pliegos_se_importa_sin_descomprimirlo(entorno, capsys):
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": _carteles(GPS, OTRO),
+                                              "Detalles lineas.csv": _lineas(GPS[0])}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 0
+
+    salida = capsys.readouterr().out
+    assert f"IMPORTADO (carteles) {ZIP_PLIEGOS} › Detalle de pliegos de condiciones.csv" in salida
+    assert f"IMPORTADO (lineas) {ZIP_PLIEGOS} › Detalles lineas.csv" in salida
+    # Carteles antes que líneas, con el nombre de siempre: igual que si se hubiera descomprimido a mano.
+    assert _importaciones(entorno) == [("carteles", "Detalle de pliegos de condiciones.csv"),
+                                       ("lineas", "Detalles lineas.csv")]
+    assert _outbox(entorno) == [("oscar@ejemplo.test", GPS[0], "preparado")]
+    # El ZIP se mueve entero a procesados; los CSV extraídos no quedan en la carpeta de entrada.
+    assert sorted(p.name for p in entorno.incoming_dir.iterdir()) == ["procesados"]
+    assert [p.name for p in (entorno.incoming_dir / "procesados" / _hoy()).iterdir()] == [ZIP_PLIEGOS]
+
+
+def test_zip_de_pliegos_ya_descomprimido_a_mano_no_se_importa_dos_veces(entorno, capsys):
+    carteles_csv, lineas_csv = _carteles(GPS), _lineas(GPS[0])
+    _dejar(entorno, "Detalle de pliegos de condiciones.csv", carteles_csv)
+    _dejar(entorno, "Detalles lineas.csv", lineas_csv)
+    main(["run-cycle", "--origen", "sintetico"], entorno)
+    capsys.readouterr()
+
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": carteles_csv,
+                                              "Detalles lineas.csv": lineas_csv}))
+    main(["run-cycle", "--origen", "sintetico"], entorno)
+
+    salida = capsys.readouterr().out
+    assert salida.count("YA IMPORTADO") == 2 and len(_importaciones(entorno)) == 2
+
+
+@pytest.mark.parametrize("miembros, motivo", [
+    ({"Detalle de pliegos de condiciones.csv": "carteles"}, "faltan Detalles lineas.csv"),
+    ({"Detalle de pliegos de condiciones.csv": "carteles", "Detalles lineas.csv": "lineas", "otro.csv": "x"},
+     "sobran otro.csv"),
+])
+def test_zip_de_pliegos_incompleto_se_aparta_y_no_se_avisa(entorno, miembros, motivo):
+    datos = {"carteles": _carteles(GPS), "lineas": _lineas(GPS[0]), "x": b"x\r\n"}
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({n: datos[v] for n, v in miembros.items()}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and motivo in error
+    assert _importaciones(entorno) == [] and _outbox(entorno) == []
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_PLIEGOS).exists()
+
+
+def test_zip_de_pliegos_con_un_csv_cortado_se_aparta_entero(entorno):
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": _carteles(GPS),
+                                              "Detalles lineas.csv": _lineas(GPS[0])[:-10]}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "termina a mitad de una fila" in error
+    assert _importaciones(entorno) == []  # ninguno de los dos: el ZIP se revisa completo antes de importar
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_PLIEGOS).exists()

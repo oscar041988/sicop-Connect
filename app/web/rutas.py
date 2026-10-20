@@ -9,7 +9,9 @@ from __future__ import annotations
 import logging
 import re
 import sqlite3
+import tempfile
 from contextlib import closing
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
@@ -21,6 +23,7 @@ from fastapi.templating import Jinja2Templates
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
 from app.database import check_database, connect
+from app.importers import zip_pliegos
 from app.importers.comun import ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import avisos, destinatarios, historial, panel, reintentos, usuarios
@@ -199,9 +202,39 @@ def revisar(request: Request, nro_sicop: str, decision: str = Form(""), motivo: 
     return RedirectResponse(f"/oportunidades/{nro_sicop}#revisiones", status_code=303)
 
 
+@dataclass
+class ParteCarga:
+    """Lo que se muestra de cada CSV importado: uno si se subió un CSV, dos si fue el ZIP de pliegos."""
+    nombre: str
+    reporte: str
+    resultado: object
+    anterior: tuple | None
+
+
+def _importar_parte(conn, reporte: str, ruta: Path, nombre: str, origen: str, raw_dir: Path) -> ParteCarga:
+    resultado = IMPORTADORES[reporte](conn, ruta, origen, raw_dir)
+    # Qué fue la importación anterior del mismo archivo, para que el aviso no se preste a confusión.
+    anterior = conn.execute("SELECT report, file_name, imported_at FROM imports WHERE id = ?",
+                            (resultado.ya_importado,)).fetchone() if resultado.ya_importado else None
+    return ParteCarga(nombre, reporte, resultado, anterior)
+
+
+def _importar_zip_pliegos(conn, ruta: Path, nombre: str, origen: str, raw_dir: Path
+                          ) -> tuple[list[ParteCarga], str | None]:
+    """Carteles y después líneas. Si las líneas fallan, los carteles ya importados se muestran igual."""
+    partes: list[ParteCarga] = []
+    with tempfile.TemporaryDirectory() as temporal:
+        for reporte, csv in zip_pliegos.extraer(ruta, Path(temporal)):
+            try:
+                partes.append(_importar_parte(conn, reporte, csv, f"{nombre} › {csv.name}", origen, raw_dir))
+            except ImportacionError as exc:
+                return partes, f"No se importó {csv.name}: {exc}"
+    return partes, None
+
+
 def _render_carga(request: Request, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "cargar.html", {
-        "seccion": "cargar", "reportes": list(IMPORTADORES), "origenes": ORIGENES, "extensiones": carga.EXTENSIONES,
+        "seccion": "cargar", "reportes": list(carga.EXTENSIONES), "origenes": ORIGENES, "extensiones": carga.EXTENSIONES,
         "limite_mb": carga.en_megas(load_settings().upload_max_bytes), "separadores": SEPARADORES,
         "max_rechazos": MAX_RECHAZOS_VISIBLES, "ejemplos": EJEMPLOS_POR_ADVERTENCIA, "formulario": {},
         **contexto,
@@ -217,7 +250,7 @@ def formulario_carga(request: Request) -> Response:
 def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
            archivo: UploadFile | None = File(None)) -> Response:
     formulario = {"reporte": reporte, "origen": origen}
-    if reporte not in IMPORTADORES or origen not in ORIGENES:
+    if reporte not in carga.EXTENSIONES or origen not in ORIGENES:
         return _render_carga(request, 400, formulario=formulario,
                              error="Elige el tipo de reporte y el origen de los datos.")
     if archivo is None or not archivo.filename:
@@ -231,21 +264,21 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
     except carga.CargaInvalida as exc:
         status = 413 if isinstance(exc, carga.ArchivoMuyGrande) else 400
         return _render_carga(request, status, formulario=formulario, error=str(exc))
+    error = None
     try:
         with closing(connect(settings.database_path)) as conn:
-            resultado = IMPORTADORES[reporte](conn, ruta, origen, settings.raw_data_dir)
-            # Qué fue la importación anterior del mismo archivo, para que el aviso no se preste a confusión.
-            anterior = conn.execute("SELECT report, file_name, imported_at FROM imports WHERE id = ?",
-                                    (resultado.ya_importado,)).fetchone() if resultado.ya_importado else None
-    except ImportacionError as exc:
-        ruta.unlink(missing_ok=True)  # no se importó nada: no queda en la carpeta de entrada
-        return _render_carga(request, 400, formulario=formulario, error=f"No se importó: {exc}")
-    if resultado.ya_importado is not None:
-        ruta.unlink(missing_ok=True)  # repetido: el original ya está guardado desde la primera vez
+            if reporte == carga.PLIEGOS:
+                partes, error = _importar_zip_pliegos(conn, ruta, archivo.filename, origen, settings.raw_data_dir)
+            else:
+                partes = [_importar_parte(conn, reporte, ruta, archivo.filename, origen, settings.raw_data_dir)]
+    except (ImportacionError, zip_pliegos.ZipInvalido) as exc:
+        partes, error = [], f"No se importó: {exc}"
+    if error or all(p.resultado.ya_importado is not None for p in partes):
+        # Con error, o repetido (el original ya está guardado desde la primera vez): no queda en la carpeta de entrada.
+        ruta.unlink(missing_ok=True)
     # Sin Post/Redirect/Get: el detalle de los rechazos no se guarda en la base. Si se recarga la página y se
     # reenvía el archivo, el hash lo reconoce y no se importa dos veces.
-    return _render_carga(request, formulario=formulario, resultado=resultado, nombre_original=archivo.filename,
-                         anterior=anterior)
+    return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error)
 
 
 # --- Usuarios (solo administradores) -------------------------------------------------------------------------
