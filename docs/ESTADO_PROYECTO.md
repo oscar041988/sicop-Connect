@@ -268,8 +268,11 @@
   «Bloqueos del despliegue»). Hoja de la sesión y acta: `docs/ACTA_LECCION_10.md`. Propuesta de ampliaciones
   para Oscar: `docs/AMPLIACIONES.md`.
 - Salieron de la prueba de `OPERACION.md` (2026-10-19), cada uno es un cambio aparte y no se hace sin pedirlo:
-  - Regla de «cámaras»: que no cuente con «intraorales» o equipo médico (falso positivo CCSS `20261001749`);
-    agregarlo al golden set · Ivania / Claude.
+  - ~~Regla de «cámaras»: que no cuente con «intraorales» o equipo médico (falso positivo CCSS `20261001749`);
+    agregarlo al golden set~~ **Hecho 2026-10-20** en la rama `regla-camaras-intraorales` (`a707895`, PR para
+    Oscar): exclusión «intraoral» en `videotelematica` (decisión de Ivania; «equipo medico» se descartó por el
+    riesgo con ambulancias). Reglas `b880e0d350e1`; golden set 34/34 = 100 %; 348 passed. En la base de Windows
+    la CCSS pasó a «sin coincidencia» y el OIJ sigue Alta. En el servidor aplica al actualizar y correr `evaluate`.
   - El panel no avisa de carteles nuevos sin evaluar · Claude (mejora pequeña).
   - ~~`doctor` marca `MAIL_TO` como pendiente aunque ya no se usa~~ Hecho en la rama `doctor-sin-mail-to`
     (`69172a0`, PR esperando a Oscar).
