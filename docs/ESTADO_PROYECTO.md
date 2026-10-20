@@ -276,6 +276,17 @@
 - Repositorio público o privado · Oscar: cree que olvidó pasarlo a privado; lo revisa (2026-10-19).
 - Respaldos en el servidor (destino, retención, diario) · **Oscar los hace él** (2026-10-19).
 - Ciclo diario en el servidor: **aprobado por Oscar (2026-10-19)**, primero en dry-run; el envío real después.
+- **Práctica del reto de la semana 2 (2026-10-20, Ivania):**
+  - Explicación: 3 correctas y 1 a medias. La segunda vez del ciclo no avisa porque el **archivo** ya se
+    importó (`YA IMPORTADO` → «no llegó nada nuevo»), no por la huella de cada cartel. El selector no descarta
+    lo ya avisado: lo hace `motivo_para` y, de respaldo, la clave UNIQUE.
+  - Demostración: dos `notify --dry-run` → 0 nuevos · 12 ya avisados las dos veces. Fila de `20261001587` en
+    `notification_outbox`: 3 destinatarios, motivo `nueva`, `aceptado` el 2026-10-13.
+  - Ventana de 7 días (`NOTIFY_LOOKBACK_DAYS`): bien explicada. Se corrigió que **solo afecta los avisos**
+    (`app/avisos.py`, `candidatos`); el panel no la usa y muestra los carteles abiertos sin importar la fecha
+    de importación.
+  - Repasar antes del reto oficial: huella del archivo vs. huella del cartel; para qué sirve la ventana de 7 días.
+  - Pendiente: reto oficial en la revisión semanal con Oscar (sin Claude). Hoja de la sesión: `docs/ACTA_LECCION_10.md`.
 - ~~Confirmar el estado del servidor~~ **Cerrado 2026-10-16 (Ivania):** instalada, funcionando y con HTTPS.
 - ~~Golden set: 4 provisionales~~ **Cerrado 2026-10-12 (Ivania):** confirmados sin el pliego (concursos cerrados);
   medición 33/33 = 100 %, sin provisionales. 33 carteles reales (17 interesan, 6 no interesan, 10 falsos positivos conocidos), etiquetas de Oscar del 2026-10-08;
@@ -321,6 +332,8 @@
   cómo pasar los JSON de Google y destino/retención de los respaldos.
   **2026-10-19:** los respaldos los hace Oscar en el servidor. Los JSON de Google siguen abiertos (Oscar no
   entendió la pregunta; se le explica de nuevo).
+  **2026-10-20 (Ivania):** los JSON de Google ya están en el servidor; prueba con `notify --send` desde el
+  servidor y el correo llegó. Cuenta para el Hito 2: ☑ correo real recibido desde el servidor.
 - **Pedido de Oscar para la lección 7:** destinatarios de los avisos editables desde el panel, no fijos en
   `MAIL_TO` (al inicio: Anabelle y Oscar). Solo el administrador cambia la lista, con historial (`audit_log`).
 - **Niveles de acceso aprobados por Oscar (2026-10-12):** 2 niveles, los que ya admite `users.role`.
