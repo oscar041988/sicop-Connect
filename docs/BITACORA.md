@@ -506,5 +506,7 @@ deja el archivo de SICOP antes de las 8:00. Ivania: copiar el respaldo a la USB 
 de las 6 familias.
 Commit: `leccion-10` (`d75fc22` → `4b91f5a`) · `regla-camaras-intraorales` (`a707895`) · `panel-aviso-sin-evaluar`
 (`b734ccc`) · `zip-pliegos` (`41cf4db`), cada una con su PR.
-Demo para mañana: (completar, Ivania; sugerencia: el ZIP de pliegos en el panel y el aviso de «datos sin evaluar»,
-en Windows)
+Demo para mañana: en la rama `zip-pliegos`, abrir http://127.0.0.1:8000, ir a «Cargar archivo» y subir el ZIP de
+pliegos tal como lo baja SICOP. El panel muestra sus dos partes («ZIP › Detalle de pliegos de condiciones.csv» y
+«ZIP › Detalles lineas.csv»), cada una con «ya se importó (#7 / #8)». Muestra que ya no hay que descomprimir el ZIP a
+mano, y también la idempotencia: el mismo archivo no se importa dos veces.
