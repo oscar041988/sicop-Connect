@@ -408,7 +408,7 @@ de mínimo 10.
 
 ## 2026-10-19 — cierre de la lección 9 (por calendario, lección 11)
 
-Horas realizadas: (completar, Ivania)
+Horas realizadas: 5 h
 Objetivo acordado en la reunión: cerrar la lección 9 (app en el servidor) y destrabar la 10 (avisos de cada mañana).
 Trabajo y archivos cambiados:
 - Fin de línea LF en todo el repositorio (decisión de Oscar); los CSV se guardan byte por byte con el CRLF de SICOP.
@@ -428,8 +428,9 @@ Evidencia y comando de comprobación:
 - `backup` → `sicop_20261019-114809` (huella igual al manifiesto); restaurado en una carpeta aparte, revisiones #1–#5.
 - En el servidor: revisiones de Corredores, Puriscal, OIJ, Santa Ana y CCSS desde otra computadora.
 Datos: reales (SICOP, 19/10) en Windows y en el servidor; ningún correo enviado.
-Claude: (completar, Ivania, según /usage)
-Estimado vs. real (horas humanas por tarea): (completar, Ivania)
+Claude: interacciones y uso no registrados.
+Estimado vs. real (horas humanas por tarea): lección 9 · estimado 7,5 h (agenda de la guía) · real 5 h el 19/10
+(lección cerrada; la instalación del 15/10 la hizo la herramienta de Oscar y sus horas no están registradas).
 Autoevaluación de la lección 9: las tres correctas (Mac / servidor, por qué no `root`, código y datos aparte).
 Concepto aprendido (redactado por Claude a pedido de Ivania): separar código, datos y configuración. El código va en
 `/opt/sicop-connect` y se puede reemplazar en cada versión o volver a sacar de GitHub; los datos van en
