@@ -105,6 +105,10 @@ Nivel que se declara hoy: **obtención asistida; análisis y avisos automáticos
 - O4a ya está hecho (rama `zip-pliegos`): ¿lo une? ¿O4b le parece bien? ¿A quién va el recordatorio y a qué hora?
 - ¿Le interesa O2 a cambio de dar permiso de lectura del buzón?
 - ¿Se le pregunta a soporte de SICOP si hay una API (O1)?
+- **¿Avisar por correo cuando el ciclo falla?** Hoy un «FALLO» (no llegó el archivo, ZIP dañado, error de Gmail…)
+  solo queda en `journalctl` y en `source_runs`: el ciclo no le avisa a nadie (`app/ciclo.py` solo llama a los
+  avisos cuando todo salió bien). Si nadie revisa, una semana de fallos se ve igual que una semana sin
+  oportunidades. Es más amplio que O4b (que solo cubre «no llegó el archivo»). ¿A quién se avisa?
 
 ## 6. Decisión
 
@@ -115,5 +119,17 @@ Nivel que se declara hoy: **obtención asistida; análisis y avisos automáticos
 
 ## 7. Autoevaluación (guía, lección 11; la responde Ivania)
 
-- ¿Por qué un resultado «no viable» también tiene valor?
-- ¿Qué riesgo tendría un adaptador que se rompe sin avisar?
+Respuestas de Ivania (2026-10-20), con ajustes de Claude: **las dos correctas.**
+
+- **¿Por qué un resultado «no viable» también tiene valor?** Evita perder días construyendo un bot que intentara
+  saltarse el código de validación de SICOP: habría violado los términos de uso y se rompería con cualquier
+  cambio del portal. El documento deja registrado por qué se descartó, con la evidencia, para que nadie repita
+  la investigación dentro de seis meses. Y orientó el esfuerzo hacia algo útil: el modo asistido mejorado (O4a),
+  sin saltarse controles.
+  *Ajustes:* O3 se descarta **aunque técnicamente funcionara**, porque elude la validación; esa es la razón de
+  fondo. La decisión de Oscar todavía no está escrita (sección 6): hoy queda la evidencia y el razonamiento.
+- **¿Qué riesgo tendría un adaptador que se rompe sin avisar?** Que el sistema falle en silencio y el equipo
+  crea que no hay concursos mientras se pierden oportunidades reales. El mensaje de «FALLO» lo evita porque hace
+  visible el problema el mismo día.
+  *Ajuste:* hoy el «FALLO» solo es visible para quien lo busca (`journalctl`, `source_runs`); nadie recibe un
+  correo. De ahí la pregunta para Oscar de la sección 5 (avisar cuando el ciclo falla).
