@@ -8,6 +8,8 @@ Reglas:
 * Si la fuente falló o no llegó ningún archivo nuevo, se evalúa igual (los plazos cambian con el día) pero
   NO se avisa: un correo sin los datos de hoy daría a entender que no hubo compras nuevas.
 * Los archivos importados (o ya importados antes) se mueven a INCOMING_DIR/procesados/<fecha>/.
+* El ZIP de pliegos se acepta tal como llega: se importan sus dos CSV (app/importers/zip_pliegos.py) y el ZIP
+  se mueve entero, a procesados o, si alguno de sus CSV falló, a con_error.
 * Obtención en modo manual: los archivos los descarga una persona y los deja en INCOMING_DIR (o los sube en el
   panel). Este módulo no programa nada; el horario lo pone el temporizador del servidor (lección 9).
 """
@@ -18,6 +20,7 @@ import json
 import os
 import shutil
 import sqlite3
+import tempfile
 import time
 import zipfile
 from contextlib import closing
@@ -29,7 +32,7 @@ from app import avisos
 from app.bloqueo import CicloOcupado, bloqueo
 from app.config import Settings
 from app.database import connect
-from app.importers import carteles, catalogo, instituciones, lineas
+from app.importers import carteles, catalogo, instituciones, lineas, zip_pliegos
 from app.importers.comun import HORA_CR, ImportacionError
 from app.importers.csv_reader import parse_csv
 from app.matching.evaluar import ResultadoEvaluacion, evaluar_base
@@ -139,7 +142,8 @@ def tipo_de_reporte(path: Path) -> str:
             with zipfile.ZipFile(path) as zf:
                 malo = zf.testzip()
                 if catalogo.ARCHIVO_EN_ZIP not in zf.namelist():
-                    raise ArchivoInvalido(f"el ZIP no trae {catalogo.ARCHIVO_EN_ZIP!r}: no es el catálogo del portal")
+                    raise ArchivoInvalido(f"el ZIP no trae {catalogo.ARCHIVO_EN_ZIP!r} ni los CSV de pliegos: "
+                                          "no es el catálogo ni el reporte de pliegos del portal")
                 raw = zf.read(catalogo.ARCHIVO_EN_ZIP)
         except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
             raise ArchivoInvalido(f"el ZIP no se puede leer: {exc}") from exc
@@ -215,37 +219,74 @@ def registrar_ocupado(settings: Settings, origen: str, quien: str, ahora: dateti
 
 # --- El ciclo ----------------------------------------------------------------------------------------
 
+def _clasificar(path: Path, temporal: Path) -> list[tuple[str, Path]]:
+    """[(reporte, CSV a importar)]. El ZIP de pliegos se abre en sus dos CSV; lo demás es un solo archivo."""
+    if zip_pliegos.es_zip_de_pliegos(path):
+        try:
+            csvs = zip_pliegos.extraer(path, temporal)
+        except zip_pliegos.ZipInvalido as exc:
+            raise ArchivoInvalido(str(exc)) from exc
+        return [(tipo_de_reporte(csv), csv) for _, csv in csvs]  # misma revisión que un CSV suelto
+    return [(tipo_de_reporte(path), path)]
+
+
 def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen: str, fecha: str) -> list[str]:
     errores: list[str] = []
     por_tipo: dict[str, list[Path]] = {t: [] for t in ORDEN}
-    for path in listos:
-        try:
-            por_tipo[tipo_de_reporte(path)].append(path)
-        except (ArchivoInvalido, OSError) as exc:
-            errores.append(f"{path.name}: {exc}")
-            movido = _mover(path, settings.incoming_dir / CON_ERROR / fecha)
-            ciclo.archivos.append(ArchivoCiclo(path.name, "error", detalle=str(exc), movido_a=str(movido)))
-    desde, hasta = [], []
-    for tipo in ORDEN:
-        for path in por_tipo[tipo]:
+    zip_de: dict[Path, Path] = {}                 # CSV sacado de un ZIP de pliegos → ese ZIP
+    partes: dict[Path, list[ArchivoCiclo]] = {}   # ZIP → lo que pasó con cada uno de sus CSV
+    con_error: set[Path] = set()
+    with tempfile.TemporaryDirectory() as temporal:
+        for n, path in enumerate(listos):
             try:
-                r = IMPORTADORES[tipo](conn, path, origen, settings.raw_data_dir, source_run_id=ciclo.id)
-            except (ImportacionError, OSError) as exc:
+                clasificados = _clasificar(path, Path(temporal) / str(n))
+            except (ArchivoInvalido, OSError) as exc:
                 errores.append(f"{path.name}: {exc}")
                 movido = _mover(path, settings.incoming_dir / CON_ERROR / fecha)
-                ciclo.archivos.append(ArchivoCiclo(path.name, "error", tipo, str(exc), movido_a=str(movido)))
+                ciclo.archivos.append(ArchivoCiclo(path.name, "error", detalle=str(exc), movido_a=str(movido)))
                 continue
-            movido = _mover(path, settings.incoming_dir / PROCESADOS / fecha)
-            if r.ya_importado is not None:
-                ciclo.archivos.append(ArchivoCiclo(path.name, "ya_importado", tipo,
-                                                   f"igual a la importación #{r.ya_importado}: no cambió nada",
-                                                   r.ya_importado, movido_a=str(movido)))
-                continue
-            ciclo.archivos.append(ArchivoCiclo(path.name, "importado", tipo, import_id=r.import_id,
-                                               aceptadas=r.aceptadas, rechazadas=len(r.rechazos), movido_a=str(movido)))
-            if r.periodo[0]:
-                desde.append(r.periodo[0])
-                hasta.append(r.periodo[1])
+            for tipo, csv in clasificados:
+                por_tipo[tipo].append(csv)
+                if csv != path:
+                    zip_de[csv] = path
+                    partes.setdefault(path, [])
+        desde, hasta = [], []
+        for tipo in ORDEN:
+            for path in por_tipo[tipo]:
+                zip_origen = zip_de.get(path)
+                nombre = f"{zip_origen.name} › {path.name}" if zip_origen else path.name
+                try:
+                    r = IMPORTADORES[tipo](conn, path, origen, settings.raw_data_dir, source_run_id=ciclo.id)
+                except (ImportacionError, OSError) as exc:
+                    errores.append(f"{nombre}: {exc}")
+                    archivo = ArchivoCiclo(nombre, "error", tipo, str(exc))
+                    if zip_origen:  # el ZIP entero se aparta al final
+                        con_error.add(zip_origen)
+                        partes[zip_origen].append(archivo)
+                    else:
+                        archivo.movido_a = str(_mover(path, settings.incoming_dir / CON_ERROR / fecha))
+                    ciclo.archivos.append(archivo)
+                    continue
+                if r.ya_importado is not None:
+                    archivo = ArchivoCiclo(nombre, "ya_importado", tipo,
+                                           f"igual a la importación #{r.ya_importado}: no cambió nada", r.ya_importado)
+                else:
+                    archivo = ArchivoCiclo(nombre, "importado", tipo, import_id=r.import_id,
+                                           aceptadas=r.aceptadas, rechazadas=len(r.rechazos))
+                    if r.periodo[0]:
+                        desde.append(r.periodo[0])
+                        hasta.append(r.periodo[1])
+                if zip_origen:
+                    partes[zip_origen].append(archivo)
+                else:
+                    archivo.movido_a = str(_mover(path, settings.incoming_dir / PROCESADOS / fecha))
+                ciclo.archivos.append(archivo)
+    # Cada ZIP se mueve una sola vez: a con_error si alguno de sus CSV falló; si no, a procesados.
+    for zip_path, archivos in partes.items():
+        destino = CON_ERROR if zip_path in con_error else PROCESADOS
+        movido = str(_mover(zip_path, settings.incoming_dir / destino / fecha))
+        for archivo in archivos:
+            archivo.movido_a = movido
     ciclo.periodo = (min(desde), max(hasta)) if desde else (None, None)
     return errores
 
