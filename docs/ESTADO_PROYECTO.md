@@ -253,6 +253,10 @@
   de las siguientes partes del proyecto; se actualiza una sola vez, cuando la app esté lista. Los pasos de
   servidor de este documento y de las actas (lección 10: dry-run, envío supervisado, timer, reinicio) quedan en
   espera hasta entonces. Oscar sigue revisando y uniendo los PR.
+- **Rama `desarrollo` (2026-10-21):** junta todo para trabajar en local: `obtencion-automatica` (que trae
+  `acta-despliegue` y `leccion-10`) + `doctor-sin-mail-to`, `regla-camaras-intraorales`,
+  `panel-aviso-sin-evaluar` y `zip-pliegos`, sin conflictos. 360 passed; golden set 34/34. Desde aquí se sigue
+  (ciclo local, lección 1); al final, Oscar revisa esta rama. Solo local.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
