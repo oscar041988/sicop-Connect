@@ -76,5 +76,18 @@ Todas tienen `Cod Unidad Compra` con ceros iniciales (`00001`, `01142`, `02102`)
 - Fila 2: cédula `9999999999` (la de los carteles sintéticos); fila 3: cédula con ceros iniciales;
   fila 4: cédula en notación científica → rechazada.
 
+## `correo_codigo_simulado.eml` y `correo_envio_simulado.eml`
+
+- **Datos: SIMULADOS.** Copias anonimizadas de dos correos reales de `info@sicop.go.cr` recibidos el
+  2026-10-21 (13:34 y 13:36, hora de Costa Rica), descargados de Gmail como `.eml`. Los originales están en
+  `data/correos_sicop/`, fuera de Git.
+- Se conservó la forma real: remitente, asunto codificado (`=?UTF-8?Q?…?=`), fecha, `text/html; charset=utf-8`
+  y la codificación del cuerpo (el del código en `quoted-printable`, con líneas cortadas por `=`; el del
+  enlace en `7bit`).
+- Se reemplazó: el código (6 letras y números, ahora `Zq9Xw4`), el `processId` del enlace (ahora `99999`),
+  el destinatario (`buzon@example.com`) y el `Message-id`. Se quitaron las cabeceras de entrega y firmas
+  (`Received`, `DKIM`, `ARC`, `List-Unsubscribe`, `Reporting-Meta`). La primera cabecera,
+  `X-Datos-Sicop-Connect`, marca el archivo como SIMULADO.
+
 **No editar estos archivos** (ni abrirlo y guardarlo con Excel). Si hace falta otro caso, agregar un fixture nuevo
 y anotarlo aquí con su origen (real / sintético / simulado).

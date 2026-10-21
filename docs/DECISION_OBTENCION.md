@@ -189,3 +189,9 @@ Reemplazan, solo para la obtención, la regla «no se eluden códigos de validac
 
 Datos por confirmar en la primera solicitud real: cuánto tarda el correo con el enlace (la guía dice horas; lo
 observado en `ACCESO_SICOP.md` fue ≈ 1 minuto) y si la ventana «Procesando el reporte» trae el `processId`.
+
+Observado el 2026-10-21 (solicitud manual de Ivania, correos guardados en `data/correos_sicop/`): el correo del
+código llegó a las 13:34:03 y el del enlace a las 13:36:03, **2 minutos después**. El código tiene 6 letras y
+números (distingue mayúsculas) dentro de `<strong>…</strong>`, en un cuerpo HTML `quoted-printable`. El enlace
+es `…/ext-report-download?processId=<número>`, en HTML `7bit`. Copias anonimizadas para las pruebas:
+`tests/fixtures/correo_*_simulado.eml`.
