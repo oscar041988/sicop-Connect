@@ -275,8 +275,10 @@
   los dos asuntos exactos; usa solo el correo más reciente posterior a la solicitud; distingue «no llegó» de
   «formato desconocido»; nada sin enmascarar en mensajes. Comandos `obtain gmail-auth` y `obtain check-mail`.
   `gmail.py` reutilizado (clase `Permiso`; el envío no cambia). Fixtures `tests/fixtures/correo_*_simulado.eml`.
-  391 passed (31 nuevas). Pendiente · Ivania: prueba real de solo lectura (`docs/GOOGLE_API.md` §8). Si da 403,
-  el administrador agrega `gmail.readonly` al cliente OAuth.
+  391 passed (31 nuevas). **Prueba real de solo lectura hecha por Ivania (2026-10-21):** `obtain gmail-auth`
+  aceptado como licitaciones@ (sin cambios en Google Cloud); `obtain check-mail` listó 11 correos de SICOP,
+  todos reconocidos y enmascarados. El enlace llega 2 a 6 min después del código (DECISION_OBTENCION.md §8).
+  Siguiente: lección 2 (solicitar el reporte en SICOP con Playwright).
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o

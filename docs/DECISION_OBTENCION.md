@@ -195,3 +195,9 @@ código llegó a las 13:34:03 y el del enlace a las 13:36:03, **2 minutos despu�
 números (distingue mayúsculas) dentro de `<strong>…</strong>`, en un cuerpo HTML `quoted-printable`. El enlace
 es `…/ext-report-download?processId=<número>`, en HTML `7bit`. Copias anonimizadas para las pruebas:
 `tests/fixtures/correo_*_simulado.eml`.
+
+Primera lectura real con `obtain check-mail` (2026-10-21, permiso `gmail.readonly`): 11 correos de SICOP de los
+últimos 3 días, **todos reconocidos** (ninguno con formato desconocido). Entre el código usado y el enlace pasaron
+**2 a 6 minutos** (19/10: 10:34 → 10:37 y 15:21 → 15:25; 21/10: 11:28 → 11:33 y 11:34, y 13:34 → 13:36). Hay
+códigos sin enlace propio, como el de las 13:32, al que siguió otro a las 13:34: por eso solo vale el código más
+reciente posterior a la solicitud.
