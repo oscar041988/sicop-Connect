@@ -70,11 +70,14 @@ def doctor(settings: Settings) -> int:
     print(f"Base de datos: {db['status']} - {db['detail']}")
     print(f"Avisos: {'habilitados' if settings.notifications_enabled else 'deshabilitados'}"
           f" (dry-run: {'sí' if settings.notifications_dry_run else 'no'})")
+    def existe(path):
+        return "PENDIENTE" if path is None else ("existe" if path.is_file() else "NO EXISTE")
     if settings.mail_provider == "gmail_api":
-        def existe(path):
-            return "PENDIENTE" if path is None else ("existe" if path.is_file() else "NO EXISTE")
         print(f"Gmail: archivo del cliente {existe(settings.google_client_file)}"
               f" · token {existe(settings.google_token_file)} (el contenido nunca se muestra)")
+    if settings.google_read_token_file is not None or settings.sicop_request_email:
+        print(f"Gmail lectura: archivo del cliente {existe(settings.google_client_file)}"
+              f" · token de lectura {existe(settings.google_read_token_file)} (el contenido nunca se muestra)")
     print(f"Programador: {'habilitado' if settings.scheduler_enabled else 'deshabilitado'}")
     print(f"Pendientes: {', '.join(pendientes) if pendientes else 'ninguno'}")
     return 0
@@ -359,6 +362,47 @@ def google_auth(settings: Settings) -> int:
     return 0
 
 
+def _crear_lector(settings: Settings):
+    """El lector real de Gmail (solo lectura). Las pruebas lo reemplazan por uno SIMULADO."""
+    from app.sources import gmail_reader
+    return gmail_reader.crear_lector(settings)
+
+
+def obtain_gmail_auth(settings: Settings) -> int:
+    from app.sources import gmail_reader
+    try:
+        cuenta = gmail_reader.autorizar(settings)
+    except gmail_reader.GmailError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Autorizado: la app puede LEER (no enviar ni borrar) el buzón de {cuenta}. "
+          "Token guardado en GOOGLE_READ_TOKEN_FILE (no se muestra).")
+    return 0
+
+
+def obtain_check_mail(settings: Settings, dias: int) -> int:
+    from app.sources import gmail_reader as gr
+    if not 1 <= dias <= 30:
+        print("Error: --dias debe estar entre 1 y 30.", file=sys.stderr)
+        return 1
+    try:
+        correos = _crear_lector(settings).listar_recientes(dias)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se leyó nada.", file=sys.stderr)
+        return 1
+    print(f"Correos de {gr.REMITENTE_SICOP} de los últimos {dias} días (solo lectura): {len(correos)}")
+    for c in correos:
+        if c.valor is None:
+            resultado = "FORMATO DESCONOCIDO (comparar el correo con tests/fixtures y ajustar el patrón)"
+        elif c.tipo == "codigo":
+            resultado = f"código {gr.enmascarar_codigo(c.valor)}"
+        else:
+            resultado = f"enlace {gr.enmascarar_enlace(c.valor)}"
+        print(f"  {c.recibido:%Y-%m-%d %H:%M} · {gr.ASUNTOS[c.tipo]} · {resultado}")
+    print("El código y el enlace completos nunca se muestran.")
+    return 0
+
+
 def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
     if not _base_de_usuarios(settings):
         return 1
@@ -539,6 +583,11 @@ def build_parser() -> argparse.ArgumentParser:
                       help="Envío real por Gmail (exige NOTIFICATIONS_ENABLED=true y NOTIFICATIONS_DRY_RUN=false)")
     no.add_argument("--solo", metavar="CORREO", help="Solo a este destinatario activo (prueba controlada)")
     sub.add_parser("google-auth", help="Autorización única de Gmail: entra como MAIL_FROM en el navegador")
+    ob = sub.add_parser("obtain", help="Obtención automática de SICOP (por ahora: leer el buzón, sin cambiar nada)")
+    ob_sub = ob.add_subparsers(dest="obtain_command", required=True)
+    ob_sub.add_parser("gmail-auth", help="Autorización única de LECTURA de Gmail: entra como SICOP_REQUEST_EMAIL")
+    cm = ob_sub.add_parser("check-mail", help="Lista los correos de SICOP recientes con código y enlace enmascarados")
+    cm.add_argument("--dias", type=int, default=3, help="Días hacia atrás (1 a 30; por defecto 3)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -579,6 +628,10 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return notify(settings, args.dry_run, args.solo)
     if args.command == "google-auth":
         return google_auth(settings)
+    if args.command == "obtain":
+        if args.obtain_command == "gmail-auth":
+            return obtain_gmail_auth(settings)
+        return obtain_check_mail(settings, args.dias)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

@@ -88,6 +88,30 @@ Las apps **internas** normalmente funcionan sin más. Si en el paso 7 sale «acc
 El token vale hasta que se cambie la contraseña de licitaciones@, se retire el acceso o pasen ~6 meses sin uso:
 entonces `notify --send` lo dice y basta repetir este paso.
 
+## 8. Permiso de lectura (obtención automática, lección 1): `python -m app.cli obtain gmail-auth`
+
+Para leer el código y el enlace que SICOP manda por correo, la app usa **otro** permiso, aparte del de enviar:
+`gmail.readonly` («Ver tus mensajes de correo»). Con este permiso puede leer, pero no enviar, borrar, marcar ni
+mover correos. Tiene **su propio token**: si uno se revoca, el otro sigue igual. Usa el mismo cliente OAuth
+(`GOOGLE_CLIENT_FILE`). Reglas en `docs/DECISION_OBTENCION.md` §8.
+
+1. En `.env`:
+   ```
+   SICOP_REQUEST_EMAIL=licitaciones@hermatix.com
+   GOOGLE_READ_TOKEN_FILE=C:\Users\User\secretos-sicop\google_token_lectura.json
+   ```
+   Tiene que ser **otro archivo** que `GOOGLE_TOKEN_FILE`; si es el mismo, la app se niega.
+2. `python -m app.cli doctor` → «Gmail lectura: archivo del cliente existe · token de lectura NO EXISTE».
+3. `python -m app.cli obtain gmail-auth` → entra **como licitaciones@hermatix.com**. La pantalla tiene que
+   pedir solo «Ver tus mensajes de correo» (y tu correo, para comprobar la cuenta). Si pide algo más, cancela.
+4. `python -m app.cli obtain check-mail` → lista los correos de SICOP de los últimos 3 días, con el código y el
+   enlace **enmascarados** (`Zq****`, `processId=42***`). Nunca se muestran completos.
+
+Si Google dice que la app no puede pedir ese permiso, o `check-mail` da «HTTP 403», el administrador agrega
+`.../auth/gmail.readonly` en **Acceso a datos** (paso 4) y revisa que la Gmail API esté activada (paso 3).
+Para retirar el permiso: en la cuenta licitaciones@ → *Seguridad → Apps de terceros con acceso* → SICOP Connect,
+y se borra el archivo de `GOOGLE_READ_TOKEN_FILE`.
+
 ## Después: quién hace qué (para no depender de una sola persona)
 
 - **Renovar el permiso no requiere a Oscar.** El token es de licitaciones@: si deja de servir, se repite el

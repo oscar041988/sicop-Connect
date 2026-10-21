@@ -40,10 +40,12 @@ DEFAULTS: dict[str, str] = {
     "NOTIFY_LOOKBACK_DAYS": "7",
     "GOOGLE_CLIENT_FILE": "",
     "GOOGLE_TOKEN_FILE": "",
+    "GOOGLE_READ_TOKEN_FILE": "",
+    "SICOP_REQUEST_EMAIL": "",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL"})
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -143,6 +145,17 @@ class Settings:
     def google_token_file(self) -> Path | None:
         """Token que guarda python -m app.cli google-auth. Fuera del proyecto; nunca en git."""
         return self._ruta_opcional("GOOGLE_TOKEN_FILE")
+
+    @property
+    def google_read_token_file(self) -> Path | None:
+        """Token de SOLO LECTURA (gmail.readonly) que guarda python -m app.cli obtain gmail-auth. Aparte del de
+        enviar; fuera del proyecto; nunca en git."""
+        return self._ruta_opcional("GOOGLE_READ_TOKEN_FILE")
+
+    @property
+    def sicop_request_email(self) -> str:
+        """Buzón donde llegan los correos de SICOP (código y enlace del reporte)."""
+        return self.get("SICOP_REQUEST_EMAIL").strip().lower()
 
     @property
     def notifications_enabled(self) -> bool:

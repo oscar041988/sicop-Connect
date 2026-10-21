@@ -268,7 +268,15 @@
   Prueba con `Start-ScheduledTask`: #26 corrió pero no escribió el registro (error del script, corregido en
   4330dd5); #27 FALLO esperado (sin ZIP nuevo), registrado en `data\logs\ciclo-2026-10.log` con código 1.
   Pendiente · Ivania: `SCHEDULER_ENABLED=true` en `.env`; mañana revisar la entrada de las 08:00 en el log.
-  Falta anotar cuánto tardó hoy el enlace de SICOP.
+  Enlace de SICOP: llegó 2 min después del correo del código (13:34 → 13:36; ver DECISION_OBTENCION.md §8).
+- **Obtención automática · lección 1, lector de Gmail (2026-10-21, rama `desarrollo`):** hecha con pruebas
+  SIMULADAS. `app/sources/gmail_reader.py`: permiso `gmail.readonly` con token aparte
+  (`GOOGLE_READ_TOKEN_FILE`) y buzón `SICOP_REQUEST_EMAIL`; solo GET; filtra remitente `info@sicop.go.cr` y
+  los dos asuntos exactos; usa solo el correo más reciente posterior a la solicitud; distingue «no llegó» de
+  «formato desconocido»; nada sin enmascarar en mensajes. Comandos `obtain gmail-auth` y `obtain check-mail`.
+  `gmail.py` reutilizado (clase `Permiso`; el envío no cambia). Fixtures `tests/fixtures/correo_*_simulado.eml`.
+  391 passed (31 nuevas). Pendiente · Ivania: prueba real de solo lectura (`docs/GOOGLE_API.md` §8). Si da 403,
+  el administrador agrega `gmail.readonly` al cliente OAuth.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
