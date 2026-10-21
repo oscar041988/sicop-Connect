@@ -5,6 +5,8 @@ Se ejecuta **solo con Oscar presente**. Claude no se conecta al servidor.
 
 - Ya hecho antes de la sesión (2026-10-20): los JSON de Google están en el servidor y `notify --send` desde el
   servidor entregó el correo. ☑ Correo real recibido desde el servidor.
+- Ya hecho antes de la sesión (2026-10-21): ☑ **destinatarios confirmados por Oscar**: `aumana@`, `calvarez@` y
+  `priaraya@`, los tres que estaban activos. Sin cambios en la lista.
 - 🍎 MAC = la terminal de la Mac antes de `ssh` · 🐧 SERVIDOR = la terminal después de `ssh`.
   **Antes de cada comando, decir en voz alta en qué máquina se está.**
 - En el acta se anotan el resultado y lo que cambió. **Nunca** se anotan contraseñas, llaves, `SESSION_SECRET`

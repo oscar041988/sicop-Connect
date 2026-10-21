@@ -289,8 +289,8 @@
     356 passed (8 nuevas). Con el ZIP real del 9/10 sobre una copia de la base: «YA IMPORTADO» #7 y #8, sin
     duplicar. El paso 1 de `docs/ACTA_LECCION_10.md` tiene los dos caminos (A: ZIP · B: CSV) según la versión
     del servidor.
-  - Destinatarios activos: `aumana@`, `calvarez@`, `priaraya@`. En la lección 7 Oscar pidió al inicio Anabelle y
-    él: confirmar que son los correctos · Ivania con Oscar.
+  - ~~Destinatarios activos: confirmar que son los correctos~~ **Confirmados por Oscar (2026-10-21):** `aumana@`,
+    `calvarez@` y `priaraya@`, sin cambios (anotado en `docs/ACTA_LECCION_10.md`).
   - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.
 - Servidor compartido con Nexus y otras apps: puerto 8000 solo de SICOP ☑ y el proxy pasa la IP real ☑
   (2026-10-19). Falta · Oscar: respaldos que incluyan la base de SICOP (con `app.cli backup`) y quitar del
