@@ -222,6 +222,7 @@ Lecciones de la primera revisión (2026-10-09):
 | Dos señales de la misma ficha | Toda ficha de higrómetro dice «humedad relativa»: con «termohigrometro» sumaba dos medias | Dejar los datos técnicos como contexto |
 | Título genérico | «COMPRA DE EQUIPO DE LABORATORIO», «Insumos varios II»: la señal solo está en las líneas | Descargar el catálogo de las familias (reporte 10.2); no inventar señales para el título |
 | Siglas cortas | «dsm» coincidió con «AC para DSM» (aire acondicionado) | Siglas como señal media, nunca alta |
+| Palabra con otro sentido: equipo médico | «Cámaras intraorales… y carros para transporte para equipo médico» (CCSS) daba Media por «cámaras» + «transporte» | Exclusión precisa («intraoral»), no «equipo medico»: en el título anularía también «cámaras a bordo para ambulancias y equipo médico» |
 | Palabras intermedias | «Monitoreo y Localización Satelital mediante el Sistema GPS» quedó en Baja | Agregar la frase real al YAML («localizacion satelital», que es el nombre del catálogo SICOP). Permitir palabras intermedias en el motor se simuló y no ayudó |
 
 ---
@@ -246,6 +247,7 @@ de antes y de después.
 | 2026-10-09 | `99bbfdb33641` (sin cambio) | iot_frio | Criterio: un dispositivo que mide temperatura, humedad o GPS y tiene **pantalla o panel** interesa; sin pantalla (medidor portátil) no interesa. Si dice «de mano», queda fuera siempre, aunque tenga pantalla (exclusión). `20260800233` pasa a «interesa» confirmado en el golden set | Ivania (Hermatix) | Coincide con lo que ya hace el motor: los termómetros con «PANTALLA LCD» son Alta y los termohigrómetros sin pantalla no son candidatos. Golden set 28/29 = 96,6 % |
 | 2026-10-09 | `92aef8277e2e` | gps_flotas | Señal alta «localizacion satelital» (nombre del catálogo SICOP del servicio GPS). Se descartó permitir palabras intermedias en el motor: simulado con 1, 2 y 3 palabras, no arreglaba el caso | Ivania | `20260902620` pasa a Alta y `20260900818` sube de Media a Alta. Golden set 29/29 = 100 %; 21 candidatos. Predicción simulada antes y cumplida |
 | 2026-10-12 | `92aef8277e2e` (sin cambio) | — | Se confirman los 4 provisionales del golden set sin el pliego (concursos cerrados): `20260702834` interesa (`iot_frio`, el registrador transmite datos); `20260700980` no interesa (no se dan asesorías); `20260701485` no interesa (no se da mantenimiento de cuartos fríos); `20260701333` falso positivo (no se trabaja con LIDAR, GNSS ni RTK) | Ivania (Hermatix) | Golden set 33/33 = 100 %, sin provisionales |
+| 2026-10-20 | `b880e0d350e1` | videotelematica | Exclusión «intraoral» (falso positivo CCSS `20261001749`, cámaras dentales); el cartel entra al golden set como falso positivo. Se descartó «equipo medico» (riesgo con ambulancias) | Ivania | `20261001749` pasa de Media a Sin coincidencia; el OIJ (`20260903798`) sigue Alta; ningún cartel entra. Golden set 34/34 = 100 %. Predicción simulada antes sobre los 11 829 carteles y cumplida |
 
 ### Pendiente de decidir con Oscar
 
