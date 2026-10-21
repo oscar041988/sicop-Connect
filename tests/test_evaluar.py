@@ -259,6 +259,15 @@ def test_familia_que_deja_de_coincidir_se_marca_sin_borrar(db, tmp_path):
     assert [f[3] for f in fila] == ["sin_coincidencia"]
 
 
+def test_solo_la_evaluacion_completa_queda_registrada(db, reglas):
+    with closing(connect(db)) as conn:
+        evaluar_base(conn, reglas, AHORA, nro_sicop="00000000001")  # un solo cartel: no deja al día lo importado
+        evaluar_base(conn, reglas, AHORA + timedelta(minutes=5))
+        registro = conn.execute("SELECT rules_version, evaluated_at, carteles FROM evaluation_runs").fetchall()
+
+    assert registro == [(reglas.version, (AHORA + timedelta(minutes=5)).isoformat(timespec="seconds"), 3)]
+
+
 def test_comando_evaluate(db, capsys):
     settings = load_settings(env_file=None, environ={"DATABASE_PATH": str(db)})
 

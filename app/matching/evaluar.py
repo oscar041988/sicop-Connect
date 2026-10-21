@@ -167,6 +167,9 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
                     _guardar(conn, r, previas, nro, familia,
                              (previa[0], "sin_coincidencia", "sin señales", "—", plazo, calidad),
                              reglas.version, instante, retirada=True)
+        if nro_sicop is None:  # solo una evaluación completa deja al día lo importado (ver migración 0008)
+            conn.execute("INSERT INTO evaluation_runs (rules_version, evaluated_at, carteles) VALUES (?, ?, ?)",
+                         (reglas.version, instante, r.carteles))
         conn.execute("COMMIT")
     except BaseException:
         conn.execute("ROLLBACK")

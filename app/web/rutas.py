@@ -63,7 +63,7 @@ def _base_no_lista(request: Request) -> HTMLResponse | None:
     return PLANTILLAS.TemplateResponse(request, "error.html", {"mensaje": estado["detail"]}, status_code=503)
 
 
-def _aviso_reglas(version: str | None) -> str | None:
+def _aviso_reglas(version: str | None, sin_evaluar: bool = False) -> str | None:
     if version is None:
         return "Todavía no hay evaluaciones: ejecuta python -m app.cli evaluate."
     try:
@@ -73,6 +73,9 @@ def _aviso_reglas(version: str | None) -> str | None:
     if actual != version:
         return (f"Las reglas cambiaron (YAML {actual}; se muestra la evaluación {version}). "
                 "Ejecuta python -m app.cli evaluate para actualizar.")
+    if sin_evaluar:
+        return ("Hay datos importados después de la última evaluación: los carteles nuevos o cambiados todavía "
+                "no aparecen aquí. Ejecuta python -m app.cli evaluate para actualizar.")
     return None
 
 
@@ -145,10 +148,11 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         version = panel.version_vigente(conn)
         resultado = panel.listar(conn, version, filtros, ahora) if version else panel.Pagina([], 0, 1, 1)
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
+        sin_evaluar = panel.importado_sin_evaluar(conn)
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
-        "aviso": _aviso_reglas(version), "prioridades": panel.PRIORIDADES,
+        "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
             {k: v for k, v in {**consulta, "revisado": valor}.items() if v}),
@@ -165,7 +169,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         return PLANTILLAS.TemplateResponse(
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
-        "d": datos, "version": version, "aviso": _aviso_reglas(version), "error": error,
+        "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
     }, status_code=status_code)
