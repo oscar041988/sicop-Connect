@@ -263,8 +263,12 @@
   FALLO esperado); #25 importó el ZIP de hoy (cobertura al 21/10, 10 956 carteles, 0 rechazadas; 12 226 en la
   base), 3 avisos nuevos (`20261002692` × 3) y 6 que no se repitieron; vista previa revisada, bien.
   Tarea programada: `deploy/windows/sicop-ciclo.ps1` + `deploy/windows/README.md` (lunes a viernes 8:00,
-  siempre dry-run, registro en `data\logs\`). Pendiente · Ivania: crearla, probarla con `Start-ScheduledTask`
-  y `SCHEDULER_ENABLED=true` en `.env`. Falta anotar cuánto tardó hoy el enlace de SICOP.
+  siempre dry-run, registro en `data\logs\`). Zona horaria de Windows cambiada a «América Central» (estaba
+  en la de México). Tarea «SICOP CONNECT - ciclo diario» creada por Ivania; próxima ejecución 22/10 08:00.
+  Prueba con `Start-ScheduledTask`: #26 corrió pero no escribió el registro (error del script, corregido en
+  4330dd5); #27 FALLO esperado (sin ZIP nuevo), registrado en `data\logs\ciclo-2026-10.log` con código 1.
+  Pendiente · Ivania: `SCHEDULER_ENABLED=true` en `.env`; mañana revisar la entrada de las 08:00 en el log.
+  Falta anotar cuánto tardó hoy el enlace de SICOP.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
