@@ -5,6 +5,7 @@ tests/fixtures/sicop_simulado.html y corta cualquier otra petición: nunca sale 
 instalado (python -m playwright install chromium), estas pruebas se saltan."""
 
 import sqlite3
+import time
 from contextlib import closing
 from datetime import datetime, timedelta
 from functools import partial
@@ -94,10 +95,10 @@ def _settings(tmp_path, **extra):
     return load_settings(env_file=None, environ=valores)
 
 
-def _solicitar(settings, simulacion, lector, reloj=None):
+def _solicitar(settings, simulacion, lector, reloj=None, dormir=None, **extra):
     reloj = reloj or _Reloj()
-    return sb.solicitar_reporte(settings, lector, reloj=reloj, dormir=reloj.dormir, preparar_contexto=simulacion,
-                                espera_ms=ESPERA_MS)
+    return sb.solicitar_reporte(settings, lector, reloj=reloj, dormir=dormir or reloj.dormir,
+                                preparar_contexto=simulacion, espera_ms=ESPERA_MS, **extra)
 
 
 def _filas(settings):
@@ -212,7 +213,46 @@ def test_sin_migrar_lo_dice(tmp_path):
         _solicitar(settings, _Simulacion(), _LectorSimulado(CODIGO))
 
 
+def test_ventana_del_codigo_que_se_cierra_sola_tiene_su_propio_fallo(tmp_path):
+    """Observado el 2026-10-21 a las 15:18: la ventana del código desapareció mientras se esperaba el correo."""
+    settings, sim, reloj = _settings(tmp_path), _Simulacion("codigo_se_cierra"), _Reloj()
+
+    def dormir(segundos):  # aquí sí pasa un poco de tiempo real: la ventana simulada se cierra a los 0,2 s
+        reloj.dormir(segundos)
+        time.sleep(0.5)
+
+    with pytest.raises(sb.FalloObtencion, match="La ventana del código se cerró antes de escribir el código"):
+        _solicitar(settings, sim, _LectorSimulado(CorreoNoLlego("todavía no"), CODIGO), reloj, dormir)
+    assert "codigo" not in sim.informes
+    fila = _filas(settings)[0]
+    assert (fila["estado"], fila["correo_enviado"], fila["codigo_ingresado_en"]) == ("fallido", 1, None)
+
+
+def test_diagnostico_guarda_una_captura_por_paso_y_un_resumen(tmp_path):
+    settings = _settings(tmp_path)
+    _solicitar(settings, _Simulacion(), _LectorSimulado(CODIGO), diagnostico=True)
+
+    (carpeta,) = [c for c in settings.exports_dir.iterdir() if c.is_dir()]
+    assert carpeta.name.startswith("obtencion-20261022-080000-")
+    assert sorted(p.name for p in carpeta.glob("*.png")) == [
+        "1-ventana-correo.png", "2-ventana-codigo.png", "3-codigo-encontrado.png", "4-procesando.png"]
+    resumen = (carpeta / "diagnostico.txt").read_text(encoding="utf-8")
+    assert "Código encontrado en el buzón" in resumen and "captura 3-codigo-encontrado.png" in resumen
+    assert "GET www.sicop.go.cr/app/module/pcont/public/ce-open-data → 200" in resumen
+    assert CODIGO not in resumen and BUZON not in resumen and PID not in resumen
+
+
 # --- Comando ----------------------------------------------------------------------------------------------
+
+def test_con_ver_avisa_que_no_se_toque_la_ventana(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("app.cli._crear_lector", lambda settings: _LectorSimulado(CODIGO))
+    pedidos = []
+    monkeypatch.setattr(sb, "solicitar_reporte",
+                        lambda settings, lector, ver, avisar: pedidos.append(ver) or sb.Resultado(1, CODIGO, None))
+    assert main(["obtain", "request", "--ver"], _settings(tmp_path)) == 0
+    assert pedidos == [True]
+    assert "NO la toques" in capsys.readouterr().out
+
 
 def _comando(monkeypatch, tmp_path, sim, lector):
     reloj = _Reloj()

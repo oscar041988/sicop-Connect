@@ -303,8 +303,15 @@
   - `obtain status` muestra las últimas solicitudes.
   - Pruebas SIMULADAS: reinicio, plazo, archivo vacío, HTML o con otros encabezados, enlace sin descarga.
     420 passed (18 nuevas).
-  - Pendiente · Ivania: `migrate` (0010) y la prueba real del 22/10: `obtain request --ver` y luego
-    `obtain poll --seguir`, con el ZIP en `data\incoming\` antes de las 8:00.
+  - `migrate` (0010) aplicado por Ivania el 2026-10-21.
+  - **Primeras corridas reales (2026-10-21):**
+    - #1, 15:12: FALLO antes del correo (dos iconos CSV durante la animación). Corregido en 1155896.
+    - #2, 15:17: correo enviado y código hallado en 16 s, pero la ventana del código se cerró sola antes de
+      escribirlo. Sin reporte; la solicitud del día ya contó.
+    - Mejoras pedidas por Ivania: FALLO propio para la ventana cerrada, aviso de no tocar Chrome con `--ver` y
+      capturas de cada paso con su resumen. 425 passed.
+  - Pendiente: la prueba del 22/10, 7:30, con Oscar: `obtain request --ver` → `obtain poll --seguir`. Revisar las
+    capturas en `data\exports\obtencion-…\`.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o

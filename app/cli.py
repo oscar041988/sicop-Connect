@@ -415,6 +415,9 @@ def obtain_request(settings: Settings, ver: bool) -> int:
     def avisar(texto: str) -> None:
         print(f"{datetime.now(HORA_CR):%H:%M:%S} · {texto}", flush=True)
 
+    if ver:
+        avisar("Mira la ventana de Chrome, pero NO la toques: un clic fuera del recuadro, Esc o la X cierran las "
+               "ventanas de SICOP. Se guardan capturas de cada paso en EXPORTS_DIR.")
     try:
         r = sicop_browser.solicitar_reporte(settings, lector, ver=ver, avisar=avisar)
     except sicop_browser.YaSolicitadoHoy as exc:

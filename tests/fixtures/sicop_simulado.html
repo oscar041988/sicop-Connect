@@ -7,7 +7,8 @@
      textos, roles y el icono <img alt="CSV">. No es la página real. Las pruebas reemplazan __VARIANTE__,
      __CODIGO__ y __PID__. Variantes: normal · codigo_rechazado · boton_cambiado · captcha · sin_url ·
      animacion (el panel que estaba abierto tarda en cerrarse: por un momento hay dos CSV) ·
-     dos_csv (los dos paneles quedan abiertos). -->
+     dos_csv (los dos paneles quedan abiertos) · codigo_se_cierra (la ventana del código desaparece sola, como
+     el 2026-10-21 a las 15:18). -->
 <style>
   [role=dialog] { border: 1px solid #999; padding: 16px; margin: 16px; width: 400px; }
   #panel { display: none; }
@@ -63,6 +64,7 @@
   function ventanaCodigo() {
     const v = ventana('<p>Digite el código de verificación enviado a su correo eletrónico para concluir</p>' +
       '<input type="text"><button type="button">Continuar</button><p id="error"></p>');
+    if (VARIANTE === "codigo_se_cierra") setTimeout(() => { ventanas.innerHTML = ""; }, 200);
     v.querySelector("button").addEventListener("click", () => {
       const escrito = v.querySelector("input").value;
       informar("codigo", escrito);

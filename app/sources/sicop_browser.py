@@ -21,6 +21,7 @@ from contextlib import closing
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 from typing import Callable
 
 from playwright.sync_api import Error as PlaywrightError
@@ -94,7 +95,7 @@ def _esperar_codigo(lector, desde: datetime, minutos: int, reloj, dormir):
             raise FalloObtencion(f"No se pudo leer el código: {exc}") from None
 
 
-def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> tuple:
+def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar, foto=lambda _: None) -> tuple:
     estado = {"paso": "abrir Datos abiertos"}
 
     def paso(nombre: str) -> None:
@@ -124,6 +125,7 @@ def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> t
         ventana = page.get_by_role("dialog").filter(has_text=TEXTO_CORREO)
         ventana.wait_for()
         _revisar_control(page)
+        foto("1-ventana-correo")  # antes de escribir: la captura no muestra el correo
         ventana.get_by_role("textbox").fill(settings.sicop_request_email)
         desde = reloj() - MARGEN_RELOJ
         ventana.get_by_role("button", name="Continuar").click()
@@ -133,11 +135,23 @@ def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> t
         paso("ventana del código")
         ventana = page.get_by_role("dialog").filter(has_text=TEXTO_CODIGO)
         ventana.wait_for()
+        foto("2-ventana-codigo")
         avisar(f"Esperando el correo con el código (hasta {settings.obtain_code_timeout_min} min)…")
         codigo = _esperar_codigo(lector, desde, settings.obtain_code_timeout_min, reloj, dormir).valor
         avisar("Código encontrado en el buzón; se escribe en SICOP.")
-        ventana.get_by_role("textbox").fill(codigo)
-        ventana.get_by_role("button", name="Continuar").click()
+        foto("3-codigo-encontrado")  # antes de escribirlo: ¿sigue abierta la ventana?
+        # 2026-10-21 15:18: la ventana del código desapareció mientras se esperaba el correo (nadie tocó Chrome).
+        cerrada = FalloObtencion("La ventana del código se cerró antes de escribir el código. SICOP no recibió el "
+                                 "código: hoy no habrá reporte. Ver las capturas paso a paso.")
+        if not ventana.is_visible():
+            raise cerrada
+        try:
+            ventana.get_by_role("textbox").fill(codigo)
+            ventana.get_by_role("button", name="Continuar").click()
+        except PlaywrightTimeout:
+            if not ventana.is_visible():
+                raise cerrada from None
+            raise
         anotar("codigo_ingresado")
 
         paso(f"ventana «{TEXTO_PROCESANDO}»")
@@ -148,6 +162,7 @@ def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> t
             _revisar_control(page)
             raise FalloObtencion("SICOP no aceptó el código o cambió la ventana: no apareció "
                                  f"«{TEXTO_PROCESANDO}». No se repite la solicitud hoy.") from None
+        foto("4-procesando")
         enlace = ventana.get_by_role("link", name="URL de descarga")
         href = enlace.first.get_attribute("href") if enlace.count() else None
         encontrado = re.search(r"processId=(\d+)", href or "")
@@ -172,6 +187,39 @@ def _captura(page, carpeta: Path, nombre: str) -> Path | None:
         return None
 
 
+class _Diagnostico:
+    """Con --ver: una captura en cada paso y un resumen (pasos con su hora y peticiones a SICOP) en
+    EXPORTS_DIR/obtencion-AAAAMMDD-HHMMSS-<id>/. Las capturas se toman con los campos vacíos y el resumen no lleva
+    correos, códigos ni parámetros de las direcciones."""
+
+    def __init__(self, carpeta: Path, reloj):
+        self.carpeta, self.reloj, self.lineas, self.red = carpeta, reloj, [], []
+        carpeta.mkdir(parents=True, exist_ok=True)
+
+    def nota(self, texto: str) -> None:
+        self.lineas.append(f"{self.reloj():%H:%M:%S} · {texto}")
+
+    def foto(self, page, nombre: str) -> None:
+        try:
+            page.screenshot(path=str(self.carpeta / f"{nombre}.png"), full_page=True)
+            self.nota(f"captura {nombre}.png")
+        except PlaywrightError:
+            self.nota(f"no se pudo tomar la captura {nombre}")
+
+    def respuesta(self, respuesta) -> None:
+        pedido = respuesta.request
+        if pedido.resource_type in ("document", "xhr", "fetch"):
+            partes = urlsplit(pedido.url)  # sin ?parámetros
+            self.red.append(f"{self.reloj():%H:%M:%S} · {pedido.method} {partes.netloc}{partes.path} → "
+                            f"{respuesta.status}")
+
+    def guardar(self) -> Path:
+        ruta = self.carpeta / "diagnostico.txt"
+        ruta.write_text("Pasos:\n" + "\n".join(self.lineas) + "\n\nPeticiones de la página (sin parámetros):\n"
+                        + "\n".join(self.red) + "\n", encoding="utf-8")
+        return ruta
+
+
 def _hoy_ya_se_envio(conn: sqlite3.Connection, hoy: str) -> bool:
     return conn.execute("SELECT 1 FROM solicitudes_sicop WHERE substr(solicitada_en, 1, 10) = ? AND correo_enviado = 1",
                         (hoy,)).fetchone() is not None
@@ -179,8 +227,11 @@ def _hoy_ya_se_envio(conn: sqlite3.Connection, hoy: str) -> bool:
 
 def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: Callable[[], datetime] = _ahora,
                       dormir: Callable[[float], None] = time.sleep, avisar: Callable[[str], None] = lambda _: None,
-                      preparar_contexto: Callable | None = None, espera_ms: int = ESPERA_MS) -> Resultado:
-    """Una solicitud del «Detalle pliego de condiciones» en CSV. Lanza YaSolicitadoHoy o FalloObtencion."""
+                      preparar_contexto: Callable | None = None, espera_ms: int = ESPERA_MS,
+                      diagnostico: bool | None = None) -> Resultado:
+    """Una solicitud del «Detalle pliego de condiciones» en CSV. Lanza YaSolicitadoHoy o FalloObtencion.
+
+    diagnostico (por defecto, igual que ver): capturas de cada paso y resumen en EXPORTS_DIR (ver _Diagnostico)."""
     if not settings.sicop_request_email:
         raise FalloObtencion("Falta SICOP_REQUEST_EMAIL en .env (el buzón donde llegan los correos de SICOP).")
     inicio = reloj()
@@ -205,6 +256,15 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
                          " WHERE id = ?", (fallo.motivo, str(fallo.captura) if fallo.captura else None,
                                            reloj().isoformat(timespec="seconds"), solicitud_id))
 
+        diag = None
+        if ver if diagnostico is None else diagnostico:
+            diag = _Diagnostico(settings.exports_dir / f"obtencion-{inicio:%Y%m%d-%H%M%S}-{solicitud_id}", reloj)
+            aviso_original = avisar
+
+            def avisar(texto: str) -> None:  # noqa: F811 — también queda en el resumen del diagnóstico
+                diag.nota(texto)
+                aviso_original(texto)
+
         try:
             with sync_playwright() as p:
                 navegador = p.chromium.launch(headless=not ver)
@@ -214,15 +274,22 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
                         preparar_contexto(contexto)
                     page = contexto.new_page()
                     page.set_default_timeout(espera_ms)
+                    if diag:
+                        page.on("response", diag.respuesta)
                     avisar(f"Abriendo SICOP {'con' if ver else 'sin'} ventana…")
+                    foto = (lambda nombre: diag.foto(page, nombre)) if diag else (lambda _: None)
                     try:
-                        codigo, process_id = _pasos(page, settings, lector, anotar, reloj, dormir, avisar)
+                        codigo, process_id = _pasos(page, settings, lector, anotar, reloj, dormir, avisar, foto)
                     except FalloObtencion as fallo:
                         fallo.captura = _captura(page, settings.exports_dir,
                                                  f"obtencion-fallo-{inicio:%Y%m%d-%H%M%S}-{solicitud_id}.png")
+                        if diag:
+                            diag.nota(f"FALLO · {fallo.motivo}")
                         raise
                 finally:
                     navegador.close()
+                    if diag:
+                        avisar(f"Capturas y resumen del diagnóstico en {diag.guardar().parent}")
         except FalloObtencion as fallo:
             fallar(fallo)
             raise

@@ -210,6 +210,18 @@ animación, y por un momento se ven los dos. La exploración no lo notó porque 
 Ajuste: se espera hasta 10 s a que quede un solo icono CSV visible (prueba con la variante `animacion` de la
 página simulada).
 
+**Segunda corrida (2026-10-21 15:17, Ivania, sin tocar la ventana): FALLO después de enviar el correo**, así que
+la solicitud del día ya contó.
+- 15:17:49: apareció la ventana «Digite el código de verificación…».
+- 15:18:05: el código ya estaba en el buzón (llegó en ≈ 16 s).
+- Al ir a escribirlo, la ventana ya no estaba: a las 15:18:36 la captura muestra la página sin ninguna ventana.
+  SICOP no recibió el código.
+- **Pendiente de verificar:** por qué se cerró. Supuestos: un tiempo límite de la ventana, o algo de la página.
+- Ajustes:
+  - FALLO propio, «la ventana del código se cerró antes de escribir el código» (variante `codigo_se_cierra`);
+  - con `--ver`, aviso de no tocar Chrome;
+  - capturas de cada paso, más un resumen con las peticiones a SICOP, en `data/exports/obtencion-…/`.
+
 Peticiones de la página (solo método, servidor y ruta; sin parámetros ni cookies):
 - `www.sicop.go.cr`: el documento, unos 60 archivos `chunk-XXXXXXXX.js` con nombres que dependen de la versión,
   iconos y estilos.
