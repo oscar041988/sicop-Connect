@@ -249,6 +249,18 @@
 
 ## Pendientes
 
+- **Cambio de método (2026-10-21, Oscar):** todo se desarrolla y se prueba **en local**. El servidor queda fuera
+  de las siguientes partes del proyecto; se actualiza una sola vez, cuando la app esté lista. Los pasos de
+  servidor de este documento y de las actas (lección 10: dry-run, envío supervisado, timer, reinicio) quedan en
+  espera hasta entonces. Oscar sigue revisando y uniendo los PR.
+- **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
+  `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
+  escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
+  bloqueo, nunca. Ajustes a la guía: la lección 4 solo en su parte local (servidor al final); token de Gmail de
+  lectura aparte del de envío, con el mismo cliente; confirmar en la primera prueba real cuánto tarda el enlace
+  (guía: horas · observado: ≈ 1 min). Términos de uso y 4 documentos de SICOP revisados el 2026-10-21: sin
+  prohibición (detalle en la regla 3). Pendiente: el Reglamento de SICOP (no conseguido) y que Oscar acepte el
+  documento. La guía `.docx` no va a Git: su captura 7 muestra un enlace real de descarga (`processId`).
 - ~~Fin de línea CRLF vs LF~~ **Decidido 2026-10-19 (Oscar): LF**, normalizado con `.gitattributes`. **Hecho en la
   rama `fin-de-linea-lf` (2026-10-19), unido a `main` con el PR #1:** todo el texto en LF; excepción `*.csv -text` (byte por byte,
   con el CRLF de SICOP: 3 pruebas dependían de él y en Linux habrían fallado). 337 passed.

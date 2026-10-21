@@ -1,9 +1,13 @@
 # Decisión: ¿se puede automatizar la descarga de SICOP? (A1)
 
-**BORRADOR (2026-10-20), sin decisión.** Preparado por Ivania con Claude para la lección 11 (guía, sección 13,
-y 16.1). Lo decide Oscar después de revisar juntos los términos de uso del portal.
-Regla de la guía: no se eluden códigos de validación, CAPTCHA ni términos de uso. «No es viable sin
-intervención humana» es un resultado válido.
+**DECIDIDO (2026-10-21): obtención automática completa, aprobada por Oscar.** Ver la sección 6 (decisión) y la
+sección 8 (reglas nuevas). La guía de construcción es `docs/Guia_Obtencion_Automatica_SICOP.docx`.
+
+Las secciones 1–5 y 7 son el análisis del 2026-10-20 y se conservan como historia. Se hicieron cuando la app
+estaba pensada con una parte manual y bajo la regla de la guía original: «no se eluden códigos de validación,
+CAPTCHA ni términos de uso». Con la aprobación de Oscar, **esa regla cambia para el código por correo**: el
+código demuestra que Hermatix controla `licitaciones@hermatix.com`, y leerlo de su propio buzón no engaña a
+nadie. **El CAPTCHA y los bloqueos siguen sin saltarse** (sección 8).
 
 ## 1. Problema
 
@@ -69,8 +73,10 @@ descomprime y deja los CSV en la carpeta de entrada (pasos 6–7).
 
 Un programa que abre el portal, llena la ventana, lee el código del correo y lo escribe.
 
-- Escribir el código por programa es **eludir la validación** (paso 4). **Descartada** por la regla de la guía,
-  sin importar si técnicamente funcionara.
+- *(2026-10-20)* Escribir el código por programa es **eludir la validación** (paso 4). **Descartada** por la
+  regla de la guía, sin importar si técnicamente funcionara.
+- **2026-10-21: aceptada por Oscar** (sección 6). El código se lee del buzón propio de Hermatix, con permiso de
+  solo lectura; el riesgo de fragilidad se cubre con FALLO visible, capturas y vuelta al modo manual (sección 8).
 - Además: es frágil (cualquier cambio del portal lo rompe sin avisar), necesita dependencias nuevas y tiene un
   riesgo alto con los términos de uso.
 
@@ -86,7 +92,7 @@ Un programa que abre el portal, llena la ventana, lee el código del correo y lo
   que ya funciona (`gmail.send`). Hay que decidir a quién y a qué hora.
 - **c. Instrucciones cortas** en `docs/OPERACION.md` para la persona que descarga (ya existen en buena parte).
 
-## 4. Recomendación provisional
+## 4. Recomendación provisional (2026-10-20, reemplazada por la decisión de la sección 6)
 
 1. **O4a y O4b ahora**: quitan fricción sin permisos nuevos ni riesgos con los términos. O4a ya está hecho
    (2026-10-20, falta unirlo y actualizar el servidor); queda O4b.
@@ -112,10 +118,17 @@ Nivel que se declara hoy: **obtención asistida; análisis y avisos automáticos
 
 ## 6. Decisión
 
-- Fecha:
-- Opción aceptada:
-- Decidió:
+- Fecha: 2026-10-21 (comunicada por Ivania).
+- Opción aceptada: **obtención automática completa** (O3 ampliada con el lector de Gmail de O2): la app pide el
+  reporte en el portal, lee el código y el enlace del buzón `licitaciones@hermatix.com`, descarga el ZIP y lo
+  deja en la carpeta de entrada para el ciclo.
+- Decidió: Oscar.
 - Comentarios:
+  - Se construye y se prueba **en local** (decisión de Oscar del mismo día); el servidor se actualiza al final.
+  - O4a (ZIP de pliegos) sigue sirviendo: es el formato que la obtención automática dejará en la carpeta.
+  - El modo asistido (`SOURCE_MODE=manual`) se mantiene como plan B.
+  - Queda abierto: O4b (recordatorio) y avisar por correo cuando el ciclo falla (sección 5); con la obtención
+    automática, el aviso de FALLO pasa a ser parte de la lección 4 de la guía nueva.
 
 ## 7. Autoevaluación (guía, lección 11; la responde Ivania)
 
@@ -133,3 +146,46 @@ Respuestas de Ivania (2026-10-20), con ajustes de Claude: **las dos correctas.**
   visible el problema el mismo día.
   *Ajuste:* hoy el «FALLO» solo es visible para quien lo busca (`journalctl`, `source_runs`); nadie recibe un
   correo. De ahí la pregunta para Oscar de la sección 5 (avisar cuando el ciclo falla).
+
+## 8. Reglas de la obtención automática (desde 2026-10-21)
+
+Reemplazan, solo para la obtención, la regla «no se eluden códigos de validación» de la guía original.
+
+1. **El código por correo sí se automatiza**, leyéndolo del buzón propio de Hermatix.
+2. **CAPTCHA, bloqueo o aviso del portal contra programas: la app se detiene** con FALLO «control no
+   automatizable», no reintenta y se vuelve al modo manual. Eso no se salta nunca.
+3. **Términos de uso: revisados el 2026-10-21 (Ivania con Claude), sin prohibición.** Ningún documento habla de
+   programas, robots ni descargas automáticas. Documentos en `docs/normativa_sicop/`:
+   - *Condiciones Generales de Uso* (`docs/. Condiciones Generales de Uso.txt`): 5c, no «sobrecargar» la
+     plataforma (→ regla 4); 5d, no reproducir ni comercializar la información «ante terceros» (uso interno de
+     Hermatix: sí; vender o compartir los datos fuera de Hermatix: no); 1e, pueden cambiar en cualquier momento
+     (releerlas al desplegar).
+   - *Lineamientos de seguridad del SDU* (Hacienda, 2023): las consultas públicas sin autenticación quedan fuera
+     de las exigencias de firma digital (6.1, art. 2); conexión segura y navegador HTML 5 (art. 3); SICOP puede
+     bloquear conexiones por «comportamiento de navegación» o «cantidad de consulta por periodo» (6.2, art. 5)
+     → reglas 2 y 4.
+   - *Manual de verificación de correo* (P-PS-185): el código sirve para «verificar que la dirección de correo…
+     funcione correctamente»; llega en ≈ 1 minuto y vale hasta 1 hora (es el flujo de validar el correo del
+     usuario, no el del reporte: solo referencia).
+   - *Manual de configuración* (P-PS-146): Chrome 60 o superior y ventanas emergentes permitidas para
+     `www.sicop.go.cr` y `vpj.sicop.go.cr` (dato técnico para la lección 2).
+   - *Manual de registro de proveedores* (P-PS-123): al registrarse se aceptan los términos y un «Contrato de
+     uso» de datos personales, cuyo texto completo no se tiene; la descarga de datos abiertos no pide sesión.
+   - **Pendiente:** el *Reglamento para la Utilización de SICOP* (cláusula 1a), no conseguido. Si aparece, se
+     revisa; si prohíbe descargas con programas, se anota aquí y se vuelve a decidir.
+4. **Una sola solicitud a SICOP por día** (restricción en la base). Las pruebas reales, de una en una.
+5. **Permiso de Gmail solo de lectura** (`gmail.readonly`), con un **token aparte** del de enviar avisos
+   (`gmail.send`): cada parte de la app tiene solo el permiso que necesita. Se reutiliza el mismo cliente de
+   Google (`GOOGLE_CLIENT_FILE`).
+6. **Solo correos de `info@sicop.go.cr`** con los asuntos «Código verificación para reporte» y «Envío de
+   reporte» (observados en las capturas de la guía). No se leen, mueven ni marcan otros correos.
+7. **Sin secretos en logs, Git ni chats:** códigos, enlaces, `processId` y tokens se muestran enmascarados.
+8. **Pruebas automáticas siempre con SICOP y Gmail simulados** (datos marcados «SIMULADO»).
+9. **Ningún fallo en silencio:** un archivo vacío, con otro formato o un enlace vencido es FALLO, nunca «cero
+   oportunidades». El enlace se descarga apenas llega: el portal dice 24 h, pero se observó uno vencido a las
+   ≈ 16,5 h (sección 2).
+10. **`SOURCE_MODE=manual|auto`**, manual por defecto: volver al modo asistido no requiere tocar código.
+11. **No se declara «automática»** hasta que un ciclo real lo demuestre de punta a punta.
+
+Datos por confirmar en la primera solicitud real: cuánto tarda el correo con el enlace (la guía dice horas; lo
+observado en `ACCESO_SICOP.md` fue ≈ 1 minuto) y si la ventana «Procesando el reporte» trae el `processId`.

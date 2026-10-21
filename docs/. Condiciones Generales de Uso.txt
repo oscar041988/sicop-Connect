@@ -1,0 +1,114 @@
+. Condiciones Generales de Uso
+
+a. El uso de la plataforma de compras electrónicas SICOP por parte de las Instituciones Usuarias, así como por parte de los Proveedores Registrados conlleva la aceptación voluntaria de la normativa que sustenta el uso del sistema SICOP, entiéndase el Reglamento para la Utilización del Sistema Integrado de Compras Públicas, denominado en adelante como SICOP; el Manual de Procedimientos SICOP tanto para instituciones compradoras como para proveedores, así como lo expresado en estas condiciones de uso.
+
+b. SICOP constituye el registro oficial de proveedores para las Instituciones Usuarias. Este será implementado a través del Registro Electrónico de Proveedores y tendrá el propósito de registrar e inscribir todas las personas físicas y jurídicas, nacionales y extranjeras que deseen ofrecer bienes y servicios a las Instituciones Usuarias de SICOP.
+
+c. El proveedor que desee ofrecer sus bienes y servicios a las Instituciones Usuarias podrá realizar su registro en SICOP, utilizando su certificado digital o firma digital y sin necesidad de presentarse o aportar ningún tipo de documentación impresa ante ninguna Institución Usuaria.
+
+d. Los proveedores nacionales o bien, proveedores extranjeros que cuenten con representación en el país, que deseen convertirse en Proveedores Registrados en SICOP deben cumplir los siguientes requisitos:
+•    Contar con un certificado de firma digital.
+•    Llenar la información requerida en la solicitud de registro de proveedor provista por SICOP,
+•    Estar inscrito como patrono o trabajador independiente.
+•    Estar al día en el pago de cuotas ante la Caja Costarricense de Seguro Social (CCSS).
+•    En caso de persona jurídica, la sociedad debe estar registrada y vigente según los registros del Registro Nacional.
+La verificación de estos requisitos será realizada de manera automatizada por SICOP con los sistemas de información y bases de datos de estas instituciones y será el único medio aceptable para verificar el cumplimiento de este requisito. Los proveedores que incumplan los requisitos antes mencionados, no podrán convertirse en Proveedores Registrados en SICOP.
+
+e. El Administrador SICOP podrá en cualquier momento modificar el contenido de estas Condiciones Generales de Uso.
+
+2. Liberación de responsabilidades del Administrador SICOP
+
+El Sistema Electrónico de Compras Públicas “SICOP”, SICOP es una plataforma de operación que utiliza tecnología de punta que se pone a disposición de las Instituciones Usuarias y Proveedores Registrados como la mejor herramienta para realizar su gestión de compras. No obstante lo anterior, las Instituciones Usuarias y los Proveedores Registrados continuarán siendo responsables de su información, así como de los procesos de contratación que se lleven a cabo en SICOP. Por el motivo anterior, el Administrador SICOP no tendrá responsabilidad alguna en cualquiera de las siguientes situaciones:
+
+a. Registros incompletos, no veraces, incorrectos o inconsistentes realizados por parte de las Instituciones Usuarias o Proveedores Registrados en SICOP, sea en el Registro Electrónico de Proveedores, en el Catálogo de Bienes y Servicios SICOP o en la publicación de procesos de contratación.
+
+b. No cumplimiento del objeto de la contratación o la obtención de resultados no deseados en los procesos de contratación que lleven a cabo las Instituciones Usuarias a través de SICOP.
+
+c. Cualquier incumplimiento en los contratos celebrados entre Instituciones Usuarias y Proveedores Registrados a través de SICOP.
+
+d. Resolver los conflictos, problemas e incumplimientos que puedan existir en las relaciones contractuales que establezcan Instituciones Usuarias y Proveedores Registrados a través de SICOP.
+
+e. Resolver cualquier deficiencia que se genere por una caída temporal de la plataforma SICOP, provocada por cualquier causa, propia o de terceros.
+
+f. Inexactitudes, errores, omisiones, retrasos, contenidos sobre información distribuida a través de SICOP, por cualquiera de los medios posibles en SICOP, a saber Portal SICOP, mensaje SMS o correo electrónico.
+
+g. Virus que puedan contener documentos adjuntados por Instituciones Usuarias o Proveedores Registrados en SICOP.
+
+3. Call Center SICOP
+
+El Administrador SICOP dispondrá de un servicio de Call Center SICOP, con el propósito de atender las solicitudes de asistencia que puedan plantear Instituciones Usuarias o Proveedores Registrados relacionadas con el uso del sistema. Este servicio de Call Center SICOP tendrá las siguientes características:
+
+a. Las solicitudes de asistencia deberán ser realizadas a través de alguno de los siguientes medios:
+•    Correo electrónico : call-center@sicop.go.cr
+•    Centro de llamadas: 1311 opción 3
+    -     Consultas → Atención puntual sobre el uso de la Plataforma con una duración de 10 minutos.
+    -     Oferte Ya → Atención personalizada sin límite de tiempo con un costo de $0.77 min.
+    -     Para citas de Firma Digital: 1311 opción 7
+
+b. Las solicitudes de asistencia deben cumplir con los lineamientos emitidos por el Call Center SICOP, entre ellos:
+•    Utilizar el formulario de reporte de incidentes llenando la información que se solicita.
+•    En el caso de reporte telefónico, se deberá recopilar el nombre, número de teléfono y correo electrónico de la persona que hace el reporte o a quien se debe informar sobre el avance.
+•    En caso de tratarse de un incidente, el operador deberá realizar la clasificación de la prioridad siguiendo la clasificación descrita previamente. En cualquier caso se debe hacer una descripción precisa del incidente reportado.
+•    En caso de tratarse de un incidente en el cual exista un comportamiento particular mostrado a través de alguna página del sistema, la persona que hace el reporte deberá aportar una imagen de dicha página que facilite el análisis de las áreas técnicas responsables.
+
+c. Los horarios de atención serán los siguientes:
+•    Atención a través de operador los 365 días del año (incluye sábados, domingos, feriados) en el siguiente horario:
+•    Horario hábil de atención:
+    -     Lunes a viernes de las 06:00 am a las 10:00 pm.
+    -     Sábados, Domingos y Feriados de 9:00 am a 6:00 pm.
+    -     Atención vía correo electrónico de Lunes a Viernes de 7:00 am a 4:00 pm.
+
+d. Las solicitudes de asistencia que correspondan a incidentes tendrán alguna de las siguientes clasificaciones de gravedad:
+i. Emergencias:
+Esta prioridad se aplica únicamente cuando el usuario comunica que se está presentando uno de los siguientes casos:
+•    El error implica una corrupción de los datos del sistema SICOP.
+•    El usuario comunica que se está imposibilitando la comunicación con el sistema.
+•    Se comunica un problema que puede representar pérdidas económicas, si la atención no se brinda inmediatamente.
+ii. Alta:
+Se considera un caso con esta prioridad cuando el problema comunicado implique:
+•    Imposibilidad de continuar con la operación normal de las funciones de operación del sistema SICOP.
+•    Si el continuar ejecutando la función representa grandes esfuerzos posteriores para estabilizar la información al estado correcto.
+•    Los usuarios afectados representan un 20% del total o más.
+
+iii. Media:
+Se considera un caso con esta prioridad cuando el problema implique lo siguiente:
+•    Si el usuario indica que la labor que está realizando es de mayor importancia y que de no resolver el problema puede atrasarle en la ejecución de sus funciones y por lo tanto, atrasaría una función específica encomendada.
+iv. Normal:
+Se considera un caso con esta prioridad cuando el problema implique lo siguiente:
+•   La situación presentada no impide completar la tarea o función que el usuario requiere.
+
+e. Tiempos de atención de acuerdo a la gravedad del incidente:
+ 	Tiempo de resolución (Incluye comunicado al interesado)
+Emergencia	2 Horas*
+Alta	3 Horas*
+Media	1 día*
+Normal	De acuerdo con planeación existente.
+
+
+4. Normas de uso particulares para Instituciones Usuarias de SICOP
+
+a. Las Instituciones Usuarias de SICOP conocen y aceptan que la información relativa a la institución, a los procesos de contratación y catálogo de productos publicada a través de SICOP es de uso público y de acceso a toda la ciudadanía.
+
+b. Las Instituciones Usuarias de SICOP no podrán atentar o hacer mal uso de la plataforma SICOP de tal manera que se pueda dañar, inutilizar, sobrecargar, limitar, deteriorar la utilización del mismo.
+
+c. Las Instituciones Usuarias de SICOP no podrán hacer uso de SICOP para cualquier efecto que no esté contemplado dentro del marco del proceso de compras públicas.
+
+5. Normas de uso particulares para Proveedores Registrados de SICOP
+
+a. Los Proveedores Registrados de SICOP conocen y aceptan que la información general de la empresa, sus antecedentes, expediente sancionatorio, lista de bienes y servicios ofrecidos registrada en SICOP estará permanentemente disponible de manera pública para todas las Instituciones Usuarias de SICOP.
+
+b. Los Proveedores Registrados de SICOP conocen y aceptan sobre su obligación de actualizar en forma y plazos oportunos, de acuerdo a la legislación vigente, la información del Registro Electrónico de Proveedores de SICOP.
+
+c. Los Proveedores Registrados de SICOP no podrán atentar o hacer mal uso de la plataforma SICOP de tal manera que se pueda dañar, inutilizar, sobrecargar, limitar, deteriorar la utilización del mismo.
+
+d. Los Proveedores Registrados de SICOP no podrán reproducir ni comercializar con fines lucrativos ante terceros la información y demás funcionalidades disponibles en SICOP.
+
+e. Los Proveedores Registrados en SICOP conocen que tienen la posibilidad de decidir si recibirán mensajes de aviso a su teléfono celular y a su correo electrónico generados de manera automática por SICOP, cuando alguna Institución Usuaria realice la publicación de procesos de contratación donde soliciten alguno de los productos existentes en el Catálogo de Bienes y Servicios SICOP y que esté relacionado con el proveedor en la información de su registro en SICOP. En caso de decidir que si desea recibir estos avisos, el proveedor acepta que cada mensaje corto enviado por SICOP tendrá un costo de 50 colones, los cuales serán cargados a la factura del teléfono celular registrado para recibir estos mensajes.
+
+6. Sanciones e inhabilitaciones en SICOP.
+
+a. Los Proveedores Registrados podrán recibir sanciones o incluso llegar a ser inhabilitados para ofrecer servicios a una, varias o todas las Instituciones Usuarias de SICOP en los siguientes casos:
+i. En caso de recibir una condena por incumplimiento contractual.
+ii. liCuando se demuestre que la información provista Registro Electrónico de Proveedores de SICOP sea maliciosamente falsa, tergiversada o que induzca a errores a quienes hagan uso de ella.
+iii. Por cualquiera de las causas de inhabilitación contempladas en la legislación aplicable al proceso de compras públicas.
+Página principal     |      Condiciones de Uso     |      Guía de Registro de Proveedor
