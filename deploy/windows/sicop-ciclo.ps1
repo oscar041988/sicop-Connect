@@ -30,7 +30,7 @@ try {
     Set-Content -Path $errores -Value "No se pudo ejecutar el ciclo: $($_.Exception.Message)" -Encoding UTF8
 }
 
-$bloque = @('=' * 70, ('{0:yyyy-MM-dd HH:mm:ss} - run-cycle --origen real --dry-run' -f $ahora))
+$bloque = @(('=' * 70), ('{0:yyyy-MM-dd HH:mm:ss} - run-cycle --origen real --dry-run' -f $ahora))
 if (Test-Path $salida) { $bloque += Get-Content -Path $salida -Encoding UTF8 }
 if ((Test-Path $errores) -and (Get-Item $errores).Length -gt 0) {
     $bloque += '--- errores ---'
