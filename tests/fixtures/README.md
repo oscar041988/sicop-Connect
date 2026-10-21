@@ -89,5 +89,13 @@ Todas tienen `Cod Unidad Compra` con ceros iniciales (`00001`, `01142`, `02102`)
   (`Received`, `DKIM`, `ARC`, `List-Unsubscribe`, `Reporting-Meta`). La primera cabecera,
   `X-Datos-Sicop-Connect`, marca el archivo como SIMULADO.
 
+## `sicop_simulado.html`
+
+- **Datos: SIMULADOS.** Página que imita las ventanas de Datos abiertos de SICOP observadas el 2026-10-21
+  (`docs/ACCESO_SICOP.md`): encabezado «Detalle pliego de condiciones» (`role=button`), `<img alt="CSV">`, y las
+  ventanas `role=dialog` del correo, del código y de «Procesando el reporte», con sus textos exactos.
+- `tests/test_sicop_browser.py` reemplaza `__VARIANTE__`, `__CODIGO__` y `__PID__`. Las variantes son `normal`,
+  `codigo_rechazado`, `boton_cambiado`, `captcha` y `sin_url`.
+
 **No editar estos archivos** (ni abrirlo y guardarlo con Excel). Si hace falta otro caso, agregar un fixture nuevo
 y anotarlo aquí con su origen (real / sintético / simulado).
