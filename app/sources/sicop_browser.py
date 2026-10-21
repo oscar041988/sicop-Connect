@@ -38,6 +38,7 @@ TEXTO_CORREO = "Correo electrónico donde se le notificará"
 TEXTO_CODIGO = "Digite el código de verificación"
 TEXTO_PROCESANDO = "Procesando el reporte"
 ESPERA_MS = 30_000          # espera explícita máxima de cada ventana o botón
+ESPERA_DESCARGA_MS = 120_000  # la página de SICOP tarda unos segundos en empezar la descarga
 SONDEO_CODIGO_S = 15        # cada cuánto se revisa el buzón mientras se espera el código
 MARGEN_RELOJ = timedelta(minutes=1)  # el reloj de la PC y el de Gmail pueden diferir unos segundos
 CONTROL = re.compile(r"captcha|no soy un robot|acceso denegado|demasiadas solicitudes", re.IGNORECASE)
@@ -92,7 +93,7 @@ def _esperar_codigo(lector, desde: datetime, minutos: int, reloj, dormir):
             raise FalloObtencion(f"No se pudo leer el código: {exc}") from None
 
 
-def _pasos(page, settings: Settings, lector, marcar_correo_enviado, reloj, dormir, avisar) -> tuple:
+def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> tuple:
     estado = {"paso": "abrir Datos abiertos"}
 
     def paso(nombre: str) -> None:
@@ -120,7 +121,7 @@ def _pasos(page, settings: Settings, lector, marcar_correo_enviado, reloj, dormi
         ventana.get_by_role("textbox").fill(settings.sicop_request_email)
         desde = reloj() - MARGEN_RELOJ
         ventana.get_by_role("button", name="Continuar").click()
-        marcar_correo_enviado()
+        anotar("correo_enviado")
         avisar("Correo escrito y «Continuar»: SICOP manda el código (la solicitud de hoy ya cuenta).")
 
         paso("ventana del código")
@@ -131,6 +132,7 @@ def _pasos(page, settings: Settings, lector, marcar_correo_enviado, reloj, dormi
         avisar("Código encontrado en el buzón; se escribe en SICOP.")
         ventana.get_by_role("textbox").fill(codigo)
         ventana.get_by_role("button", name="Continuar").click()
+        anotar("codigo_ingresado")
 
         paso(f"ventana «{TEXTO_PROCESANDO}»")
         ventana = page.get_by_role("dialog").filter(has_text=TEXTO_PROCESANDO)
@@ -185,15 +187,17 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
         except sqlite3.OperationalError:
             raise FalloObtencion("La base no tiene la tabla solicitudes_sicop: ejecuta python -m app.cli migrate.") from None
 
-        def marcar_correo_enviado() -> None:
-            conn.execute("UPDATE solicitudes_sicop SET correo_enviado = 1 WHERE id = ?", (solicitud_id,))
+        def anotar(evento: str) -> None:
+            if evento == "correo_enviado":
+                conn.execute("UPDATE solicitudes_sicop SET correo_enviado = 1 WHERE id = ?", (solicitud_id,))
+            else:  # codigo_ingresado
+                conn.execute("UPDATE solicitudes_sicop SET estado = 'codigo_ingresado', codigo_ingresado_en = ?"
+                             " WHERE id = ?", (reloj().isoformat(timespec="seconds"), solicitud_id))
 
-        def terminar(estado: str, motivo: str | None = None, process_id: str | None = None,
-                     captura: Path | None = None) -> None:
-            conn.execute("UPDATE solicitudes_sicop SET estado = ?, motivo = ?, process_id = ?, captura = ?,"
-                         " terminada_en = ? WHERE id = ?",
-                         (estado, motivo, process_id, str(captura) if captura else None,
-                          reloj().isoformat(timespec="seconds"), solicitud_id))
+        def fallar(fallo: FalloObtencion) -> None:
+            conn.execute("UPDATE solicitudes_sicop SET estado = 'fallido', motivo = ?, captura = ?, terminada_en = ?"
+                         " WHERE id = ?", (fallo.motivo, str(fallo.captura) if fallo.captura else None,
+                                           reloj().isoformat(timespec="seconds"), solicitud_id))
 
         try:
             with sync_playwright() as p:
@@ -206,8 +210,7 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
                     page.set_default_timeout(espera_ms)
                     avisar(f"Abriendo SICOP {'con' if ver else 'sin'} ventana…")
                     try:
-                        codigo, process_id = _pasos(page, settings, lector, marcar_correo_enviado, reloj, dormir,
-                                                    avisar)
+                        codigo, process_id = _pasos(page, settings, lector, anotar, reloj, dormir, avisar)
                     except FalloObtencion as fallo:
                         fallo.captura = _captura(page, settings.exports_dir,
                                                  f"obtencion-fallo-{inicio:%Y%m%d-%H%M%S}-{solicitud_id}.png")
@@ -215,13 +218,56 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
                 finally:
                     navegador.close()
         except FalloObtencion as fallo:
-            terminar("fallo", fallo.motivo, captura=fallo.captura)
+            fallar(fallo)
             raise
         except PlaywrightError as exc:
             fallo = FalloObtencion(f"No se pudo abrir el navegador ({type(exc).__name__}). "
                                    "¿Falta python -m playwright install chromium?")
-            terminar("fallo", fallo.motivo)
+            fallar(fallo)
             raise fallo from None
-        terminar("procesando", process_id=process_id)
+        # Siguiente paso: obtain poll espera el correo con el enlace (app/sources/obtencion.py).
+        conn.execute("UPDATE solicitudes_sicop SET estado = 'esperando_enlace', esperando_enlace_en = ?, process_id = ?"
+                     " WHERE id = ?", (reloj().isoformat(timespec="seconds"), process_id, solicitud_id))
         return Resultado(solicitud_id, codigo, process_id)
 
+
+def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callable | None = None,
+              espera_ms: int = ESPERA_DESCARGA_MS) -> Path:
+    """Abre el enlace «Reporte» y guarda lo que SICOP descargue en carpeta/nombre (lección 3).
+
+    La página muestra «Espere mientras se descarga el archivo» y el navegador baja el archivo: se espera el evento
+    de descarga. Se guarda primero como .part y se renombra al terminar. Sin descarga → FalloObtencion."""
+    carpeta.mkdir(parents=True, exist_ok=True)
+    destino, parcial = carpeta / nombre, carpeta / f"{nombre}.part"
+    try:
+        with sync_playwright() as p:
+            navegador = p.chromium.launch()
+            try:
+                contexto = navegador.new_context(locale="es-CR", accept_downloads=True)
+                if preparar_contexto is not None:
+                    preparar_contexto(contexto)
+                page = contexto.new_page()
+                try:
+                    with page.expect_download(timeout=espera_ms) as info:
+                        try:
+                            respuesta = page.goto(url, wait_until="domcontentloaded", timeout=espera_ms)
+                            _revisar_control(page, respuesta)
+                        except PlaywrightError as exc:
+                            if "Download is starting" not in str(exc):  # el enlace descargó sin abrir página
+                                raise
+                    descarga = info.value
+                    if descarga.failure():
+                        raise FalloObtencion("La descarga de SICOP se interrumpió: descargar a mano con el enlace "
+                                             "del correo.")
+                    descarga.save_as(str(parcial))
+                except PlaywrightTimeout:
+                    fallo = FalloObtencion("Enlace vencido o SICOP no inició la descarga (no llegó ningún archivo "
+                                           f"en {espera_ms // 1000} s).")
+                    fallo.captura = _captura(page, carpeta, f"{nombre}-sin-descarga.png")
+                    raise fallo from None
+            finally:
+                navegador.close()
+    except PlaywrightError as exc:
+        raise FalloObtencion(f"Error del navegador al descargar ({type(exc).__name__}).") from None
+    parcial.replace(destino)
+    return destino

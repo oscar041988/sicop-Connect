@@ -118,7 +118,7 @@ def test_flujo_completo_con_el_codigo_del_buzon(tmp_path):
     assert sim.informes == {"correo": [BUZON], "codigo": [CODIGO], "aceptar": ["si"]}
     assert lector.desde[0] == INICIO - sb.MARGEN_RELOJ  # solo valen correos posteriores a la solicitud
     fila = _filas(settings)[0]
-    assert (fila["estado"], fila["correo_enviado"], fila["process_id"], fila["motivo"]) == ("procesando", 1, PID, None)
+    assert (fila["estado"], fila["correo_enviado"], fila["process_id"], fila["motivo"]) == ("esperando_enlace", 1, PID, None)
     assert {u.split("/")[2] for u in sim.peticiones} == {"www.sicop.go.cr"}  # nada fuera de la página simulada
     assert CODIGO not in repr(r) and PID not in repr(r)
 
@@ -127,7 +127,7 @@ def test_sin_url_de_descarga_igual_llega_a_procesando(tmp_path):
     settings = _settings(tmp_path)
     r = _solicitar(settings, _Simulacion("sin_url"), _LectorSimulado(CODIGO))
     assert r.process_id is None
-    assert _filas(settings)[0]["estado"] == "procesando"
+    assert _filas(settings)[0]["estado"] == "esperando_enlace"
 
 
 # --- Fallos -----------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ def test_si_no_llega_el_codigo_falla_con_captura_y_la_solicitud_cuenta(tmp_path)
     assert reloj() - INICIO >= timedelta(minutes=10)
     assert exc.value.captura is not None and exc.value.captura.is_file()
     fila = _filas(settings)[0]
-    assert (fila["estado"], fila["correo_enviado"]) == ("fallo", 1)
+    assert (fila["estado"], fila["correo_enviado"]) == ("fallido", 1)
     assert fila["captura"] == str(exc.value.captura)
 
     with pytest.raises(sb.YaSolicitadoHoy):  # una sola solicitud por día
@@ -152,7 +152,7 @@ def test_codigo_rechazado_es_fallo(tmp_path):
     with pytest.raises(sb.FalloObtencion, match="SICOP no aceptó el código"):
         _solicitar(settings, sim, _LectorSimulado(CODIGO))
     assert sim.informes["codigo"] == [CODIGO]
-    assert _filas(settings)[0]["estado"] == "fallo"
+    assert _filas(settings)[0]["estado"] == "fallido"
 
 
 def test_formato_desconocido_del_correo_es_fallo(tmp_path):

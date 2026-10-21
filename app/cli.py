@@ -435,6 +435,64 @@ def obtain_request(settings: Settings, ver: bool) -> int:
     return 0
 
 
+def obtain_poll(settings: Settings, seguir: bool) -> int:
+    import time
+    from app.bloqueo import CicloOcupado
+    from app.sources import gmail_reader as gr
+    from app.sources import obtencion
+    try:
+        lector = _crear_lector(settings)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se revisó nada.", file=sys.stderr)
+        return 1
+    while True:
+        hora = f"{datetime.now(HORA_CR):%H:%M:%S}"
+        try:
+            r = obtencion.sondear(settings, lector)
+        except CicloOcupado as exc:
+            print(f"Error: ya hay otro obtain poll en curso ({exc or 'sin detalle'}). No se hizo nada.", file=sys.stderr)
+            return 2
+        except obtencion.FalloObtencion as exc:
+            print(f"Error: {exc.motivo}", file=sys.stderr)
+            return 1
+        except gr.GmailError as exc:
+            print(f"{hora} · Error de Gmail: {exc} La solicitud sigue abierta; se reintenta en el próximo sondeo.",
+                  file=sys.stderr)
+            if not seguir:
+                return 1
+        else:
+            if r.fallo:
+                print(f"{hora} · FALLO · {r.mensaje}", file=sys.stderr)
+                return 1
+            print(f"{hora} · {r.mensaje}", flush=True)
+            if r.estado in (None, "validado") or not seguir:
+                return 0
+        time.sleep(settings.obtain_poll_minutes * 60)
+
+
+def obtain_status(settings: Settings) -> int:
+    from app.sources import obtencion
+    try:
+        filas = obtencion.ultimas(settings)
+    except sqlite3.OperationalError:
+        print("Error: la base no tiene la tabla solicitudes_sicop: ejecuta python -m app.cli migrate.", file=sys.stderr)
+        return 1
+    if not filas:
+        print("Todavía no hay solicitudes automáticas (obtain request).")
+        return 0
+    horas = (("codigo_ingresado_en", "código"), ("esperando_enlace_en", "procesando"),
+             ("enlace_recibido_en", "enlace"), ("descargado_en", "descargado"), ("validado_en", "validado"))
+    for f in filas:
+        pasos = " → ".join(f"{nombre} {f[col][11:16]}" for col, nombre in horas if f[col])
+        print(f"#{f['id']} · {f['solicitada_en'][:16].replace('T', ' ')} · {f['estado'].upper()}"
+              f"{' · ' + pasos if pasos else ''}")
+        if f["motivo"]:
+            print(f"     motivo: {f['motivo']}")
+        if f["archivo_entrada"]:
+            print(f"     archivo: {Path(f['archivo_entrada']).name} (SHA-256 {f['archivo_sha256'][:16]}…)")
+    return 0
+
+
 def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
     if not _base_de_usuarios(settings):
         return 1
@@ -622,6 +680,10 @@ def build_parser() -> argparse.ArgumentParser:
     cm.add_argument("--dias", type=int, default=3, help="Días hacia atrás (1 a 30; por defecto 3)")
     rq = ob_sub.add_parser("request", help="UNA solicitud real del «Detalle pliego de condiciones» en CSV (una por día)")
     rq.add_argument("--ver", action="store_true", help="Mostrar la ventana del navegador (para la prueba supervisada)")
+    po = ob_sub.add_parser("poll", help="Espera el correo con el enlace, descarga el ZIP, lo valida y lo deja en la entrada")
+    po.add_argument("--seguir", action="store_true",
+                    help="Repetir cada OBTAIN_POLL_MINUTES hasta validado, fallido o el plazo (Ctrl+C es seguro)")
+    ob_sub.add_parser("status", help="Las últimas solicitudes automáticas con su estado y horas")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -667,6 +729,10 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
             return obtain_gmail_auth(settings)
         if args.obtain_command == "request":
             return obtain_request(settings, args.ver)
+        if args.obtain_command == "poll":
+            return obtain_poll(settings, args.seguir)
+        if args.obtain_command == "status":
+            return obtain_status(settings)
         return obtain_check_mail(settings, args.dias)
     if args.command == "backup":
         return backup(settings, args.output)

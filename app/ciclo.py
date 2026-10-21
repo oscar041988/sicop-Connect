@@ -114,7 +114,7 @@ def recoger(carpeta: Path, ahora_epoch: float | None = None) -> tuple[list[Path]
     return listos, apartados
 
 
-def _revisar_csv(raw: bytes, nombre: str) -> list[str]:
+def revisar_csv(raw: bytes, nombre: str) -> list[str]:
     """Encabezado del CSV, si el archivo está completo; si no, ArchivoInvalido con el motivo."""
     if not raw:
         raise ArchivoInvalido("el archivo está vacío (0 bytes)")
@@ -151,7 +151,7 @@ def tipo_de_reporte(path: Path) -> str:
             raise ArchivoInvalido(f"el ZIP está dañado ({malo}). Vuelve a descargarlo")
     else:
         raw = path.read_bytes()
-    encabezado = set(_revisar_csv(raw, path.name))
+    encabezado = set(revisar_csv(raw, path.name))
     tipos = [t for t in ORDEN if ENCABEZADOS[t] <= encabezado]
     if len(tipos) != 1:
         motivo = "varios tipos" if tipos else "ninguno"

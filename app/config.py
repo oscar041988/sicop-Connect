@@ -43,6 +43,8 @@ DEFAULTS: dict[str, str] = {
     "GOOGLE_READ_TOKEN_FILE": "",
     "SICOP_REQUEST_EMAIL": "",
     "OBTAIN_CODE_TIMEOUT_MIN": "10",
+    "OBTAIN_LINK_MAX_HOURS": "12",
+    "OBTAIN_POLL_MINUTES": "5",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -168,6 +170,25 @@ class Settings:
         if not 1 <= minutos <= 60:
             raise ValueError("OBTAIN_CODE_TIMEOUT_MIN debe estar entre 1 y 60")
         return minutos
+
+    def _entero(self, key: str, minimo: int, maximo: int, unidad: str) -> int:
+        try:
+            valor = int(self.get(key))
+        except ValueError:
+            raise ValueError(f"{key} debe ser un número entero de {unidad}") from None
+        if not minimo <= valor <= maximo:
+            raise ValueError(f"{key} debe estar entre {minimo} y {maximo}")
+        return valor
+
+    @property
+    def obtain_link_max_hours(self) -> int:
+        """Horas máximas de espera del correo con el enlace (OBTAIN_LINK_MAX_HOURS; 12). Después: fallido."""
+        return self._entero("OBTAIN_LINK_MAX_HOURS", 1, 23, "horas")
+
+    @property
+    def obtain_poll_minutes(self) -> int:
+        """Cada cuántos minutos obtain poll --seguir revisa el buzón (OBTAIN_POLL_MINUTES; 5)."""
+        return self._entero("OBTAIN_POLL_MINUTES", 1, 60, "minutos")
 
     @property
     def notifications_enabled(self) -> bool:

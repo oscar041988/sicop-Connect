@@ -289,7 +289,22 @@
     - CAPTCHA o bloqueo → «control no automatizable», sin reintentar; captura al fallar, con los campos vaciados.
   - Pruebas: página SIMULADA `tests/fixtures/sicop_simulado.html`, con Chromium sin ventana y la red cortada.
     402 passed (11 nuevas).
-  - Pendiente · Ivania: `migrate` en su base y UNA solicitud real supervisada con `obtain request --ver`.
+  - `migrate` (0009) aplicado por Ivania el 2026-10-21. Pendiente: UNA solicitud real con `obtain request --ver`
+    (22/10, 7:30).
+- **Obtención automática · lección 3, espera, descarga y validación (2026-10-21, rama `desarrollo`):**
+  - Máquina de estados en `solicitudes_sicop` (migración 0010, que rehace la tabla):
+    `solicitado → codigo_ingresado → esperando_enlace → descargado → validado`, o `fallido`, con la hora de cada
+    cambio. Un índice único impide dos solicitudes el mismo día.
+  - `app/sources/obtencion.py` y el comando `obtain poll [--seguir]`:
+    - lee el enlace del buzón; descarga con Playwright (`sicop_browser.descargar`) a `data/raw/descargas/`, con SHA-256;
+    - valida reusando `zip_pliegos` y `ciclo.revisar_csv`, más BOM, «;», encabezados y filas > 0;
+    - copia el ZIP a `INCOMING_DIR`; plazo `OBTAIN_LINK_MAX_HOURS` (12 h); nunca pide otro reporte;
+    - no importa: eso queda para la lección 4.
+  - `obtain status` muestra las últimas solicitudes.
+  - Pruebas SIMULADAS: reinicio, plazo, archivo vacío, HTML o con otros encabezados, enlace sin descarga.
+    420 passed (18 nuevas).
+  - Pendiente · Ivania: `migrate` (0010) y la prueba real del 22/10: `obtain request --ver` y luego
+    `obtain poll --seguir`, con el ZIP en `data\incoming\` antes de las 8:00.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
