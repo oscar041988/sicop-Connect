@@ -403,6 +403,38 @@ def obtain_check_mail(settings: Settings, dias: int) -> int:
     return 0
 
 
+def obtain_request(settings: Settings, ver: bool) -> int:
+    from app.sources import gmail_reader as gr
+    from app.sources import sicop_browser
+    try:
+        lector = _crear_lector(settings)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se pidió nada a SICOP.", file=sys.stderr)
+        return 1
+
+    def avisar(texto: str) -> None:
+        print(f"{datetime.now(HORA_CR):%H:%M:%S} · {texto}", flush=True)
+
+    try:
+        r = sicop_browser.solicitar_reporte(settings, lector, ver=ver, avisar=avisar)
+    except sicop_browser.YaSolicitadoHoy as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except sicop_browser.FalloObtencion as exc:
+        print(f"FALLO · {exc.motivo}", file=sys.stderr)
+        if exc.captura:
+            print(f"Captura: {exc.captura} (con los campos vaciados)", file=sys.stderr)
+        return 1
+    avisar(f"OK · código {gr.enmascarar_codigo(r.codigo)} aceptado · SICOP mostró «Procesando el reporte».")
+    if r.process_id:
+        avisar(f"La ventana traía el enlace: {gr.enmascarar_enlace('processId=' + r.process_id)}"
+               " (guardado para la lección 3).")
+    else:
+        avisar("La ventana no traía el processId: se sabrá por el correo «Envío de reporte».")
+    avisar("El correo con el enlace llega en unos minutos: revisarlo con obtain check-mail.")
+    return 0
+
+
 def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
     if not _base_de_usuarios(settings):
         return 1
@@ -588,6 +620,8 @@ def build_parser() -> argparse.ArgumentParser:
     ob_sub.add_parser("gmail-auth", help="Autorización única de LECTURA de Gmail: entra como SICOP_REQUEST_EMAIL")
     cm = ob_sub.add_parser("check-mail", help="Lista los correos de SICOP recientes con código y enlace enmascarados")
     cm.add_argument("--dias", type=int, default=3, help="Días hacia atrás (1 a 30; por defecto 3)")
+    rq = ob_sub.add_parser("request", help="UNA solicitud real del «Detalle pliego de condiciones» en CSV (una por día)")
+    rq.add_argument("--ver", action="store_true", help="Mostrar la ventana del navegador (para la prueba supervisada)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -631,6 +665,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "obtain":
         if args.obtain_command == "gmail-auth":
             return obtain_gmail_auth(settings)
+        if args.obtain_command == "request":
+            return obtain_request(settings, args.ver)
         return obtain_check_mail(settings, args.dias)
     if args.command == "backup":
         return backup(settings, args.output)

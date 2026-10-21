@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SICOP</title>
+<!-- SIMULADO: imita las ventanas de Datos abiertos de SICOP observadas el 2026-10-21 (docs/ACCESO_SICOP.md):
+     textos, roles y el icono <img alt="CSV">. No es la página real. Las pruebas reemplazan __VARIANTE__,
+     __CODIGO__ y __PID__. Variantes: normal · codigo_rechazado · boton_cambiado · captcha · sin_url. -->
+<style>
+  [role=dialog] { border: 1px solid #999; padding: 16px; margin: 16px; width: 400px; }
+  #panel { display: none; }
+</style>
+</head>
+<body>
+<h1>Módulo descarga datos (Datos Abiertos)</h1>
+<div role="button" tabindex="0" id="cab-solicitud">Solicitud de contratación</div>
+<div role="button" tabindex="0" id="cab-pliego">Detalle pliego de condiciones</div>
+<div id="panel">
+  <p>Formato de descarga:</p>
+  <img alt="Excel" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="24" height="24">
+  <img alt="CSV" id="csv" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="24" height="24">
+  <img alt="JSON" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="24" height="24">
+</div>
+<div id="ventanas"></div>
+<script>
+  const VARIANTE = "__VARIANTE__", CODIGO = "__CODIGO__", PID = "__PID__";
+  const informar = (que, valor) => { if (window.informar) window.informar(que, valor); };
+  const ventanas = document.getElementById("ventanas");
+
+  if (VARIANTE === "captcha") {
+    document.body.insertAdjacentHTML("beforeend",
+      '<iframe src="https://www.google.com/recaptcha/api2/anchor" title="reCAPTCHA"></iframe><p>No soy un robot</p>');
+  }
+
+  function ventana(html) {
+    ventanas.innerHTML = '<div role="dialog" aria-modal="true">' + html + '</div>';
+    return ventanas.firstChild;
+  }
+
+  document.getElementById("cab-pliego").addEventListener("click", () => {
+    document.getElementById("panel").style.display = "block";
+  });
+
+  document.getElementById("csv").addEventListener("click", () => {
+    const boton = VARIANTE === "boton_cambiado" ? "Siguiente" : "Continuar";
+    const v = ventana('<p>Correo electrónico donde se le notificará</p>' +
+      '<input type="text" placeholder="ejemplo@correo.com"><button type="button">' + boton + '</button>');
+    v.querySelector("button").addEventListener("click", () => {
+      informar("correo", v.querySelector("input").value);
+      ventanaCodigo();
+    });
+  });
+
+  function ventanaCodigo() {
+    const v = ventana('<p>Digite el código de verificación enviado a su correo eletrónico para concluir</p>' +
+      '<input type="text"><button type="button">Continuar</button><p id="error"></p>');
+    v.querySelector("button").addEventListener("click", () => {
+      const escrito = v.querySelector("input").value;
+      informar("codigo", escrito);
+      if (VARIANTE === "codigo_rechazado" || escrito !== CODIGO) {
+        v.querySelector("#error").textContent = "Código inválido (SIMULADO)";
+        return;
+      }
+      ventanaProcesando();
+    });
+  }
+
+  function ventanaProcesando() {
+    const enlace = VARIANTE === "sin_url" ? '<span>URL de descarga</span>' :
+      '<a href="https://www.sicop.go.cr/app/module/bid/public/ext-report-download?processId=' + PID +
+      '">URL de descarga</a>';
+    const v = ventana('<h2>Procesando el reporte</h2>' +
+      '<p>El reporte se está generando. Una vez procesado, se enviará a su correo registrado.</p>' +
+      '<p>********** ' + enlace + ' **********</p>' +
+      '<p>El archivo permanecerá disponible 24 hrs. En caso de no descargarlo, debe proceder a generarlo nuevamente.</p>' +
+      '<button type="button">Aceptar</button>');
+    v.querySelector("button").addEventListener("click", () => {
+      informar("aceptar", "si");
+      ventanas.innerHTML = "";
+    });
+  }
+</script>
+</body>
+</html>

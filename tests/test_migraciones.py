@@ -48,7 +48,7 @@ def test_migrate_crea_las_tablas_de_16_3(db):
     assert apply_migrations(db) == ["0001_esquema_inicial.sql", "0002_lineas_catalogo_instituciones.sql",
                                    "0003_evaluacion.sql", "0004_panel_revisiones.sql",
                                    "0005_historial_admin.sql", "0006_avisos.sql", "0007_ciclo.sql",
-                                   "0008_evaluaciones.sql"]
+                                   "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql"]
 
     with closing(sqlite3.connect(db)) as conn:
         tablas = {fila[0] for fila in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
@@ -198,7 +198,7 @@ def test_0004_conserva_revisiones_y_rellena_tipo_de_procedimiento(tmp_path, db):
         conn.commit()
 
     assert apply_migrations(db) == ["0004_panel_revisiones.sql", "0005_historial_admin.sql", "0006_avisos.sql",
-                                    "0007_ciclo.sql", "0008_evaluaciones.sql"]
+                                    "0007_ciclo.sql", "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql"]
 
     with closing(_conn(db)) as conn:
         assert conn.execute("SELECT tipo_procedimiento FROM tenders").fetchone()[0] == "Licitación Reducida"
@@ -245,4 +245,4 @@ def test_migracion_con_error_no_deja_nada_a_medias(tmp_path, db):
 
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT name FROM sqlite_master WHERE name = 'tabla_nueva'").fetchone() is None
-        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008"]
+        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009"]

@@ -278,7 +278,18 @@
   391 passed (31 nuevas). **Prueba real de solo lectura hecha por Ivania (2026-10-21):** `obtain gmail-auth`
   aceptado como licitaciones@ (sin cambios en Google Cloud); `obtain check-mail` listó 11 correos de SICOP,
   todos reconocidos y enmascarados. El enlace llega 2 a 6 min después del código (DECISION_OBTENCION.md §8).
-  Siguiente: lección 2 (solicitar el reporte en SICOP con Playwright).
+- **Obtención automática · lección 2, solicitud con navegador (2026-10-21, rama `desarrollo`):**
+  - Playwright instalado por Ivania (`playwright>=1.45` en `requirements.txt`; `requirements.lock.txt` se
+    rehace al final).
+  - Exploración 2A hecha por Ivania (14:25, sin escribir el correo), registrada en `docs/ACCESO_SICOP.md`.
+    Decisión: usar la interfaz y no la API interna.
+  - 2B: `app/sources/sicop_browser.py` y el comando `obtain request [--ver]`:
+    - selectores por texto y rol; una solicitud por día (tabla `solicitudes_sicop`, migración 0009);
+    - código del lector de la lección 1, con espera de hasta `OBTAIN_CODE_TIMEOUT_MIN`;
+    - CAPTCHA o bloqueo → «control no automatizable», sin reintentar; captura al fallar, con los campos vaciados.
+  - Pruebas: página SIMULADA `tests/fixtures/sicop_simulado.html`, con Chromium sin ventana y la red cortada.
+    402 passed (11 nuevas).
+  - Pendiente · Ivania: `migrate` en su base y UNA solicitud real supervisada con `obtain request --ver`.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o

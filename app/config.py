@@ -42,6 +42,7 @@ DEFAULTS: dict[str, str] = {
     "GOOGLE_TOKEN_FILE": "",
     "GOOGLE_READ_TOKEN_FILE": "",
     "SICOP_REQUEST_EMAIL": "",
+    "OBTAIN_CODE_TIMEOUT_MIN": "10",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -156,6 +157,17 @@ class Settings:
     def sicop_request_email(self) -> str:
         """Buzón donde llegan los correos de SICOP (código y enlace del reporte)."""
         return self.get("SICOP_REQUEST_EMAIL").strip().lower()
+
+    @property
+    def obtain_code_timeout_min(self) -> int:
+        """Minutos que obtain request espera el correo con el código de SICOP (OBTAIN_CODE_TIMEOUT_MIN; 10)."""
+        try:
+            minutos = int(self.get("OBTAIN_CODE_TIMEOUT_MIN"))
+        except ValueError:
+            raise ValueError("OBTAIN_CODE_TIMEOUT_MIN debe ser un número entero de minutos") from None
+        if not 1 <= minutos <= 60:
+            raise ValueError("OBTAIN_CODE_TIMEOUT_MIN debe estar entre 1 y 60")
+        return minutos
 
     @property
     def notifications_enabled(self) -> bool:
