@@ -257,6 +257,14 @@
   `acta-despliegue` y `leccion-10`) + `doctor-sin-mail-to`, `regla-camaras-intraorales`,
   `panel-aviso-sin-evaluar` y `zip-pliegos`, sin conflictos. 360 passed; golden set 34/34. Desde aquí se sigue
   (ciclo local, lección 1); al final, Oscar revisa esta rama. Solo local.
+- **Ciclo local en Windows (2026-10-21, Ivania, rama `desarrollo`):** respaldo, `doctor` (base 0008, avisos
+  deshabilitados, dry-run sí, sin pendientes) y ciclos a mano en dry-run con datos REALES: #23 importó el ZIP
+  del 19/10 (no estaba en la base; 10 778 carteles, 0 rechazadas); #24 «EN ESPERA» (ZIP copiado hace < 60 s,
+  FALLO esperado); #25 importó el ZIP de hoy (cobertura al 21/10, 10 956 carteles, 0 rechazadas; 12 226 en la
+  base), 3 avisos nuevos (`20261002692` × 3) y 6 que no se repitieron; vista previa revisada, bien.
+  Tarea programada: `deploy/windows/sicop-ciclo.ps1` + `deploy/windows/README.md` (lunes a viernes 8:00,
+  siempre dry-run, registro en `data\logs\`). Pendiente · Ivania: crearla, probarla con `Start-ScheduledTask`
+  y `SCHEDULER_ENABLED=true` en `.env`. Falta anotar cuánto tardó hoy el enlace de SICOP.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o

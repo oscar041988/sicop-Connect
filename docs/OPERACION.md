@@ -104,6 +104,9 @@ python -m app.cli run-cycle --origen real --send       # envío real
 - En el servidor lo corre el temporizador `sicop-cycle.timer`, **de lunes a viernes a las 8:00** (hora de Costa
   Rica). **Todavía no está activado** (lección 10): primero en dry-run y después el envío real, siguiendo
   `DESPLIEGUE.md`, 9.6, con autorización de Oscar.
+- **En Windows (local):** una tarea del Programador de tareas corre el mismo ciclo, siempre en dry-run, de lunes
+  a viernes a las 8:00, con registro en `data\logs\`. Cómo crearla, probarla y borrarla:
+  `deploy/windows/README.md`.
 - Los archivos importados pasan a `INCOMING_DIR/procesados/<fecha>/`. Uno incompleto, ilegible o no reconocido
   **no se importa**: pasa a `INCOMING_DIR/con_error/<fecha>/` y el ciclo termina en «fallo».
 - Si no llegó ningún archivo nuevo o la fuente falló, se evalúa igual (los plazos cambian con el día), pero
