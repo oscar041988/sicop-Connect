@@ -5,7 +5,9 @@
 <title>SICOP</title>
 <!-- SIMULADO: imita las ventanas de Datos abiertos de SICOP observadas el 2026-10-21 (docs/ACCESO_SICOP.md):
      textos, roles y el icono <img alt="CSV">. No es la página real. Las pruebas reemplazan __VARIANTE__,
-     __CODIGO__ y __PID__. Variantes: normal · codigo_rechazado · boton_cambiado · captcha · sin_url. -->
+     __CODIGO__ y __PID__. Variantes: normal · codigo_rechazado · boton_cambiado · captcha · sin_url ·
+     animacion (el panel que estaba abierto tarda en cerrarse: por un momento hay dos CSV) ·
+     dos_csv (los dos paneles quedan abiertos). -->
 <style>
   [role=dialog] { border: 1px solid #999; padding: 16px; margin: 16px; width: 400px; }
   #panel { display: none; }
@@ -14,6 +16,9 @@
 <body>
 <h1>Módulo descarga datos (Datos Abiertos)</h1>
 <div role="button" tabindex="0" id="cab-solicitud">Solicitud de contratación</div>
+<div id="panel-solicitud" style="display: none">
+  <img alt="CSV" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="24" height="24">
+</div>
 <div role="button" tabindex="0" id="cab-pliego">Detalle pliego de condiciones</div>
 <div id="panel">
   <p>Formato de descarga:</p>
@@ -37,8 +42,12 @@
     return ventanas.firstChild;
   }
 
+  const panelSolicitud = document.getElementById("panel-solicitud");
+  if (VARIANTE === "animacion" || VARIANTE === "dos_csv") panelSolicitud.style.display = "block";
+
   document.getElementById("cab-pliego").addEventListener("click", () => {
     document.getElementById("panel").style.display = "block";
+    if (VARIANTE === "animacion") setTimeout(() => { panelSolicitud.style.display = "none"; }, 800);
   });
 
   document.getElementById("csv").addEventListener("click", () => {

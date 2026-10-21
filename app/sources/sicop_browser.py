@@ -25,7 +25,7 @@ from typing import Callable
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 from app.config import Settings
 from app.database import connect
@@ -39,6 +39,7 @@ TEXTO_CODIGO = "Digite el código de verificación"
 TEXTO_PROCESANDO = "Procesando el reporte"
 ESPERA_MS = 30_000          # espera explícita máxima de cada ventana o botón
 ESPERA_DESCARGA_MS = 120_000  # la página de SICOP tarda unos segundos en empezar la descarga
+ANIMACION_MS = 10_000      # lo que puede tardar en cerrarse el panel que estaba abierto
 SONDEO_CODIGO_S = 15        # cada cuánto se revisa el buzón mientras se espera el código
 MARGEN_RELOJ = timedelta(minutes=1)  # el reloj de la PC y el de Gmail pueden diferir unos segundos
 CONTROL = re.compile(r"captcha|no soy un robot|acceso denegado|demasiadas solicitudes", re.IGNORECASE)
@@ -110,8 +111,13 @@ def _pasos(page, settings: Settings, lector, anotar, reloj, dormir, avisar) -> t
         paso("hacer clic en CSV")
         csv = page.locator("img[alt='CSV']:visible")
         csv.first.wait_for()
-        if csv.count() != 1:
-            raise FalloObtencion(f"Hay {csv.count()} iconos CSV visibles y se esperaba 1: SICOP cambió la página.")
+        # Al abrir un panel, el que estaba abierto se cierra con una animación: por un momento se ven dos iconos
+        # CSV (observado el 2026-10-21). Se espera a que quede uno solo.
+        try:
+            expect(csv).to_have_count(1, timeout=ANIMACION_MS)
+        except AssertionError:
+            raise FalloObtencion(f"Hay {csv.count()} iconos CSV visibles y se esperaba 1: SICOP cambió la "
+                                 "página.") from None
         csv.click()
 
         paso("ventana del correo")

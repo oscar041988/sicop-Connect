@@ -123,6 +123,22 @@ def test_flujo_completo_con_el_codigo_del_buzon(tmp_path):
     assert CODIGO not in repr(r) and PID not in repr(r)
 
 
+def test_espera_a_que_se_cierre_el_otro_panel(tmp_path):
+    """Observado el 2026-10-21: al abrir el reporte, el panel que estaba abierto se cierra con una animación y por un
+    momento hay dos iconos CSV visibles."""
+    settings, sim = _settings(tmp_path), _Simulacion("animacion")
+    assert _solicitar(settings, sim, _LectorSimulado(CODIGO)).codigo == CODIGO
+    assert sim.informes["correo"] == [BUZON]
+
+
+def test_si_quedan_dos_csv_falla_sin_escribir_el_correo(tmp_path, monkeypatch):
+    monkeypatch.setattr(sb, "ANIMACION_MS", 1000)
+    settings, sim = _settings(tmp_path), _Simulacion("dos_csv")
+    with pytest.raises(sb.FalloObtencion, match="Hay 2 iconos CSV visibles"):
+        _solicitar(settings, sim, _LectorSimulado(CODIGO))
+    assert "correo" not in sim.informes and _filas(settings)[0]["correo_enviado"] == 0
+
+
 def test_sin_url_de_descarga_igual_llega_a_procesando(tmp_path):
     settings = _settings(tmp_path)
     r = _solicitar(settings, _Simulacion("sin_url"), _LectorSimulado(CODIGO))

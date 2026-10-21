@@ -203,6 +203,13 @@ de Git. Las ventanas 2 y 3 se toman de las capturas de la guía de obtención (s
 
 No apareció ningún CAPTCHA ni aviso de bloqueo.
 
+**Primera corrida de `obtain request --ver` (2026-10-21 15:12, Ivania): FALLO antes de escribir el correo**,
+así que no hubo solicitud real. Mensaje: «Hay 2 iconos CSV visibles y se esperaba 1». La captura del fallo muestra
+un solo icono. Explicación: al abrir «Detalle pliego de condiciones», el panel que estaba abierto se cierra con una
+animación, y por un momento se ven los dos. La exploración no lo notó porque esperaba 1,5 s antes de contar.
+Ajuste: se espera hasta 10 s a que quede un solo icono CSV visible (prueba con la variante `animacion` de la
+página simulada).
+
 Peticiones de la página (solo método, servidor y ruta; sin parámetros ni cookies):
 - `www.sicop.go.cr`: el documento, unos 60 archivos `chunk-XXXXXXXX.js` con nombres que dependen de la versión,
   iconos y estilos.
