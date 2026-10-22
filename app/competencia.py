@@ -118,6 +118,18 @@ class FamiliaCompetencia:
     carteles: set[str] = field(default_factory=set)
     competidores: list[Competidor] = field(default_factory=list)
 
+    def montos_ordenados(self) -> list[tuple[str, Decimal]]:
+        """Total de la familia por moneda: la suma de sus ganadores (cada línea es de un solo ganador)."""
+        total: dict[str, Decimal] = {}
+        for c in self.competidores:
+            for moneda, valor in c.montos.items():
+                total[moneda] = total.get(moneda, Decimal(0)) + valor
+        return sorted(total.items())
+
+    @property
+    def instituciones(self) -> int:
+        return len({i for c in self.competidores for i in c.instituciones})
+
 
 @dataclass
 class Cobertura:

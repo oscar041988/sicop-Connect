@@ -49,35 +49,57 @@
 <p class="sub">Montos: cantidad × precio − descuento, sin impuestos, cada moneda por separado (nunca se convierten).
   Las líneas con más de un registro distinto en SICOP no se suman: se indican aparte.</p>
 
+<div class="list">
 {% for fam in r.familias %}
-<section class="familia-comp">
-  <h2>{{ NOMBRES_FAMILIA.get(fam.familia, fam.familia) }}</h2>
-  <p class="sub">{{ fam.carteles | length }} cartel{% if fam.carteles | length != 1 %}es{% endif %} adjudicado{% if fam.carteles | length != 1 %}s{% endif %}
-    · {{ fam.competidores | length }} ganador{% if fam.competidores | length != 1 %}es{% endif %}</p>
-  <div class="tabla-scroll">
-  <table class="comp resumen">
-    <colgroup><col class="c-quien"><col class="c-veces"><col><col class="c-monto"></colgroup>
-    <thead><tr><th>Quién gana</th><th class="centro">Veces</th><th>Instituciones (carteles)</th><th class="num">Monto adjudicado</th></tr></thead>
-    <tbody>
-    {% for c in fam.competidores %}
-      <tr>
-        <td>{% if c.nombre %}<strong>{{ c.nombre }}</strong><br><small>{{ c.cedulas | sort | join(", ") }}</small>
-            {% else %}{{ nombre_competidor(c.clave) }}<br><small>sin nombre en competidores.yaml</small>{% endif %}</td>
-        <td class="centro"><a class="veces" href="{{ url_registros(fam.familia, c.clave) }}" title="Ver los registros">{{ c.veces }}</a></td>
-        <td class="instituciones-celda"><ul class="instituciones">{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }}{% if n > 1 %} <small>({{ n }})</small>{% endif %}</li>{% endfor %}</ul></td>
-        <td class="num">
-          {% for moneda, total in c.montos_ordenados() %}{{ monto(total, moneda) }}<br>{% else %}—<br>{% endfor %}
-          {% if c.lineas_en_conflicto %}<small>{{ c.lineas_en_conflicto }} registro{% if c.lineas_en_conflicto != 1 %}s{% endif %} sin sumar</small><br>{% endif %}
-          {% if c.carteles_sin_lineas %}<small>{{ c.carteles_sin_lineas }} cartel{% if c.carteles_sin_lineas != 1 %}es{% endif %} sin líneas en SICOP</small>{% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+{% set n_carteles = fam.carteles | length %}
+{% set n_ganadores = fam.competidores | length %}
+{% set lider = fam.competidores[0] %}
+{% set empatados = fam.competidores | selectattr("veces", "equalto", lider.veces) | list | length %}
+<article class="card familia-comp">
+  <div class="row">
+    <div>
+      <h3>{{ NOMBRES_FAMILIA.get(fam.familia, fam.familia) }}</h3>
+      <div class="inst">{{ n_carteles }} cartel{% if n_carteles != 1 %}es{% endif %} adjudicado{% if n_carteles != 1 %}s{% endif %}
+        · {{ n_ganadores }} ganador{% if n_ganadores != 1 %}es{% endif %}</div>
+    </div>
+    <div class="score"><b>{{ n_carteles }}</b><span>adjudicado{% if n_carteles != 1 %}s{% endif %}</span></div>
   </div>
-</section>
+
+  <dl class="meta">
+    <div><dt>Gana más</dt><dd>{% if empatados > 1 %}Empate entre {{ empatados }}{% else %}{{ lider.nombre or nombre_competidor(lider.clave) }}{% endif %}<br>
+      <small>{{ lider.veces }} cartel{% if lider.veces != 1 %}es{% endif %}{% if empatados > 1 %} cada uno{% endif %}</small></dd></div>
+    <div><dt>Monto adjudicado (sin impuestos)</dt><dd>{% for moneda, total in fam.montos_ordenados() %}{{ monto(total, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}Sin dato{% endfor %}</dd></div>
+    <div><dt>Instituciones</dt><dd>{{ fam.instituciones }}</dd></div>
+  </dl>
+
+  <details>
+    <summary>Ver {% if n_ganadores == 1 %}al ganador{% else %}los {{ n_ganadores }} ganadores{% endif %}</summary>
+    <div class="tabla-scroll">
+    <table class="comp resumen">
+      <colgroup><col class="c-quien"><col class="c-veces"><col><col class="c-monto"></colgroup>
+      <thead><tr><th>Quién gana</th><th class="centro">Veces</th><th>Instituciones (carteles)</th><th class="num">Monto adjudicado</th></tr></thead>
+      <tbody>
+      {% for c in fam.competidores %}
+        <tr>
+          <td>{% if c.nombre %}<strong>{{ c.nombre }}</strong><br><small>{{ c.cedulas | sort | join(", ") }}</small>
+              {% else %}{{ nombre_competidor(c.clave) }}<br><small>sin nombre en competidores.yaml</small>{% endif %}</td>
+          <td class="centro"><a class="veces" href="{{ url_registros(fam.familia, c.clave) }}" title="Ver los registros">{{ c.veces }}</a></td>
+          <td class="instituciones-celda"><ul class="instituciones">{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }}{% if n > 1 %} <small>({{ n }})</small>{% endif %}</li>{% endfor %}</ul></td>
+          <td class="num">
+            {% for moneda, total in c.montos_ordenados() %}{{ monto(total, moneda) }}<br>{% else %}—<br>{% endfor %}
+            {% if c.lineas_en_conflicto %}<small>{{ c.lineas_en_conflicto }} registro{% if c.lineas_en_conflicto != 1 %}s{% endif %} sin sumar</small><br>{% endif %}
+            {% if c.carteles_sin_lineas %}<small>{{ c.carteles_sin_lineas }} cartel{% if c.carteles_sin_lineas != 1 %}es{% endif %} sin líneas en SICOP</small>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </details>
+</article>
 {% else %}
 <p class="vacio">Ningún cartel adjudicado coincide con las familias en este periodo y prioridad.</p>
 {% endfor %}
+</div>
 {% endif %}
 {% endblock %}

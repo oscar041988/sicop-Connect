@@ -180,6 +180,9 @@ def test_quien_gana_por_familia_con_montos_por_moneda(importada):
     assert (otra.clave, otra.nombre, otra.veces, otra.montos, otra.lineas_en_conflicto) == (
         "cedula:3101000002", None, 1, {}, 2)
     assert r.sin_nombre == 1
+    # Totales de la tarjeta de la familia: la suma de sus ganadores, cada moneda aparte.
+    assert gps.montos_ordenados() == [("CRC", Decimal("2000.00")), ("USD", Decimal("300"))]
+    assert gps.instituciones == 2
     assert (r.cobertura.carteles_adjudicados, r.cobertura.con_cartel, r.cobertura.clasificados) == (4, 3, 2)
 
 
@@ -258,6 +261,7 @@ def test_pagina_competencia(cliente):
     c, _ = cliente
     html = c.get("/competencia").text
     assert "GPS y gestión de flotas" in html and "Competidor Uno" in html
+    assert "Gana más" in html and "Ver los 2 ganadores" in html
     assert "2 000.00 CRC" in html and "300.00 USD" in html
     assert "Cédula 3101000002" in html and "2 registros sin sumar" in html
     assert "familia=gps_flotas" in html and "competidor=Competidor+Uno" in html

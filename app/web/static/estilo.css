@@ -206,7 +206,16 @@ table.comp .veces { display: inline-block; min-width: 2rem; padding: 2px 8px; bo
 table.comp .veces:hover { background: var(--g5); color: #fff; }
 tr.conflicto td { color: var(--warn); }
 .filtros input[type="date"] { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
-.familia-comp h2 { margin-top: 0; }
+/* Tarjeta de familia: como la de los carteles; al pasar el mouse se levanta un poco */
+.familia-comp { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.familia-comp:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(16, 42, 67, .10); border-color: var(--g5); }
+.familia-comp h3 { margin-top: 8px; }
+.familia-comp details summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; color: var(--g7); }
+.familia-comp details summary::-webkit-details-marker { display: none; }
+.familia-comp details summary::before { content: "▸"; display: inline-block; transition: transform .15s ease; }
+.familia-comp details[open] summary::before { transform: rotate(90deg); }
+@media (max-width: 760px) { .familia-comp .row { flex-wrap: nowrap; } .familia-comp .score { min-width: 64px; } }
+@media (prefers-reduced-motion: reduce) { .familia-comp, .familia-comp details summary::before { transition: none; } .familia-comp:hover { transform: none; } }
 /* Resumen en celular: cada ganador como tarjeta (nombre y veces arriba, instituciones y monto debajo) */
 @media (max-width: 760px) {
   table.comp.resumen { min-width: 0; }
