@@ -34,26 +34,30 @@ def es_zip_de_pliegos(path: Path) -> bool:
         return False
 
 
-def extraer(path: Path, carpeta: Path) -> list[tuple[str, Path]]:
-    """Extrae los dos CSV en la carpeta y devuelve [(reporte, ruta)], carteles primero."""
+def extraer(path: Path, carpeta: Path, archivos: dict[str, str] = ARCHIVOS,
+            reporte_zip: str = "reporte de pliegos") -> list[tuple[str, Path]]:
+    """Extrae los CSV en la carpeta y devuelve [(reporte, ruta)] en el orden de `archivos` (carteles primero).
+
+    `archivos` y `reporte_zip` permiten usarlo con otro ZIP de SICOP (p. ej. adjudicaciones).
+    """
     try:
         with zipfile.ZipFile(path) as zf:
             nombres = zf.namelist()
-            faltan = [n for n in ARCHIVOS if n not in nombres]
-            sobran = [n for n in nombres if n not in ARCHIVOS]
+            faltan = [n for n in archivos if n not in nombres]
+            sobran = [n for n in nombres if n not in archivos]
             if faltan or sobran:
                 detalle = "; ".join(filter(None, [f"faltan {', '.join(faltan)}" if faltan else "",
                                                   f"sobran {', '.join(sobran)}" if sobran else ""]))
-                raise ZipInvalido(f"el ZIP no es el reporte de pliegos tal como lo entrega SICOP ({detalle})")
-            if sum(zf.getinfo(n).file_size for n in ARCHIVOS) > MAX_DESCOMPRIMIDO:
+                raise ZipInvalido(f"el ZIP no es el {reporte_zip} tal como lo entrega SICOP ({detalle})")
+            if sum(zf.getinfo(n).file_size for n in archivos) > MAX_DESCOMPRIMIDO:
                 raise ZipInvalido(f"el ZIP descomprimido pasa de {MAX_DESCOMPRIMIDO // (1024 * 1024)} MB: "
-                                  "no parece el reporte de pliegos")
+                                  f"no parece el {reporte_zip}")
             if (malo := zf.testzip()) is not None:
                 raise ZipInvalido(f"el ZIP está dañado ({malo}). Vuelve a descargarlo")
             carpeta.mkdir(parents=True, exist_ok=True)
             extraidos = []
-            for nombre, reporte in ARCHIVOS.items():
-                # El nombre lo pone el programa (de ARCHIVOS), nunca una ruta que venga dentro del ZIP.
+            for nombre, reporte in archivos.items():
+                # El nombre lo pone el programa (de `archivos`), nunca una ruta que venga dentro del ZIP.
                 destino = carpeta / nombre
                 destino.write_bytes(zf.read(nombre))
                 extraidos.append((reporte, destino))

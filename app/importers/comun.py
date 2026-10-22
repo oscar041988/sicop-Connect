@@ -146,7 +146,7 @@ def importar_reporte(
     entidad: str, origen: str, raw_dir: Path, requeridas: Iterable[str], nombre_clave: str,
     validar: Validar, guardar: Guardar,
     periodo: Callable[[list[Fila]], tuple[str | None, str | None]] | None = None,
-    source_run_id: int | None = None,
+    source_run_id: int | None = None, repetida_identica: str | None = None,
 ) -> Resultado:
     """Valida todas las filas y, si el archivo es nuevo, las guarda en una sola transacción.
 
@@ -154,6 +154,8 @@ def importar_reporte(
     * guardar(conn, fila, content_hash, import_id, momento) devuelve 'nueva', 'actualizada',
       'sin_cambios' o 'huerfana'.
     * source_run_id: la ejecución de run-cycle a la que pertenece; sin él, la importación suelta crea la suya.
+    * repetida_identica: si se indica, una fila idéntica a otra anterior del archivo no se rechaza: se
+      advierte con ese texto y se guarda una sola vez (las adjudicaciones repiten filas tal cual).
     """
     if origen not in ORIGENES:
         raise ImportacionError(f"Origen no válido: {origen!r} (usa {', '.join(ORIGENES)})")
@@ -179,6 +181,7 @@ def importar_reporte(
 
     filas: list[Fila] = []
     vistos: dict[str, int] = {}
+    originales: dict[str, dict[str, str]] = {}
     header = csv_file.header
     for linea, valores in csv_file.rows:
         try:
@@ -189,6 +192,12 @@ def importar_reporte(
                 if _NOTACION_CIENTIFICA.match(valor):
                     raise FilaRechazada(f"«{columna}» en notación científica ({valor}): código dañado por Excel")
             fila = validar(original, linea, resultado)
+            if repetida_identica and fila.clave in vistos and originales[fila.clave] == original:
+                for lineas in resultado.advertencias.values():  # sus advertencias ya las tiene la primera
+                    if linea in lineas:
+                        lineas.remove(linea)
+                resultado.advertir(repetida_identica, linea)
+                continue
             if fila.clave in vistos:
                 raise FilaRechazada(f"{nombre_clave} {fila.clave} repetido (ya está en la línea {vistos[fila.clave]})")
         except FilaRechazada as exc:
@@ -198,6 +207,7 @@ def importar_reporte(
                     lineas.remove(linea)
             continue
         vistos[fila.clave] = linea
+        originales[fila.clave] = original
         filas.append(fila)
 
     resultado.copia_original = _copiar_original(raw, nombre_archivo, file_hash, raw_dir)

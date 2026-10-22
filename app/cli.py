@@ -16,6 +16,7 @@ from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
 from app.database import MigrationError, apply_migrations, check_database, connect
 from app.compras import Compra, detalle_compra
 from app.importers.carteles import import_carteles
+from app.importers import adjudicaciones, zip_pliegos
 from app.importers.catalogo import import_catalogo
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError, Resultado
 from app.importers.instituciones import import_instituciones
@@ -135,12 +136,18 @@ def importar(settings: Settings, path: Path, report: str, origen: str) -> int:
         return 1
     try:
         with closing(connect(settings.database_path)) as conn:
-            resultado = IMPORTADORES[report](conn, path, origen, settings.raw_data_dir)
-    except ImportacionError as exc:
+            if report == "adjudicaciones":
+                partes = adjudicaciones.import_zip(conn, path, origen, settings.raw_data_dir)
+            else:
+                partes = [(report, IMPORTADORES[report](conn, path, origen, settings.raw_data_dir))]
+    except (ImportacionError, zip_pliegos.ZipInvalido) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-    print(f"Reporte: {report}  ·  origen de los datos: {origen}")
-    _imprimir_resultado(resultado)
+    for i, (parte, resultado) in enumerate(partes):
+        if i:
+            print()
+        print(f"Reporte: {parte}  ·  origen de los datos: {origen}")
+        _imprimir_resultado(resultado)
     return 0
 
 
@@ -673,9 +680,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("doctor", help="Muestra la configuración disponible y pendiente, sin secretos")
     sub.add_parser("migrate", help="Crea o actualiza el esquema de la base (repetible)")
     imp = sub.add_parser("import", help="Importa un reporte de SICOP (repetible: el mismo archivo no duplica)")
-    imp.add_argument("--path", required=True, type=Path, help="Ruta del CSV (o del ZIP, para catalogo)")
-    imp.add_argument("--report", required=True, choices=list(IMPORTADORES),
-                     help="Tipo de reporte (importar carteles antes que lineas)")
+    imp.add_argument("--path", required=True, type=Path,
+                     help="Ruta del CSV (o del ZIP, para catalogo y adjudicaciones)")
+    imp.add_argument("--report", required=True, choices=[*IMPORTADORES, "adjudicaciones"],
+                     help="Tipo de reporte (importar carteles antes que lineas y adjudicaciones;"
+                          " adjudicaciones = el ZIP «Reporte de adjudicaciones en firme» tal como llega)")
     imp.add_argument("--origen", required=True, choices=ORIGENES,
                      help="Origen de los datos: real, sintetico o simulado")
     com = sub.add_parser("compra", help="Muestra un cartel con su comprador y sus líneas")

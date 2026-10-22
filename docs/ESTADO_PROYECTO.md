@@ -342,6 +342,30 @@
       (FALLO). Se decide junto con lo de la descarga bloqueada.
     - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
       conocido: la revisión no saca un cartel de los avisos.
+- **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
+  «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
+  - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix
+    en `config/competidores.yaml` (hoy vacío; las cédulas sin nombre se muestran como «Cédula …»).
+  - Migración 0012 (`adjudicaciones`, `adjudicacion_proveedores`, `adjudicacion_lineas`) e importador del ZIP tal
+    como llega: `python -m app.cli import --report adjudicaciones --path "<ZIP>" --origen real`.
+  - La familia es la del cartel, con las mismas reglas, porque las líneas adjudicadas no traen texto.
+  - Página «Competencia» (cualquier usuario con sesión):
+    - por familia: quién gana, cuántas veces, con qué instituciones y el monto por moneda (cantidad × precio −
+      descuento, sin impuestos, sin convertir);
+    - filtros por periodo en firme y por prioridad;
+    - cada número lleva a sus registros, con la importación y el archivo de origen.
+  - Las 88 líneas con más de un registro distinto no se suman: se cuentan aparte.
+  - Importado en la base local: 0 rechazos.
+    - En la primera pasada se rechazaron 4345 filas porque SICOP marca «sin valor» con un espacio. Se corrigió,
+      se quitó solo esa importación (#20, copia de la base antes) y se reimportó como #23.
+    - Resultado: 9155 carteles adjudicados (jul–oct 2026); 7096 con su cartel importado; **10 en Alta o Media**
+      (iot_frio 5, gps_flotas 4, cámaras corporales 1, rastreo de activos 1); 13 cédulas ganadoras sin nombre.
+  - 452 passed (15 nuevas en `tests/test_competencia.py`, datos SINTÉTICOS).
+  - **Pendiente · Ivania/Oscar:**
+    - poner nombre a las cédulas ganadoras en `config/competidores.yaml` (Registro Nacional o ficha del
+      proveedor en SICOP);
+    - descargar «Contratos» si se quiere comparar;
+    - revisar la página en el panel.
 - **Obtención automática · lección 4, integrar al ciclo (2026-10-22, rama `desarrollo`, solo local):** hecha con
   pruebas SIMULADAS; **no activada**.
   - Oscar quiere todo automático. Mientras SICOP bloquee la descarga, el plan B es un clic: alerta por correo →
@@ -362,7 +386,7 @@
   - 437 passed (11 nuevas en `tests/test_automatico.py`).
   - Fuera de esta lección: plantillas de systemd y despliegue (al final, con el servidor) y las dos solicitudes
     al día (después de la respuesta de SICOP).
-  - **Pendiente · Ivania:** `migrate` (0011) en la base local. Para activar: `.env` (`SOURCE_MODE=auto`,
+  - ~~`migrate` (0011) en la base local~~ hecho (22/10). **Pendiente · Ivania/Oscar:** para activar: `.env` (`SOURCE_MODE=auto`,
     `OBTAIN_ALERT_TO`), una vuelta a mano y crear la tarea, cuando Oscar y Ivania lo decidan.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas

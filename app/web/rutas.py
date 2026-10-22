@@ -26,7 +26,7 @@ from app.database import check_database, connect
 from app.importers import zip_pliegos
 from app.importers.comun import ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import avisos, destinatarios, historial, panel, reintentos, usuarios
+from app import avisos, competencia, destinatarios, historial, panel, reintentos, usuarios
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -49,6 +49,7 @@ PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
+    nombre_competidor=competencia.nombre_competidor,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
 
@@ -283,6 +284,52 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
     # Sin Post/Redirect/Get: el detalle de los rechazos no se guarda en la base. Si se recarga la página y se
     # reenvía el archivo, el hash lo reconoce y no se importa dos veces.
     return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error)
+
+
+# --- Competencia (todos los usuarios con sesión) ---------------------------------------------------------------
+
+def _competidores() -> tuple[dict[str, str], str | None]:
+    """Los nombres de config/competidores.yaml; si el archivo está mal, la página igual se ve (con cédulas)."""
+    try:
+        return competencia.cargar_competidores(), None
+    except (competencia.CompetidoresError, OSError) as exc:
+        return {}, f"{exc}. Mientras tanto, los ganadores se muestran por cédula."
+
+
+@router.get("/competencia", response_class=HTMLResponse)
+def pagina_competencia(request: Request, desde: str = "", hasta: str = "", prioridad: str = "") -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtro = competencia.Filtro.desde_texto(desde, hasta, prioridad)
+    nombres, error_yaml = _competidores()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        hay_adjudicaciones = conn.execute("SELECT 1 FROM adjudicaciones LIMIT 1").fetchone() is not None
+        datos = competencia.resumen(conn, version, filtro, nombres) if version and hay_adjudicaciones else None
+    return PLANTILLAS.TemplateResponse(request, "competencia.html", {
+        "seccion": "competencia", "filtro": filtro, "r": datos, "version": version, "error": error_yaml,
+        "aviso": _aviso_reglas(version), "hay_adjudicaciones": hay_adjudicaciones,
+        "prioridades": competencia.PRIORIDADES,
+        "url_registros": lambda familia, clave: "/competencia/registros?" + urlencode(
+            {**filtro.consulta(), "familia": familia, "competidor": clave}),
+    })
+
+
+@router.get("/competencia/registros", response_class=HTMLResponse)
+def registros_competencia(request: Request, familia: str = "", competidor: str = "", desde: str = "",
+                          hasta: str = "", prioridad: str = "") -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtro = competencia.Filtro.desde_texto(desde, hasta, prioridad)
+    nombres, error_yaml = _competidores()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        carteles = competencia.registros(conn, version, filtro, nombres, familia, competidor) if version else []
+    return PLANTILLAS.TemplateResponse(request, "competencia_registros.html", {
+        "seccion": "competencia", "filtro": filtro, "familia": familia, "competidor": competidor,
+        "carteles": carteles, "version": version, "error": error_yaml,
+        "volver": "/competencia" + ("?" + urlencode(filtro.consulta()) if filtro.consulta() else ""),
+    })
 
 
 # --- Usuarios (solo administradores) -------------------------------------------------------------------------

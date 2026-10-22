@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}Competencia{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Competencia</h1>
+  <p class="sub">Quién gana lo adjudicado en cada familia de Hermatix. Fuente: «Adjudicaciones en firme» de SICOP.
+    La familia es la del cartel, con las mismas reglas que las oportunidades. Cada número lleva a sus registros.</p>
+</section>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<details class="filtros-caja" open>
+  <summary>Periodo y prioridad</summary>
+  <form class="filtros" method="get" action="/competencia">
+    <label>Adjudicado en firme desde
+      <input type="date" name="desde" value="{{ filtro.desde or '' }}">
+    </label>
+    <label>Hasta
+      <input type="date" name="hasta" value="{{ filtro.hasta or '' }}">
+    </label>
+    <label>Prioridad del cartel
+      <select name="prioridad">
+        {% for valor in prioridades %}
+        <option value="{{ valor }}" {% if filtro.prioridad == valor %}selected{% endif %}>
+          {% if valor == "candidatos" %}Alta y Media{% elif valor == "todas" %}Alta, Media y Baja{% else %}{{ ENCAJES[valor] }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="acciones">
+      <button class="btn p" type="submit">Filtrar</button>
+      <a href="/competencia">Limpiar</a>
+    </div>
+  </form>
+</details>
+
+{% if not hay_adjudicaciones %}
+<p class="vacio">Todavía no hay adjudicaciones importadas. Descarga «Adjudicaciones en firme» en datos abiertos de SICOP
+  e impórtalo con: python -m app.cli import --report adjudicaciones --path "&lt;ZIP&gt;" --origen real</p>
+{% elif r %}
+<p class="sub">
+  {{ r.cobertura.carteles_adjudicados }} carteles adjudicados{% if filtro.desde or filtro.hasta %} en el periodo{% endif %} ·
+  {{ r.cobertura.con_cartel }} con su cartel importado (a los demás no se les puede aplicar una familia) ·
+  {{ r.cobertura.clasificados }} en alguna familia con esta prioridad.
+  {% if r.sin_nombre %}{{ r.sin_nombre }} cédula{% if r.sin_nombre != 1 %}s{% endif %} ganadora{% if r.sin_nombre != 1 %}s{% endif %}
+  sin nombre en config/competidores.yaml.{% endif %}
+  {% if r.cobertura.sin_fecha and (filtro.desde or filtro.hasta) %}{{ r.cobertura.sin_fecha }} sin fecha en firme: no entran al filtrar por periodo.{% endif %}
+</p>
+<p class="sub">Montos: cantidad × precio − descuento, sin impuestos, cada moneda por separado (nunca se convierten).
+  Las líneas con más de un registro distinto en SICOP no se suman: se indican aparte.</p>
+
+{% for fam in r.familias %}
+<section>
+  <h2>{{ NOMBRES_FAMILIA.get(fam.familia, fam.familia) }}</h2>
+  <p class="sub">{{ fam.carteles | length }} cartel{% if fam.carteles | length != 1 %}es{% endif %} adjudicado{% if fam.carteles | length != 1 %}s{% endif %}
+    · {{ fam.competidores | length }} ganador{% if fam.competidores | length != 1 %}es{% endif %}</p>
+  <div class="tabla-scroll">
+  <table class="comp">
+    <thead><tr><th>Quién gana</th><th>Veces</th><th>Instituciones (carteles)</th><th>Monto adjudicado por moneda</th></tr></thead>
+    <tbody>
+    {% for c in fam.competidores %}
+      <tr>
+        <td>{% if c.nombre %}<strong>{{ c.nombre }}</strong><br><small>{{ c.cedulas | sort | join(", ") }}</small>
+            {% else %}{{ nombre_competidor(c.clave) }}<br><small>sin nombre en competidores.yaml</small>{% endif %}</td>
+        <td class="num"><a href="{{ url_registros(fam.familia, c.clave) }}">{{ c.veces }}</a></td>
+        <td><ul>{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }} ({{ n }})</li>{% endfor %}</ul></td>
+        <td class="num">
+          {% for moneda, total in c.montos_ordenados() %}{{ monto(total, moneda) }}<br>{% else %}—<br>{% endfor %}
+          {% if c.lineas_en_conflicto %}<small>{{ c.lineas_en_conflicto }} registro{% if c.lineas_en_conflicto != 1 %}s{% endif %} sin sumar</small><br>{% endif %}
+          {% if c.carteles_sin_lineas %}<small>{{ c.carteles_sin_lineas }} cartel{% if c.carteles_sin_lineas != 1 %}es{% endif %} sin líneas en SICOP</small>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% else %}
+<p class="vacio">Ningún cartel adjudicado coincide con las familias en este periodo y prioridad.</p>
+{% endfor %}
+{% endif %}
+{% endblock %}

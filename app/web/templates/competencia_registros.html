@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}Registros de competencia{% endblock %}
+{% block contenido %}
+<section>
+  <p><a href="{{ volver }}">← Volver a Competencia</a></p>
+  <h1>{{ nombre_competidor(competidor) }} · {{ NOMBRES_FAMILIA.get(familia, familia) }}</h1>
+  <p class="sub">{{ carteles | length }} cartel{% if carteles | length != 1 %}es{% endif %} adjudicado{% if carteles | length != 1 %}s{% endif %}
+    {% if filtro.desde or filtro.hasta %}· en firme entre {{ filtro.desde or "el inicio" }} y {{ filtro.hasta or "hoy" }}{% endif %}.
+    Cada línea es un registro del reporte «Det Lineas Adjudicadas», con la importación y el archivo de donde salió.</p>
+</section>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+{% for c in carteles %}
+<section class="tarjeta">
+  <p><strong><a href="/oportunidades/{{ c.nro_sicop }}">{{ c.nro_sicop }}</a></strong>
+    {% if c.titulo %}· {{ c.titulo | titulo }}{% endif %}</p>
+  <p class="sub">{{ c.institucion }} · en firme {{ c.fecha_firme | fecha }} · cédula{% if c.cedulas | length != 1 %}s{% endif %} {{ c.cedulas | join(", ") }}</p>
+  {% if c.lineas %}
+  <div class="tabla-scroll">
+  <table class="comp">
+    <thead><tr><th>Línea</th><th>Cédula</th><th>Cantidad</th><th>Precio unitario</th><th>Descuento</th><th>IVA</th>
+      <th>Monto sin impuestos</th><th>Origen</th></tr></thead>
+    <tbody>
+    {% for l in c.lineas %}
+      <tr{% if l.registros > 1 %} class="conflicto"{% endif %}>
+        <td>{{ l.numero_linea }}</td>
+        <td>{{ l.cedula }}</td>
+        <td class="num">{{ l.cantidad }}</td>
+        <td class="num">{{ l.precio_unitario }} {{ l.moneda }}</td>
+        <td class="num">{{ l.descuento or "—" }}</td>
+        <td class="num">{{ l.iva or "—" }}</td>
+        <td class="num">{{ monto(l.monto, l.moneda) }}{% if l.registros > 1 %}<br><small>no sumado: {{ l.registros }} registros distintos</small>{% endif %}</td>
+        <td><small>registro #{{ l.id }} · importación #{{ l.import_id }}<br>{{ l.archivo or "" }}</small></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="vacio">SICOP no trae líneas adjudicadas de este cartel para esta cédula: cuenta como ganado, sin monto.</p>
+  {% endif %}
+</section>
+{% else %}
+<p class="vacio">No hay registros para esta combinación. Revisa el periodo y la prioridad.</p>
+{% endfor %}
+{% endblock %}

@@ -178,6 +178,16 @@ table.lista th { background: var(--line); color: var(--g9); font-size: .8rem; }
 .historial li { margin-bottom: 10px; }
 .historial p { margin: 4px 0 0; white-space: pre-wrap; }
 
+/* Competencia: tablas con montos por moneda; en pantallas angostas se desplazan dentro de su caja */
+.tabla-scroll { overflow-x: auto; }
+table.comp { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); margin-top: 10px; }
+table.comp th, table.comp td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.comp th { background: var(--line); color: var(--g9); font-size: .8rem; }
+table.comp td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.comp ul { margin: 0; padding-left: 16px; }
+tr.conflicto td { color: var(--warn); }
+.filtros input[type="date"] { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
+
 /* 9. Responsive */
 /* Tabla de líneas del detalle: anchos fijos para que la descripción larga se corte */
 table.lista th:nth-child(1) { width: 3rem; }
