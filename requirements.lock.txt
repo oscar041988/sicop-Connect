@@ -4,6 +4,8 @@
 # Comprobado de nuevo el 2026-10-13 (lección 8, encargo B): un entorno limpio da exactamente esta lista
 # y con ella pasaron las 328 pruebas (python -m pytest -q, más requirements-dev.txt, que no entra aquí).
 # Todas aceptan Python 3.11 o más (starlette 1.8 lo exige; el servidor tendrá 3.12) y ninguna es solo de Windows.
+# 2026-10-22 (A5): se agregó openpyxl. Entorno limpio con este mismo lock + openpyxl>=3.1; solo se sumaron
+# openpyxl 3.1.5 y su dependencia et_xmlfile 2.0.0 (ninguna otra versión cambió).
 # Para actualizar: repetir en un entorno nuevo, correr las pruebas y reemplazar este archivo; nunca a mano.
 annotated-doc==0.0.5
 annotated-types==0.8.0
@@ -15,6 +17,7 @@ cffi==2.1.1
 charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
+et_xmlfile==2.0.0
 fastapi==0.143.0
 google-auth==2.62.0
 google-auth-oauthlib==1.5.0
@@ -24,6 +27,7 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.4
 oauthlib==4.0.0
+openpyxl==3.1.5
 opentelemetry-api==1.45.1
 pyasn1==0.6.4
 pyasn1_modules==0.4.2

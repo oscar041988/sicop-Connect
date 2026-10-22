@@ -23,7 +23,7 @@ from app.importers.instituciones import import_instituciones
 from app.importers.lineas import import_lineas
 from app.matching.evaluar import ENCAJES, ResultadoEvaluacion, evaluar_base
 from app.matching.reglas import REGLAS_PATH, ReglasError, cargar_reglas
-from app import avisos, ciclo, respaldo, usuarios
+from app import avisos, ciclo, respaldo, resumen, usuarios
 from app.usuarios import UsuarioInvalido, crear_usuario, validar_contrasena
 
 MAX_RECHAZOS_VISIBLES = 20
@@ -531,7 +531,7 @@ def obtain_auto(settings: Settings) -> int:
     return 1 if v.fallo else 0
 
 
-def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
+def notify(settings: Settings, dry_run: bool, solo: str | None = None, semanal: bool = False) -> int:
     if not _base_de_usuarios(settings):
         return 1
     proveedor = None
@@ -548,6 +548,15 @@ def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
             print(f"Error: {exc} No se envió nada.", file=sys.stderr)
             return 1
     ahora = datetime.now(HORA_CR)
+    if semanal:
+        try:
+            with closing(connect(settings.database_path)) as conn:
+                r = resumen.notify(conn, settings, ahora, dry_run=dry_run, proveedor=proveedor)
+        except avisos.AvisoError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        print(f"{'DRY-RUN · no se envía nada' if dry_run else 'ENVÍO REAL'} · resumen semanal")
+        return _imprimir_resumen(r, dry_run)
     try:
         dias = settings.notify_lookback_days
         with closing(connect(settings.database_path)) as conn:
@@ -572,7 +581,8 @@ def _imprimir_avisos(resultado: avisos.Resultado, dry_run: bool) -> int:
         print("No hay destinatarios activos: agrégalos en el panel («Destinatarios»). No se preparó nada.")
         return 0
     print(f"Destinatarios activos: {resultado.destinatarios}")
-    print(f"Avisos nuevos en la outbox: {resultado.nuevos} · ya avisados antes (no se repiten): {resultado.ya_avisados}")
+    cierre = f" (de cierre próximo: {resultado.por_cerrar})" if resultado.por_cerrar else ""
+    print(f"Avisos nuevos en la outbox: {resultado.nuevos}{cierre} · ya avisados antes (no se repiten): {resultado.ya_avisados}")
     total = sum(len(v) for v in resultado.preparados.values())
     print(f"Preparados {'esperando envío' if dry_run else 'para enviar'}: {total}")
     for para, lista in sorted(resultado.preparados.items()):
@@ -595,6 +605,23 @@ def _imprimir_avisos(resultado: avisos.Resultado, dry_run: bool) -> int:
     if "fallido" in estados:
         print("Atención: hay envíos FALLIDOS. Gmail los rechazó; revisa el motivo. No se reintentan solos.")
     return 0 if estados == {"aceptado"} else 1
+
+
+def _imprimir_resumen(r: resumen.Resultado, dry_run: bool) -> int:
+    if r.destinatarios == 0:
+        print("No hay destinatarios activos: agrégalos en el panel («Destinatarios»). No se preparó nada.")
+        return 0
+    print(f"Resumen semanal {r.id_semana}: nuevos en la outbox {r.nuevos} · por enviar {len(r.preparados)}")
+    if not r.preparados:
+        print("El resumen de esta semana ya se envió (o se intentó): no se repite.")
+        return 0
+    print(f"Asunto: {r.asunto}")
+    if dry_run:
+        print(f"Vista previa: {r.vista_previa[0].parent}")
+        return 0
+    for para, envio in sorted(r.envios.items()):
+        print(f"  {para}: {envio.estado.upper()} · {envio.detalle}")
+    return 0 if {e.estado for e in r.envios.values()} == {"aceptado"} else 1
 
 
 ETIQUETAS_ARCHIVO = {"importado": "IMPORTADO", "ya_importado": "YA IMPORTADO", "error": "ERROR",
@@ -650,8 +677,10 @@ def run_cycle(settings: Settings, origen: str, dry_run: bool) -> int:
         print(f"Evaluación: reglas {e.version} · {e.carteles} carteles · nuevas {e.nuevas} · actualizadas {e.actualizadas}")
     if c.aviso_omitido:
         print(f"Avisos: NO se avisó ({c.aviso_omitido}).")
-    elif c.avisos:
+    if c.avisos:
         _imprimir_avisos(c.avisos, dry_run)
+    if c.resumen:
+        _imprimir_resumen(c.resumen, dry_run)
     if c.estado == "ok":
         print(f"Ciclo #{c.id}: OK.")
         return 0
@@ -712,6 +741,8 @@ def build_parser() -> argparse.ArgumentParser:
     modo.add_argument("--send", action="store_true",
                       help="Envío real por Gmail (exige NOTIFICATIONS_ENABLED=true y NOTIFICATIONS_DRY_RUN=false)")
     no.add_argument("--solo", metavar="CORREO", help="Solo a este destinatario activo (prueba controlada)")
+    no.add_argument("--resumen-semanal", action="store_true",
+                    help="El resumen ejecutivo de la semana anterior (el ciclo lo arma solo los lunes); uno por semana")
     sub.add_parser("google-auth", help="Autorización única de Gmail: entra como MAIL_FROM en el navegador")
     ob = sub.add_parser("obtain", help="Obtención automática de SICOP (por ahora: leer el buzón, sin cambiar nada)")
     ob_sub = ob.add_subparsers(dest="obtain_command", required=True)
@@ -762,7 +793,10 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "list-users":
         return list_users(settings)
     if args.command == "notify":
-        return notify(settings, args.dry_run, args.solo)
+        if args.resumen_semanal and args.solo:
+            print("Error: --solo es solo para los avisos, no para el resumen semanal.", file=sys.stderr)
+            return 1
+        return notify(settings, args.dry_run, args.solo, args.resumen_semanal)
     if args.command == "google-auth":
         return google_auth(settings)
     if args.command == "obtain":

@@ -137,6 +137,10 @@ summary { cursor: pointer; font-weight: 700; color: var(--g9); }
 .card details dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .card details p { margin: 12px 0 0; max-width: 70ch; }
 .enlace { font-weight: 700; }
+/* Línea de resultados con el botón «Exportar a Excel» (A5): respeta los filtros activos */
+.resultados { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.resultados .sub { flex: 1 1 320px; }
+.btn.o.exportar { white-space: nowrap; padding: 8px 14px; }
 .paginas { display: flex; gap: 12px; align-items: center; justify-content: center; }
 
 /* 8. Detalle del cartel */
@@ -151,9 +155,9 @@ summary { cursor: pointer; font-weight: 700; color: var(--g9); }
 mark { background: #C8F0D6; color: var(--g9); padding: 0 .15em; border-radius: 4px; }
 
 .encaje, .plazo, .decision, .familia, .sin-revisar { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
-.encaje-alta, .familia, .decision-interesa, .plazo-abierto { background: var(--g1); color: var(--g7); }
+.encaje-alta, .familia, .decision-interesa, .decision-ofertada, .plazo-abierto { background: var(--g1); color: var(--g7); }
 .encaje-media, .plazo-cierra_7_dias, .plazo-por_verificar { background: var(--warn-bg); color: var(--warn); }
-.encaje-baja, .encaje-sin_coincidencia, .decision-no_interesa, .plazo-vencido, .sin-revisar { background: var(--no-bg); color: var(--no); }
+.encaje-baja, .encaje-sin_coincidencia, .decision-no_interesa, .decision-no_se_oferta, .plazo-vencido, .sin-revisar { background: var(--no-bg); color: var(--no); }
 .decision-revisar_requisitos { background: var(--azul-bg); color: var(--azul); }
 
 .datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }

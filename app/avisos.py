@@ -7,6 +7,11 @@ actual se vio por primera vez en los últimos NOTIFY_LOOKBACK_DAYS días. El mot
 * nueva_version: el cartel cambió (enmienda), con el mismo cierre.
 Si la versión es la misma que ya se le avisó, no se vuelve a avisar.
 
+Cierre próximo (A4): además, un cartel cuya última revisión es «Interesa» o «Revisar requisitos» (sin decisión
+final: «Ofertada» o «No se oferta») y que cierra en NOTIFY_CLOSING_DAYS días o menos recibe el motivo
+cierre_proximo, aunque su prioridad no sea Alta o Media (lo marcó una persona). Una vez por versión del cartel.
+El resumen semanal del lunes está en app/resumen.py; usa la misma outbox con su propio motivo.
+
 La «versión» es el content_hash del cartel; cuándo se vio por primera vez sale de raw_snapshots (cada versión
 queda ahí con su fecha, y la de una versión repetida no cambia).
 
@@ -37,7 +42,9 @@ from app.database import transaccion
 from app.matching.evaluar import plazo_estado
 from app.notifications import EnvioIncierto, EnvioRechazado
 
-MOTIVOS = {"nueva": "Nueva", "cambio_plazo": "Cambió el plazo", "nueva_version": "Cambió el cartel"}
+MOTIVOS = {"nueva": "Nueva", "cambio_plazo": "Cambió el plazo", "nueva_version": "Cambió el cartel",
+           "cierre_proximo": "Cierra pronto y sigue sin decisión final"}
+MOTIVOS_DE_VERSION = ("nueva", "nueva_version", "cambio_plazo")  # los que siguen las versiones del cartel
 ESTADOS = ("preparado", "aceptado", "fallido", "incierto")
 MAX_FRASES = 6  # evidencia: frases que coincidieron, las primeras
 
@@ -46,7 +53,8 @@ _PLANTILLAS = Environment(
     autoescape=select_autoescape(["html"]),  # el .txt va sin escapar: es texto plano
     trim_blocks=True, lstrip_blocks=True,
 )
-_PLANTILLAS.filters.update(fecha=panel.fecha_cr, titulo=panel.formato_titulo, legible=panel.legible)
+_PLANTILLAS.filters.update(fecha=panel.fecha_cr, titulo=panel.formato_titulo, legible=panel.legible,
+                          fecha_dia=lambda d: d.strftime("%d/%m/%Y"))
 
 
 class AvisoError(Exception):
@@ -92,7 +100,8 @@ class Envio:
 class Resultado:
     version_reglas: str
     destinatarios: int
-    nuevos: int = 0          # avisos agregados a la outbox en esta corrida
+    nuevos: int = 0          # avisos agregados a la outbox en esta corrida (todos los motivos)
+    por_cerrar: int = 0      # de ellos, de cierre próximo
     ya_avisados: int = 0     # candidatos que ya tenían su aviso para esa versión: no se repiten
     # Por destinatario, todo lo que está «preparado»: exactamente lo que enviaría --send.
     preparados: dict[str, list[Oportunidad]] = field(default_factory=dict)
@@ -122,9 +131,11 @@ def candidatos(conn: sqlite3.Connection, version_reglas: str, ahora: datetime, d
 def motivo_para(conn: sqlite3.Connection, destinatario: str, nro_sicop: str, version: str,
                 cierre: str | None) -> str | None:
     """Por qué avisarle ahora a ese destinatario, o None si ya se le avisó esta versión."""
+    # Solo cuentan los avisos de versión: un aviso de cierre próximo no dice nada de qué versión se avisó.
     ultimo = conn.execute(
-        "SELECT version, cierre FROM notification_outbox WHERE recipient = ? AND nro_sicop = ? ORDER BY id DESC LIMIT 1",
-        (destinatario.strip().lower(), nro_sicop)).fetchone()
+        "SELECT version, cierre FROM notification_outbox WHERE recipient = ? AND nro_sicop = ?"
+        f" AND motivo IN ({', '.join('?' * len(MOTIVOS_DE_VERSION))}) ORDER BY id DESC LIMIT 1",
+        (destinatario.strip().lower(), nro_sicop, *MOTIVOS_DE_VERSION)).fetchone()
     if ultimo is None:
         return "nueva"
     if ultimo[0] == version:
@@ -132,13 +143,34 @@ def motivo_para(conn: sqlite3.Connection, destinatario: str, nro_sicop: str, ver
     return "cambio_plazo" if ultimo[1] != cierre else "nueva_version"
 
 
-def preparar(conn: sqlite3.Connection, version_reglas: str, ahora: datetime, dias: int) -> Resultado:
-    """Agrega a la outbox («preparado») los avisos que faltan. Repetible: lo ya preparado no se duplica."""
+def por_cerrar(conn: sqlite3.Connection, ahora: datetime, dias: int) -> list[tuple[str, str, str]]:
+    """(Número SICOP, versión, cierre) de los carteles en curso (última revisión «Interesa» o «Revisar
+    requisitos») que cierran en `dias` días o menos y todavía no cerraron."""
+    filas = conn.execute(
+        "SELECT t.nro_sicop, t.content_hash, t.fecha_cierre_recepcion FROM tenders t"
+        " JOIN reviews r ON r.id = (SELECT max(id) FROM reviews WHERE nro_sicop = t.nro_sicop)"
+        f" WHERE r.decision IN ({', '.join('?' * len(panel.DECISIONES_EN_CURSO))})"
+        " ORDER BY t.fecha_cierre_recepcion, t.nro_sicop", panel.DECISIONES_EN_CURSO).fetchall()
+    resultado = []
+    for nro, version, cierre in filas:
+        if plazo_estado(cierre, ahora) in ("vencido", "por_verificar"):
+            continue  # sin fecha legible no se puede decir que cierra pronto
+        if datetime.fromisoformat(cierre) - ahora <= timedelta(days=dias):
+            resultado.append((nro, version, cierre))
+    return resultado
+
+
+def preparar(conn: sqlite3.Connection, version_reglas: str, ahora: datetime, dias: int,
+             dias_cierre: int | None = None) -> Resultado:
+    """Agrega a la outbox («preparado») los avisos que faltan. Repetible: lo ya preparado no se duplica.
+
+    dias: NOTIFY_LOOKBACK_DAYS (0 = no preparar los avisos de versión).
+    dias_cierre: con un número, también prepara los de cierre próximo (NOTIFY_CLOSING_DAYS)."""
     lista = destinatarios.activos(conn)
     resultado = Resultado(version_reglas, len(lista))
     momento = ahora.isoformat(timespec="seconds")
     with transaccion(conn):
-        for nro, version, cierre in candidatos(conn, version_reglas, ahora, dias):
+        for nro, version, cierre in (candidatos(conn, version_reglas, ahora, dias) if dias else []):
             for d in lista:
                 para = d.email.strip().lower()
                 motivo = motivo_para(conn, para, nro, version, cierre)
@@ -151,6 +183,15 @@ def preparar(conn: sqlite3.Connection, version_reglas: str, ahora: datetime, dia
                     " cierre, rules_version, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'preparado', ?)",
                     (dedup_key(para, nro, version, motivo), para, nro, version, motivo, cierre, version_reglas, momento))
                 resultado.nuevos += cursor.rowcount
+        for nro, version, cierre in (por_cerrar(conn, ahora, dias_cierre) if dias_cierre else []):
+            for d in lista:
+                para = d.email.strip().lower()
+                cursor = conn.execute(
+                    "INSERT OR IGNORE INTO notification_outbox (dedup_key, recipient, nro_sicop, version, motivo,"
+                    " cierre, rules_version, status, created_at) VALUES (?, ?, ?, ?, 'cierre_proximo', ?, ?, 'preparado', ?)",
+                    (dedup_key(para, nro, version, "cierre_proximo"), para, nro, version, cierre, version_reglas, momento))
+                resultado.nuevos += cursor.rowcount
+                resultado.por_cerrar += cursor.rowcount
     return resultado
 
 
@@ -158,6 +199,8 @@ def _oportunidad(conn: sqlite3.Connection, nro_sicop: str, motivo: str, version_
                  base_url: str) -> Oportunidad:
     d = panel.detalle(conn, nro_sicop, version_reglas, ahora)
     candidatas = [e for e in d.evaluaciones if e.encaje in ("alta", "media")]  # ya vienen Alta primero
+    # Un cierre próximo puede ser de un cartel Baja que una persona marcó: se muestra su prioridad real.
+    con_senal = candidatas or [e for e in d.evaluaciones if e.encaje != "sin_coincidencia"]
     frases: list[str] = []
     for e in candidatas:
         for lista in panel.frases_de_evidencia(e.evidencia).values():
@@ -166,14 +209,15 @@ def _oportunidad(conn: sqlite3.Connection, nro_sicop: str, motivo: str, version_
     return Oportunidad(
         nro_sicop=nro_sicop, motivo=motivo, titulo=c.descripcion,
         institucion=c.institucion or f"Institución {c.institution_cedula or 'sin cédula'}",
-        encaje=candidatas[0].encaje if candidatas else "media",
-        familias=[panel.NOMBRES_FAMILIA.get(e.familia, e.familia) for e in candidatas],
+        encaje=con_senal[0].encaje if con_senal else "sin_coincidencia",
+        familias=[panel.NOMBRES_FAMILIA.get(e.familia, e.familia) for e in con_senal],
         cierre=c.fecha_cierre_recepcion, plazo=d.plazo, regresiva=panel.cuenta_regresiva(c.fecha_cierre_recepcion, ahora),
         frases=frases[:MAX_FRASES], enlace=f"{base_url}/oportunidades/{nro_sicop}",
     )
 
 
-def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str) -> dict[str, list[Oportunidad]]:
+def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str,
+               motivos: tuple[str, ...] | None = None) -> dict[str, list[Oportunidad]]:
     """Avisos en estado «preparado», por destinatario (solo los que siguen activos): lo que enviaría --send.
 
     Se saltan los carteles cuyo cierre ya venció (quedan «preparado», sin enviarse). Si un cartel tiene varios
@@ -182,8 +226,8 @@ def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str) -> dict
     filas: dict[tuple[str, str], tuple[str, str, list[int]]] = {}
     for id_, para, nro, motivo, version_reglas in conn.execute(
             "SELECT id, recipient, nro_sicop, motivo, rules_version FROM notification_outbox"
-            " WHERE status = 'preparado' ORDER BY id").fetchall():
-        if para in activos:
+            " WHERE status = 'preparado' AND nro_sicop IS NOT NULL ORDER BY id").fetchall():  # el resumen va aparte
+        if para in activos and (motivos is None or motivo in motivos):
             ids = filas.get((para, nro), ("", "", []))[2]
             filas[(para, nro)] = (motivo, version_reglas, [*ids, id_])  # el más reciente manda
     por_destinatario: dict[str, list[Oportunidad]] = {}
@@ -200,9 +244,11 @@ def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str) -> dict
 
 def asunto(oportunidades: list[Oportunidad]) -> str:
     nuevas = sum(o.motivo == "nueva" for o in oportunidades)
-    cambios = len(oportunidades) - nuevas
+    cierran = sum(o.motivo == "cierre_proximo" for o in oportunidades)
+    cambios = len(oportunidades) - nuevas - cierran
     partes = [f"{nuevas} nueva{'s' if nuevas != 1 else ''}"] if nuevas else []
     partes += [f"{cambios} con cambios"] if cambios else []
+    partes += [f"{cierran} por cerrar sin decisión"] if cierran else []
     total = len(oportunidades)
     return f"SICOP · {total} oportunidad{'es' if total != 1 else ''} para revisar ({', '.join(partes)})"
 
@@ -261,10 +307,12 @@ def enviar(conn: sqlite3.Connection, por_destinatario: dict[str, list[Oportunida
 
 
 def notify(conn: sqlite3.Connection, settings: Settings, ahora: datetime, dry_run: bool = True,
-           proveedor: Proveedor | None = None, solo: str | None = None) -> Resultado:
+           proveedor: Proveedor | None = None, solo: str | None = None, solo_cierre: bool = False) -> Resultado:
     """Prepara los avisos; con dry_run escribe la vista previa, sin dry_run los envía con el proveedor.
 
-    solo: enviar únicamente a ese destinatario (prueba controlada); los demás siguen «preparado»."""
+    solo: enviar únicamente a ese destinatario (prueba controlada); los demás siguen «preparado».
+    solo_cierre: solo los de cierre próximo. Lo usa el ciclo cuando la fuente falló: el plazo corre igual y este
+    aviso no depende de los datos del día; los demás quedan «preparado» para el siguiente ciclo con datos."""
     if not dry_run and proveedor is None:
         raise AvisoError("Falta el proveedor de correo para el envío real.")
     version = panel.version_vigente(conn)
@@ -274,8 +322,12 @@ def notify(conn: sqlite3.Connection, settings: Settings, ahora: datetime, dry_ru
         solo = solo.strip().lower()
         if solo not in {d.email.strip().lower() for d in destinatarios.activos(conn)}:
             raise AvisoError(f"{solo} no es un destinatario activo: agrégalo en el panel («Destinatarios»).")
-    resultado = preparar(conn, version, ahora, settings.notify_lookback_days)
-    resultado.preparados = pendientes(conn, ahora, settings.app_base_url)
+    if solo_cierre:
+        resultado = preparar(conn, version, ahora, 0, settings.notify_closing_days)
+        resultado.preparados = pendientes(conn, ahora, settings.app_base_url, ("cierre_proximo",))
+    else:
+        resultado = preparar(conn, version, ahora, settings.notify_lookback_days, settings.notify_closing_days)
+        resultado.preparados = pendientes(conn, ahora, settings.app_base_url)
     if solo is not None:
         resultado.preparados = {k: v for k, v in resultado.preparados.items() if k == solo}
     if dry_run:

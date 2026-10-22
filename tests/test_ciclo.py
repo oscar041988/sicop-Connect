@@ -175,7 +175,7 @@ def test_si_un_archivo_falla_se_importa_el_resto_pero_no_se_avisa(entorno):
     c = ciclo.run_cycle(entorno, "sintetico")
 
     assert c.estado == "fallo" and [a.resultado for a in c.archivos] == ["error", "importado"]
-    assert c.avisos is None and _outbox(entorno) == []
+    assert c.avisos.preparados == {} and _outbox(entorno) == []  # solo revisa cierres próximos: no hay
 
 
 def test_carpeta_vacia_no_es_cero_oportunidades(entorno, capsys):

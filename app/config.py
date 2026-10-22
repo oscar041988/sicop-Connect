@@ -39,6 +39,7 @@ DEFAULTS: dict[str, str] = {
     "EXPORTS_DIR": "data/exports",
     "APP_BASE_URL": "http://127.0.0.1:8000",
     "NOTIFY_LOOKBACK_DAYS": "7",
+    "NOTIFY_CLOSING_DAYS": "3",
     "GOOGLE_CLIENT_FILE": "",
     "GOOGLE_TOKEN_FILE": "",
     "GOOGLE_READ_TOKEN_FILE": "",
@@ -125,6 +126,18 @@ class Settings:
             raise ValueError("NOTIFY_LOOKBACK_DAYS debe ser un número entero de días") from None
         if dias <= 0:
             raise ValueError("NOTIFY_LOOKBACK_DAYS debe ser mayor que 0")
+        return dias
+
+    @property
+    def notify_closing_days(self) -> int:
+        """Aviso de cierre próximo: oportunidades marcadas «Interesa» o «Revisar requisitos» que cierran en N días
+        o menos (NOTIFY_CLOSING_DAYS; por defecto 3, decisión de Ivania 2026-10-22)."""
+        try:
+            dias = int(self.get("NOTIFY_CLOSING_DAYS"))
+        except ValueError:
+            raise ValueError("NOTIFY_CLOSING_DAYS debe ser un número entero de días") from None
+        if dias <= 0:
+            raise ValueError("NOTIFY_CLOSING_DAYS debe ser mayor que 0")
         return dias
 
     @property

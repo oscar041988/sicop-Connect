@@ -6,7 +6,9 @@ Reglas:
 * Un archivo incompleto, ilegible o que no se reconoce es un ERROR explícito: no se importa, se aparta en
   INCOMING_DIR/con_error/<fecha>/ y el ciclo queda «fallo». Nunca se interpreta como «cero oportunidades».
 * Si la fuente falló o no llegó ningún archivo nuevo, se evalúa igual (los plazos cambian con el día) pero
-  NO se avisa: un correo sin los datos de hoy daría a entender que no hubo compras nuevas.
+  NO se avisa: un correo sin los datos de hoy daría a entender que no hubo compras nuevas. La excepción es el
+  aviso de cierre próximo (A4): no depende de los datos del día y el plazo corre igual.
+* Los lunes (hora de Costa Rica) el ciclo arma también el resumen semanal (app/resumen.py), con el mismo dry-run.
 * Los archivos importados (o ya importados antes) se mueven a INCOMING_DIR/procesados/<fecha>/.
 * El ZIP de pliegos se acepta tal como llega: se importan sus dos CSV (app/importers/zip_pliegos.py) y el ZIP
   se mueve entero, a procesados o, si alguno de sus CSV falló, a con_error.
@@ -28,7 +30,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from app import avisos
+from app import avisos, resumen
 from app.bloqueo import CicloOcupado, bloqueo
 from app.config import Settings
 from app.database import connect
@@ -82,6 +84,7 @@ class Ciclo:
     evaluacion: ResultadoEvaluacion | None = None
     avisos: avisos.Resultado | None = None
     aviso_omitido: str | None = None   # por qué no se avisó, si no se avisó
+    resumen: resumen.Resultado | None = None  # solo los lunes
 
     def contar(self, resultado: str) -> int:
         return sum(1 for a in self.archivos if a.resultado == resultado)
@@ -333,18 +336,40 @@ def _paso_a_paso(conn, settings, ciclo: Ciclo, origen, ahora, proveedor, reglas_
     # Evaluar siempre: aunque no haya datos nuevos, los plazos cambian con el día.
     ciclo.evaluacion = evaluar_base(conn, cargar_reglas(reglas_path), ahora=ahora)
 
+    problemas = list(errores)
     if errores:
-        ciclo.estado, ciclo.error = "fallo", " · ".join(errores)
-        ciclo.aviso_omitido = "la fuente falló o no trajo datos nuevos: no se avisa con datos incompletos"
-        return
+        ciclo.aviso_omitido = ("la fuente falló o no trajo datos nuevos: no se avisa con datos incompletos"
+                               " (solo los cierres próximos, que no dependen de los datos del día)")
+    for problema in (_avisar(conn, settings, ciclo, ahora, proveedor, solo_cierre=bool(errores)),
+                     _resumen_del_lunes(conn, settings, ciclo, ahora, proveedor)):
+        if problema:
+            problemas.append(problema)
+    ciclo.estado = "fallo" if problemas else "ok"
+    ciclo.error = " · ".join(problemas) or None
+
+
+def _avisar(conn, settings: Settings, ciclo: Ciclo, ahora: datetime, proveedor, solo_cierre: bool) -> str | None:
+    """Avisos del día (o solo los de cierre próximo). Devuelve el problema, si lo hubo."""
     try:
-        ciclo.avisos = avisos.notify(conn, settings, ahora, dry_run=ciclo.dry_run, proveedor=proveedor)
-    except avisos.AvisoError as exc:
-        ciclo.estado, ciclo.error = "fallo", f"avisos: {exc}"
-        return
+        ciclo.avisos = avisos.notify(conn, settings, ahora, dry_run=ciclo.dry_run, proveedor=proveedor,
+                                     solo_cierre=solo_cierre)
+    except (avisos.AvisoError, ValueError) as exc:
+        return f"avisos: {exc}"
     no_aceptados = sorted(p for p, e in ciclo.avisos.envios.items() if e.estado != "aceptado")
     if no_aceptados:
-        ciclo.estado, ciclo.error = "fallo", "avisos sin aceptar: " + ", ".join(
-            f"{p} ({ciclo.avisos.envios[p].estado})" for p in no_aceptados)
-        return
-    ciclo.estado = "ok"
+        return "avisos sin aceptar: " + ", ".join(f"{p} ({ciclo.avisos.envios[p].estado})" for p in no_aceptados)
+    return None
+
+
+def _resumen_del_lunes(conn, settings: Settings, ciclo: Ciclo, ahora: datetime, proveedor) -> str | None:
+    """El resumen semanal, solo los lunes (hora de Costa Rica). Devuelve el problema, si lo hubo."""
+    if ahora.astimezone(HORA_CR).weekday() != 0:
+        return None
+    try:
+        ciclo.resumen = resumen.notify(conn, settings, ahora, dry_run=ciclo.dry_run, proveedor=proveedor)
+    except avisos.AvisoError as exc:
+        return f"resumen semanal: {exc}"
+    malos = sorted(p for p, e in ciclo.resumen.envios.items() if e.estado != "aceptado")
+    if malos:
+        return "resumen semanal sin aceptar: " + ", ".join(f"{p} ({ciclo.resumen.envios[p].estado})" for p in malos)
+    return None

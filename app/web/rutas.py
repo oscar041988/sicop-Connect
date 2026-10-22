@@ -24,9 +24,9 @@ from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLE
 from app.config import load_settings
 from app.database import check_database, connect
 from app.importers import zip_pliegos
-from app.importers.comun import ORIGENES, ImportacionError
+from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import avisos, competencia, destinatarios, historial, panel, reintentos, usuarios
+from app import avisos, competencia, destinatarios, exportar, historial, panel, reintentos, usuarios
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -161,7 +161,30 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
             {k: v for k, v in {**consulta, "revisado": valor}.items() if v}),
         "url_pagina": lambda n: "/oportunidades?" + urlencode({**consulta, "pagina": n}),
+        "url_exportar": "/oportunidades.xlsx" + ("?" + urlencode(consulta) if consulta else ""),
     })
+
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@router.get("/oportunidades.xlsx")
+def exportar_oportunidades(request: Request, prioridad: str = "candidatos", familia: str = "", institucion: str = "",
+                           plazo: str = "", revisado: str = "", tipo: str = "", q: str = "") -> Response:
+    """A5: el listado con los mismos filtros que la pantalla, en Excel (todas las páginas)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtros = panel.Filtros(prioridad, familia, institucion, plazo, revisado, tipo, q, 1).limpios()
+    ahora = _ahora()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        if version is None:
+            return PLANTILLAS.TemplateResponse(request, "error.html", {
+                "mensaje": "Todavía no hay evaluaciones: no hay nada que exportar."}, status_code=409)
+        contenido, filas = exportar.libro(conn, version, filtros, ahora, load_settings().app_base_url)
+    log.info("Exportación a Excel: %s filas · usuario %s", filas, (seguridad.usuario_actual(request) or {}).get("id"))
+    nombre = f"oportunidades_{ahora.astimezone(HORA_CR):%Y%m%d-%H%M}.xlsx"
+    return Response(contenido, media_type=XLSX, headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 
 def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, error: str | None = None,

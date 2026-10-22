@@ -342,6 +342,41 @@
       (FALLO). Se decide junto con lo de la descarga bloqueada.
     - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
       conocido: la revisión no saca un cartel de los avisos.
+- **A4 · Cierre próximo y resumen semanal (2026-10-22, rama `desarrollo`, solo local, dry-run):**
+  - Decisiones de Ivania (22/10):
+    - decisiones finales nuevas «Ofertada» y «No se oferta»;
+    - N = 3 días (`NOTIFY_CLOSING_DAYS`);
+    - el resumen lo arma el ciclo del lunes.
+  - Migración 0013: reconstruye `reviews` (dos decisiones más) y `notification_outbox` (motivos `cierre_proximo` y
+    `resumen_semanal`). Se copian todas las filas con su id y se recrean los triggers.
+  - **Cierre próximo:** se avisa si la última revisión es «Interesa» o «Revisar requisitos» y el cartel cierra en
+    3 días o menos, aunque no sea Alta ni Media. Se avisa una vez por versión del cartel
+    (clave `destinatario|N.º|versión|cierre_proximo`). Va en el mismo correo diario.
+    - Si la fuente falla, el ciclo manda **solo** estos avisos, porque el plazo corre igual; el ciclo sigue en «fallo».
+  - **Resumen semanal** (`app/resumen.py`) de la semana anterior:
+    - Contenido: nuevas por familia, revisadas, pendientes sin revisar, cierres de los próximos 7 días y, si hay,
+      adjudicaciones relevantes.
+    - Un correo por destinatario y semana, con clave `destinatario|resumen|2026-W44|resumen_semanal`.
+    - Uno viejo que quedó «preparado» no se envía.
+    - A mano: `python -m app.cli notify --resumen-semanal --dry-run`.
+  - Probado sobre una COPIA de la base real (sin tocar la outbox real):
+    - el cartel `20261001587` («Interesa», cierra el 23/10) entra como «Cierra pronto…» para los 3 destinatarios;
+    - asunto del resumen: «2 nuevas, 2 sin revisar, 3 por cerrar», más 1 familia con adjudicaciones.
+  - Pendiente:
+    - un resumen «fallido» no aparece en la página «Avisos» (no es de un cartel); se ve en la salida del ciclo.
+    - Que Oscar confirme N y el contenido del resumen.
+- **A5 · Exportar a Excel (2026-10-22):**
+  - Botón «Exportar a Excel» en el panel de carteles (`/oportunidades.xlsx`).
+    - Usa los mismos filtros que la pantalla y exporta todas las páginas.
+    - Hoja «Filtros» con lo aplicado, la fecha y la fuente.
+  - Número SICOP y N.º de procedimiento como celdas de **texto** (formato «@»).
+  - Ningún texto se guarda como fórmula (un título con «=» queda texto).
+  - Montos: una columna por moneda, en Decimal.
+  - Dependencia nueva `openpyxl` 3.1.5 (con `et_xmlfile` 2.0.0). El lock se regeneró en un entorno limpio y no
+    cambió ninguna otra versión.
+    - Hallazgo: el lock no tiene `playwright` (está en `requirements.txt`); revisarlo antes de instalar en el servidor.
+  - Real (copia): 29 filas candidatas y 320 con «Todas».
+- 470 passed tras A4 y A5 (11 nuevas en `tests/test_cierre_resumen.py`, 7 en `tests/test_exportar.py`).
 - **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
   «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
   - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix
