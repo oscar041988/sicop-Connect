@@ -294,12 +294,14 @@ def test_migracion_0010_convierte_los_estados_viejos(tmp_path):
                                                   ("2026-10-22T07:30:00-06:00", 0, "en_curso", None)])
         conn.commit()
 
-    assert apply_migrations(db) == ["0010_solicitudes_estados.sql"]
+    assert apply_migrations(db) == ["0010_solicitudes_estados.sql", "0011_alerta_obtencion.sql"]
     assert apply_migrations(db) == []  # repetible: la segunda vez no cambia nada
     with closing(sqlite3.connect(db)) as conn:
-        filas = conn.execute("SELECT estado, esperando_enlace_en, terminada_en FROM solicitudes_sicop ORDER BY id")
-        assert filas.fetchall() == [("esperando_enlace", "2026-10-20T07:33", None),
-                                    ("fallido", None, "2026-10-21T07:41"), ("solicitado", None, None)]
+        filas = conn.execute("SELECT estado, esperando_enlace_en, terminada_en, alerta_estado FROM solicitudes_sicop"
+                             " ORDER BY id")
+        # 0011: la fallida de antes no manda alerta (ya se revisó a mano).
+        assert filas.fetchall() == [("esperando_enlace", "2026-10-20T07:33", None, None),
+                                    ("fallido", None, "2026-10-21T07:41", "anterior"), ("solicitado", None, None, None)]
 
 
 # --- Comandos ---------------------------------------------------------------------------------------------

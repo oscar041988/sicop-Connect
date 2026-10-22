@@ -215,3 +215,11 @@ reciente posterior a la solicitud.
 - **Pendiente · Oscar:** decidir entre preguntarle a SICOP, con el ID de soporte, si se permite descargar con un
   programa, o dejar la descarga en manual (la solicitud y el código siguen automáticos). Mientras no se decida,
   no se reintenta la descarga automática ni se cambia el navegador para evitar el bloqueo.
+
+**Lección 4 (2026-10-22): `obtain auto` integra la obtención al ciclo** (`docs/OPERACION.md` 3.1). Aplica estas
+reglas así:
+- Regla 2: una solicitud fallida no se reintenta; se manda **una** alerta con el plan B (descarga a mano).
+- Regla 4: una solicitud por día, aunque falle.
+- Regla 7: la alerta no lleva el enlace, el código ni el `processId`.
+- Regla 10: con `SOURCE_MODE=manual` no hace nada.
+- Regla 11: sigue sin declararse «automática» hasta que un ciclo real lo demuestre.

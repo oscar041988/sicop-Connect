@@ -493,7 +493,35 @@ def obtain_status(settings: Settings) -> int:
             print(f"     motivo: {f['motivo']}")
         if f["archivo_entrada"]:
             print(f"     archivo: {Path(f['archivo_entrada']).name} (SHA-256 {f['archivo_sha256'][:16]}…)")
+        if f.get("alerta_estado") and f["alerta_estado"] != "anterior":
+            print(f"     alerta: {f['alerta_estado'].replace('_', ' ')} ({f['alerta_en'][11:16]})")
     return 0
+
+
+def obtain_auto(settings: Settings) -> int:
+    """Una vuelta de la obtención automática (la tarea programada, cada 15 min). 0 = ok · 1 = fallo · 2 = ocupado."""
+    from app.bloqueo import CicloOcupado
+    from app.sources import automatico
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}). Ejecuta python -m app.cli migrate", file=sys.stderr)
+        return 1
+    try:
+        settings.source_mode, settings.obtain_request_hour
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    hora = f"{datetime.now(HORA_CR):%Y-%m-%d %H:%M:%S}"
+    try:
+        v = automatico.vuelta(settings, crear_lector=lambda s: _crear_lector(s),
+                              proveedor_alerta=lambda s: _crear_proveedor(s))
+    except CicloOcupado as exc:
+        print(f"{hora} · Otra vuelta de obtain auto sigue en curso ({exc or 'sin detalle'}). Esta no hizo nada.",
+              file=sys.stderr)
+        return 2
+    for linea in v.lineas:
+        print(f"{hora} · {linea}", file=sys.stderr if linea.startswith("FALLO") else sys.stdout, flush=True)
+    return 1 if v.fallo else 0
 
 
 def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
@@ -687,6 +715,7 @@ def build_parser() -> argparse.ArgumentParser:
     po.add_argument("--seguir", action="store_true",
                     help="Repetir cada OBTAIN_POLL_MINUTES hasta validado, fallido o el plazo (Ctrl+C es seguro)")
     ob_sub.add_parser("status", help="Las últimas solicitudes automáticas con su estado y horas")
+    ob_sub.add_parser("auto", help="Una vuelta de la obtención automática (tarea programada; solo con SOURCE_MODE=auto)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -736,6 +765,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
             return obtain_poll(settings, args.seguir)
         if args.obtain_command == "status":
             return obtain_status(settings)
+        if args.obtain_command == "auto":
+            return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
     if args.command == "backup":
         return backup(settings, args.output)

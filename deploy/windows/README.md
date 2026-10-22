@@ -74,3 +74,51 @@ Unregister-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario" -Confirm:$fals
 
 `SCHEDULER_ENABLED` en `.env` es solo informativo (lo muestra `doctor`); ponerlo en `true` al crear la tarea y
 en `false` al borrarla.
+
+## Obtención automática (lección 4): tarea «SICOP CONNECT - obtencion»
+
+Reemplaza a la tarea de las 8:00 cuando se pase a `SOURCE_MODE=auto` (decisión de Ivania, 2026-10-22). **No se
+crea sola ni se activa con este documento:** se crea cuando Oscar y Ivania lo decidan.
+
+- `sicop-obtencion.ps1`: una vuelta de `obtain auto` cada 15 min, de 07:00 a 20:00, de lunes a viernes. Registro
+  en `data\logs\obtencion-AAAA-MM.log`.
+- Cada vuelta, con `SOURCE_MODE=auto`: desde `OBTAIN_REQUEST_HOUR` pide el reporte (una vez por día), revisa el
+  buzón, manda la alerta si algo falló (a `OBTAIN_ALERT_TO`; en dry-run solo la vista previa) y, si hay un archivo
+  en `data\incoming`, corre el ciclo en dry-run. Con `SOURCE_MODE=manual` no hace nada.
+- Códigos de salida: `0` = ok · `1` = algo falló (ver el registro y la alerta) · `2` = otra vuelta seguía en curso.
+
+### Antes de crearla
+
+1. En `.env`: `SOURCE_MODE=auto`, `OBTAIN_REQUEST_HOUR=07:00`, `OBTAIN_ALERT_TO=licitaciones@hermatix.com`.
+2. `.venv\Scripts\python.exe -m app.cli migrate` (aplica la 0011).
+3. Una vuelta a mano: `.venv\Scripts\python.exe -m app.cli obtain auto`.
+4. Pausar la tarea de las 8:00, porque esta la reemplaza:
+   `Disable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"`.
+
+### Crearla (PowerShell, una sola vez)
+
+```powershell
+$proyecto = "C:\Users\User\sicop-connect"
+$accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-obtencion.ps1`"" `
+    -WorkingDirectory $proyecto
+$horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 7:00
+$horario.Repetition = (New-ScheduledTaskTrigger -Once -At 7:00 -RepetitionInterval (New-TimeSpan -Minutes 15) `
+    -RepetitionDuration (New-TimeSpan -Hours 13)).Repetition
+$ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "SICOP CONNECT - obtencion" -Action $accion -Trigger $horario -Settings $ajustes `
+    -Description "obtain auto cada 15 min, 07:00-20:00, lunes a viernes. Registro en data\logs."
+```
+
+- Si la computadora se enciende a las 8:01, la vuelta de las 8:15 hace lo que faltaba: pide el reporte si no se
+  pidió y sigue desde donde quedó (el estado vive en la base).
+- Volver a manual sin borrar nada: `SOURCE_MODE=manual` en `.env`. La tarea sigue corriendo, pero no hace nada.
+
+### Pausarla o borrarla
+
+```powershell
+Disable-ScheduledTask -TaskName "SICOP CONNECT - obtencion"
+Unregister-ScheduledTask -TaskName "SICOP CONNECT - obtencion" -Confirm:$false
+Enable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"    # si se vuelve al ciclo de las 8:00
+```

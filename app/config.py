@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, time
 from pathlib import Path
 from typing import Mapping
 
@@ -45,10 +46,12 @@ DEFAULTS: dict[str, str] = {
     "OBTAIN_CODE_TIMEOUT_MIN": "10",
     "OBTAIN_LINK_MAX_HOURS": "12",
     "OBTAIN_POLL_MINUTES": "5",
+    "OBTAIN_REQUEST_HOUR": "07:00",
+    "OBTAIN_ALERT_TO": "",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO"})
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -189,6 +192,27 @@ class Settings:
     def obtain_poll_minutes(self) -> int:
         """Cada cuántos minutos obtain poll --seguir revisa el buzón (OBTAIN_POLL_MINUTES; 5)."""
         return self._entero("OBTAIN_POLL_MINUTES", 1, 60, "minutos")
+
+    @property
+    def source_mode(self) -> str:
+        """manual (por defecto): obtain auto no toca SICOP ni Gmail · auto: obtain auto pide, espera e importa."""
+        modo = self.get("SOURCE_MODE").strip().lower()
+        if modo not in ("manual", "auto"):
+            raise ValueError("SOURCE_MODE debe ser manual o auto")
+        return modo
+
+    @property
+    def obtain_request_hour(self) -> time:
+        """Desde qué hora obtain auto pide el reporte del día (OBTAIN_REQUEST_HOUR, HH:MM; 07:00)."""
+        try:
+            return datetime.strptime(self.get("OBTAIN_REQUEST_HOUR").strip(), "%H:%M").time()
+        except ValueError:
+            raise ValueError("OBTAIN_REQUEST_HOUR debe ser una hora HH:MM, por ejemplo 07:00") from None
+
+    @property
+    def obtain_alert_to(self) -> str:
+        """Buzón que recibe la alerta de FALLO de la obtención automática (OBTAIN_ALERT_TO)."""
+        return self.get("OBTAIN_ALERT_TO").strip().lower()
 
     @property
     def notifications_enabled(self) -> bool:

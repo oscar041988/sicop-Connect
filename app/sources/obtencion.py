@@ -170,6 +170,8 @@ def _avanzar(conn, settings: Settings, fila: dict, lector, reloj, descargar) -> 
         try:
             ruta = descargar(correo.valor, settings.raw_data_dir / "descargas", nombre)
         except FalloObtencion as exc:
+            # El enlace sí llegó: la alerta de la lección 4 lo usa para indicar el plan B (descargar a mano).
+            actualizar(enlace_recibido_en=_momento(correo.recibido))
             if exc.captura:
                 actualizar(captura=str(exc.captura))
             return fallar(exc.motivo)

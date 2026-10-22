@@ -194,10 +194,10 @@ def _cobertura(ciclo: Ciclo) -> str:
     return json.dumps(datos, ensure_ascii=False)
 
 
-def _abrir(conn: sqlite3.Connection, origen: str, ahora: datetime) -> int:
+def _abrir(conn: sqlite3.Connection, origen: str, ahora: datetime, modo: str) -> int:
     return conn.execute(
-        "INSERT INTO source_runs (started_at, mode, data_origin, status, kind) VALUES (?, 'manual', ?, 'en_curso', 'ciclo')",
-        (_momento(ahora), origen)).lastrowid
+        "INSERT INTO source_runs (started_at, mode, data_origin, status, kind) VALUES (?, ?, ?, 'en_curso', 'ciclo')",
+        (_momento(ahora), modo, origen)).lastrowid
 
 
 def _cerrar(conn: sqlite3.Connection, ciclo: Ciclo) -> None:
@@ -292,15 +292,17 @@ def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen
 
 
 def run_cycle(settings: Settings, origen: str, dry_run: bool = True, ahora: datetime | None = None,
-              proveedor: avisos.Proveedor | None = None, reglas_path: Path = REGLAS_PATH) -> Ciclo:
-    """Un ciclo completo. Lanza CicloOcupado si ya hay otro. Con dry_run=False hace falta el proveedor."""
+              proveedor: avisos.Proveedor | None = None, reglas_path: Path = REGLAS_PATH,
+              modo: str = "manual") -> Ciclo:
+    """Un ciclo completo. Lanza CicloOcupado si ya hay otro. Con dry_run=False hace falta el proveedor.
+    modo (source_runs.mode): manual = run-cycle o la tarea de las 8:00 · auto = lo lanzó obtain auto."""
     ahora = (ahora or datetime.now(HORA_CR)).astimezone(HORA_CR)
     quien = f"empezó {ahora:%Y-%m-%d %H:%M:%S}, proceso {os.getpid()}"
     with bloqueo(ruta_bloqueo(settings), quien), closing(connect(settings.database_path)) as conn:
         # Un ciclo anterior que se cortó (apagón, proceso cerrado) quedó «en_curso»: ya no lo está.
         conn.execute("UPDATE source_runs SET status = 'fallo', error = 'interrumpido: el ciclo no terminó'"
                      " WHERE kind = 'ciclo' AND status = 'en_curso'")
-        ciclo = Ciclo(_abrir(conn, origen, ahora), dry_run)
+        ciclo = Ciclo(_abrir(conn, origen, ahora, modo), dry_run)
         try:
             _paso_a_paso(conn, settings, ciclo, origen, ahora, proveedor, reglas_path)
         except Exception as exc:

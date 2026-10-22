@@ -122,6 +122,54 @@ python -m app.cli run-cycle --origen real --send       # envío real
 - Efecto conocido: un cartel cargado el viernes después de las 8:00 que cierra el sábado o el domingo no se
   avisa por correo (el lunes ya venció). Sí aparece en el panel.
 
+### 3.1 Obtención automática (`obtain auto`, lección 4)
+
+**Estado (2026-10-22): construida y probada con datos SIMULADOS; no activada.** En la única prueba real, SICOP
+rechazó la descarga hecha por el programa (`DECISION_OBTENCION.md` §8): mientras eso no se resuelva con soporte de
+SICOP, la descarga cae en el plan B de abajo. No se llama «automática» hasta que un ciclo real lo demuestre.
+
+`python -m app.cli obtain auto` es **una vuelta**; la tarea «SICOP CONNECT - obtencion» la repite cada 15 min, de
+07:00 a 20:00, de lunes a viernes (`deploy/windows/README.md`). Cada vuelta:
+
+1. Con `SOURCE_MODE=manual` no hace nada (no abre SICOP ni lee Gmail).
+2. Desde `OBTAIN_REQUEST_HOUR` (07:00), si hoy no hay solicitud, pide el reporte. **Una por día:** si la de hoy
+   falló, no se pide otra sola.
+3. Si hay una solicitud abierta, revisa el buzón: enlace → descarga → validación → el ZIP queda en `INCOMING_DIR`.
+4. Si una solicitud falló, manda **una** alerta a `OBTAIN_ALERT_TO` con el motivo y el plan B. Mientras los avisos
+   estén en dry-run (`NOTIFICATIONS_DRY_RUN=true`), la alerta es solo un archivo:
+   `EXPORTS_DIR\alerta-obtencion-<n>.txt`. La alerta nunca lleva el enlace ni el código.
+5. Si hay un archivo listo en `INCOMING_DIR` (el de la descarga automática o uno dejado a mano), corre el ciclo
+   **en dry-run**. En `source_runs` queda con modo `auto`. Un archivo recién copiado espera a la vuelta siguiente.
+
+**Activar:** en `.env`, `SOURCE_MODE=auto`, `OBTAIN_ALERT_TO=` (el buzón de la alerta) y `migrate`; luego crear la
+tarea y pausar la de las 8:00 (`deploy/windows/README.md`). **Volver a manual:** `SOURCE_MODE=manual`. No hay que
+tocar código ni borrar la tarea; desde la vuelta siguiente no hace nada.
+
+**Qué hacer ante cada FALLO** (aparece en el registro, en la alerta y en `obtain status`):
+
+| Motivo | Qué significa | Qué hacer |
+|---|---|---|
+| «control no automatizable» (CAPTCHA o bloqueo, con ID de soporte) | SICOP no dejó pasar al programa | Plan B. No reintentar ni «arreglar» el programa para pasar el control. Anotar el ID de soporte para SICOP. |
+| «Enlace vencido o SICOP no inició la descarga» | El enlace no entregó el archivo | Plan B con el mismo correo. |
+| «El archivo descargado no es válido: …» | Llegó algo que no es el reporte | Revisar el archivo en `RAW_DATA_DIR\descargas`; plan B. |
+| «No llegó el correo con el código» / «El enlace no llegó en 12 h» | SICOP no mandó el correo a tiempo | Buscar en Gmail (otra carpeta, otro asunto). Si hace falta el reporte, pedirlo a mano (sección 1.1). |
+| «No se pudo abrir Gmail» | El permiso de lectura venció o se revocó | Renovarlo (abajo). |
+| «Ciclo #n: …» | Falló el ciclo, no la obtención | Sección 3 y sección 5. |
+
+**Plan B (un clic):** abrir en el buzón de SICOP el correo «Envío de reporte» de hoy, hacer clic en el enlace,
+guardar el ZIP y dejarlo en `INCOMING_DIR` sin abrirlo en Excel. La vuelta siguiente (≤ 15 min) lo importa,
+evalúa y prepara los avisos.
+
+**Renovar el acceso a Gmail (lectura):** `python -m app.cli obtain gmail-auth`, entrando con el buzón de
+`SICOP_REQUEST_EMAIL`. Después, `python -m app.cli obtain check-mail` para comprobar. El permiso de enviar avisos
+es otro (`google-auth`, sección 4).
+
+**Dónde mirar:**
+- `python -m app.cli obtain status`: las últimas solicitudes, con la hora de cada paso, el motivo y la alerta.
+- `data\logs\obtencion-AAAA-MM.log`: la salida de cada vuelta de la tarea.
+- `EXPORTS_DIR`: capturas de los fallos de la solicitud (`obtencion-fallo-…png`) y las alertas en vista previa.
+- `RAW_DATA_DIR\descargas`: los ZIP descargados tal como llegaron y la captura de un fallo de descarga.
+
 ## 4. Enviar avisos
 
 ### 4.1 Qué se avisa

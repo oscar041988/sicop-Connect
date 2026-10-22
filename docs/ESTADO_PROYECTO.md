@@ -340,6 +340,28 @@
       (FALLO). Se decide junto con lo de la descarga bloqueada.
     - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
       conocido: la revisión no saca un cartel de los avisos.
+- **Obtención automática · lección 4, integrar al ciclo (2026-10-22, rama `desarrollo`, solo local):** hecha con
+  pruebas SIMULADAS; **no activada**.
+  - Oscar quiere todo automático. Mientras SICOP bloquee la descarga, el plan B es un clic: alerta por correo →
+    descargar a mano con «Envío de reporte» → dejar el ZIP en `INCOMING_DIR`.
+  - `app/sources/automatico.py` y el comando `obtain auto`: una vuelta cada 15 min, 07:00–20:00, lunes a viernes.
+    - Con `SOURCE_MODE=manual` no hace nada.
+    - Desde `OBTAIN_REQUEST_HOUR` (07:00) pide una vez por día; sondea el buzón.
+    - Si falla, manda **una** alerta a `OBTAIN_ALERT_TO`, sin enlace ni código (en dry-run, solo
+      `EXPORTS_DIR\alerta-obtencion-<n>.txt`).
+    - Si hay un archivo en `INCOMING_DIR`, corre el ciclo en dry-run con modo `auto` en `source_runs`.
+    - Tiene su propio bloqueo y respeta los de `obtain poll` y `run-cycle`.
+  - Migración 0011: `alerta_estado` y `alerta_en` en `solicitudes_sicop`; las fallidas de antes quedan «anterior»
+    (sin alerta). `obtain poll` ahora guarda `enlace_recibido_en` también cuando falla la descarga.
+  - Decisiones de Ivania (22/10): la alerta va a licitaciones@; la tarea nueva reemplaza la de las 8:00.
+  - Windows: `deploy/windows/sicop-obtencion.ps1` y su sección en `deploy/windows/README.md` (la tarea **no** se
+    creó). `docs/OPERACION.md` 3.1: activar, volver a manual, qué hacer ante cada FALLO, renovar Gmail y dónde mirar.
+  - `.env.example`: `OBTAIN_REQUEST_HOUR=07:00`, `OBTAIN_ALERT_TO=` (sin valor).
+  - 437 passed (11 nuevas en `tests/test_automatico.py`).
+  - Fuera de esta lección: plantillas de systemd y despliegue (al final, con el servidor) y las dos solicitudes
+    al día (después de la respuesta de SICOP).
+  - **Pendiente · Ivania:** `migrate` (0011) en la base local. Para activar: `.env` (`SOURCE_MODE=auto`,
+    `OBTAIN_ALERT_TO`), una vuelta a mano y crear la tarea, cuando Oscar y Ivania lo decidan.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o
