@@ -318,13 +318,20 @@
       «enlace vencido».
     - **Corregido:** esa página ahora es FALLO «control no automatizable», con el ID de soporte y una captura.
       Prueba SIMULADA nueva en `tests/test_obtencion.py`.
+    - **Diagnóstico agregado (`eb91bcf`):** todo FALLO de descarga (bloqueo, descarga interrumpida o sin descarga)
+      dice a qué hora se abrió el enlace, el código HTTP y la página final, sin parámetros (no muestra el
+      `processId`). En la prueba del 22/10 no se registró el código HTTP; solo se sabe que no fue 403 ni 429.
+      Revisado también: el enlace se copia bien del correo y la espera de 120 s alcanza (a mano, la descarga
+      empieza en segundos). Causa del rechazo sin confirmar: solo SICOP puede verla con el ID de soporte.
+      426 passed.
     - Ivania descargó el ZIP a mano con el mismo enlace y funcionó. Ciclo #28 (dry-run) OK: importaciones #18
       (10 990 carteles) y #19 (79 260 líneas), 0 rechazadas; cobertura al 21/10; 12 260 carteles en la base;
       evaluación con 0 nuevas y 9 actualizadas; 0 avisos nuevos y 6 preparados (los del 21/10). Detalle en
       `DECISION_OBTENCION.md` §8.
   - Pendientes de la prueba:
     - **Oscar:** preguntar a SICOP con el ID de soporte o dejar la descarga en manual. Hasta que decida, no se
-      reintenta la descarga automática.
+      reintenta la descarga automática. Contacto (Condiciones Generales de Uso, sección 3): 1311 opción 3 o
+      call-center@sicop.go.cr; piden usar su formulario de reporte de incidentes.
     - ~~La tarea de las 08:00 del 22/10 no dejó registro~~ **Revisado (22/10):** la computadora se encendió a las
       8:01. Windows marca 1 ejecución perdida y la tarea no la recupera (`StartWhenAvailable` apagado a propósito,
       como `Persistent=false` en el servidor). No es un error. **Decisión de Ivania: dejarla como está.**
