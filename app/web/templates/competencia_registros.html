@@ -19,8 +19,8 @@
   {% if c.lineas %}
   <div class="tabla-scroll">
   <table class="comp">
-    <thead><tr><th>Línea</th><th>Cédula</th><th>Cantidad</th><th>Precio unitario</th><th>Descuento</th><th>IVA</th>
-      <th>Monto sin impuestos</th><th>Origen</th></tr></thead>
+    <thead><tr><th>Línea</th><th>Cédula</th><th class="num">Cantidad</th><th class="num">Precio unitario</th>
+      <th class="num">Descuento</th><th class="num">IVA</th><th class="num">Monto sin impuestos</th><th>Origen</th></tr></thead>
     <tbody>
     {% for l in c.lineas %}
       <tr{% if l.registros > 1 %} class="conflicto"{% endif %}>

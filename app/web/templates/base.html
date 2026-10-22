@@ -22,9 +22,15 @@
         <a href="/competencia"{% if seccion == "competencia" %} aria-current="page"{% endif %}>Competencia</a>
         <a href="/cargar"{% if seccion == "cargar" %} aria-current="page"{% endif %}>Cargar archivo</a>
         {% if usuario.rol == "admin" %}
-        <a href="/destinatarios"{% if seccion == "destinatarios" %} aria-current="page"{% endif %}>Destinatarios</a>
-        <a href="/avisos"{% if seccion == "avisos" %} aria-current="page"{% endif %}>Avisos</a>
-        <a href="/usuarios"{% if seccion == "usuarios" %} aria-current="page"{% endif %}>Usuarios</a>
+        {# Las páginas de administración van agrupadas: sueltas, el menú no cabía en una línea (sin JavaScript) #}
+        <details class="menu-admin">
+          <summary{% if seccion in ("destinatarios", "avisos", "usuarios") %} class="actual"{% endif %}>Administración</summary>
+          <div>
+            <a href="/destinatarios"{% if seccion == "destinatarios" %} aria-current="page"{% endif %}>Destinatarios</a>
+            <a href="/avisos"{% if seccion == "avisos" %} aria-current="page"{% endif %}>Avisos</a>
+            <a href="/usuarios"{% if seccion == "usuarios" %} aria-current="page"{% endif %}>Usuarios</a>
+          </div>
+        </details>
         {% endif %}
         <form class="salir" method="post" action="/logout">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

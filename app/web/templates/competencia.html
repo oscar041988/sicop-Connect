@@ -50,20 +50,21 @@
   Las líneas con más de un registro distinto en SICOP no se suman: se indican aparte.</p>
 
 {% for fam in r.familias %}
-<section>
+<section class="familia-comp">
   <h2>{{ NOMBRES_FAMILIA.get(fam.familia, fam.familia) }}</h2>
   <p class="sub">{{ fam.carteles | length }} cartel{% if fam.carteles | length != 1 %}es{% endif %} adjudicado{% if fam.carteles | length != 1 %}s{% endif %}
     · {{ fam.competidores | length }} ganador{% if fam.competidores | length != 1 %}es{% endif %}</p>
   <div class="tabla-scroll">
-  <table class="comp">
-    <thead><tr><th>Quién gana</th><th>Veces</th><th>Instituciones (carteles)</th><th>Monto adjudicado por moneda</th></tr></thead>
+  <table class="comp resumen">
+    <colgroup><col class="c-quien"><col class="c-veces"><col><col class="c-monto"></colgroup>
+    <thead><tr><th>Quién gana</th><th class="centro">Veces</th><th>Instituciones (carteles)</th><th class="num">Monto adjudicado</th></tr></thead>
     <tbody>
     {% for c in fam.competidores %}
       <tr>
         <td>{% if c.nombre %}<strong>{{ c.nombre }}</strong><br><small>{{ c.cedulas | sort | join(", ") }}</small>
             {% else %}{{ nombre_competidor(c.clave) }}<br><small>sin nombre en competidores.yaml</small>{% endif %}</td>
-        <td class="num"><a href="{{ url_registros(fam.familia, c.clave) }}">{{ c.veces }}</a></td>
-        <td><ul>{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }} ({{ n }})</li>{% endfor %}</ul></td>
+        <td class="centro"><a class="veces" href="{{ url_registros(fam.familia, c.clave) }}" title="Ver los registros">{{ c.veces }}</a></td>
+        <td class="instituciones-celda"><ul class="instituciones">{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }}{% if n > 1 %} <small>({{ n }})</small>{% endif %}</li>{% endfor %}</ul></td>
         <td class="num">
           {% for moneda, total in c.montos_ordenados() %}{{ monto(total, moneda) }}<br>{% else %}—<br>{% endfor %}
           {% if c.lineas_en_conflicto %}<small>{{ c.lineas_en_conflicto }} registro{% if c.lineas_en_conflicto != 1 %}s{% endif %} sin sumar</small><br>{% endif %}
