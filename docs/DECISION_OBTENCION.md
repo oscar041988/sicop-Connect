@@ -201,3 +201,17 @@ Primera lectura real con `obtain check-mail` (2026-10-21, permiso `gmail.readonl
 **2 a 6 minutos** (19/10: 10:34 → 10:37 y 15:21 → 15:25; 21/10: 11:28 → 11:33 y 11:34, y 13:34 → 13:36). Hay
 códigos sin enlace propio, como el de las 13:32, al que siguió otro a las 13:34: por eso solo vale el código más
 reciente posterior a la solicitud.
+
+**Primera prueba real de punta a punta (2026-10-22, Ivania con Oscar, solicitud #3):**
+- `obtain request --ver`: el código llegó 31 s después del correo y SICOP lo aceptó a las 08:05:22. La ventana
+  «Procesando el reporte» **no trajo el `processId`**.
+- El correo con el enlace llegó entre las 08:51 y las 08:56: **≈ 50 minutos**. Rango observado hasta hoy: de 2 a
+  50 min. El plazo de 12 h (`OBTAIN_LINK_MAX_HOURS`) sigue siendo suficiente.
+- **SICOP bloqueó la descarga hecha por el programa.** En vez del ZIP mostró «No fue posible acceder a la página
+  solicitada. Por favor, póngase en contacto con nosotros», con un «ID de soporte». Desde el commit siguiente,
+  esa página es FALLO «control no automatizable» (regla 2) y el motivo guarda el ID de soporte.
+- Con el mismo enlace, **la descarga a mano en Chrome funcionó**. El ciclo #28 (dry-run) importó ese ZIP sin
+  rechazos.
+- **Pendiente · Oscar:** decidir entre preguntarle a SICOP, con el ID de soporte, si se permite descargar con un
+  programa, o dejar la descarga en manual (la solicitud y el código siguen automáticos). Mientras no se decida,
+  no se reintenta la descarga automática ni se cambia el navegador para evitar el bloqueo.

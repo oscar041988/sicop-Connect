@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-20 · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-22 (prueba real de obtención) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -310,8 +310,25 @@
       escribirlo. Sin reporte; la solicitud del día ya contó.
     - Mejoras pedidas por Ivania: FALLO propio para la ventana cerrada, aviso de no tocar Chrome con `--ver` y
       capturas de cada paso con su resumen. 425 passed.
-  - Pendiente: la prueba del 22/10, 7:30, con Oscar: `obtain request --ver` → `obtain poll --seguir`. Revisar las
-    capturas en `data\exports\obtencion-…\`.
+  - **Prueba real del 22/10 con Oscar (solicitud #3), empezó a las 08:04:**
+    - `obtain request --ver` OK: código aceptado a las 08:05:22, sin `processId`. Capturas en
+      `data\exports\obtencion-20261022-080438-3\`.
+    - `obtain poll --seguir`: el enlace llegó a los ≈ 50 min (08:51–08:56). Al abrirlo, SICOP mostró una página
+      de bloqueo («No fue posible acceder a la página solicitada… ID de soporte»). El programa lo reportó como
+      «enlace vencido».
+    - **Corregido:** esa página ahora es FALLO «control no automatizable», con el ID de soporte y una captura.
+      Prueba SIMULADA nueva en `tests/test_obtencion.py`.
+    - Ivania descargó el ZIP a mano con el mismo enlace y funcionó. Ciclo #28 (dry-run) OK: importaciones #18
+      (10 990 carteles) y #19 (79 260 líneas), 0 rechazadas; cobertura al 21/10; 12 260 carteles en la base;
+      evaluación con 0 nuevas y 9 actualizadas; 0 avisos nuevos y 6 preparados (los del 21/10). Detalle en
+      `DECISION_OBTENCION.md` §8.
+  - Pendientes de la prueba:
+    - **Oscar:** preguntar a SICOP con el ID de soporte o dejar la descarga en manual. Hasta que decida, no se
+      reintenta la descarga automática.
+    - **Ivania:** la tarea de las 08:00 del 22/10 no dejó entrada en `data\logs\ciclo-2026-10.log`. Revisar el
+      «Último resultado» en el Programador de tareas.
+    - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
+      conocido: la revisión no saca un cartel de los avisos.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
   `docs/Guia_Obtencion_Automatica_SICOP.docx` (revisada por Claude el 2026-10-21). Decisión y reglas nuevas
   escritas en `docs/DECISION_OBTENCION.md` (secciones 6 y 8): el código por correo se automatiza; CAPTCHA o

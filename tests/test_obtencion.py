@@ -71,14 +71,15 @@ class _Lector:
 class _Portal:
     """SIMULADO: la página «Espere mientras se descarga el archivo» y el archivo que descarga."""
 
-    def __init__(self, archivo: bytes = b"", descarga: bool = True):
-        self.archivo, self.descarga, self.peticiones = archivo, descarga, []
+    def __init__(self, archivo: bytes = b"", descarga: bool = True, pagina: str | None = None):
+        self.archivo, self.descarga, self.pagina, self.peticiones = archivo, descarga, pagina, []
 
     def __call__(self, contexto):
         script = ("<script>setTimeout(() => { const a = document.createElement('a'); "
                   f"a.href = '{URL_ZIP}'; document.body.appendChild(a); a.click(); }}, 100);</script>"
                   if self.descarga else "")
-        pagina = f"<!doctype html><html><body><p>Espere mientras se descarga el archivo</p>{script}</body></html>"
+        pagina = self.pagina or ("<!doctype html><html><body><p>Espere mientras se descarga el archivo</p>"
+                                 f"{script}</body></html>")
 
         def manejar(route):
             url = route.request.url
@@ -216,6 +217,26 @@ def test_enlace_que_no_descarga_es_enlace_vencido(tmp_path):
     assert r.fallo and "Enlace vencido o SICOP no inició la descarga" in r.mensaje
     fila = _fila(settings, sid)
     assert fila["estado"] == "fallido" and Path(fila["captura"]).is_file()
+    assert not settings.incoming_dir.exists() or not any(settings.incoming_dir.iterdir())
+
+
+# SIMULADO: copia del texto de la página que SICOP mostró al programa el 22/10, con un ID de soporte inventado.
+PAGINA_BLOQUEO = ("<!doctype html><html><body><p>No fue posible acceder a la página solicitada. Por favor, póngase en "
+                  "contacto con nosotros.</p><p>ID de soporte: 00000000-1111-2222-3333-444444444444</p>"
+                  "<p><a href='javascript:history.back()'>[Volver atrás]</a></p></body></html>")
+
+
+@con_chromium
+def test_pagina_de_bloqueo_es_control_no_automatizable(tmp_path):
+    settings = _settings(tmp_path)
+    sid = _solicitud(settings)
+    portal = _Portal(pagina=PAGINA_BLOQUEO)
+    r = _sondear(settings, _Lector(ENLACE), portal)
+    assert r.fallo and "control no automatizable" in r.mensaje
+    assert "00000000-1111-2222-3333-444444444444" in r.mensaje
+    fila = _fila(settings, sid)
+    assert fila["estado"] == "fallido" and Path(fila["captura"]).is_file()
+    assert portal.peticiones.count(ENLACE) == 1  # no se reintenta
     assert not settings.incoming_dir.exists() or not any(settings.incoming_dir.iterdir())
 
 

@@ -43,7 +43,9 @@ ESPERA_DESCARGA_MS = 120_000  # la página de SICOP tarda unos segundos en empez
 ANIMACION_MS = 10_000      # lo que puede tardar en cerrarse el panel que estaba abierto
 SONDEO_CODIGO_S = 15        # cada cuánto se revisa el buzón mientras se espera el código
 MARGEN_RELOJ = timedelta(minutes=1)  # el reloj de la PC y el de Gmail pueden diferir unos segundos
-CONTROL = re.compile(r"captcha|no soy un robot|acceso denegado|demasiadas solicitudes", re.IGNORECASE)
+CONTROL = re.compile(r"captcha|no soy un robot|acceso denegado|demasiadas solicitudes"
+                     r"|no fue posible acceder a la página solicitada", re.IGNORECASE)  # la última: 22/10, al descargar
+ID_SOPORTE = re.compile(r"ID de soporte:\s*([0-9a-f-]{8,64})", re.IGNORECASE)
 
 
 class FalloObtencion(Exception):
@@ -77,7 +79,9 @@ def _revisar_control(page, respuesta=None) -> None:
         raise FalloObtencion(f"control no automatizable: SICOP respondió HTTP {respuesta.status} (bloqueo). "
                              "No se reintenta: volver al modo manual y avisar.", control=True)
     if page.locator("iframe[src*='captcha' i]").count() or page.get_by_text(CONTROL).count():
-        raise FalloObtencion("control no automatizable: la página muestra un CAPTCHA o un aviso de bloqueo. "
+        soporte = ID_SOPORTE.search(page.inner_text("body"))
+        detalle = f" (ID de soporte de SICOP: {soporte.group(1)})" if soporte else ""
+        raise FalloObtencion(f"control no automatizable: la página muestra un CAPTCHA o un aviso de bloqueo{detalle}. "
                              "No se reintenta: volver al modo manual y avisar.", control=True)
 
 
@@ -333,6 +337,10 @@ def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callab
                         raise FalloObtencion("La descarga de SICOP se interrumpió: descargar a mano con el enlace "
                                              "del correo.")
                     descarga.save_as(str(parcial))
+                except FalloObtencion as fallo:
+                    if fallo.control and fallo.captura is None:
+                        fallo.captura = _captura(page, carpeta, f"{nombre}-bloqueo.png")
+                    raise
                 except PlaywrightTimeout:
                     fallo = FalloObtencion("Enlace vencido o SICOP no inició la descarga (no llegó ningún archivo "
                                            f"en {espera_ms // 1000} s).")
