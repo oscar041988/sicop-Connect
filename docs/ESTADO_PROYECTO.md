@@ -325,8 +325,12 @@
   - Pendientes de la prueba:
     - **Oscar:** preguntar a SICOP con el ID de soporte o dejar la descarga en manual. Hasta que decida, no se
       reintenta la descarga automática.
-    - **Ivania:** la tarea de las 08:00 del 22/10 no dejó entrada en `data\logs\ciclo-2026-10.log`. Revisar el
-      «Último resultado» en el Programador de tareas.
+    - ~~La tarea de las 08:00 del 22/10 no dejó registro~~ **Revisado (22/10):** la computadora se encendió a las
+      8:01. Windows marca 1 ejecución perdida y la tarea no la recupera (`StartWhenAvailable` apagado a propósito,
+      como `Persistent=false` en el servidor). No es un error. **Decisión de Ivania: dejarla como está.**
+    - **Para hablar con Oscar:** la hora del ciclo. Hoy el ZIP llegó hacia las 9:20 (solicitud a las 8:05 + enlace
+      a los ≈ 50 min + descarga a mano), así que un ciclo a las 8:00 casi siempre correrá sin archivo nuevo
+      (FALLO). Se decide junto con lo de la descarga bloqueada.
     - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
       conocido: la revisión no saca un cartel de los avisos.
 - **Obtención automática (2026-10-21):** Oscar aprobó la opción de automatizar la descarga de SICOP; guía en
