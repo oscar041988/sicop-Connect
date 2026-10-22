@@ -332,6 +332,8 @@
     - **Oscar:** preguntar a SICOP con el ID de soporte o dejar la descarga en manual. Hasta que decida, no se
       reintenta la descarga automática. Contacto (Condiciones Generales de Uso, sección 3): 1311 opción 3 o
       call-center@sicop.go.cr; piden usar su formulario de reporte de incidentes.
+      **Enviado (22/10):** Ivania envió la consulta a call-center@sicop.go.cr con el ID de soporte. Se espera la
+      respuesta; al llegar se anota en `DECISION_OBTENCION.md` §8 y se decide la activación de `obtain auto`.
     - ~~La tarea de las 08:00 del 22/10 no dejó registro~~ **Revisado (22/10):** la computadora se encendió a las
       8:01. Windows marca 1 ejecución perdida y la tarea no la recupera (`StartWhenAvailable` apagado a propósito,
       como `Persistent=false` en el servidor). No es un error. **Decisión de Ivania: dejarla como está.**
