@@ -308,6 +308,17 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
         return Resultado(solicitud_id, codigo, process_id)
 
 
+def _texto_diagnostico(diagnostico: dict) -> str:
+    """« Diagnóstico: enlace abierto a las 08:56:52 · HTTP 200 · página www.sicop.go.cr/…» (sin parámetros)."""
+    if diagnostico["abierto"] is None:
+        return ""
+    partes = [f"enlace abierto a las {diagnostico['abierto']:%H:%M:%S}",
+              f"HTTP {diagnostico['http']}" if diagnostico["http"] is not None else "sin respuesta HTTP"]
+    if diagnostico["pagina"]:
+        partes.append(f"página {diagnostico['pagina']}")
+    return " Diagnóstico: " + " · ".join(partes) + "."
+
+
 def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callable | None = None,
               espera_ms: int = ESPERA_DESCARGA_MS) -> Path:
     """Abre el enlace «Reporte» y guarda lo que SICOP descargue en carpeta/nombre (lección 3).
@@ -316,6 +327,7 @@ def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callab
     de descarga. Se guarda primero como .part y se renombra al terminar. Sin descarga → FalloObtencion."""
     carpeta.mkdir(parents=True, exist_ok=True)
     destino, parcial = carpeta / nombre, carpeta / f"{nombre}.part"
+    diagnostico = {"abierto": None, "http": None, "pagina": None}  # solo para el motivo de un FALLO
     try:
         with sync_playwright() as p:
             navegador = p.chromium.launch()
@@ -327,7 +339,11 @@ def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callab
                 try:
                     with page.expect_download(timeout=espera_ms) as info:
                         try:
+                            diagnostico["abierto"] = _ahora()
                             respuesta = page.goto(url, wait_until="domcontentloaded", timeout=espera_ms)
+                            if respuesta is not None:
+                                partes = urlsplit(respuesta.url)  # sin ?parámetros: el processId no se muestra
+                                diagnostico.update(http=respuesta.status, pagina=f"{partes.netloc}{partes.path}")
                             _revisar_control(page, respuesta)
                         except PlaywrightError as exc:
                             if "Download is starting" not in str(exc):  # el enlace descargó sin abrir página
@@ -340,10 +356,11 @@ def descargar(url: str, carpeta: Path, nombre: str, *, preparar_contexto: Callab
                 except FalloObtencion as fallo:
                     if fallo.control and fallo.captura is None:
                         fallo.captura = _captura(page, carpeta, f"{nombre}-bloqueo.png")
+                    fallo.motivo += _texto_diagnostico(diagnostico)
                     raise
                 except PlaywrightTimeout:
                     fallo = FalloObtencion("Enlace vencido o SICOP no inició la descarga (no llegó ningún archivo "
-                                           f"en {espera_ms // 1000} s).")
+                                           f"en {espera_ms // 1000} s).{_texto_diagnostico(diagnostico)}")
                     fallo.captura = _captura(page, carpeta, f"{nombre}-sin-descarga.png")
                     raise fallo from None
             finally:

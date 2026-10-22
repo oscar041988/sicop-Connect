@@ -215,6 +215,8 @@ def test_enlace_que_no_descarga_es_enlace_vencido(tmp_path):
     sid = _solicitud(settings)
     r = _sondear(settings, _Lector(ENLACE), _Portal(descarga=False))
     assert r.fallo and "Enlace vencido o SICOP no inició la descarga" in r.mensaje
+    assert "HTTP 200 · página www.sicop.go.cr/app/module/bid/public/ext-report-download." in r.mensaje
+    assert PID not in r.mensaje  # el diagnóstico no muestra el processId
     fila = _fila(settings, sid)
     assert fila["estado"] == "fallido" and Path(fila["captura"]).is_file()
     assert not settings.incoming_dir.exists() or not any(settings.incoming_dir.iterdir())
@@ -234,6 +236,8 @@ def test_pagina_de_bloqueo_es_control_no_automatizable(tmp_path):
     r = _sondear(settings, _Lector(ENLACE), portal)
     assert r.fallo and "control no automatizable" in r.mensaje
     assert "00000000-1111-2222-3333-444444444444" in r.mensaje
+    assert "Diagnóstico: enlace abierto a las" in r.mensaje and "HTTP 200" in r.mensaje
+    assert PID not in r.mensaje
     fila = _fila(settings, sid)
     assert fila["estado"] == "fallido" and Path(fila["captura"]).is_file()
     assert portal.peticiones.count(ENLACE) == 1  # no se reintenta
