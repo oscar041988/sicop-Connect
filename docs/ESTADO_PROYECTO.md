@@ -444,6 +444,9 @@
     **a confirmar por Ivania**: O1–O4 cumplidos · O5 y O6 parciales · O7 pendiente · O8 en curso. Anotar ya las
     horas del 21 al 23/10 en `docs/METRICAS.md` (no registradas). Las secciones 6 y 9 se completan después del
     servidor y los simulacros.
+    **Informe escrito (2026-10-23, Ivania), en Google Docs** (no está en el repositorio; Claude no lo ha leído).
+    Debe quedar en el Drive de Hermatix, compartido con Oscar. **Pendiente · Ivania:** actualizar las secciones 6
+    (operación) y 9 (pendientes y plan de continuidad) después de la lección 15 y los simulacros.
 - **Pruebas con Python 3.12, el del servidor (2026-10-23, Ivania instaló 3.12.10 con `py install 3.12`):** entorno
   aparte con `requirements-dev.txt`, sin conflictos. Falló 1 prueba que con 3.14 pasaba: con 3.12, un correo con
   remitente `info@sicop.go.cr <falso@otro.test>` se aceptaba como de SICOP (Python se quedaba solo con
