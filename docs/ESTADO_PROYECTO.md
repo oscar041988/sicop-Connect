@@ -439,6 +439,11 @@
     ciclo lo ve como «YA IMPORTADO»; números de ciclo que saltan; nombre del respaldo elegido solo; comprobar que
     la restauración se hizo (el primer intento no se hizo y la revisión aparecía igual).
   - **Pendiente · Ivania:** el informe final con sus palabras (sección 21.3).
+    **Esquema listo (2026-10-23):** `docs/INFORME_FINAL.md`, con las 9 partes de la sección 21.3, los datos de
+    apoyo con su fuente y las preguntas a responder (no tiene texto redactado). Estado propuesto de los objetivos,
+    **a confirmar por Ivania**: O1–O4 cumplidos · O5 y O6 parciales · O7 pendiente · O8 en curso. Anotar ya las
+    horas del 21 al 23/10 en `docs/METRICAS.md` (no registradas). Las secciones 6 y 9 se completan después del
+    servidor y los simulacros.
 - **Pruebas con Python 3.12, el del servidor (2026-10-23, Ivania instaló 3.12.10 con `py install 3.12`):** entorno
   aparte con `requirements-dev.txt`, sin conflictos. Falló 1 prueba que con 3.14 pasaba: con 3.12, un correo con
   remitente `info@sicop.go.cr <falso@otro.test>` se aceptaba como de SICOP (Python se quedaba solo con
