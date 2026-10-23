@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ asunto }}</title>
+</head>
+<!-- Correo: estilos en línea (muchos programas de correo ignoran <style>) y sin imágenes ni scripts. -->
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:Arial,Helvetica,sans-serif;color:#1C1C1C;">
+<div style="max-width:640px;margin:0 auto;padding:20px 16px;">
+  <p style="margin:0 0 4px;font-size:13px;color:#5A6B7B;">Hermatix · Oportunidades SICOP · Resumen semanal</p>
+  <h1 style="margin:0 0 12px;font-size:20px;color:#103050;">Semana del {{ c.inicio | fecha_dia }} al {{ hasta | fecha_dia }}</h1>
+  <p style="margin:0 0 16px;font-size:14px;">Hola, equipo. Este es el resumen de la semana en SICOP para Hermatix.
+    {% if c.datos_hasta %}Datos de carteles importados hasta el {{ c.datos_hasta | fecha }}.{% endif %}</p>
+
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 8px;font-size:15px;font-weight:bold;color:#103050;">Nuevas oportunidades: {{ c.nuevas_total }}</p>
+    {% if c.nuevas_por_familia %}
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      {% for familia, n in c.nuevas_por_familia %}
+      <tr><td style="padding:4px 0;border-bottom:1px solid #eef2f6;">{{ familia }}</td>
+          <td style="padding:4px 0;border-bottom:1px solid #eef2f6;text-align:right;font-weight:bold;">{{ n }}</td></tr>
+      {% endfor %}
+    </table>
+    <p style="margin:6px 0 0;font-size:12px;color:#5A6B7B;">Prioridad Alta o Media. Un cartel puede contar en más de una familia.</p>
+    {% else %}
+    <p style="margin:0;font-size:14px;">Ninguna oportunidad nueva con prioridad Alta o Media en la semana.</p>
+    {% endif %}
+  </div>
+
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 8px;font-size:15px;font-weight:bold;color:#103050;">Revisadas en la semana: {{ c.revisadas_total }}</p>
+    {% if c.revisadas %}
+    <p style="margin:0;font-size:14px;">{% for decision, n in c.revisadas %}{{ decision }}: <strong>{{ n }}</strong>{{ " · " if not loop.last }}{% endfor %}</p>
+    {% else %}
+    <p style="margin:0;font-size:14px;">Nadie registró revisiones esta semana.</p>
+    {% endif %}
+  </div>
+
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 8px;font-size:15px;font-weight:bold;color:#103050;">Próximos cierres (7 días): {{ c.proximos_cierres | length }}</p>
+    {% for o in c.proximos_cierres %}
+    <p style="margin:0 0 8px;font-size:14px;"><strong>{{ o.cierre | fecha }}</strong> ({{ o.regresiva }}) · {{ o.estado }}<br>
+      <a href="{{ o.enlace }}" style="color:#0780EE;">{{ o.titulo | titulo | legible }}</a><br>
+      <span style="color:#5A6B7B;">{{ o.institucion | legible }} · N.º SICOP {{ o.nro_sicop }}</span></p>
+    {% else %}
+    <p style="margin:0;font-size:14px;">Nada en juego cierra en los próximos 7 días.</p>
+    {% endfor %}
+  </div>
+
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 8px;font-size:15px;font-weight:bold;color:#103050;">Pendientes sin revisar: {{ c.pendientes_total }}</p>
+    {% for o in c.pendientes %}
+    <p style="margin:0 0 6px;font-size:14px;"><a href="{{ o.enlace }}" style="color:#0780EE;">{{ o.titulo | titulo | legible }}</a>
+      <span style="color:#5A6B7B;">· cierra {{ o.cierre | fecha }}</span></p>
+    {% endfor %}
+    {% if c.pendientes_total > c.pendientes | length %}
+    <p style="margin:6px 0 0;font-size:13px;">… y {{ c.pendientes_total - c.pendientes | length }} más en el <a href="{{ panel }}/oportunidades?revisado=no" style="color:#0780EE;">panel</a>.</p>
+    {% elif not c.pendientes %}
+    <p style="margin:0;font-size:14px;">Todo lo Alta o Media abierto ya tiene revisión.</p>
+    {% endif %}
+  </div>
+
+  {% if c.hay_adjudicaciones %}
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 8px;font-size:15px;font-weight:bold;color:#103050;">Adjudicaciones relevantes</p>
+    {% for a in c.adjudicaciones %}
+    <p style="margin:0 0 8px;font-size:14px;"><strong>{{ a.familia }}</strong>: {{ a.carteles }} adjudicado{{ "s" if a.carteles != 1 }} ·
+      {% if a.empate > 1 %}empate entre {{ a.empate }} ganadores{% else %}gana más {{ a.lider }}{% endif %} ({{ a.veces }})
+      {% if a.montos %}<br><span style="color:#5A6B7B;">{% for moneda, total in a.montos %}{{ monto(total, moneda) }}{{ " · " if not loop.last }}{% endfor %} sin impuestos</span>{% endif %}</p>
+    {% else %}
+    <p style="margin:0;font-size:14px;">Ninguna adjudicación en firme de la semana cae en las familias de Hermatix
+      (según las adjudicaciones importadas).</p>
+    {% endfor %}
+    <p style="margin:6px 0 0;font-size:13px;"><a href="{{ panel }}/competencia" style="color:#0780EE;font-weight:bold;">Ver Competencia</a></p>
+  </div>
+  {% endif %}
+
+  <p style="margin:16px 0 0;font-size:12px;color:#5A6B7B;">Fuente: datos abiertos de SICOP. Recibes este resumen
+    porque estás en la lista de destinatarios del panel ({{ panel }}/destinatarios). Generado {{ ahora | fecha }}.</p>
+</div>
+</body>
+</html>

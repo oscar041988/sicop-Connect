@@ -259,6 +259,35 @@ def test_familia_que_deja_de_coincidir_se_marca_sin_borrar(db, tmp_path):
     assert [f[3] for f in fila] == ["sin_coincidencia"]
 
 
+def test_retirar_una_familia_no_toca_las_de_otros_carteles(db, tmp_path):
+    """Revisión del 2026-10-23: las previas se agrupan por cartel (antes cada cartel recorría las de toda la base)."""
+    archivo = tmp_path / "reglas.yaml"
+    archivo.write_text(REGLAS_MINI, encoding="utf-8")
+    reglas = cargar_reglas(archivo)
+    with closing(connect(db)) as conn:
+        conn.execute("UPDATE tenders SET descripcion = 'Servicio de monitoreo GPS de flotilla'"
+                     " WHERE nro_sicop = '00000000003'")
+        evaluar_base(conn, reglas, AHORA)
+        antes = {f[0]: f for f in _filas(db)}
+        conn.execute("UPDATE tenders SET descripcion = 'Compra de sillas' WHERE nro_sicop = '00000000001'")
+        r = evaluar_base(conn, reglas, AHORA)
+
+    despues = {f[0]: f for f in _filas(db)}
+    assert (r.retiradas, r.actualizadas, r.nuevas) == (1, 0, 0) and r.sin_cambios == len(antes) - 1
+    assert despues["00000000001"][3] == "sin_coincidencia"
+    assert {k: v for k, v in despues.items() if k != "00000000001"} == \
+        {k: v for k, v in antes.items() if k != "00000000001"}
+
+
+def test_solo_la_evaluacion_completa_queda_registrada(db, reglas):
+    with closing(connect(db)) as conn:
+        evaluar_base(conn, reglas, AHORA, nro_sicop="00000000001")  # un solo cartel: no deja al día lo importado
+        evaluar_base(conn, reglas, AHORA + timedelta(minutes=5))
+        registro = conn.execute("SELECT rules_version, evaluated_at, carteles FROM evaluation_runs").fetchall()
+
+    assert registro == [(reglas.version, (AHORA + timedelta(minutes=5)).isoformat(timespec="seconds"), 3)]
+
+
 def test_comando_evaluate(db, capsys):
     settings = load_settings(env_file=None, environ={"DATABASE_PATH": str(db)})
 

@@ -97,11 +97,48 @@ def test_catalogo_acepta_el_zip_del_portal(cliente, carpetas, db):
     assert [fila[0] for fila in _importaciones(db)] == ["catalogo"]
 
 
+def _zip_pliegos(lineas=True):
+    contenido = io.BytesIO()
+    with zipfile.ZipFile(contenido, "w") as zf:
+        zf.writestr("Detalle de pliegos de condiciones.csv", CARTELES)
+        if lineas:
+            zf.writestr("Detalles lineas.csv", (FIXTURES / "lineas_sintetico.csv").read_bytes())
+    return contenido.getvalue()
+
+
+def test_pliegos_acepta_el_zip_del_portal_e_importa_carteles_y_lineas(cliente, carpetas, db):
+    entrada, _ = carpetas
+
+    respuesta = _subir(cliente, _zip_pliegos(), "Reporte de detalle pliego de condiciones.zip", "pliegos")
+
+    assert respuesta.status_code == 200
+    assert respuesta.text.count("Resumen de la importación") == 2
+    assert "Reporte de detalle pliego de condiciones.zip › Detalle de pliegos de condiciones.csv" in respuesta.text
+    assert "reporte carteles" in respuesta.text and "reporte lineas" in respuesta.text
+    assert [(f[0], f[1]) for f in _importaciones(db)] == [("carteles", "Detalle de pliegos de condiciones.csv"),
+                                                          ("lineas", "Detalles lineas.csv")]
+    assert len(list(entrada.iterdir())) == 1  # el ZIP queda en la carpeta de entrada, como un CSV subido
+
+    otra_vez = _subir(cliente, _zip_pliegos(), "copia.zip", "pliegos")
+    assert otra_vez.text.count("Este archivo ya se importó") == 2 and len(_importaciones(db)) == 2
+    assert len(list(entrada.iterdir())) == 1  # la copia repetida no queda
+
+
+def test_pliegos_rechaza_un_zip_incompleto(cliente, carpetas, db):
+    entrada, _ = carpetas
+
+    respuesta = _subir(cliente, _zip_pliegos(lineas=False), "pliegos.zip", "pliegos")
+
+    assert respuesta.status_code == 400 and "faltan Detalles lineas.csv" in respuesta.text
+    assert _importaciones(db) == [] and not any(entrada.iterdir())
+
+
 # --- Validaciones -----------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("nombre, reporte", [
     ("carteles.xlsx", "carteles"),
-    ("carteles.zip", "carteles"),     # el ZIP solo se acepta para el catálogo
+    ("carteles.zip", "carteles"),     # el ZIP solo se acepta para el catálogo y para «pliegos»
+    ("pliegos.csv", "pliegos"),       # «pliegos» es solo el ZIP
     ("programa.exe", "instituciones"),
     ("sin_extension", "lineas"),
     ("carteles.csv.exe", "carteles"),
@@ -152,6 +189,17 @@ def test_reporte_equivocado_no_importa_y_no_deja_el_archivo(cliente, carpetas, d
     respuesta = _subir(cliente, INSTITUCIONES, "instituciones.csv", "carteles")  # no es un archivo de carteles
 
     assert respuesta.status_code == 400 and "No se importó: Faltan encabezados" in respuesta.text
+    assert not any(entrada.iterdir()) and _importaciones(db) == []
+
+
+def test_archivo_ilegible_no_da_error_500_ni_deja_el_archivo(cliente, carpetas, db):
+    """Revisión del 2026-10-23: un byte que no existe en cp1252 (0x81) hacía caer la carga con un error 500."""
+    entrada, _ = carpetas
+    danado = CARTELES.replace(b"\n", b"\x81\xff\n", 2)  # ni UTF-8 ni cp1252
+
+    respuesta = _subir(cliente, danado, "carteles.csv")
+
+    assert respuesta.status_code == 400 and "no es UTF-8 ni cp1252 (byte 0x81" in respuesta.text
     assert not any(entrada.iterdir()) and _importaciones(db) == []
 
 

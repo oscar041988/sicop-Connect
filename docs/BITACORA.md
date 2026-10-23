@@ -405,3 +405,109 @@ entiende en 30 s?, ¿falta o sobra algo?, ¿incluir los «No interesa»?, ¿a qu
 Oscar da el acceso y pone las credenciales en el `.env`. Bloqueos del despliegue · Oscar · antes del mié 14/10.
 Commit: `50e7b7e` Niveles de acceso, usuarios e historial · `6983336` Lección 7, encargo A · `b80d33e` Contraseñas
 de mínimo 10.
+
+## 2026-10-19 — cierre de la lección 9 (por calendario, lección 11)
+
+Horas realizadas: 5 h
+Objetivo acordado en la reunión: cerrar la lección 9 (app en el servidor) y destrabar la 10 (avisos de cada mañana).
+Trabajo y archivos cambiados:
+- Fin de línea LF en todo el repositorio (decisión de Oscar); los CSV se guardan byte por byte con el CRLF de SICOP.
+  Primer push y primeros PR: #1 (LF) y #2 (página «Avisos»). Oscar los unió a `main`.
+- `docs/ACTA_DESPLIEGUE.md` (nuevo): la instalación del 15/10 la hizo un asistente de IA de Oscar y el código fue
+  del servidor a GitHub. Revisado: en GitHub no hay secretos. En la consola: app como `sicop`, permisos de la guía,
+  `health` ok, puerto 8000 solo de SICOP, el proxy pasa la IP real, ciclo diario `disabled`.
+- Base del servidor: tenía carteles cargados pero nunca evaluados. Oscar corrió `evaluate` (camino B) y el panel
+  del servidor mostró las oportunidades.
+- Datos al día en Windows (importaciones #12 y #13, 614 carteles nuevos) y prueba paso a paso de `OPERACION.md`,
+  secciones 1–6: 13 hallazgos corregidos en el manual. Simulacros #3 (restaurar) y #4 (ciclo sin datos) en Windows.
+- Archivos de Google instalados en el servidor por la herramienta de Oscar (sin registro de los comandos).
+Evidencia y comando de comprobación:
+- `python -m pytest -q` → 337 passed (rama LF) y 348 passed (con «Avisos»).
+- `run-cycle --origen real --dry-run` → ciclo #22 «FALLO · no llegó ningún archivo nuevo», código 1, no avisó.
+- `notify --dry-run` → 3 destinatarios, las mismas 3 oportunidades que se avisaron a mano.
+- `backup` → `sicop_20261019-114809` (huella igual al manifiesto); restaurado en una carpeta aparte, revisiones #1–#5.
+- En el servidor: revisiones de Corredores, Puriscal, OIJ, Santa Ana y CCSS desde otra computadora.
+Datos: reales (SICOP, 19/10) en Windows y en el servidor; ningún correo enviado.
+Claude: interacciones y uso no registrados.
+Estimado vs. real (horas humanas por tarea): lección 9 · estimado 7,5 h (agenda de la guía) · real 5 h el 19/10
+(lección cerrada; la instalación del 15/10 la hizo la herramienta de Oscar y sus horas no están registradas).
+Autoevaluación de la lección 9: las tres correctas (Mac / servidor, por qué no `root`, código y datos aparte).
+Concepto aprendido (redactado por Claude a pedido de Ivania): separar código, datos y configuración. El código va en
+`/opt/sicop-connect` y se puede reemplazar en cada versión o volver a sacar de GitHub; los datos van en
+`/var/lib/sicop-connect` y son únicos; los secretos van en `/etc/sicop-connect`, solo legibles por `sicop`. Como
+cambiar el motor de un carro sin vaciar la maleta: se actualiza el código sin tocar las revisiones, y un respaldo
+solo necesita la carpeta de datos.
+Error encontrado y cómo se resolvió: en la consola del servidor, `python -m app.cli evaluate` dio «Command 'python'
+not found». En el servidor no se usa `python` suelto: se corre con `systemd-run` como `sicop`, con el `.venv` y
+`app.env` del panel (`OPERACION.md`, «Cómo se corre un comando»). Con `python3` desde `~` habría usado otra base.
+También: marqué «Interesa» por error en la CCSS (`20261001749`) en vez de Puriscal (`20261002246`); se corrigió
+con una revisión nueva. Lección: mirar el título, no solo el número.
+Bloqueo, responsable y próximo paso: lección 10 (ciclo de las 8:00 y envío real) · Ivania con Oscar · confirmar que
+los avisos del servidor siguen en dry-run, confirmar destinatarios, envío supervisado y activar el temporizador.
+Commit: rama `acta-despliegue` (ver su PR).
+Demo para mañana: el panel del servidor con las oportunidades de hoy y sus revisiones.
+
+## 2026-10-20 — preparación de la lección 10 (Hito 2) y pendientes sin Oscar (por calendario, lección 12)
+
+Horas realizadas: 6 h
+Objetivo acordado: dejar lista la sesión del Hito 2 con Oscar y avanzar los pendientes que no dependen de él.
+Trabajo y archivos cambiados:
+- Servidor (Ivania con Oscar): los JSON de Google ya están en el servidor; `notify --send` desde el servidor
+  entregó el correo. ☑ Hito 2: correo real recibido desde el servidor.
+- `docs/ACTA_LECCION_10.md` (nuevo): hoja de la sesión y acta, pasos 0–4 (estado del servidor, ciclo en dry-run,
+  envío supervisado, temporizador, reinicio). El paso 1 tiene dos caminos: A (ZIP) o B (CSV), según la versión.
+- `docs/AMPLIACIONES.md` (nuevo): tabla A1–A6 con valor, esfuerzo y riesgo; orden recomendado A4 → A5 → A3.
+  Oscar elige.
+- Regla de «cámaras» (rama `regla-camaras-intraorales`): exclusión «intraoral» en `videotelematica` por el falso
+  positivo de la CCSS (`20261001749`); se descartó «equipo medico» por el riesgo con ambulancias. Reglas
+  `b880e0d350e1`; el cartel entra al golden set (34 carteles).
+- Aviso en el panel de datos importados sin evaluar (rama `panel-aviso-sin-evaluar`): migración 0008
+  (`evaluation_runs`); opción elegida por Ivania.
+- ZIP de pliegos sin descomprimir, en el ciclo y en el panel (rama `zip-pliegos`; opción O4a de A1).
+- `docs/DECISION_OBTENCION.md` (nuevo, borrador de A1): la descarga no se puede automatizar del todo, porque cada
+  solicitud pide un código por correo. Recomendación provisional: mejorar el modo asistido.
+- Práctica del reto de la semana 2, autoevaluación de A1 y autoevaluación de la lección 10 (en `ESTADO_PROYECTO.md`
+  y `DECISION_OBTENCION.md`).
+- GitHub: `leccion-10` rebasada sobre `acta-despliegue`; PR de las 6 ramas creados por Ivania en la web.
+Evidencia y comando de comprobación:
+- `python -m pytest -q` → 356 passed en `zip-pliegos`, 351 en `panel-aviso-sin-evaluar`, 348 en
+  `regla-camaras-intraorales`; golden set 34/34 = 100 %.
+- `evaluate` (base de Windows): la CCSS pasa de Media a «sin coincidencia»; el OIJ (`20260903798`) sigue Alta.
+- `notify --dry-run` dos veces → 0 nuevos · 12 ya avisados las dos veces. Fila de `20261001587` en la outbox:
+  3 destinatarios, motivo `nueva`, `aceptado` el 13/10.
+- Respaldo `sicop_20261020-094004` y `migrate` → 0008 en la base de Windows: aviso antes de `evaluate`, sin aviso
+  después.
+- `run-cycle --dry-run` con el ZIP real del 9/10 sobre una copia de la base: los dos CSV «YA IMPORTADO» (#7 y #8).
+Datos: reales en `data/sicop.db` (Windows) y en el servidor; las pruebas usan datos sintéticos; la prueba del ZIP
+usó una copia de la base, que después se borró. Desde Windows no se envió ningún correo.
+Claude: interacciones y uso no registrados
+Estimado vs. real (horas humanas por tarea): lección 10 · estimado 7,25 h (agenda de la guía) · real 6 h hasta
+ahora, en preparación y pendientes; **la lección sigue abierta**: falta la sesión con Oscar (pasos 1–4 de la
+hoja, revisión semanal 2).
+Autoevaluación de la lección 10: las tres correctas, con ajustes (el temporizador corre de lunes a viernes, no
+todos los días; sin archivo nuevo igual evalúa; condiciones para avisar). Ver `ESTADO_PROYECTO.md`.
+Concepto aprendido (redactado por Claude a pedido de Ivania, a partir de sus respuestas del reto): idempotencia.
+Una operación es idempotente si hacerla dos veces deja todo igual que hacerla una vez. Lo comprobé con
+`notify --dry-run`: la primera vez dejó 12 avisos en la outbox y la segunda dijo «0 nuevos · 12 ya avisados». Es
+como un sello de «recibido»: si llega otra copia del mismo documento, ya se sabe que se registró. Gracias a eso,
+si el temporizador lanzara el ciclo dos veces por error, nadie recibiría el correo repetido.
+Error encontrado y cómo se resolvió:
+- El resumen de pendientes salió de `main` y estaba desactualizado: lo más nuevo estaba en `acta-despliegue`, que
+  todavía no se ha unido. Lección: antes de decir qué falta, mirar también las ramas sin unir.
+- `leccion-10` y `acta-despliegue` cambiaban las mismas líneas de `ESTADO_PROYECTO.md`. Se resolvió con un rebase
+  y `push --force-with-lease` (solo de `leccion-10`).
+- PowerShell 5.1 rompe las comillas dobles dentro de `python -c` y de `git commit -m`. Se resolvió con un
+  here-string (`@'…'@ | python -`) y con `git commit -F archivo`. Uno de los commits falló por esto y la rama se
+  subió sin él; se repitió.
+- Al preparar la hoja se vio que el ciclo no aceptaba el ZIP de pliegos; de ahí salió O4a.
+Bloqueo, responsable y próximo paso: Oscar revisa y une las 6 ramas (primero `acta-despliegue`, luego
+`leccion-10`) y actualiza el servidor (9.8: respaldo, `migrate` → 0008, `evaluate`) · luego, la sesión del Hito 2
+con `docs/ACTA_LECCION_10.md`, el reto oficial de la semana 2 y la elección de las ampliaciones · decidir quién
+deja el archivo de SICOP antes de las 8:00. Ivania: copiar el respaldo a la USB y buscar los códigos de catálogo
+de las 6 familias.
+Commit: `leccion-10` (`d75fc22` → `4b91f5a`) · `regla-camaras-intraorales` (`a707895`) · `panel-aviso-sin-evaluar`
+(`b734ccc`) · `zip-pliegos` (`41cf4db`), cada una con su PR.
+Demo para mañana: en la rama `zip-pliegos`, abrir http://127.0.0.1:8000, ir a «Cargar archivo» y subir el ZIP de
+pliegos tal como lo baja SICOP. El panel muestra sus dos partes («ZIP › Detalle de pliegos de condiciones.csv» y
+«ZIP › Detalles lineas.csv»), cada una con «ya se importó (#7 / #8)». Muestra que ya no hay que descomprimir el ZIP a
+mano, y también la idempotencia: el mismo archivo no se importa dos veces.

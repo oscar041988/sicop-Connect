@@ -5,6 +5,7 @@ relativas a hoy para que el plazo siga abierto. Nunca toca data/ ni envía corre
 SIMULADO.
 """
 
+import io
 import json
 import os
 import sqlite3
@@ -25,6 +26,7 @@ from app.config import load_settings
 from app.database import apply_migrations, connect
 from app.importers.comun import HORA_CR
 from tests.test_avisos import ProveedorSimulado
+from tests.test_competencia import armar_zip
 
 ENCABEZADO = ("Número SICOP;Cédula;Fecha Publicación;Numero de procedimiento;Cod Unidad Compra;Nombre Unidad Compra;"
               "Tipo de procedimiento;Modalidad Procedimiento;Excepción CD;Descripción;Pago Adelantado Pymes;"
@@ -174,7 +176,7 @@ def test_si_un_archivo_falla_se_importa_el_resto_pero_no_se_avisa(entorno):
     c = ciclo.run_cycle(entorno, "sintetico")
 
     assert c.estado == "fallo" and [a.resultado for a in c.archivos] == ["error", "importado"]
-    assert c.avisos is None and _outbox(entorno) == []
+    assert c.avisos.preparados == {} and _outbox(entorno) == []  # solo revisa cierres próximos: no hay
 
 
 def test_carpeta_vacia_no_es_cero_oportunidades(entorno, capsys):
@@ -285,3 +287,139 @@ def test_zip_del_catalogo_se_reconoce(entorno, tmp_path):
         zf.write(fuente, "Codigos Identificacion.csv")
 
     assert ciclo.tipo_de_reporte(zip_path) == "catalogo"
+
+
+# --- ZIP de pliegos tal como llega del portal (DECISION_OBTENCION.md, O4a) ----------------------------------
+
+ENCABEZADO_LINEAS = ("Número SICOP;Numero de linea;Numero partida;Cantidad;Precio Unitario Estimado;Moneda;"
+                     "Tipo Cambio USD;Código identificación")
+ZIP_PLIEGOS = "Reporte de detalle pliego de condiciones.zip"
+
+
+def _lineas(nro):
+    return ("﻿" + "\r\n".join([ENCABEZADO_LINEAS, f"{nro};1;1;3;150000.00;CRC;;8311160200000001"]) + "\r\n"
+            ).encode("utf-8")
+
+
+def _zip_pliegos(miembros):
+    contenido = io.BytesIO()
+    with zipfile.ZipFile(contenido, "w", zipfile.ZIP_DEFLATED) as zf:
+        for nombre, datos in miembros.items():
+            zf.writestr(nombre, datos)
+    return contenido.getvalue()
+
+
+def _importaciones(settings):
+    with closing(sqlite3.connect(settings.database_path)) as conn:
+        return conn.execute("SELECT report, file_name FROM imports ORDER BY id").fetchall()
+
+
+def test_zip_de_pliegos_se_importa_sin_descomprimirlo(entorno, capsys):
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": _carteles(GPS, OTRO),
+                                              "Detalles lineas.csv": _lineas(GPS[0])}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 0
+
+    salida = capsys.readouterr().out
+    assert f"IMPORTADO (carteles) {ZIP_PLIEGOS} › Detalle de pliegos de condiciones.csv" in salida
+    assert f"IMPORTADO (lineas) {ZIP_PLIEGOS} › Detalles lineas.csv" in salida
+    # Carteles antes que líneas, con el nombre de siempre: igual que si se hubiera descomprimido a mano.
+    assert _importaciones(entorno) == [("carteles", "Detalle de pliegos de condiciones.csv"),
+                                       ("lineas", "Detalles lineas.csv")]
+    assert _outbox(entorno) == [("oscar@ejemplo.test", GPS[0], "preparado")]
+    # El ZIP se mueve entero a procesados; los CSV extraídos no quedan en la carpeta de entrada.
+    assert sorted(p.name for p in entorno.incoming_dir.iterdir()) == ["procesados"]
+    assert [p.name for p in (entorno.incoming_dir / "procesados" / _hoy()).iterdir()] == [ZIP_PLIEGOS]
+
+
+def test_zip_de_pliegos_ya_descomprimido_a_mano_no_se_importa_dos_veces(entorno, capsys):
+    carteles_csv, lineas_csv = _carteles(GPS), _lineas(GPS[0])
+    _dejar(entorno, "Detalle de pliegos de condiciones.csv", carteles_csv)
+    _dejar(entorno, "Detalles lineas.csv", lineas_csv)
+    main(["run-cycle", "--origen", "sintetico"], entorno)
+    capsys.readouterr()
+
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": carteles_csv,
+                                              "Detalles lineas.csv": lineas_csv}))
+    main(["run-cycle", "--origen", "sintetico"], entorno)
+
+    salida = capsys.readouterr().out
+    assert salida.count("YA IMPORTADO") == 2 and len(_importaciones(entorno)) == 2
+
+
+@pytest.mark.parametrize("miembros, motivo", [
+    ({"Detalle de pliegos de condiciones.csv": "carteles"}, "faltan Detalles lineas.csv"),
+    ({"Detalle de pliegos de condiciones.csv": "carteles", "Detalles lineas.csv": "lineas", "otro.csv": "x"},
+     "sobran otro.csv"),
+])
+def test_zip_de_pliegos_incompleto_se_aparta_y_no_se_avisa(entorno, miembros, motivo):
+    datos = {"carteles": _carteles(GPS), "lineas": _lineas(GPS[0]), "x": b"x\r\n"}
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({n: datos[v] for n, v in miembros.items()}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and motivo in error
+    assert _importaciones(entorno) == [] and _outbox(entorno) == []
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_PLIEGOS).exists()
+
+
+def test_zip_de_pliegos_con_un_csv_cortado_se_aparta_entero(entorno):
+    _dejar(entorno, ZIP_PLIEGOS, _zip_pliegos({"Detalle de pliegos de condiciones.csv": _carteles(GPS),
+                                              "Detalles lineas.csv": _lineas(GPS[0])[:-10]}))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "termina a mitad de una fila" in error
+    assert _importaciones(entorno) == []  # ninguno de los dos: el ZIP se revisa completo antes de importar
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_PLIEGOS).exists()
+
+
+# --- ZIP de adjudicaciones (revisión del 2026-10-23: antes se apartaba a con_error) ---------------------------
+
+ZIP_ADJUDICACIONES = "Reporte de adjudicaciones en firme.zip"
+
+
+def _zip_adjudicaciones(tmp_path, **kwargs):
+    return armar_zip(tmp_path / "adjudicaciones.zip", **kwargs).read_bytes()
+
+
+def test_zip_de_adjudicaciones_se_importa_despues_de_los_carteles(entorno, tmp_path, capsys):
+    _dejar(entorno, ZIP_ADJUDICACIONES, _zip_adjudicaciones(tmp_path))
+    _dejar(entorno, "Detalle de pliegos de condiciones.csv", _carteles(GPS))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 0
+
+    assert [r for r, _ in _importaciones(entorno)] == ["carteles", "adjudicaciones", "adjudicacion_proveedores",
+                                                       "adjudicacion_lineas"]
+    assert _outbox(entorno) == [("oscar@ejemplo.test", GPS[0], "preparado")]  # los carteles sí son datos del día
+    assert (entorno.incoming_dir / "procesados" / _hoy() / ZIP_ADJUDICACIONES).exists()
+    assert f"IMPORTADO (adjudicaciones) {ZIP_ADJUDICACIONES} › Detalle Adjudicaciones.csv" in capsys.readouterr().out
+
+
+def test_solo_adjudicaciones_se_importan_pero_no_se_avisa(entorno, tmp_path):
+    _dejar(entorno, ZIP_ADJUDICACIONES, _zip_adjudicaciones(tmp_path))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "solo llegaron adjudicaciones" in error
+    assert len(_importaciones(entorno)) == 3 and _outbox(entorno) == []
+    assert (entorno.incoming_dir / "procesados" / _hoy() / ZIP_ADJUDICACIONES).exists()
+
+
+def test_zip_de_adjudicaciones_cortado_se_aparta_entero(entorno, tmp_path):
+    with zipfile.ZipFile(tmp_path / "cortado.zip", "w") as zf:
+        with zipfile.ZipFile(io.BytesIO(_zip_adjudicaciones(tmp_path))) as completo:
+            for nombre in completo.namelist():
+                datos = completo.read(nombre)
+                zf.writestr(nombre, datos[:-10] if nombre == "Det Lineas Adjudicadas.csv" else datos)
+    _dejar(entorno, ZIP_ADJUDICACIONES, (tmp_path / "cortado.zip").read_bytes())
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "Det Lineas Adjudicadas.csv: incompleto" in error
+    assert _importaciones(entorno) == []
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_ADJUDICACIONES).exists()

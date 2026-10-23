@@ -9,7 +9,9 @@ from __future__ import annotations
 import logging
 import re
 import sqlite3
+import tempfile
 from contextlib import closing
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
@@ -21,9 +23,10 @@ from fastapi.templating import Jinja2Templates
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
 from app.database import check_database, connect
-from app.importers.comun import ORIGENES, ImportacionError
+from app.importers import zip_pliegos
+from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import avisos, destinatarios, historial, panel, reintentos, usuarios
+from app import avisos, competencia, destinatarios, exportar, historial, panel, reintentos, resumen, usuarios
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -46,6 +49,7 @@ PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
+    nombre_competidor=competencia.nombre_competidor,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
 
@@ -63,7 +67,7 @@ def _base_no_lista(request: Request) -> HTMLResponse | None:
     return PLANTILLAS.TemplateResponse(request, "error.html", {"mensaje": estado["detail"]}, status_code=503)
 
 
-def _aviso_reglas(version: str | None) -> str | None:
+def _aviso_reglas(version: str | None, sin_evaluar: bool = False) -> str | None:
     if version is None:
         return "Todavía no hay evaluaciones: ejecuta python -m app.cli evaluate."
     try:
@@ -73,6 +77,9 @@ def _aviso_reglas(version: str | None) -> str | None:
     if actual != version:
         return (f"Las reglas cambiaron (YAML {actual}; se muestra la evaluación {version}). "
                 "Ejecuta python -m app.cli evaluate para actualizar.")
+    if sin_evaluar:
+        return ("Hay datos importados después de la última evaluación: los carteles nuevos o cambiados todavía "
+                "no aparecen aquí. Ejecuta python -m app.cli evaluate para actualizar.")
     return None
 
 
@@ -145,15 +152,39 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         version = panel.version_vigente(conn)
         resultado = panel.listar(conn, version, filtros, ahora) if version else panel.Pagina([], 0, 1, 1)
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
+        sin_evaluar = panel.importado_sin_evaluar(conn)
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
-        "aviso": _aviso_reglas(version), "prioridades": panel.PRIORIDADES,
+        "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
             {k: v for k, v in {**consulta, "revisado": valor}.items() if v}),
         "url_pagina": lambda n: "/oportunidades?" + urlencode({**consulta, "pagina": n}),
+        "url_exportar": "/oportunidades.xlsx" + ("?" + urlencode(consulta) if consulta else ""),
     })
+
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@router.get("/oportunidades.xlsx")
+def exportar_oportunidades(request: Request, prioridad: str = "candidatos", familia: str = "", institucion: str = "",
+                           plazo: str = "", revisado: str = "", tipo: str = "", q: str = "") -> Response:
+    """A5: el listado con los mismos filtros que la pantalla, en Excel (todas las páginas)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtros = panel.Filtros(prioridad, familia, institucion, plazo, revisado, tipo, q, 1).limpios()
+    ahora = _ahora()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        if version is None:
+            return PLANTILLAS.TemplateResponse(request, "error.html", {
+                "mensaje": "Todavía no hay evaluaciones: no hay nada que exportar."}, status_code=409)
+        contenido, filas = exportar.libro(conn, version, filtros, ahora, load_settings().app_base_url)
+    log.info("Exportación a Excel: %s filas · usuario %s", filas, (seguridad.usuario_actual(request) or {}).get("id"))
+    nombre = f"oportunidades_{ahora.astimezone(HORA_CR):%Y%m%d-%H%M}.xlsx"
+    return Response(contenido, media_type=XLSX, headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 
 def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, error: str | None = None,
@@ -165,7 +196,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         return PLANTILLAS.TemplateResponse(
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
-        "d": datos, "version": version, "aviso": _aviso_reglas(version), "error": error,
+        "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
     }, status_code=status_code)
@@ -199,9 +230,39 @@ def revisar(request: Request, nro_sicop: str, decision: str = Form(""), motivo: 
     return RedirectResponse(f"/oportunidades/{nro_sicop}#revisiones", status_code=303)
 
 
+@dataclass
+class ParteCarga:
+    """Lo que se muestra de cada CSV importado: uno si se subió un CSV, dos si fue el ZIP de pliegos."""
+    nombre: str
+    reporte: str
+    resultado: object
+    anterior: tuple | None
+
+
+def _importar_parte(conn, reporte: str, ruta: Path, nombre: str, origen: str, raw_dir: Path) -> ParteCarga:
+    resultado = IMPORTADORES[reporte](conn, ruta, origen, raw_dir)
+    # Qué fue la importación anterior del mismo archivo, para que el aviso no se preste a confusión.
+    anterior = conn.execute("SELECT report, file_name, imported_at FROM imports WHERE id = ?",
+                            (resultado.ya_importado,)).fetchone() if resultado.ya_importado else None
+    return ParteCarga(nombre, reporte, resultado, anterior)
+
+
+def _importar_zip_pliegos(conn, ruta: Path, nombre: str, origen: str, raw_dir: Path
+                          ) -> tuple[list[ParteCarga], str | None]:
+    """Carteles y después líneas. Si las líneas fallan, los carteles ya importados se muestran igual."""
+    partes: list[ParteCarga] = []
+    with tempfile.TemporaryDirectory() as temporal:
+        for reporte, csv in zip_pliegos.extraer(ruta, Path(temporal)):
+            try:
+                partes.append(_importar_parte(conn, reporte, csv, f"{nombre} › {csv.name}", origen, raw_dir))
+            except ImportacionError as exc:
+                return partes, f"No se importó {csv.name}: {exc}"
+    return partes, None
+
+
 def _render_carga(request: Request, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "cargar.html", {
-        "seccion": "cargar", "reportes": list(IMPORTADORES), "origenes": ORIGENES, "extensiones": carga.EXTENSIONES,
+        "seccion": "cargar", "reportes": list(carga.EXTENSIONES), "origenes": ORIGENES, "extensiones": carga.EXTENSIONES,
         "limite_mb": carga.en_megas(load_settings().upload_max_bytes), "separadores": SEPARADORES,
         "max_rechazos": MAX_RECHAZOS_VISIBLES, "ejemplos": EJEMPLOS_POR_ADVERTENCIA, "formulario": {},
         **contexto,
@@ -217,7 +278,7 @@ def formulario_carga(request: Request) -> Response:
 def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
            archivo: UploadFile | None = File(None)) -> Response:
     formulario = {"reporte": reporte, "origen": origen}
-    if reporte not in IMPORTADORES or origen not in ORIGENES:
+    if reporte not in carga.EXTENSIONES or origen not in ORIGENES:
         return _render_carga(request, 400, formulario=formulario,
                              error="Elige el tipo de reporte y el origen de los datos.")
     if archivo is None or not archivo.filename:
@@ -231,21 +292,67 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
     except carga.CargaInvalida as exc:
         status = 413 if isinstance(exc, carga.ArchivoMuyGrande) else 400
         return _render_carga(request, status, formulario=formulario, error=str(exc))
+    error = None
     try:
         with closing(connect(settings.database_path)) as conn:
-            resultado = IMPORTADORES[reporte](conn, ruta, origen, settings.raw_data_dir)
-            # Qué fue la importación anterior del mismo archivo, para que el aviso no se preste a confusión.
-            anterior = conn.execute("SELECT report, file_name, imported_at FROM imports WHERE id = ?",
-                                    (resultado.ya_importado,)).fetchone() if resultado.ya_importado else None
-    except ImportacionError as exc:
-        ruta.unlink(missing_ok=True)  # no se importó nada: no queda en la carpeta de entrada
-        return _render_carga(request, 400, formulario=formulario, error=f"No se importó: {exc}")
-    if resultado.ya_importado is not None:
-        ruta.unlink(missing_ok=True)  # repetido: el original ya está guardado desde la primera vez
+            if reporte == carga.PLIEGOS:
+                partes, error = _importar_zip_pliegos(conn, ruta, archivo.filename, origen, settings.raw_data_dir)
+            else:
+                partes = [_importar_parte(conn, reporte, ruta, archivo.filename, origen, settings.raw_data_dir)]
+    except (ImportacionError, zip_pliegos.ZipInvalido) as exc:
+        partes, error = [], f"No se importó: {exc}"
+    if error or all(p.resultado.ya_importado is not None for p in partes):
+        # Con error, o repetido (el original ya está guardado desde la primera vez): no queda en la carpeta de entrada.
+        ruta.unlink(missing_ok=True)
     # Sin Post/Redirect/Get: el detalle de los rechazos no se guarda en la base. Si se recarga la página y se
     # reenvía el archivo, el hash lo reconoce y no se importa dos veces.
-    return _render_carga(request, formulario=formulario, resultado=resultado, nombre_original=archivo.filename,
-                         anterior=anterior)
+    return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error)
+
+
+# --- Competencia (todos los usuarios con sesión) ---------------------------------------------------------------
+
+def _competidores() -> tuple[dict[str, str], str | None]:
+    """Los nombres de config/competidores.yaml; si el archivo está mal, la página igual se ve (con cédulas)."""
+    try:
+        return competencia.cargar_competidores(), None
+    except (competencia.CompetidoresError, OSError) as exc:
+        return {}, f"{exc}. Mientras tanto, los ganadores se muestran por cédula."
+
+
+@router.get("/competencia", response_class=HTMLResponse)
+def pagina_competencia(request: Request, desde: str = "", hasta: str = "", prioridad: str = "") -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtro = competencia.Filtro.desde_texto(desde, hasta, prioridad)
+    nombres, error_yaml = _competidores()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        hay_adjudicaciones = conn.execute("SELECT 1 FROM adjudicaciones LIMIT 1").fetchone() is not None
+        datos = competencia.resumen(conn, version, filtro, nombres) if version and hay_adjudicaciones else None
+    return PLANTILLAS.TemplateResponse(request, "competencia.html", {
+        "seccion": "competencia", "filtro": filtro, "r": datos, "version": version, "error": error_yaml,
+        "aviso": _aviso_reglas(version), "hay_adjudicaciones": hay_adjudicaciones,
+        "prioridades": competencia.PRIORIDADES,
+        "url_registros": lambda familia, clave: "/competencia/registros?" + urlencode(
+            {**filtro.consulta(), "familia": familia, "competidor": clave}),
+    })
+
+
+@router.get("/competencia/registros", response_class=HTMLResponse)
+def registros_competencia(request: Request, familia: str = "", competidor: str = "", desde: str = "",
+                          hasta: str = "", prioridad: str = "") -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    filtro = competencia.Filtro.desde_texto(desde, hasta, prioridad)
+    nombres, error_yaml = _competidores()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        carteles = competencia.registros(conn, version, filtro, nombres, familia, competidor) if version else []
+    return PLANTILLAS.TemplateResponse(request, "competencia_registros.html", {
+        "seccion": "competencia", "filtro": filtro, "familia": familia, "competidor": competidor,
+        "carteles": carteles, "version": version, "error": error_yaml,
+        "volver": "/competencia" + ("?" + urlencode(filtro.consulta()) if filtro.consulta() else ""),
+    })
 
 
 # --- Usuarios (solo administradores) -------------------------------------------------------------------------
@@ -393,7 +500,8 @@ def cambiar_estado_destinatario(request: Request, destinatario_id: int, activo: 
 
 def _render_avisos(request: Request, conn, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "avisos.html", {
-        "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()), "motivos_aviso": avisos.MOTIVOS,
+        "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()),
+        "motivos_aviso": {**avisos.MOTIVOS, resumen.MOTIVO: "Resumen semanal"},
         "historial": historial.ultimos(conn, historial.DE_AVISOS), "acciones": historial.ACCIONES,
         "hecho": request.session.pop("hecho", None), **contexto,
     }, status_code=status_code)
@@ -423,6 +531,9 @@ def pagina_avisos(request: Request) -> Response:
 def reintentar_aviso(request: Request, outbox_id: int, revise_enviados: str = Form("")) -> Response:
     def cambio(conn):
         a = reintentos.reintentar(conn, outbox_id, _ahora(), _quien(request), revise_enviados == "1")
+        if a.es_resumen:
+            return (f"Resumen semanal {a.semana} para {a.para} preparado otra vez: sale con el siguiente envío del"
+                    " resumen (python -m app.cli notify --resumen-semanal --send).")
         return (f"Aviso del cartel {a.nro_sicop} para {a.para} preparado otra vez: sale en el siguiente envío"
                 " de avisos.")
     return _cambio_de_aviso(request, cambio)
@@ -432,5 +543,5 @@ def reintentar_aviso(request: Request, outbox_id: int, revise_enviados: str = Fo
 def confirmar_aviso(request: Request, outbox_id: int) -> Response:
     def cambio(conn):
         a = reintentos.confirmar_salida(conn, outbox_id, _ahora(), _quien(request))
-        return f"Aviso del cartel {a.nro_sicop} para {a.para} marcado como enviado: no se reenviará."
+        return f"Aviso del {a.que} para {a.para} marcado como enviado: no se reenviará."
     return _cambio_de_aviso(request, cambio)

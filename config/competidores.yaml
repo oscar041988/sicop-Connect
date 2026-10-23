@@ -1,0 +1,23 @@
+# Competidores de Hermatix para la página «Competencia» de SICOP CONNECT. Lo edita Hermatix.
+#
+# Por qué cédulas y no nombres: el reporte de adjudicaciones de SICOP trae SOLO la cédula de quien ganó
+# («Cédula Empresa Proveedora»), nunca el nombre. Aquí se le pone nombre a cada cédula y se juntan bajo un
+# mismo competidor las cédulas que son de la misma empresa (por ejemplo, dos razones sociales del mismo grupo).
+# La cédula de una empresa se confirma en el Registro Nacional o en la ficha del proveedor en SICOP.
+#
+# Reglas:
+#   - Cada cédula entre comillas, solo dígitos y sin guiones: "3101000000" (sin comillas, YAML se come los
+#     ceros iniciales y el programa no arranca la página).
+#   - Una cédula pertenece a un solo competidor.
+#   - Una cédula que no esté aquí igual aparece en la página, como «Cédula 3101…».
+#   - Al guardar, basta con recargar la página: no hace falta reevaluar ni reiniciar.
+#
+# Formato (quitar los # para usarlo; el nombre y la cédula de este ejemplo NO son reales):
+#
+# competidores:
+#   "Empresa Ejemplo":
+#     cedulas:
+#       - "3101000000"
+#       - "3101000001"
+
+competidores: {}

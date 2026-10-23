@@ -138,12 +138,16 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
             lineas[nro].append(Texto(f"línea {numero}", nombre))
 
     previas: dict[tuple[str, str], tuple] = {}
+    # Familias evaluadas antes, por cartel: así cada cartel revisa solo las suyas (antes recorría todas las
+    # previas de la base por cada cartel, y con miles de carteles eso se volvía lento).
+    familias_previas: dict[str, list[str]] = defaultdict(list)
     for fila in conn.execute(
         f"SELECT nro_sicop, familia, producto, encaje, regla, evidencia, plazo_estado, calidad_datos"
         f" FROM opportunity_assessments WHERE rules_version = ? {filtro.replace('WHERE', 'AND')}",
         (reglas.version, *params),
     ):
         previas[(fila[0], fila[1])] = tuple(fila[2:])
+        familias_previas[fila[0]].append(fila[1])
 
     r = ResultadoEvaluacion(reglas.version)
     carteles = conn.execute(f"SELECT nro_sicop, descripcion, fecha_cierre_recepcion FROM tenders {filtro}",
@@ -162,11 +166,15 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
                 r.por_encaje[e.familia][e.encaje] += 1
                 _guardar(conn, r, previas, nro, e.familia,
                          (e.producto, e.encaje, e.regla, e.evidencia, plazo, calidad), reglas.version, instante)
-            for (p_nro, familia), previa in previas.items():
-                if p_nro == nro and familia not in vigentes and previa[1:3] != ("sin_coincidencia", "sin señales"):
+            for familia in familias_previas.get(nro, []):
+                previa = previas[(nro, familia)]
+                if familia not in vigentes and previa[1:3] != ("sin_coincidencia", "sin señales"):
                     _guardar(conn, r, previas, nro, familia,
                              (previa[0], "sin_coincidencia", "sin señales", "—", plazo, calidad),
                              reglas.version, instante, retirada=True)
+        if nro_sicop is None:  # solo una evaluación completa deja al día lo importado (ver migración 0008)
+            conn.execute("INSERT INTO evaluation_runs (rules_version, evaluated_at, carteles) VALUES (?, ?, ?)",
+                         (reglas.version, instante, r.carteles))
         conn.execute("COMMIT")
     except BaseException:
         conn.execute("ROLLBACK")

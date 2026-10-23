@@ -10,6 +10,11 @@ from pathlib import Path
 SEPARADORES = (";", ",", "\t")
 
 
+class ImportacionError(Exception):
+    """El archivo completo no se puede importar (nada se escribe en la base). Se usa desde app.importers.comun;
+    vive aquí porque leer el archivo ya puede fallar así."""
+
+
 @dataclass
 class CsvFile:
     encoding: str
@@ -20,12 +25,20 @@ class CsvFile:
 
 
 def decode(raw: bytes) -> tuple[str, str, list[str]]:
-    """Devuelve (texto, codificación, advertencias). UTF-8 primero; si falla, cp1252."""
+    """Devuelve (texto, codificación, advertencias). UTF-8 primero; si falla, cp1252.
+
+    Algunos bytes (0x81, 0x8D, 0x8F, 0x90, 0x9D) no existen en cp1252: un archivo así no se puede leer y se
+    rechaza con ImportacionError (antes salía un error 500 en el panel)."""
     try:
         return raw.decode("utf-8-sig"), "utf-8", []
     except UnicodeDecodeError:
         aviso = "El archivo no es UTF-8; se leyó como cp1252 (Windows). ¿Pasó por Excel?"
-        return raw.decode("cp1252"), "cp1252", [aviso]
+        try:
+            return raw.decode("cp1252"), "cp1252", [aviso]
+        except UnicodeDecodeError as exc:
+            raise ImportacionError(
+                f"no se puede leer el texto: no es UTF-8 ni cp1252 (byte 0x{raw[exc.start]:02X} en la posición "
+                f"{exc.start}). No parece un reporte de SICOP o está dañado: vuelve a descargarlo") from None
 
 
 def read_csv(path: Path) -> CsvFile:

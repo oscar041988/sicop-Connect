@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, time
 from pathlib import Path
 from typing import Mapping
 
@@ -17,6 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
 
 # Valores por defecto: los mismos de .env.example (seguros: sin envíos ni tareas programadas).
+# Solo se leen estas claves: una que ya no está (como MAIL_TO, reemplazada por los destinatarios del panel en la
+# lección 7) se ignora aunque siga en un .env o app.env viejo.
 DEFAULTS: dict[str, str] = {
     "APP_ENV": "development",
     "APP_TIMEZONE": "America/Costa_Rica",
@@ -30,19 +33,26 @@ DEFAULTS: dict[str, str] = {
     "SCHEDULER_ENABLED": "false",
     "MAIL_PROVIDER": "unconfigured",
     "MAIL_FROM": "",
-    "MAIL_TO": "",
     "SESSION_SECRET": "",
     "SESSION_MAX_AGE_HOURS": "8",
     "UPLOAD_MAX_MB": "25",
     "EXPORTS_DIR": "data/exports",
     "APP_BASE_URL": "http://127.0.0.1:8000",
     "NOTIFY_LOOKBACK_DAYS": "7",
+    "NOTIFY_CLOSING_DAYS": "3",
     "GOOGLE_CLIENT_FILE": "",
     "GOOGLE_TOKEN_FILE": "",
+    "GOOGLE_READ_TOKEN_FILE": "",
+    "SICOP_REQUEST_EMAIL": "",
+    "OBTAIN_CODE_TIMEOUT_MIN": "10",
+    "OBTAIN_LINK_MAX_HOURS": "12",
+    "OBTAIN_POLL_MINUTES": "5",
+    "OBTAIN_REQUEST_HOUR": "07:00",
+    "OBTAIN_ALERT_TO": "",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "MAIL_TO"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO"})
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -119,6 +129,18 @@ class Settings:
         return dias
 
     @property
+    def notify_closing_days(self) -> int:
+        """Aviso de cierre próximo: oportunidades marcadas «Interesa» o «Revisar requisitos» que cierran en N días
+        o menos (NOTIFY_CLOSING_DAYS; por defecto 3, decisión de Ivania 2026-10-22)."""
+        try:
+            dias = int(self.get("NOTIFY_CLOSING_DAYS"))
+        except ValueError:
+            raise ValueError("NOTIFY_CLOSING_DAYS debe ser un número entero de días") from None
+        if dias <= 0:
+            raise ValueError("NOTIFY_CLOSING_DAYS debe ser mayor que 0")
+        return dias
+
+    @property
     def mail_provider(self) -> str:
         return self.get("MAIL_PROVIDER").strip().lower()
 
@@ -142,6 +164,68 @@ class Settings:
     def google_token_file(self) -> Path | None:
         """Token que guarda python -m app.cli google-auth. Fuera del proyecto; nunca en git."""
         return self._ruta_opcional("GOOGLE_TOKEN_FILE")
+
+    @property
+    def google_read_token_file(self) -> Path | None:
+        """Token de SOLO LECTURA (gmail.readonly) que guarda python -m app.cli obtain gmail-auth. Aparte del de
+        enviar; fuera del proyecto; nunca en git."""
+        return self._ruta_opcional("GOOGLE_READ_TOKEN_FILE")
+
+    @property
+    def sicop_request_email(self) -> str:
+        """Buzón donde llegan los correos de SICOP (código y enlace del reporte)."""
+        return self.get("SICOP_REQUEST_EMAIL").strip().lower()
+
+    @property
+    def obtain_code_timeout_min(self) -> int:
+        """Minutos que obtain request espera el correo con el código de SICOP (OBTAIN_CODE_TIMEOUT_MIN; 10)."""
+        try:
+            minutos = int(self.get("OBTAIN_CODE_TIMEOUT_MIN"))
+        except ValueError:
+            raise ValueError("OBTAIN_CODE_TIMEOUT_MIN debe ser un número entero de minutos") from None
+        if not 1 <= minutos <= 60:
+            raise ValueError("OBTAIN_CODE_TIMEOUT_MIN debe estar entre 1 y 60")
+        return minutos
+
+    def _entero(self, key: str, minimo: int, maximo: int, unidad: str) -> int:
+        try:
+            valor = int(self.get(key))
+        except ValueError:
+            raise ValueError(f"{key} debe ser un número entero de {unidad}") from None
+        if not minimo <= valor <= maximo:
+            raise ValueError(f"{key} debe estar entre {minimo} y {maximo}")
+        return valor
+
+    @property
+    def obtain_link_max_hours(self) -> int:
+        """Horas máximas de espera del correo con el enlace (OBTAIN_LINK_MAX_HOURS; 12). Después: fallido."""
+        return self._entero("OBTAIN_LINK_MAX_HOURS", 1, 23, "horas")
+
+    @property
+    def obtain_poll_minutes(self) -> int:
+        """Cada cuántos minutos obtain poll --seguir revisa el buzón (OBTAIN_POLL_MINUTES; 5)."""
+        return self._entero("OBTAIN_POLL_MINUTES", 1, 60, "minutos")
+
+    @property
+    def source_mode(self) -> str:
+        """manual (por defecto): obtain auto no toca SICOP ni Gmail · auto: obtain auto pide, espera e importa."""
+        modo = self.get("SOURCE_MODE").strip().lower()
+        if modo not in ("manual", "auto"):
+            raise ValueError("SOURCE_MODE debe ser manual o auto")
+        return modo
+
+    @property
+    def obtain_request_hour(self) -> time:
+        """Desde qué hora obtain auto pide el reporte del día (OBTAIN_REQUEST_HOUR, HH:MM; 07:00)."""
+        try:
+            return datetime.strptime(self.get("OBTAIN_REQUEST_HOUR").strip(), "%H:%M").time()
+        except ValueError:
+            raise ValueError("OBTAIN_REQUEST_HOUR debe ser una hora HH:MM, por ejemplo 07:00") from None
+
+    @property
+    def obtain_alert_to(self) -> str:
+        """Buzón que recibe la alerta de FALLO de la obtención automática (OBTAIN_ALERT_TO)."""
+        return self.get("OBTAIN_ALERT_TO").strip().lower()
 
     @property
     def notifications_enabled(self) -> bool:

@@ -2,7 +2,8 @@
 
 Tres defensas antes de importar:
 * Tamaño: se rechaza si la petición declara más de UPLOAD_MAX_MB y, por si no lo declara, al copiar.
-* Extensión: .csv para todos los reportes; .zip solo para el catálogo (el portal lo entrega así).
+* Extensión: .csv para todos los reportes; .zip para el catálogo y para «pliegos» (el ZIP de «Detalle pliego de
+  condiciones» con carteles y líneas), porque el portal los entrega así.
 * Nombre: el del navegador no se usa tal cual; se limpia y la carpeta la decide el programa.
 """
 
@@ -22,7 +23,8 @@ from app.config import load_settings
 from app.importers.comun import HORA_CR
 
 RUTA = "/cargar"
-EXTENSIONES = {"carteles": (".csv",), "lineas": (".csv",), "catalogo": (".csv", ".zip"),
+PLIEGOS = "pliegos"  # no es un importador: es el ZIP con los CSV de carteles y líneas (app/importers/zip_pliegos.py)
+EXTENSIONES = {PLIEGOS: (".zip",), "carteles": (".csv",), "lineas": (".csv",), "catalogo": (".csv", ".zip"),
                "instituciones": (".csv",)}
 MARGEN_FORMULARIO = 64 * 1024  # los otros campos del formulario también ocupan bytes
 BLOQUE = 1024 * 1024

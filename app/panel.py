@@ -34,7 +34,11 @@ PLAZOS = {"cierra_7_dias": "Cierra en 7 días o menos", "abierto": "Abierto", "p
           "vencido": "Vencido"}
 CALIDADES = {"completo": "Completo", "sin_lineas": "Sin líneas", "codigo_sin_catalogo": "Código sin catálogo",
              "archivo_parcial": "Archivo parcial"}
-DECISIONES = {"interesa": "Interesa", "no_interesa": "No interesa", "revisar_requisitos": "Revisar requisitos"}
+DECISIONES = {"interesa": "Interesa", "no_interesa": "No interesa", "revisar_requisitos": "Revisar requisitos",
+              "ofertada": "Ofertada", "no_se_oferta": "No se oferta"}
+# Mientras la última revisión sea una de estas, el cartel sigue «en curso» y puede recibir el aviso de cierre
+# próximo (A4). «Ofertada» y «No se oferta» son decisiones finales (migración 0013).
+DECISIONES_EN_CURSO = ("interesa", "revisar_requisitos")
 MOTIVOS = {"no_encaja": "No encaja con el portafolio", "plazo": "Plazo", "requisitos": "Requisitos",
            "presupuesto": "Presupuesto", "otro": "Otro"}
 NOMBRES_FAMILIA = {  # solo para mostrar; las claves son las del YAML
@@ -74,7 +78,7 @@ class Filtros:
     familia: str = ""
     institucion: str = ""
     plazo: str = ""
-    revisado: str = ""   # "" · "si" · "no" · o una decisión: "interesa", "no_interesa", "revisar_requisitos"
+    revisado: str = ""   # "" · "si" · "no" · o una decisión de DECISIONES
     tipo: str = ""
     q: str = ""          # búsqueda en título, institución o Número SICOP
     pagina: int = 1
@@ -169,8 +173,34 @@ class Detalle:
 
 
 def version_vigente(conn: sqlite3.Connection) -> str | None:
-    fila = conn.execute("SELECT rules_version FROM opportunity_assessments ORDER BY id DESC LIMIT 1").fetchone()
+    """Versión de reglas de la última evaluación COMPLETA (evaluation_runs, migración 0008).
+
+    No sirve «la última fila de opportunity_assessments»: evaluate --nro con un YAML nuevo dejaría vigente una
+    versión con un solo cartel, y volver a un YAML anterior actualiza filas viejas sin cambiar la última.
+    Una base evaluada antes de la migración 0008 no tiene registro: ahí se usa la última fila, como antes.
+    """
+    fila = conn.execute("SELECT rules_version FROM evaluation_runs ORDER BY id DESC LIMIT 1").fetchone()
+    if fila is None:
+        fila = conn.execute("SELECT rules_version FROM opportunity_assessments ORDER BY id DESC LIMIT 1").fetchone()
     return fila[0] if fila else None
+
+
+# Los reportes que cambian lo que evalúa evaluate: título, líneas y nombre de catálogo.
+REPORTES_EVALUADOS = ("carteles", "lineas", "catalogo")
+
+
+def importado_sin_evaluar(conn: sqlite3.Connection) -> bool:
+    """¿Hay una importación con filas aceptadas posterior a la última evaluación completa?
+
+    Las fechas se comparan con julianday: unas vienen en hora de Costa Rica (-06:00) y otras en UTC.
+    """
+    marcas = ", ".join("?" for _ in REPORTES_EVALUADOS)
+    fila = conn.execute(
+        f"SELECT 1 FROM imports WHERE report IN ({marcas}) AND rows_accepted > 0"
+        "   AND julianday(imported_at) > COALESCE("
+        "       (SELECT MAX(julianday(evaluated_at)) FROM evaluation_runs), 0) LIMIT 1",
+        REPORTES_EVALUADOS).fetchone()
+    return fila is not None
 
 
 def _base_sql() -> str:
@@ -191,7 +221,8 @@ def _base_sql() -> str:
         )"""
 
 
-def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: datetime) -> Pagina:
+def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: datetime, todas: bool = False) -> Pagina:
+    """Una página de la lista con los filtros. todas=True: todas las filas en una página (exportar a Excel, A5)."""
     f = filtros.limpios()
     encajes = PRIORIDADES[f.prioridad]
     condiciones = [f"encaje IN ({', '.join(f':e{n}' for n in range(len(encajes)))})"]
@@ -216,7 +247,8 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
     donde = " AND ".join(condiciones)
 
     total = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {donde}", params).fetchone()[0]
-    paginas = max(1, -(-total // POR_PAGINA))
+    tamaño = max(total, 1) if todas else POR_PAGINA
+    paginas = max(1, -(-total // tamaño))
     pagina = min(f.pagina, paginas)
     filas = conn.execute(
         f"""{_base_sql()}
@@ -227,7 +259,7 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
                  CASE WHEN plazo = 'vencido' THEN -julianday(cierre) ELSE julianday(cierre) END,
                  nro_sicop, familia
         LIMIT :limite OFFSET :desde""",
-        {**params, "limite": POR_PAGINA, "desde": (pagina - 1) * POR_PAGINA},
+        {**params, "limite": tamaño, "desde": (pagina - 1) * tamaño},
     ).fetchall()
     resultado = [FilaLista(*fila[:-1], es_nuevo=bool(fila[-1])) for fila in filas]
     montos = estimados(conn, [f.nro_sicop for f in resultado])
@@ -238,15 +270,15 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
 
 def estimados(conn: sqlite3.Connection, nros: list[str]) -> dict[str, dict[str, Monto]]:
     """Suma de cantidad × precio de las líneas de cada cartel, separada por moneda (en Python, con Decimal)."""
-    if not nros:
-        return {}
-    marcas = ", ".join("?" * len(nros))
     por_cartel: dict[str, list[Monto]] = {}
-    for nro, valor, moneda in conn.execute(
-        f"SELECT nro_sicop, estimado_linea, moneda FROM tender_lines WHERE nro_sicop IN ({marcas})"
-        " AND estimado_linea IS NOT NULL AND moneda IS NOT NULL", nros,
-    ):
-        por_cartel.setdefault(nro, []).append(Monto(parse_decimal(valor), moneda))
+    unicos = list(dict.fromkeys(nros))
+    for inicio in range(0, len(unicos), 900):  # por tandas: SQLite limita los parámetros de una consulta
+        tanda = unicos[inicio:inicio + 900]
+        for nro, valor, moneda in conn.execute(
+            f"SELECT nro_sicop, estimado_linea, moneda FROM tender_lines WHERE nro_sicop IN ({', '.join('?' * len(tanda))})"
+            " AND estimado_linea IS NOT NULL AND moneda IS NOT NULL", tanda,
+        ):
+            por_cartel.setdefault(nro, []).append(Monto(parse_decimal(valor), moneda))
     return {nro: totales_por_moneda(m) for nro, m in por_cartel.items()}
 
 
@@ -423,7 +455,7 @@ def guardar_revision(conn: sqlite3.Connection, nro_sicop: str, decision: str, mo
     if conn.execute("SELECT 1 FROM tenders WHERE nro_sicop = ?", (nro_sicop,)).fetchone() is None:
         raise RevisionInvalida(f"No existe el cartel {nro_sicop}.")
     if decision not in DECISIONES:
-        raise RevisionInvalida("Elige una decisión: Interesa, No interesa o Revisar requisitos.")
+        raise RevisionInvalida("Elige una decisión: " + ", ".join(DECISIONES.values()) + ".")
     if decision == "no_interesa":
         if motivo not in MOTIVOS:
             raise RevisionInvalida("Para «No interesa» hay que elegir el motivo.")

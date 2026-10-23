@@ -317,6 +317,64 @@ def test_aviso_si_las_reglas_cambiaron(cliente, db, tmp_path):
     assert "Las reglas cambiaron" in cliente.get("/oportunidades").text
 
 
+def test_la_version_vigente_es_la_de_la_ultima_evaluacion_completa(db, tmp_path):
+    """Revisión del 2026-10-23: antes mandaba la última fila guardada, no la última evaluación completa."""
+    otras = tmp_path / "reglas.yaml"
+    otras.write_text('familias:\n  gps_flotas:\n    producto: fleetmatix\n    senales_alta: ["gps"]\n',
+                     encoding="utf-8")
+    actual, nuevas = cargar_reglas(), cargar_reglas(otras)
+    with closing(connect(db)) as conn:
+        # Un solo cartel con el YAML nuevo: el panel no puede quedarse mostrando solo ese cartel.
+        evaluar_base(conn, nuevas, AHORA, nro_sicop="00000000001")
+        assert panel.version_vigente(conn) == actual.version
+
+        evaluar_base(conn, nuevas, AHORA)
+        assert panel.version_vigente(conn) == nuevas.version
+
+        # Volver al YAML anterior: sus filas ya existen y no cambian, pero esa es la evaluación vigente.
+        evaluar_base(conn, actual, AHORA)
+        assert panel.version_vigente(conn) == actual.version
+
+
+def test_base_vieja_sin_registro_de_evaluaciones_usa_la_ultima_fila(db):
+    """Una base evaluada antes de la migración 0008 no tiene evaluation_runs: se sigue viendo lo evaluado."""
+    with closing(connect(db)) as conn:
+        conn.execute("DELETE FROM evaluation_runs")
+        assert panel.version_vigente(conn) == cargar_reglas().version
+
+
+SIN_EVALUAR = "Hay datos importados después de la última evaluación"
+
+
+def _importacion(conn, n, report, aceptadas, cuando):
+    conn.execute("INSERT INTO imports (report, file_name, file_hash, data_origin, rows_accepted, imported_at)"
+                 " VALUES (?, ?, ?, 'sintetico', ?, ?)",
+                 (report, f"archivo{n}.csv", f"huella{n}", aceptadas, cuando.isoformat(timespec="seconds")))
+
+
+def test_aviso_si_hay_datos_importados_sin_evaluar(cliente, db):
+    # La evaluación del fixture fue en AHORA (UTC); la importación llega después, en hora de Costa Rica.
+    with closing(connect(db)) as conn:
+        _importacion(conn, 1, "carteles", 3, (AHORA + timedelta(minutes=1)).astimezone(CR))
+        conn.commit()
+    assert SIN_EVALUAR in cliente.get("/oportunidades").text
+    assert SIN_EVALUAR in cliente.get("/oportunidades/00000000001").text
+
+    with closing(connect(db)) as conn:
+        evaluar_base(conn, cargar_reglas(), AHORA + timedelta(minutes=2))
+    assert SIN_EVALUAR not in cliente.get("/oportunidades").text
+
+
+def test_sin_aviso_si_lo_importado_no_cambia_la_evaluacion(cliente, db):
+    with closing(connect(db)) as conn:
+        _importacion(conn, 1, "instituciones", 5, AHORA + timedelta(minutes=1))  # no entra en evaluate
+        _importacion(conn, 2, "lineas", 0, AHORA + timedelta(minutes=1))         # todo rechazado
+        _importacion(conn, 3, "carteles", 3, AHORA - timedelta(minutes=1))       # anterior a la evaluación
+        conn.commit()
+
+    assert SIN_EVALUAR not in cliente.get("/oportunidades").text
+
+
 def test_base_sin_migrar(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "no_existe.db"))
 

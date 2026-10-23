@@ -27,8 +27,8 @@ El detalle de cada paso está en las secciones 3 y 4.
 - El **título** del cartel (`tenders.descripcion`).
 - El **nombre de catálogo** de cada línea, solo si el código de la línea une con el catálogo (reporte 10.2).
   Las líneas sin catálogo no aportan texto, pero bajan la calidad de datos a «Código sin catálogo».
-  Hoy solo **36 de 73 991 líneas** tienen catálogo descargado (3 códigos de clasificación), así que la mayoría
-  de los carteles se evalúa solo por el título.
+  Solo **41 de 87 344 líneas** tienen catálogo descargado (3 códigos de clasificación; base local, 2026-10-23),
+  así que la mayoría de los carteles se evalúa solo por el título.
 
 ### 1.2 Cómo compara
 
@@ -74,7 +74,7 @@ Cada resultado (tabla `opportunity_assessments`) guarda por separado:
 | Encaje comercial | Alta · Media · Baja · Sin coincidencia | Las reglas |
 | Plazo / estado | Abierto · Cierra en 7 días o menos · Vencido · Por verificar | Fecha de cierre de recepción |
 | Calidad de datos | Completo · Sin líneas · Código sin catálogo | Líneas y catálogo. «Archivo parcial» (de la guía) **aún no se detecta** |
-| Requisitos | Viabilidad pendiente · Revisado | Decisión humana. **Pendiente**: llega con el panel y las revisiones (lección 5) |
+| Requisitos y decisión | Interesa · No interesa · Revisar requisitos · Ofertada · No se oferta | Decisión humana en el panel: va en `reviews`, no en esta tabla |
 
 «Alta» habla del encaje con el portafolio, **no** de que Hermatix pueda o deba participar.
 
@@ -106,19 +106,23 @@ Si todo dice «sin cambios», ni las reglas ni los datos cambiaron desde la últ
 
 ### 1.6 Familias actuales
 
-Candidatos con las reglas `92aef8277e2e` sobre 10 339 carteles reales (julio a octubre de 2026):
+Candidatos con las reglas `b880e0d350e1` sobre 12 260 carteles reales publicados del 7 de julio al 21 de
+octubre de 2026 (base local, evaluación completa del 2026-10-22):
 
 | Familia | Producto | Alta | Media | Baja |
 |---|---|---|---|---|
-| `gps_flotas` | FleetMatix | 7 | 3 | 13 |
-| `videotelematica` | Fenova IA | 0 | 0 | 33 |
+| `gps_flotas` | FleetMatix | 9 | 5 | 15 |
+| `videotelematica` | Fenova IA | 1 | 0 | 43 |
 | `seguridad_vial` | Fenova IA | 0 | 0 | 9 |
 | `transporte_corporativo` | MoveOn | 0 | 0 | 0 |
-| `rastreo_activos` | SmartTags | 0 | 2 | 18 |
-| `iot_frio` | Osmia IoT | 6 | 0 | 3 |
-| `camaras_corporales` | BodyCams | 3 | 0 | 2 |
+| `rastreo_activos` | SmartTags | 0 | 2 | 23 |
+| `iot_frio` | Osmia IoT | 7 | 0 | 3 |
+| `camaras_corporales` | BodyCams | 5 | 0 | 2 |
 | `conteo_pasajeros` | PassengerIQ | 0 | 0 | 4 |
-| `mantenimiento_flotas` | FleetRun | 0 | 0 | 97 |
+| `mantenimiento_flotas` | FleetRun | 0 | 0 | 115 |
+
+Antes, con `92aef8277e2e` sobre 10 339 carteles (2026-10-09): gps_flotas 7/3/13, iot_frio 6/0/3, camaras_corporales
+3/0/2. Desde entonces entraron 1 921 carteles y el único cambio de reglas fue la exclusión «intraoral» (sección 6).
 
 Una familia sin candidatos no es un error: en este periodo no hubo compras de ese producto.
 
@@ -188,6 +192,9 @@ python -m app.cli evaluate --nro NRO_SICOP
 - **Versión de reglas**: es una huella del archivo YAML (p. ej. `2de4846a5a7e`). Cambiar una sola palabra genera
   una versión nueva; las evaluaciones anteriores **no se borran**, así que se pueden comparar el antes y el después.
 - **Reevaluar es idempotente**: con la misma versión y los mismos datos, la segunda vez dice «sin cambios».
+- **Qué versión muestra el panel:** la de la última `evaluate` **completa**. `evaluate --nro` sirve para mirar un
+  cartel con el YAML nuevo, pero no cambia el panel ni los avisos. Si se vuelve a un YAML anterior, basta un
+  `evaluate` completo para que esa versión sea otra vez la vigente.
 - El resumen de `evaluate` muestra, por familia, cuántos carteles quedaron en Alta / Media / Baja / Sin coincidencia.
   Ese conteo es la forma rápida de ver si una familia se llenó de ruido.
 
@@ -222,6 +229,7 @@ Lecciones de la primera revisión (2026-10-09):
 | Dos señales de la misma ficha | Toda ficha de higrómetro dice «humedad relativa»: con «termohigrometro» sumaba dos medias | Dejar los datos técnicos como contexto |
 | Título genérico | «COMPRA DE EQUIPO DE LABORATORIO», «Insumos varios II»: la señal solo está en las líneas | Descargar el catálogo de las familias (reporte 10.2); no inventar señales para el título |
 | Siglas cortas | «dsm» coincidió con «AC para DSM» (aire acondicionado) | Siglas como señal media, nunca alta |
+| Palabra con otro sentido: equipo médico | «Cámaras intraorales… y carros para transporte para equipo médico» (CCSS) daba Media por «cámaras» + «transporte» | Exclusión precisa («intraoral»), no «equipo medico»: en el título anularía también «cámaras a bordo para ambulancias y equipo médico» |
 | Palabras intermedias | «Monitoreo y Localización Satelital mediante el Sistema GPS» quedó en Baja | Agregar la frase real al YAML («localizacion satelital», que es el nombre del catálogo SICOP). Permitir palabras intermedias en el motor se simuló y no ayudó |
 
 ---
@@ -246,6 +254,7 @@ de antes y de después.
 | 2026-10-09 | `99bbfdb33641` (sin cambio) | iot_frio | Criterio: un dispositivo que mide temperatura, humedad o GPS y tiene **pantalla o panel** interesa; sin pantalla (medidor portátil) no interesa. Si dice «de mano», queda fuera siempre, aunque tenga pantalla (exclusión). `20260800233` pasa a «interesa» confirmado en el golden set | Ivania (Hermatix) | Coincide con lo que ya hace el motor: los termómetros con «PANTALLA LCD» son Alta y los termohigrómetros sin pantalla no son candidatos. Golden set 28/29 = 96,6 % |
 | 2026-10-09 | `92aef8277e2e` | gps_flotas | Señal alta «localizacion satelital» (nombre del catálogo SICOP del servicio GPS). Se descartó permitir palabras intermedias en el motor: simulado con 1, 2 y 3 palabras, no arreglaba el caso | Ivania | `20260902620` pasa a Alta y `20260900818` sube de Media a Alta. Golden set 29/29 = 100 %; 21 candidatos. Predicción simulada antes y cumplida |
 | 2026-10-12 | `92aef8277e2e` (sin cambio) | — | Se confirman los 4 provisionales del golden set sin el pliego (concursos cerrados): `20260702834` interesa (`iot_frio`, el registrador transmite datos); `20260700980` no interesa (no se dan asesorías); `20260701485` no interesa (no se da mantenimiento de cuartos fríos); `20260701333` falso positivo (no se trabaja con LIDAR, GNSS ni RTK) | Ivania (Hermatix) | Golden set 33/33 = 100 %, sin provisionales |
+| 2026-10-20 | `b880e0d350e1` | videotelematica | Exclusión «intraoral» (falso positivo CCSS `20261001749`, cámaras dentales); el cartel entra al golden set como falso positivo. Se descartó «equipo medico» (riesgo con ambulancias) | Ivania | `20261001749` pasa de Media a Sin coincidencia; el OIJ (`20260903798`) sigue Alta; ningún cartel entra. Golden set 34/34 = 100 %. Predicción simulada antes sobre los 11 829 carteles y cumplida |
 
 ### Pendiente de decidir con Oscar
 

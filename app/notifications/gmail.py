@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import json
+from dataclasses import dataclass
 from email.headerregistry import Address
 from email.message import EmailMessage
 from pathlib import Path
@@ -29,7 +30,8 @@ from app.notifications import EnvioIncierto, EnvioRechazado
 
 SCOPE_ENVIAR = "https://www.googleapis.com/auth/gmail.send"
 # openid + email: solo para comprobar qué cuenta autorizó (debe ser MAIL_FROM). No dan acceso al correo.
-SCOPES = [SCOPE_ENVIAR, "openid", "https://www.googleapis.com/auth/userinfo.email"]
+SCOPES_CUENTA = ["openid", "https://www.googleapis.com/auth/userinfo.email"]
+SCOPES = [SCOPE_ENVIAR, *SCOPES_CUENTA]
 URL_ENVIAR = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 TIMEOUT_S = 30
 NOMBRE_REMITENTE = "Hermatix · SICOP"
@@ -37,7 +39,27 @@ MAX_DETALLE = 300  # caracteres de la respuesta de Google que se guardan
 
 
 class GmailError(Exception):
-    """No se puede usar Gmail (falta el token, venció, cuenta equivocada…). Nada se envió."""
+    """No se puede usar Gmail (falta el token, venció, cuenta equivocada…). Nada se envió ni se leyó."""
+
+
+@dataclass(frozen=True)
+class Permiso:
+    """Un permiso de Gmail con su propio token: enviar avisos (este módulo) o leer el buzón (app/sources/gmail_reader)."""
+
+    scope: str          # el permiso de Gmail (el token se carga solo con él)
+    var_token: str      # variable de .env con la ruta del token
+    var_cuenta: str     # variable de .env con la cuenta que debe autorizar
+    para_que: str       # para qué es esa cuenta (mensajes de error)
+    comando: str        # comando que repite la autorización
+    pantalla: str       # lo que Google muestra al pedir el permiso
+
+    @property
+    def scopes(self) -> list[str]:
+        return [self.scope, *SCOPES_CUENTA]
+
+
+PERMISO_ENVIAR = Permiso(SCOPE_ENVIAR, "GOOGLE_TOKEN_FILE", "MAIL_FROM", "la cuenta que envía los avisos",
+                         "python -m app.cli google-auth", "«Enviar correo en tu nombre»")
 
 
 def construir_mensaje(remitente: str, para: str, asunto: str, html: str, texto: str) -> EmailMessage:
@@ -93,15 +115,15 @@ class GmailProveedor:
         return str(id_mensaje)
 
 
-def cargar_credenciales(token_file: Path | None) -> Credentials:
-    """Lee el token guardado y lo renueva si venció. Si no sirve, GmailError (antes de tocar la outbox)."""
-    rehacer = "Repite la autorización: python -m app.cli google-auth (entrando como el remitente)."
+def cargar_credenciales(token_file: Path | None, permiso: Permiso = PERMISO_ENVIAR) -> Credentials:
+    """Lee el token guardado y lo renueva si venció. Si no sirve, GmailError (antes de tocar la outbox o el buzón)."""
+    rehacer = f"Repite la autorización: {permiso.comando} (entrando como {permiso.var_cuenta})."
     if token_file is None:
-        raise GmailError("Falta GOOGLE_TOKEN_FILE en .env.")
+        raise GmailError(f"Falta {permiso.var_token} en .env.")
     if not token_file.is_file():
-        raise GmailError(f"No hay token guardado en GOOGLE_TOKEN_FILE. {rehacer}")
+        raise GmailError(f"No hay token guardado en {permiso.var_token}. {rehacer}")
     try:
-        credenciales = Credentials.from_authorized_user_file(str(token_file), [SCOPE_ENVIAR])
+        credenciales = Credentials.from_authorized_user_file(str(token_file), [permiso.scope])
     except (ValueError, OSError, json.JSONDecodeError):
         raise GmailError(f"El token guardado no se puede leer. {rehacer}") from None
     if not credenciales.valid:
@@ -110,7 +132,7 @@ def cargar_credenciales(token_file: Path | None) -> Credentials:
         except google.auth.exceptions.RefreshError:
             raise GmailError(f"Google ya no acepta el token (contraseña cambiada o acceso retirado). {rehacer}") from None
         except google.auth.exceptions.TransportError:
-            raise GmailError("No se pudo conectar con Google para renovar el token. No se envió nada.") from None
+            raise GmailError("No se pudo conectar con Google para renovar el token.") from None
         token_file.write_text(credenciales.to_json(), encoding="utf-8")
     return credenciales
 
@@ -125,26 +147,27 @@ def cuenta_autorizada(credenciales: Credentials) -> str:
     return str(datos.get("email", "")).strip().lower()
 
 
-def autorizar(client_file: Path | None, token_file: Path | None, remitente: str, flujo=None) -> str:
-    """Autorización única: abre el navegador, guarda el token y devuelve la cuenta. Se niega si no es el remitente."""
+def autorizar(client_file: Path | None, token_file: Path | None, cuenta_esperada: str, flujo=None,
+              permiso: Permiso = PERMISO_ENVIAR) -> str:
+    """Autorización única: abre el navegador, guarda el token y devuelve la cuenta. Se niega si no es la esperada."""
     if client_file is None or token_file is None:
-        raise GmailError("Faltan GOOGLE_CLIENT_FILE o GOOGLE_TOKEN_FILE en .env.")
-    if not remitente:
-        raise GmailError("Falta MAIL_FROM en .env (la cuenta que envía los avisos).")
+        raise GmailError(f"Faltan GOOGLE_CLIENT_FILE o {permiso.var_token} en .env.")
+    if not cuenta_esperada:
+        raise GmailError(f"Falta {permiso.var_cuenta} en .env ({permiso.para_que}).")
     if not client_file.is_file():
         raise GmailError("No se encuentra el archivo de GOOGLE_CLIENT_FILE.")
     if flujo is None:
         from google_auth_oauthlib.flow import InstalledAppFlow
-        flujo = InstalledAppFlow.from_client_secrets_file(str(client_file), SCOPES)
-    aviso = (f"Se abrirá el navegador: entra como {remitente} y acepta «Enviar correo en tu nombre».\n"
+        flujo = InstalledAppFlow.from_client_secrets_file(str(client_file), permiso.scopes)
+    aviso = (f"Se abrirá el navegador: entra como {cuenta_esperada} y acepta {permiso.pantalla}.\n"
              "Si no se abre solo, copia esta dirección en el navegador:\n{url}")
-    credenciales = flujo.run_local_server(port=0, open_browser=True, login_hint=remitente,
+    credenciales = flujo.run_local_server(port=0, open_browser=True, login_hint=cuenta_esperada,
                                           authorization_prompt_message=aviso,
                                           success_message="Listo: ya puedes cerrar esta pestaña y volver a la terminal.")
     cuenta = cuenta_autorizada(credenciales)
-    if cuenta != remitente:
-        raise GmailError(f"Autorizaste con {cuenta or 'una cuenta desconocida'}, pero MAIL_FROM es {remitente}. "
-                         "No se guardó nada: repite entrando como el remitente.")
+    if cuenta != cuenta_esperada:
+        raise GmailError(f"Autorizaste con {cuenta or 'una cuenta desconocida'}, pero {permiso.var_cuenta} es "
+                         f"{cuenta_esperada}. No se guardó nada: repite entrando como {cuenta_esperada}.")
     token_file.parent.mkdir(parents=True, exist_ok=True)
     token_file.write_text(credenciales.to_json(), encoding="utf-8")
     return cuenta

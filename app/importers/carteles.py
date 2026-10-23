@@ -2,7 +2,8 @@
 
 El mapeo columna → campo está en docs/MAPEO_DATOS.md. Lo común (idempotencia, copia del original,
 raw_snapshots, rechazos) está en app/importers/comun.py. Un cartel modificado se actualiza en
-tenders y su versión anterior queda en raw_snapshots.
+tenders y su versión anterior queda en raw_snapshots. Un cartel nuevo recupera las líneas que llegaron antes
+que él (huérfanas, app/importers/lineas.py).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from pathlib import Path
 from app.importers.comun import (HORA_CR, ORIGENES, Fila, FilaRechazada, ImportacionError, Rechazo,  # noqa: F401
                                  Resultado, exigir_digitos, importar_reporte, upsert)
 from app.importers.csv_reader import parse_csv
+from app.importers.lineas import recuperar_huerfanas
 
 # Encabezado real del archivo → campo de tenders (docs/MAPEO_DATOS.md, reporte 2).
 COLUMNAS = {
@@ -67,6 +69,11 @@ def _guardar(conn: sqlite3.Connection, fila: Fila, content_hash: str, import_id:
                   al_crear={"first_import_id": import_id}, siempre={"last_import_id": import_id})
 
 
+def aviso_recuperadas(lineas: int, carteles: int) -> str:
+    return (f"Se recuperaron {lineas} línea{'s' if lineas != 1 else ''} de {carteles} cartel"
+            f"{'es' if carteles != 1 else ''} que habían llegado antes que su cartel (estaban en raw_snapshots).")
+
+
 def _periodo(filas: list[Fila]) -> tuple[str | None, str | None]:
     publicaciones = sorted(f.campos["fecha_publicacion"] for f in filas if f.campos["fecha_publicacion"])
     return (publicaciones[0][:10], publicaciones[-1][:10]) if publicaciones else (None, None)
@@ -76,8 +83,19 @@ def import_carteles(conn: sqlite3.Connection, path: Path, origen: str, raw_dir: 
                     source_run_id: int | None = None) -> Resultado:
     """Importa un CSV de carteles. La conexión debe venir de app.database.connect (base migrada)."""
     raw = path.read_bytes()
-    return importar_reporte(
+    recuperadas: dict[str, int] = {}  # cartel nuevo → líneas huérfanas recuperadas
+
+    def guardar(conn: sqlite3.Connection, fila: Fila, content_hash: str, import_id: int, momento: str) -> str:
+        estado = _guardar(conn, fila, content_hash, import_id, momento)
+        if estado == "nueva" and (n := recuperar_huerfanas(conn, fila.clave, momento)):
+            recuperadas[fila.clave] = n
+        return estado
+
+    resultado = importar_reporte(
         conn, nombre_archivo=path.name, raw=raw, csv_file=parse_csv(raw), report="carteles",
         entidad="cartel", origen=origen, raw_dir=raw_dir, requeridas=COLUMNAS, nombre_clave="Número SICOP",
-        validar=_validar, guardar=_guardar, periodo=_periodo, source_run_id=source_run_id,
+        validar=_validar, guardar=guardar, periodo=_periodo, source_run_id=source_run_id,
     )
+    if recuperadas:
+        resultado.avisos_archivo.append(aviso_recuperadas(sum(recuperadas.values()), len(recuperadas)))
+    return resultado

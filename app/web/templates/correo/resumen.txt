@@ -1,0 +1,52 @@
+{{ asunto }}
+
+Hola, equipo. Este es el resumen de la semana en SICOP para Hermatix
+(del {{ c.inicio | fecha_dia }} al {{ hasta | fecha_dia }}).
+{% if c.datos_hasta %}Datos de carteles importados hasta el {{ c.datos_hasta | fecha }}.
+{% endif %}
+
+NUEVAS OPORTUNIDADES (Alta o Media): {{ c.nuevas_total }}
+{% for familia, n in c.nuevas_por_familia %}
+   {{ familia }}: {{ n }}
+{% else %}
+   Ninguna en la semana.
+{% endfor %}
+
+REVISADAS EN LA SEMANA: {{ c.revisadas_total }}
+{% for decision, n in c.revisadas %}
+   {{ decision }}: {{ n }}
+{% else %}
+   Nadie registró revisiones esta semana.
+{% endfor %}
+
+PRÓXIMOS CIERRES (7 días): {{ c.proximos_cierres | length }}
+{% for o in c.proximos_cierres %}
+   {{ o.cierre | fecha }} ({{ o.regresiva }}) · {{ o.estado }}
+   {{ o.titulo | titulo | legible }} · N.º SICOP {{ o.nro_sicop }}
+   {{ o.enlace }}
+{% else %}
+   Nada en juego cierra en los próximos 7 días.
+{% endfor %}
+
+PENDIENTES SIN REVISAR: {{ c.pendientes_total }}
+{% for o in c.pendientes %}
+   {{ o.titulo | titulo | legible }} · cierra {{ o.cierre | fecha }}
+{% endfor %}
+{% if c.pendientes_total > c.pendientes | length %}
+   … y {{ c.pendientes_total - c.pendientes | length }} más: {{ panel }}/oportunidades?revisado=no
+{% endif %}
+{% if c.hay_adjudicaciones %}
+
+ADJUDICACIONES RELEVANTES
+{% for a in c.adjudicaciones %}
+   {{ a.familia }}: {{ a.carteles }} adjudicado{{ "s" if a.carteles != 1 }} · {% if a.empate > 1 %}empate entre {{ a.empate }} ganadores{% else %}gana más {{ a.lider }}{% endif %} ({{ a.veces }}){% if a.montos %} · {% for moneda, total in a.montos %}{{ monto(total, moneda) }}{{ " · " if not loop.last }}{% endfor %} sin impuestos{% endif %}
+
+{% else %}
+   Ninguna adjudicación en firme de la semana cae en las familias de Hermatix.
+{% endfor %}
+   Ver Competencia: {{ panel }}/competencia
+{% endif %}
+
+--
+Fuente: datos abiertos de SICOP. Recibes este resumen porque estás en la lista de destinatarios
+del panel ({{ panel }}/destinatarios). Generado {{ ahora | fecha }}.

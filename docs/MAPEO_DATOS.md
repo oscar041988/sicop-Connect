@@ -5,7 +5,7 @@ traduce a un campo interno de la app.
 
 **Estado: PARCIAL.** Reportes 2, 2.1 y 1 contrastados con archivos reales del 2026-10-07
 (ver `docs/ACCESO_SICOP.md`). Ofertas: archivo sin filas. Reportes 10.2 (3 clasificaciones) y 11 contrastados con archivos reales
-del 2026-10-08. Adjudicaciones: sin archivo todavía.
+del 2026-10-08. Adjudicaciones en firme (6, 6.1 y 6.2) contrastadas con el archivo real del 2026-10-22.
 La columna "Diccionario" usa los nombres del **diccionario oficial de SICOP**
 (`docs/referencias/Diccionario_de_datos_reporte_de_contratos_de_Datos_abiertos.pdf`, revisado 2026-10-07);
 la guía 16.3 solo lista un subconjunto. Los encabezados reales **sí son distintos** (tildes,
@@ -225,23 +225,53 @@ filas**: solo se conocen los encabezados. No se mapea hasta tener datos.
 - Nombres que difieren del diccionario: `CEDULA_PROVEEDOR` → `Cédula Empresa Proveedora`;
   en 5.1, `NRO_OFERTA` → `Identificador`, `CODIGO_PRODUCTO` (24 dígitos) → `Código Producto`.
 
-## Adjudicaciones / contratos (para A2)
+## Adjudicaciones en firme (reportes 6, 6.1 y 6.2) · módulo de competencia (A2)
 
-El diccionario oficial los describe como reportes 6 (Detalle de adjudicaciones), 6.1 (Proveedores
-adjudicados), 6.2 (Líneas adjudicadas), 7 (Detalle contratos) y 7.2 (Líneas de contratos). En el portal
-aparecen como «Adjudicaciones en firme» y «Contratos». Sin archivo: no se proponen campos internos.
+Archivo de referencia: `Reporte de adjudicaciones en firme.zip`, descargado por Ivania el 2026-10-22 (UTF-8 con BOM,
+punto y coma). Trae 3 CSV: `Detalle Adjudicaciones.csv` (29 922 filas), `Det Proveedores Adj.csv` (15 430) y
+`Det Lineas Adjudicadas.csv` (26 969). Adjudicaciones en firme de julio a octubre de 2026. Se importa el ZIP tal
+cual: `python -m app.cli import --report adjudicaciones --path "<ZIP>" --origen real` (`app/importers/adjudicaciones.py`).
+«Contratos» (reportes 7 y 7.2) todavía no se descargó.
 
-Columnas del diccionario, reporte 6: `NRO_SICOP`, `NUMERO_PROCEDIMIENTO`, `FECHA_COMUNICACION`,
-`FECHA_ADJ_FIRME`, `PERMITE_RECURSOS`, `FECHA_MAXIMA_RECURSOS`, `DESIERTO`.
-Reporte 6.2: `NRO_SICOP`, `NRO_OFERTA`, `CODIGO_PRODUCTO`, `NRO_LINEA`, `CEDULA_PROVEEDOR`,
-`CANTIDAD_ADJUDICADA`, `PRECIO_UNITARIO_ADJUDICADO`, `TIPO_MONEDA`, `DESCUENTO`, `IVA`,
-`OTROS_IMPUESTOS`, `ACARREOS`, `TIPO_CAMBIO_CRC`.
+**Adjudicatario: viene SOLO como cédula** (`Cédula Empresa Proveedora`), nunca con nombre. El nombre lo pone
+Hermatix en `config/competidores.yaml`. Las cédulas tienen 10 dígitos (26 945 líneas) o 12 (24); algunas empiezan
+con 0, así que se guardan como texto.
 
-Archivo de referencia: _(pendiente)_
+Lo que se observó en los datos reales:
+- **Reporte 6:** un cartel tiene varias filas, una por acto en firme y cada una con su hora (9155 carteles en
+  29 922 filas). Hay 462 filas idénticas. SICOP marca «sin valor» con un espacio (`' '`): 4345 en
+  `Fecha Maxima Recursos`, 663 en `Permite Recursos` y 13 en `Fecha Comunicación`. Se guarda como vacío.
+  `Desierto` es siempre `N`.
+- **Reporte 6.1:** hay 7486 filas idénticas, que se guardan una vez. Todo cartel del 6.1 y del 6.2 está en el 6.
+- **Reporte 6.2:** no trae descripción ni código de producto (el diccionario dice `CODIGO_PRODUCTO` y
+  `NRO_OFERTA`, pero no vienen). Por eso la familia sale del cartel. Las 26 969 líneas unen con `tender_lines`
+  por `Número SICOP` + `Numero de linea`.
+  - **88 líneas tienen más de un registro distinto** para el mismo cartel, línea y cédula. Casi siempre cambia
+    solo `Tipo Cambio CRC`, pero a veces también la moneda o la cantidad. Se guardan todos y **no se suman**.
+  - `Descuento` e `IVA` son **montos, no porcentajes**. Por ejemplo, 11 × 55 000 con descuento 90 750 es un
+    15 %, y el IVA 7840 es el 2 % de 392 000.
 
-| Diccionario | Encabezado real | Campo interno (propuesto) | Tipo | Regla / nota | Verificado |
+| Diccionario | Encabezado real | Campo interno | Tipo | Regla / nota | Verificado |
 |---|---|---|---|---|---|
-| | | | | | no |
+| `NRO_SICOP` | `Número SICOP` | `adjudicaciones.nro_sicop` (y en 6.1 y 6.2) | texto | une con `tenders.nro_sicop` | sí |
+| `NUMERO_PROCEDIMIENTO` | `Numero de procedimiento` | `nro_procedimiento` | texto | | sí |
+| `FECHA_COMUNICACION` | `Fecha Comunicación` | `fecha_comunicacion` | fecha CR | `' '` = vacío | sí |
+| `FECHA_ADJ_FIRME` | `Fecha Adj Firme` | `fecha_adj_firme` | fecha CR | periodo de «Competencia»: la primera del cartel | sí |
+| `PERMITE_RECURSOS` | `Permite Recursos` | `permite_recursos` | texto | `Si` / `No` / `' '` | sí |
+| `FECHA_MAXIMA_RECURSOS` | `Fecha Maxima Recursos` | `fecha_maxima_recursos` | fecha CR | `' '` = vacío | sí |
+| `DESIERTO` | `Desierto` | `desierto` | texto | | sí |
+| `CEDULA_PROVEEDOR` (6.1) | `Cédula Empresa Proveedora` | `adjudicacion_proveedores.cedula_proveedor` | texto | **el adjudicatario**; quién gana y cuántas veces | sí |
+| `NRO_LINEA` | `Numero de linea` | `adjudicacion_lineas.numero_linea` | texto | | sí |
+| `CEDULA_PROVEEDOR` (6.2) | `Cédula Empresa Proveedora` | `adjudicacion_lineas.cedula_proveedor` | texto | | sí |
+| `CANTIDAD_ADJUDICADA` | `Cantidad` | `cantidad` | Decimal (texto) | | sí |
+| `PRECIO_UNITARIO_ADJUDICADO` | `Precio` | `precio_unitario` | Decimal (texto) | hasta 4 decimales | sí |
+| `TIPO_MONEDA` | `Moneda` | `moneda` | 3 letras | CRC 22 580 · USD 4304 · EUR 85 | sí |
+| `DESCUENTO` | `Descuento` | `descuento` | Decimal (texto) | monto | sí |
+| `IVA` | `IVA` | `iva` | Decimal (texto) | monto; no se suma al monto | sí |
+| `OTROS_IMPUESTOS` | `Otros Impuestos` | `otros_impuestos` | Decimal (texto) | no se suma | sí |
+| `ACARREOS` | `Acarreos` | `acarreos` | Decimal (texto) | no se suma | sí |
+| `TIPO_CAMBIO_CRC` | `Tipo Cambio CRC` | `tipo_cambio_crc` | Decimal (texto) | se guarda, **nunca se usa para convertir** | sí |
+| — | (calculado) | `monto_sin_impuestos` | Decimal (texto) | cantidad × precio − descuento, en la moneda de la línea | sí |
 
 ## Columnas reales fuera de la tabla de la guía 16.3
 
@@ -281,3 +311,4 @@ Lo mismo aplica a las columnas del reporte 1 que están fuera de la guía (`NUME
 | 2026-10-08 | Advertencia de inicio de recepción solo si es más de 1 h antes de la publicación (108 → 1 caso) | Decisión de Ivania; revisión en el portal (ver `ACCESO_SICOP.md`) |
 | 2026-10-09 | `XE` = «Procedimientos Especiales» (no «Procedimiento»): comprobado con la columna «Tipo de procedimiento» de los datos reales | 10 339 carteles en `raw_snapshots` |
 | 2026-10-09 | Zona horaria confirmada (hora de Costa Rica, `-06:00`); significado de los 8 códigos de tipo de procedimiento; dudas cerradas: `NRO_SEQ_SICOP` y `Codigos Productos.csv` | Ivania: SICOP es exclusivo de Costa Rica; PDF de SICOP «Licitación para precalificación»; horas de cierre en los datos reales |
+| 2026-10-22 | Adjudicaciones en firme (6, 6.1 y 6.2) con archivo real: adjudicatario solo por cédula, `' '` = vacío, filas idénticas, 88 líneas con registros distintos, descuento e IVA como montos | `Reporte de adjudicaciones en firme.zip` (Ivania) |

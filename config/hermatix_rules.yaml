@@ -71,6 +71,7 @@ familias:
       "camara termica para edificio", "camara de diputados", "camara de comercio", "cctv",
       "videovigilancia de edificios", "videovigilancia de sedes", "camara de conservacion de cadaveres",
       "camara de vacio", "camara de flujo laminar", "camara gastrica", "camara fotografica digital",
+      "intraoral",                  # cámaras dentales (20261001749, CCSS; Ivania, 2026-10-20)
     ]
 
   seguridad_vial:

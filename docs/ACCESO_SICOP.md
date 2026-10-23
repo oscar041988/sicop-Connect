@@ -3,9 +3,10 @@
 Registro manual de lo observado en el módulo de datos abiertos de SICOP (guía, sección 16.2).
 
 **Estado del acceso: SIN VERIFICAR.**
-No se ha verificado ninguna API pública documentada. Este documento no declara ninguna API,
-dirección interna ni llamada del navegador; solo registra lo que una persona observa al usar el
-portal en un navegador normal.
+No se ha verificado ninguna API pública documentada. Este documento no declara ninguna API ni
+dirección interna como utilizable. Registra lo que una persona observa al usar el portal en un navegador
+normal y, desde la lección 2 de la obtención automática, las peticiones que hizo la página durante la
+exploración, solo como **observadas** (ver «Exploración con navegador automatizado»).
 
 ## Reglas al registrar
 
@@ -181,6 +182,70 @@ Cálculo del hash en PowerShell (no modifica el archivo):
 ```powershell
 Get-FileHash data\raw\NOMBRE_DEL_ARCHIVO -Algorithm SHA256
 ```
+
+## Exploración con navegador automatizado (2026-10-21)
+
+Obtención automática, lección 2, encargo 2A: Ivania corrió `scripts/explorar_sicop.py` a las 14:25, con la
+ventana visible. El script desplegó el reporte, hizo clic en CSV y se detuvo en la ventana del correo **sin
+escribirlo**, así que SICOP no mandó ningún código. El informe y la captura quedaron en `data/exports/`, fuera
+de Git. Las ventanas 2 y 3 se toman de las capturas de la guía de obtención (solicitud manual).
+
+**Observado:**
+
+| Paso | Elemento | Selector estable que usa `app/sources/sicop_browser.py` |
+|---|---|---|
+| Página | `https://www.sicop.go.cr/app/module/pcont/public/ce-open-data`: aplicación Angular (PrimeNG), sin iframes, sin iniciar sesión | — |
+| 1 | Encabezado «Detalle pliego de condiciones» (`p-accordion-header`, `role=button`) | `get_by_role("button", name="Detalle pliego de condiciones")` |
+| 2 | Icono `<img alt="CSV">` del panel abierto (era el único visible) | `img[alt='CSV']:visible`, exactamente 1 |
+| 3 | Ventana `role=dialog`: «Correo electrónico donde se le notificará», campo con placeholder `ejemplo@correo.com` y botón «Continuar» | `get_by_role("dialog").filter(has_text="Correo electrónico donde se le notificará")`, su `textbox` y su botón «Continuar» |
+| 4 | Ventana: «Digite el código de verificación enviado a su correo eletrónico para concluir» (así, con la errata), campo y «Continuar» | `filter(has_text="Digite el código de verificación")` |
+| 5 | Ventana «Procesando el reporte»: «El reporte se está generando…», vínculo «URL de descarga» entre asteriscos, «El archivo permanecerá disponible 24 hrs…» y botón «Aceptar» | `filter(has_text="Procesando el reporte")`, vínculo «URL de descarga» y botón «Aceptar» |
+
+No apareció ningún CAPTCHA ni aviso de bloqueo.
+
+**Primera corrida de `obtain request --ver` (2026-10-21 15:12, Ivania): FALLO antes de escribir el correo**,
+así que no hubo solicitud real. Mensaje: «Hay 2 iconos CSV visibles y se esperaba 1». La captura del fallo muestra
+un solo icono. Explicación: al abrir «Detalle pliego de condiciones», el panel que estaba abierto se cierra con una
+animación, y por un momento se ven los dos. La exploración no lo notó porque esperaba 1,5 s antes de contar.
+Ajuste: se espera hasta 10 s a que quede un solo icono CSV visible (prueba con la variante `animacion` de la
+página simulada).
+
+**Segunda corrida (2026-10-21 15:17, Ivania, sin tocar la ventana): FALLO después de enviar el correo**, así que
+la solicitud del día ya contó.
+- 15:17:49: apareció la ventana «Digite el código de verificación…».
+- 15:18:05: el código ya estaba en el buzón (llegó en ≈ 16 s).
+- Al ir a escribirlo, la ventana ya no estaba: a las 15:18:36 la captura muestra la página sin ninguna ventana.
+  SICOP no recibió el código.
+- **Pendiente de verificar:** por qué se cerró. Supuestos: un tiempo límite de la ventana, o algo de la página.
+- Ajustes:
+  - FALLO propio, «la ventana del código se cerró antes de escribir el código» (variante `codigo_se_cierra`);
+  - con `--ver`, aviso de no tocar Chrome;
+  - capturas de cada paso, más un resumen con las peticiones a SICOP, en `data/exports/obtencion-…/`.
+
+Peticiones de la página (solo método, servidor y ruta; sin parámetros ni cookies):
+- `www.sicop.go.cr`: el documento, unos 60 archivos `chunk-XXXXXXXX.js` con nombres que dependen de la versión,
+  iconos y estilos.
+- `prod-api.sicop.go.cr`, API JSON:
+  - `GET /comn/api/v1/public/coCommonCd/list/CE47` y `GET …/coCommonCd/provincias`: catálogos;
+  - `POST /comn/api/v1/public/comnMlangTransinfo/list`: textos;
+  - `POST /epum/api/v1/public/ptMenu/getHeader` y `…/getUserActionMenu`: menú;
+  - `POST /pcont/api/v1/public/ceOpenDataPublicController/requestDownload`, **una vez, aunque no se escribió el
+    correo**.
+- `cdn.jsdelivr.net`: herramienta de accesibilidad.
+
+**Pendiente de verificar** (en la primera solicitud real, `python -m app.cli obtain request --ver`):
+- en qué clic sale `requestDownload` (supuesto: al tocar CSV, antes de pedir el correo);
+- si el vínculo «URL de descarga» trae el `processId`;
+- qué muestra SICOP si el código está mal (supuesto: se queda en la ventana del código; la app lo trata como
+  FALLO «SICOP no aceptó el código»).
+
+**Opinión: no llamar la API directamente.**
+- No está documentada como pública, y CLAUDE.md prohíbe inventar APIs.
+- Las rutas internas pueden cambiar sin aviso, y los archivos `chunk-*.js` cambian de nombre en cada versión del
+  portal.
+- La interfaz, en cambio, es la que SICOP ofrece al público. La app usa sus textos visibles y roles, que cambian
+  menos que la estructura interna.
+- Si un día SICOP publica una API documentada, se revisa esta decisión.
 
 ## Preguntas para soporte de SICOP
 

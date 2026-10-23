@@ -16,13 +16,14 @@ from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
 from app.database import MigrationError, apply_migrations, check_database, connect
 from app.compras import Compra, detalle_compra
 from app.importers.carteles import import_carteles
+from app.importers import adjudicaciones, zip_pliegos
 from app.importers.catalogo import import_catalogo
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError, Resultado
 from app.importers.instituciones import import_instituciones
 from app.importers.lineas import import_lineas
 from app.matching.evaluar import ENCAJES, ResultadoEvaluacion, evaluar_base
 from app.matching.reglas import REGLAS_PATH, ReglasError, cargar_reglas
-from app import avisos, ciclo, respaldo, usuarios
+from app import avisos, ciclo, respaldo, resumen, usuarios
 from app.usuarios import UsuarioInvalido, crear_usuario, validar_contrasena
 
 MAX_RECHAZOS_VISIBLES = 20
@@ -70,11 +71,14 @@ def doctor(settings: Settings) -> int:
     print(f"Base de datos: {db['status']} - {db['detail']}")
     print(f"Avisos: {'habilitados' if settings.notifications_enabled else 'deshabilitados'}"
           f" (dry-run: {'sí' if settings.notifications_dry_run else 'no'})")
+    def existe(path):
+        return "PENDIENTE" if path is None else ("existe" if path.is_file() else "NO EXISTE")
     if settings.mail_provider == "gmail_api":
-        def existe(path):
-            return "PENDIENTE" if path is None else ("existe" if path.is_file() else "NO EXISTE")
         print(f"Gmail: archivo del cliente {existe(settings.google_client_file)}"
               f" · token {existe(settings.google_token_file)} (el contenido nunca se muestra)")
+    if settings.google_read_token_file is not None or settings.sicop_request_email:
+        print(f"Gmail lectura: archivo del cliente {existe(settings.google_client_file)}"
+              f" · token de lectura {existe(settings.google_read_token_file)} (el contenido nunca se muestra)")
     print(f"Programador: {'habilitado' if settings.scheduler_enabled else 'deshabilitado'}")
     print(f"Pendientes: {', '.join(pendientes) if pendientes else 'ninguno'}")
     return 0
@@ -132,12 +136,18 @@ def importar(settings: Settings, path: Path, report: str, origen: str) -> int:
         return 1
     try:
         with closing(connect(settings.database_path)) as conn:
-            resultado = IMPORTADORES[report](conn, path, origen, settings.raw_data_dir)
-    except ImportacionError as exc:
+            if report == "adjudicaciones":
+                partes = adjudicaciones.import_zip(conn, path, origen, settings.raw_data_dir)
+            else:
+                partes = [(report, IMPORTADORES[report](conn, path, origen, settings.raw_data_dir))]
+    except (ImportacionError, zip_pliegos.ZipInvalido) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-    print(f"Reporte: {report}  ·  origen de los datos: {origen}")
-    _imprimir_resultado(resultado)
+    for i, (parte, resultado) in enumerate(partes):
+        if i:
+            print()
+        print(f"Reporte: {parte}  ·  origen de los datos: {origen}")
+        _imprimir_resultado(resultado)
     return 0
 
 
@@ -359,7 +369,169 @@ def google_auth(settings: Settings) -> int:
     return 0
 
 
-def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
+def _crear_lector(settings: Settings):
+    """El lector real de Gmail (solo lectura). Las pruebas lo reemplazan por uno SIMULADO."""
+    from app.sources import gmail_reader
+    return gmail_reader.crear_lector(settings)
+
+
+def obtain_gmail_auth(settings: Settings) -> int:
+    from app.sources import gmail_reader
+    try:
+        cuenta = gmail_reader.autorizar(settings)
+    except gmail_reader.GmailError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Autorizado: la app puede LEER (no enviar ni borrar) el buzón de {cuenta}. "
+          "Token guardado en GOOGLE_READ_TOKEN_FILE (no se muestra).")
+    return 0
+
+
+def obtain_check_mail(settings: Settings, dias: int) -> int:
+    from app.sources import gmail_reader as gr
+    if not 1 <= dias <= 30:
+        print("Error: --dias debe estar entre 1 y 30.", file=sys.stderr)
+        return 1
+    try:
+        correos = _crear_lector(settings).listar_recientes(dias)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se leyó nada.", file=sys.stderr)
+        return 1
+    print(f"Correos de {gr.REMITENTE_SICOP} de los últimos {dias} días (solo lectura): {len(correos)}")
+    for c in correos:
+        if c.valor is None:
+            resultado = "FORMATO DESCONOCIDO (comparar el correo con tests/fixtures y ajustar el patrón)"
+        elif c.tipo == "codigo":
+            resultado = f"código {gr.enmascarar_codigo(c.valor)}"
+        else:
+            resultado = f"enlace {gr.enmascarar_enlace(c.valor)}"
+        print(f"  {c.recibido:%Y-%m-%d %H:%M} · {gr.ASUNTOS[c.tipo]} · {resultado}")
+    print("El código y el enlace completos nunca se muestran.")
+    return 0
+
+
+def obtain_request(settings: Settings, ver: bool) -> int:
+    from app.sources import gmail_reader as gr
+    from app.sources import sicop_browser
+    try:
+        lector = _crear_lector(settings)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se pidió nada a SICOP.", file=sys.stderr)
+        return 1
+
+    def avisar(texto: str) -> None:
+        print(f"{datetime.now(HORA_CR):%H:%M:%S} · {texto}", flush=True)
+
+    if ver:
+        avisar("Mira la ventana de Chrome, pero NO la toques: un clic fuera del recuadro, Esc o la X cierran las "
+               "ventanas de SICOP. Se guardan capturas de cada paso en EXPORTS_DIR.")
+    try:
+        r = sicop_browser.solicitar_reporte(settings, lector, ver=ver, avisar=avisar)
+    except sicop_browser.YaSolicitadoHoy as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except sicop_browser.FalloObtencion as exc:
+        print(f"FALLO · {exc.motivo}", file=sys.stderr)
+        if exc.captura:
+            print(f"Captura: {exc.captura} (con los campos vaciados)", file=sys.stderr)
+        return 1
+    avisar(f"OK · código {gr.enmascarar_codigo(r.codigo)} aceptado · SICOP mostró «Procesando el reporte».")
+    if r.process_id:
+        avisar(f"La ventana traía el enlace: {gr.enmascarar_enlace('processId=' + r.process_id)}"
+               " (guardado para la lección 3).")
+    else:
+        avisar("La ventana no traía el processId: se sabrá por el correo «Envío de reporte».")
+    avisar("El correo con el enlace llega en unos minutos: revisarlo con obtain check-mail.")
+    return 0
+
+
+def obtain_poll(settings: Settings, seguir: bool) -> int:
+    import time
+    from app.bloqueo import CicloOcupado
+    from app.sources import gmail_reader as gr
+    from app.sources import obtencion
+    try:
+        lector = _crear_lector(settings)
+    except gr.GmailError as exc:
+        print(f"Error: {exc} No se revisó nada.", file=sys.stderr)
+        return 1
+    while True:
+        hora = f"{datetime.now(HORA_CR):%H:%M:%S}"
+        try:
+            r = obtencion.sondear(settings, lector)
+        except CicloOcupado as exc:
+            print(f"Error: ya hay otro obtain poll en curso ({exc or 'sin detalle'}). No se hizo nada.", file=sys.stderr)
+            return 2
+        except obtencion.FalloObtencion as exc:
+            print(f"Error: {exc.motivo}", file=sys.stderr)
+            return 1
+        except gr.GmailError as exc:
+            print(f"{hora} · Error de Gmail: {exc} La solicitud sigue abierta; se reintenta en el próximo sondeo.",
+                  file=sys.stderr)
+            if not seguir:
+                return 1
+        else:
+            if r.fallo:
+                print(f"{hora} · FALLO · {r.mensaje}", file=sys.stderr)
+                return 1
+            print(f"{hora} · {r.mensaje}", flush=True)
+            if r.estado in (None, "validado") or not seguir:
+                return 0
+        time.sleep(settings.obtain_poll_minutes * 60)
+
+
+def obtain_status(settings: Settings) -> int:
+    from app.sources import obtencion
+    try:
+        filas = obtencion.ultimas(settings)
+    except sqlite3.OperationalError:
+        print("Error: la base no tiene la tabla solicitudes_sicop: ejecuta python -m app.cli migrate.", file=sys.stderr)
+        return 1
+    if not filas:
+        print("Todavía no hay solicitudes automáticas (obtain request).")
+        return 0
+    horas = (("codigo_ingresado_en", "código"), ("esperando_enlace_en", "procesando"),
+             ("enlace_recibido_en", "enlace"), ("descargado_en", "descargado"), ("validado_en", "validado"))
+    for f in filas:
+        pasos = " → ".join(f"{nombre} {f[col][11:16]}" for col, nombre in horas if f[col])
+        print(f"#{f['id']} · {f['solicitada_en'][:16].replace('T', ' ')} · {f['estado'].upper()}"
+              f"{' · ' + pasos if pasos else ''}")
+        if f["motivo"]:
+            print(f"     motivo: {f['motivo']}")
+        if f["archivo_entrada"]:
+            print(f"     archivo: {Path(f['archivo_entrada']).name} (SHA-256 {f['archivo_sha256'][:16]}…)")
+        if f.get("alerta_estado") and f["alerta_estado"] != "anterior":
+            print(f"     alerta: {f['alerta_estado'].replace('_', ' ')} ({f['alerta_en'][11:16]})")
+    return 0
+
+
+def obtain_auto(settings: Settings) -> int:
+    """Una vuelta de la obtención automática (la tarea programada, cada 15 min). 0 = ok · 1 = fallo · 2 = ocupado."""
+    from app.bloqueo import CicloOcupado
+    from app.sources import automatico
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}). Ejecuta python -m app.cli migrate", file=sys.stderr)
+        return 1
+    try:
+        settings.source_mode, settings.obtain_request_hour
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    hora = f"{datetime.now(HORA_CR):%Y-%m-%d %H:%M:%S}"
+    try:
+        v = automatico.vuelta(settings, crear_lector=lambda s: _crear_lector(s),
+                              proveedor_alerta=lambda s: _crear_proveedor(s))
+    except CicloOcupado as exc:
+        print(f"{hora} · Otra vuelta de obtain auto sigue en curso ({exc or 'sin detalle'}). Esta no hizo nada.",
+              file=sys.stderr)
+        return 2
+    for linea in v.lineas:
+        print(f"{hora} · {linea}", file=sys.stderr if linea.startswith("FALLO") else sys.stdout, flush=True)
+    return 1 if v.fallo else 0
+
+
+def notify(settings: Settings, dry_run: bool, solo: str | None = None, semanal: bool = False) -> int:
     if not _base_de_usuarios(settings):
         return 1
     proveedor = None
@@ -376,6 +548,15 @@ def notify(settings: Settings, dry_run: bool, solo: str | None = None) -> int:
             print(f"Error: {exc} No se envió nada.", file=sys.stderr)
             return 1
     ahora = datetime.now(HORA_CR)
+    if semanal:
+        try:
+            with closing(connect(settings.database_path)) as conn:
+                r = resumen.notify(conn, settings, ahora, dry_run=dry_run, proveedor=proveedor)
+        except avisos.AvisoError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        print(f"{'DRY-RUN · no se envía nada' if dry_run else 'ENVÍO REAL'} · resumen semanal")
+        return _imprimir_resumen(r, dry_run)
     try:
         dias = settings.notify_lookback_days
         with closing(connect(settings.database_path)) as conn:
@@ -400,7 +581,8 @@ def _imprimir_avisos(resultado: avisos.Resultado, dry_run: bool) -> int:
         print("No hay destinatarios activos: agrégalos en el panel («Destinatarios»). No se preparó nada.")
         return 0
     print(f"Destinatarios activos: {resultado.destinatarios}")
-    print(f"Avisos nuevos en la outbox: {resultado.nuevos} · ya avisados antes (no se repiten): {resultado.ya_avisados}")
+    cierre = f" (de cierre próximo: {resultado.por_cerrar})" if resultado.por_cerrar else ""
+    print(f"Avisos nuevos en la outbox: {resultado.nuevos}{cierre} · ya avisados antes (no se repiten): {resultado.ya_avisados}")
     total = sum(len(v) for v in resultado.preparados.values())
     print(f"Preparados {'esperando envío' if dry_run else 'para enviar'}: {total}")
     for para, lista in sorted(resultado.preparados.items()):
@@ -423,6 +605,23 @@ def _imprimir_avisos(resultado: avisos.Resultado, dry_run: bool) -> int:
     if "fallido" in estados:
         print("Atención: hay envíos FALLIDOS. Gmail los rechazó; revisa el motivo. No se reintentan solos.")
     return 0 if estados == {"aceptado"} else 1
+
+
+def _imprimir_resumen(r: resumen.Resultado, dry_run: bool) -> int:
+    if r.destinatarios == 0:
+        print("No hay destinatarios activos: agrégalos en el panel («Destinatarios»). No se preparó nada.")
+        return 0
+    print(f"Resumen semanal {r.id_semana}: nuevos en la outbox {r.nuevos} · por enviar {len(r.preparados)}")
+    if not r.preparados:
+        print("El resumen de esta semana ya se envió (o se intentó): no se repite.")
+        return 0
+    print(f"Asunto: {r.asunto}")
+    if dry_run:
+        print(f"Vista previa: {r.vista_previa[0].parent}")
+        return 0
+    for para, envio in sorted(r.envios.items()):
+        print(f"  {para}: {envio.estado.upper()} · {envio.detalle}")
+    return 0 if {e.estado for e in r.envios.values()} == {"aceptado"} else 1
 
 
 ETIQUETAS_ARCHIVO = {"importado": "IMPORTADO", "ya_importado": "YA IMPORTADO", "error": "ERROR",
@@ -478,8 +677,10 @@ def run_cycle(settings: Settings, origen: str, dry_run: bool) -> int:
         print(f"Evaluación: reglas {e.version} · {e.carteles} carteles · nuevas {e.nuevas} · actualizadas {e.actualizadas}")
     if c.aviso_omitido:
         print(f"Avisos: NO se avisó ({c.aviso_omitido}).")
-    elif c.avisos:
+    if c.avisos:
         _imprimir_avisos(c.avisos, dry_run)
+    if c.resumen:
+        _imprimir_resumen(c.resumen, dry_run)
     if c.estado == "ok":
         print(f"Ciclo #{c.id}: OK.")
         return 0
@@ -508,9 +709,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("doctor", help="Muestra la configuración disponible y pendiente, sin secretos")
     sub.add_parser("migrate", help="Crea o actualiza el esquema de la base (repetible)")
     imp = sub.add_parser("import", help="Importa un reporte de SICOP (repetible: el mismo archivo no duplica)")
-    imp.add_argument("--path", required=True, type=Path, help="Ruta del CSV (o del ZIP, para catalogo)")
-    imp.add_argument("--report", required=True, choices=list(IMPORTADORES),
-                     help="Tipo de reporte (importar carteles antes que lineas)")
+    imp.add_argument("--path", required=True, type=Path,
+                     help="Ruta del CSV (o del ZIP, para catalogo y adjudicaciones)")
+    imp.add_argument("--report", required=True, choices=[*IMPORTADORES, "adjudicaciones"],
+                     help="Tipo de reporte (importar carteles antes que lineas y adjudicaciones;"
+                          " adjudicaciones = el ZIP «Reporte de adjudicaciones en firme» tal como llega)")
     imp.add_argument("--origen", required=True, choices=ORIGENES,
                      help="Origen de los datos: real, sintetico o simulado")
     com = sub.add_parser("compra", help="Muestra un cartel con su comprador y sus líneas")
@@ -538,7 +741,21 @@ def build_parser() -> argparse.ArgumentParser:
     modo.add_argument("--send", action="store_true",
                       help="Envío real por Gmail (exige NOTIFICATIONS_ENABLED=true y NOTIFICATIONS_DRY_RUN=false)")
     no.add_argument("--solo", metavar="CORREO", help="Solo a este destinatario activo (prueba controlada)")
+    no.add_argument("--resumen-semanal", action="store_true",
+                    help="El resumen ejecutivo de la semana anterior (el ciclo lo arma solo los lunes); uno por semana")
     sub.add_parser("google-auth", help="Autorización única de Gmail: entra como MAIL_FROM en el navegador")
+    ob = sub.add_parser("obtain", help="Obtención automática de SICOP (por ahora: leer el buzón, sin cambiar nada)")
+    ob_sub = ob.add_subparsers(dest="obtain_command", required=True)
+    ob_sub.add_parser("gmail-auth", help="Autorización única de LECTURA de Gmail: entra como SICOP_REQUEST_EMAIL")
+    cm = ob_sub.add_parser("check-mail", help="Lista los correos de SICOP recientes con código y enlace enmascarados")
+    cm.add_argument("--dias", type=int, default=3, help="Días hacia atrás (1 a 30; por defecto 3)")
+    rq = ob_sub.add_parser("request", help="UNA solicitud real del «Detalle pliego de condiciones» en CSV (una por día)")
+    rq.add_argument("--ver", action="store_true", help="Mostrar la ventana del navegador (para la prueba supervisada)")
+    po = ob_sub.add_parser("poll", help="Espera el correo con el enlace, descarga el ZIP, lo valida y lo deja en la entrada")
+    po.add_argument("--seguir", action="store_true",
+                    help="Repetir cada OBTAIN_POLL_MINUTES hasta validado, fallido o el plazo (Ctrl+C es seguro)")
+    ob_sub.add_parser("status", help="Las últimas solicitudes automáticas con su estado y horas")
+    ob_sub.add_parser("auto", help="Una vuelta de la obtención automática (tarea programada; solo con SOURCE_MODE=auto)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -576,9 +793,24 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "list-users":
         return list_users(settings)
     if args.command == "notify":
-        return notify(settings, args.dry_run, args.solo)
+        if args.resumen_semanal and args.solo:
+            print("Error: --solo es solo para los avisos, no para el resumen semanal.", file=sys.stderr)
+            return 1
+        return notify(settings, args.dry_run, args.solo, args.resumen_semanal)
     if args.command == "google-auth":
         return google_auth(settings)
+    if args.command == "obtain":
+        if args.obtain_command == "gmail-auth":
+            return obtain_gmail_auth(settings)
+        if args.obtain_command == "request":
+            return obtain_request(settings, args.ver)
+        if args.obtain_command == "poll":
+            return obtain_poll(settings, args.seguir)
+        if args.obtain_command == "status":
+            return obtain_status(settings)
+        if args.obtain_command == "auto":
+            return obtain_auto(settings)
+        return obtain_check_mail(settings, args.dias)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

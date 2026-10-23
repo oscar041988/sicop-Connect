@@ -76,5 +76,28 @@ Todas tienen `Cod Unidad Compra` con ceros iniciales (`00001`, `01142`, `02102`)
 - Fila 2: cédula `9999999999` (la de los carteles sintéticos); fila 3: cédula con ceros iniciales;
   fila 4: cédula en notación científica → rechazada.
 
+## `correo_codigo_simulado.eml` y `correo_envio_simulado.eml`
+
+- **Datos: SIMULADOS.** Copias anonimizadas de dos correos reales de `info@sicop.go.cr` recibidos el
+  2026-10-21 (13:34 y 13:36, hora de Costa Rica), descargados de Gmail como `.eml`. Los originales están en
+  `data/correos_sicop/`, fuera de Git.
+- Se conservó la forma real: remitente, asunto codificado (`=?UTF-8?Q?…?=`), fecha, `text/html; charset=utf-8`
+  y la codificación del cuerpo (el del código en `quoted-printable`, con líneas cortadas por `=`; el del
+  enlace en `7bit`).
+- Se reemplazó: el código (6 letras y números, ahora `Zq9Xw4`), el `processId` del enlace (ahora `99999`),
+  el destinatario (`buzon@example.com`) y el `Message-id`. Se quitaron las cabeceras de entrega y firmas
+  (`Received`, `DKIM`, `ARC`, `List-Unsubscribe`, `Reporting-Meta`). La primera cabecera,
+  `X-Datos-Sicop-Connect`, marca el archivo como SIMULADO.
+
+## `sicop_simulado.html`
+
+- **Datos: SIMULADOS.** Página que imita las ventanas de Datos abiertos de SICOP observadas el 2026-10-21
+  (`docs/ACCESO_SICOP.md`): encabezado «Detalle pliego de condiciones» (`role=button`), `<img alt="CSV">`, y las
+  ventanas `role=dialog` del correo, del código y de «Procesando el reporte», con sus textos exactos.
+- `tests/test_sicop_browser.py` reemplaza `__VARIANTE__`, `__CODIGO__` y `__PID__`. Las variantes son `normal`,
+  `codigo_rechazado`, `boton_cambiado`, `captcha`, `sin_url`, `animacion` (por un momento hay dos iconos CSV
+  visibles, como en el portal real el 2026-10-21), `dos_csv` y `codigo_se_cierra` (la ventana del código
+  desaparece sola, como el 2026-10-21 a las 15:18).
+
 **No editar estos archivos** (ni abrirlo y guardarlo con Excel). Si hace falta otro caso, agregar un fixture nuevo
 y anotarlo aquí con su origen (real / sintético / simulado).

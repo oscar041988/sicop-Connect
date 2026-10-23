@@ -252,3 +252,47 @@ def test_cli_importa_los_cuatro_reportes_y_muestra_la_compra(tmp_path, capsys, c
     assert "SIN CATÁLOGO" in salida and "4001.00 CRC · 30.75 USD" in salida
 
     assert main(["compra", "20269999999"], settings=settings) == 1
+
+
+# --- Líneas que llegan antes que su cartel (revisión del 2026-10-23) ----------------------------------------
+
+COLUMNAS_LINEA = ("nro_sicop, numero_linea, numero_partida, codigo_identificacion, cantidad_solicitada,"
+                  " precio_unitario_estimado, moneda, estimado_linea, content_hash")
+
+
+def _lineas_guardadas(db):
+    with closing(sqlite3.connect(db)) as conn:
+        return conn.execute(f"SELECT {COLUMNAS_LINEA} FROM tender_lines ORDER BY nro_sicop, numero_linea").fetchall()
+
+
+def test_lineas_que_llegaron_antes_que_su_cartel_se_recuperan(db, tmp_path, raw_dir):
+    """Antes, esas líneas quedaban solo en raw_snapshots: su archivo no se puede importar otra vez (mismo hash)."""
+    huerfanas = _importar(db, import_lineas, LINEAS, raw_dir)
+    assert huerfanas.huerfanas == huerfanas.aceptadas and _lineas_guardadas(db) == []
+
+    r = _importar(db, import_carteles, CARTELES, raw_dir)
+
+    # Queda igual que si los carteles hubieran llegado primero.
+    normal = tmp_path / "normal.db"
+    apply_migrations(normal)
+    _importar(normal, import_carteles, CARTELES, raw_dir)
+    _importar(normal, import_lineas, LINEAS, raw_dir)
+    esperadas = _lineas_guardadas(normal)
+    assert _lineas_guardadas(db) == esperadas and len(esperadas) == 4
+    assert any("Se recuperaron 4 líneas de" in aviso for aviso in r.avisos_archivo)
+    # La del cartel que no existe (20269900077) sigue solo en raw_snapshots: no se inventa el cartel.
+    assert _uno(db, "SELECT count(*) FROM tender_lines WHERE nro_sicop = '20269900077'") == (0,)
+
+
+def test_de_una_linea_huerfana_se_recupera_su_ultima_version(db, tmp_path, raw_dir):
+    encabezado = LINEAS.read_text(encoding="utf-8-sig").splitlines()[0]
+    for n, cantidad in enumerate(("2", "5")):  # la misma línea en dos archivos, antes de que llegue el cartel
+        archivo = tmp_path / f"lineas_{n}.csv"
+        archivo.write_text(f"{encabezado}\n20269900001;1;1;{cantidad};1500.50;CRC;455.77;9999990100000001\n",
+                           encoding="utf-8-sig")
+        _importar(db, import_lineas, archivo, raw_dir)
+
+    _importar(db, import_carteles, CARTELES, raw_dir)
+
+    assert _uno(db, "SELECT cantidad_solicitada, estimado_linea FROM tender_lines WHERE nro_sicop = '20269900001'"
+                    " AND numero_linea = '1'") == ("5", "7502.50")

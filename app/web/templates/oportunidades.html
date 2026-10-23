@@ -2,7 +2,7 @@
 {% block contenido %}
 {# Chips de estado de la revisión + búsqueda (diseño del prototipo de Hermatix) #}
 <div class="tools">
-  {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos")] %}
+  {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos"), ("ofertada", "Ofertada"), ("no_se_oferta", "No se oferta")] %}
   <a class="chip" href="{{ url_chip(valor) }}" aria-pressed="{{ 'true' if filtros.revisado == valor else 'false' }}">{{ texto }}</a>
   {% endfor %}
   <form class="buscar" method="get" action="/oportunidades">
@@ -66,12 +66,15 @@
   </form>
 </details>
 
-<p class="sub">{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %} (un cartel puede coincidir con más de una familia) · ordenados por cierre más próximo (los vencidos al final)</p>
+<div class="resultados">
+  <p class="sub">{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %} (un cartel puede coincidir con más de una familia) · ordenados por cierre más próximo (los vencidos al final)</p>
+  {% if pagina.total %}<a class="btn o exportar" href="{{ url_exportar }}" download>Exportar a Excel</a>{% endif %}
+</div>
 
 {% if pagina.filas %}
 <div class="list">
   {% for f in pagina.filas %}
-  {% set estado = {"interesa": "si", "no_interesa": "no"}.get(f.decision, "") %}
+  {% set estado = {"interesa": "si", "ofertada": "si", "no_interesa": "no", "no_se_oferta": "no"}.get(f.decision, "") %}
   <article class="card {{ estado }} {% if f.plazo == 'vencido' %}vencido{% endif %}">
     <div class="row">
       <div>
@@ -83,7 +86,9 @@
           {% elif f.plazo == "por_verificar" %}<span class="tag w">Plazo por verificar</span>{% endif %}
           {% if f.decision == "interesa" %}<span class="tag">Interesa</span>
           {% elif f.decision == "no_interesa" %}<span class="tag g">No interesa</span>
-          {% elif f.decision == "revisar_requisitos" %}<span class="tag r">Revisar requisitos</span>{% endif %}
+          {% elif f.decision == "revisar_requisitos" %}<span class="tag r">Revisar requisitos</span>
+          {% elif f.decision == "ofertada" %}<span class="tag">Ofertada</span>
+          {% elif f.decision == "no_se_oferta" %}<span class="tag g">No se oferta</span>{% endif %}
         </div>
         <h3><a href="/oportunidades/{{ f.nro_sicop }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
         <div class="inst">{{ f.institucion | legible or "Sin datos de la institución" }}</div>

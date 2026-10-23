@@ -11,13 +11,16 @@
   {% for a in avisos %}
   <div class="tarjeta usuario">
     <p><strong>{{ a.estado | capitalize }}</strong> · {{ a.para }} ·
+      {% if a.es_resumen %}{{ a.titulo }}{% else %}
       <a href="/oportunidades/{{ a.nro_sicop }}">{{ a.nro_sicop }}</a>
-      {% if a.titulo %}· {{ a.titulo | titulo }}{% endif %}</p>
+      {% if a.titulo %}· {{ a.titulo | titulo }}{% endif %}{% endif %}</p>
     <p class="sub">{{ motivos_aviso.get(a.motivo, a.motivo) }} · preparado {{ a.creado | fecha }}
       {% if a.actualizado %}· último intento {{ a.actualizado | fecha }}{% endif %}<br>
       Respuesta: {{ a.detalle or "sin detalle" }}</p>
     {% if a.superado %}
     <p class="vacio">Ya le llegó una versión más nueva de este cartel: no hace falta reenviarlo.</p>
+    {% elif a.vencido and a.es_resumen %}
+    <p class="vacio">Es el resumen de otra semana: ya no se envía.</p>
     {% elif a.vencido %}
     <p class="vacio">El cartel ya cerró: no se puede reenviar.</p>
     {% elif not a.destinatario_activo %}

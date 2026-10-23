@@ -3,7 +3,15 @@
 # Generado el 2026-10-13 desde un entorno limpio con `pip install -r requirements.txt` y `pip freeze`.
 # Comprobado de nuevo el 2026-10-13 (lección 8, encargo B): un entorno limpio da exactamente esta lista
 # y con ella pasaron las 328 pruebas (python -m pytest -q, más requirements-dev.txt, que no entra aquí).
-# Todas aceptan Python 3.11 o más (starlette 1.8 lo exige; el servidor tendrá 3.12) y ninguna es solo de Windows.
+# Todas aceptan Python 3.12 (el del servidor; pyee 14 es la que más pide) y ninguna es solo de Windows.
+# 2026-10-22 (A5): se agregó openpyxl. Entorno limpio con este mismo lock + openpyxl>=3.1; solo se sumaron
+# openpyxl 3.1.5 y su dependencia et_xmlfile 2.0.0 (ninguna otra versión cambió).
+# 2026-10-23: faltaba playwright (está en requirements.txt desde la obtención automática). Entorno limpio con
+# este lock + playwright==1.64.0 (la versión con la que pasan las pruebas): solo se sumaron playwright 1.64.0,
+# greenlet 3.5.6 y pyee 14.0.0, con ruedas para Linux y Python 3.12. Entorno nuevo con requirements-dev.txt
+# (que ahora usa este lock y fija las herramientas de prueba): 483 pruebas pasaron. En el servidor falta además
+# el navegador:
+#   .venv/bin/python -m playwright install chromium
 # Para actualizar: repetir en un entorno nuevo, correr las pruebas y reemplazar este archivo; nunca a mano.
 annotated-doc==0.0.5
 annotated-types==0.8.0
@@ -15,21 +23,26 @@ cffi==2.1.1
 charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
+et_xmlfile==2.0.0
 fastapi==0.143.0
 google-auth==2.62.0
 google-auth-oauthlib==1.5.0
+greenlet==3.5.6
 h11==0.16.0
 idna==3.20
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.4
 oauthlib==4.0.0
+openpyxl==3.1.5
 opentelemetry-api==1.45.1
+playwright==1.64.0
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
 pycparser==3.11
 pydantic==2.14.1
 pydantic_core==2.50.1
+pyee==14.0.0
 python-multipart==0.0.32
 PyYAML==6.0.3
 requests==2.34.2
