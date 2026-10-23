@@ -458,8 +458,10 @@
     34 casos del golden set + 3 revisiones · precisión 95,0 % (19/20) · cobertura 100 % (19/19). Errores: falsa
     alerta en `iot_frio` (`20261000990`, «telemetría… Acueducto», revisado «No encaja») y otra familia en
     `rastreo_activos` (`20260802605`).
-  - **Pendiente · Ivania/Oscar:** decidir el caso «telemetría» con la receta de `REGLAS.md` sección 3;
-    `migrate` y `score-rules` en la base local para guardar la medición real.
+  - **Pendiente · Ivania/Oscar:** decidir el caso «telemetría» con la receta de `REGLAS.md` sección 3.
+  - ~~`migrate` y `score-rules` en la base local~~ **Hecho 2026-10-23 (Claude, a pedido de Ivania):** respaldo
+    `sicop_20261023-140005` (esquema 0013, integridad ok) → `migrate` (0014) → `score-rules`: **medición #1
+    guardada** en la base real, igual a la de la copia (95,0 % / 100 %, los mismos 2 errores).
   - Pruebas: 494 passed con Python 3.14 y con 3.12 (8 nuevas en `tests/test_calidad.py`; las listas de
     migraciones y la versión de esquema de las pruebas pasan a 0014). En una corrida con 3.12 falló 1 prueba que
     no se pudo identificar y no se repitió en 3 corridas más: **prueba intermitente por investigar**.
