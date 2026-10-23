@@ -12,6 +12,8 @@ Reglas:
 * Los archivos importados (o ya importados antes) se mueven a INCOMING_DIR/procesados/<fecha>/.
 * El ZIP de pliegos se acepta tal como llega: se importan sus dos CSV (app/importers/zip_pliegos.py) y el ZIP
   se mueve entero, a procesados o, si alguno de sus CSV falló, a con_error.
+* El ZIP «Reporte de adjudicaciones en firme» también (app/importers/adjudicaciones.py): sus tres CSV se importan
+  después de los carteles. No cuenta como «datos del día» para los avisos: sin carteles nuevos no se avisa.
 * Obtención en modo manual: los archivos los descarga una persona y los deja en INCOMING_DIR (o los sube en el
   panel). Este módulo no programa nada; el horario lo pone el temporizador del servidor (lección 9).
 """
@@ -34,7 +36,7 @@ from app import avisos, resumen
 from app.bloqueo import CicloOcupado, bloqueo
 from app.config import Settings
 from app.database import connect
-from app.importers import carteles, catalogo, instituciones, lineas, zip_pliegos
+from app.importers import adjudicaciones, carteles, catalogo, instituciones, lineas, zip_pliegos
 from app.importers.comun import HORA_CR, ImportacionError
 from app.importers.csv_reader import parse_csv
 from app.matching.evaluar import ResultadoEvaluacion, evaluar_base
@@ -47,7 +49,11 @@ __all__ = ["CicloOcupado", "Ciclo", "ArchivoCiclo", "run_cycle", "ruta_bloqueo"]
 ORDEN = ("instituciones", "carteles", "catalogo", "lineas")
 IMPORTADORES = {"instituciones": instituciones.import_instituciones, "carteles": carteles.import_carteles,
                 "catalogo": catalogo.import_catalogo, "lineas": lineas.import_lineas}
-# Encabezados que identifican cada reporte (los mismos que exige su importador).
+# Los tres CSV del ZIP de adjudicaciones, después de los carteles (necesitan el cartel para su familia).
+ADJUDICACIONES = tuple(adjudicaciones.ARCHIVOS.values())
+IMPORTADORES.update(adjudicaciones.IMPORTADORES)
+# Encabezados que identifican cada reporte (los mismos que exige su importador). Las adjudicaciones no: solo se
+# aceptan dentro de su ZIP, que se reconoce por los nombres de sus archivos.
 ENCABEZADOS = {"instituciones": set(instituciones.COLUMNAS), "carteles": set(carteles.COLUMNAS),
                "catalogo": set(catalogo.COLUMNAS), "lineas": set(lineas.COLUMNAS)}
 
@@ -145,8 +151,8 @@ def tipo_de_reporte(path: Path) -> str:
             with zipfile.ZipFile(path) as zf:
                 malo = zf.testzip()
                 if catalogo.ARCHIVO_EN_ZIP not in zf.namelist():
-                    raise ArchivoInvalido(f"el ZIP no trae {catalogo.ARCHIVO_EN_ZIP!r} ni los CSV de pliegos: "
-                                          "no es el catálogo ni el reporte de pliegos del portal")
+                    raise ArchivoInvalido(f"el ZIP no trae {catalogo.ARCHIVO_EN_ZIP!r} ni los CSV de pliegos o de "
+                                          "adjudicaciones: no es el catálogo ni un reporte del portal")
                 raw = zf.read(catalogo.ARCHIVO_EN_ZIP)
         except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
             raise ArchivoInvalido(f"el ZIP no se puede leer: {exc}") from exc
@@ -223,19 +229,31 @@ def registrar_ocupado(settings: Settings, origen: str, quien: str, ahora: dateti
 # --- El ciclo ----------------------------------------------------------------------------------------
 
 def _clasificar(path: Path, temporal: Path) -> list[tuple[str, Path]]:
-    """[(reporte, CSV a importar)]. El ZIP de pliegos se abre en sus dos CSV; lo demás es un solo archivo."""
+    """[(reporte, CSV a importar)]. Los ZIP de pliegos y de adjudicaciones se abren en sus CSV; lo demás es un
+    solo archivo."""
     if zip_pliegos.es_zip_de_pliegos(path):
         try:
             csvs = zip_pliegos.extraer(path, temporal)
         except zip_pliegos.ZipInvalido as exc:
             raise ArchivoInvalido(str(exc)) from exc
         return [(tipo_de_reporte(csv), csv) for _, csv in csvs]  # misma revisión que un CSV suelto
+    if zip_pliegos.es_zip_de_pliegos(path, adjudicaciones.ARCHIVOS):
+        try:
+            csvs = zip_pliegos.extraer(path, temporal, adjudicaciones.ARCHIVOS, "reporte de adjudicaciones en firme")
+        except zip_pliegos.ZipInvalido as exc:
+            raise ArchivoInvalido(str(exc)) from exc
+        for _, csv in csvs:  # completo (descarga no cortada); el tipo ya lo dice el nombre dentro del ZIP
+            try:
+                revisar_csv(csv.read_bytes(), csv.name)
+            except ArchivoInvalido as exc:
+                raise ArchivoInvalido(f"{csv.name}: {exc}") from exc
+        return csvs
     return [(tipo_de_reporte(path), path)]
 
 
 def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen: str, fecha: str) -> list[str]:
     errores: list[str] = []
-    por_tipo: dict[str, list[Path]] = {t: [] for t in ORDEN}
+    por_tipo: dict[str, list[Path]] = {t: [] for t in (*ORDEN, *ADJUDICACIONES)}
     zip_de: dict[Path, Path] = {}                 # CSV sacado de un ZIP de pliegos → ese ZIP
     partes: dict[Path, list[ArchivoCiclo]] = {}   # ZIP → lo que pasó con cada uno de sus CSV
     con_error: set[Path] = set()
@@ -254,7 +272,7 @@ def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen
                     zip_de[csv] = path
                     partes.setdefault(path, [])
         desde, hasta = [], []
-        for tipo in ORDEN:
+        for tipo in por_tipo:  # en orden: ORDEN y después las adjudicaciones
             for path in por_tipo[tipo]:
                 zip_origen = zip_de.get(path)
                 nombre = f"{zip_origen.name} › {path.name}" if zip_origen else path.name
@@ -325,11 +343,16 @@ def _paso_a_paso(conn, settings, ciclo: Ciclo, origen, ahora, proveedor, reglas_
         listos, apartados = recoger(carpeta)
         ciclo.archivos.extend(apartados)
         errores += _importar(conn, settings, ciclo, listos, origen, f"{ahora:%Y-%m-%d}")
-    nuevos = ciclo.contar("importado")
+    # Las adjudicaciones no son «datos del día» para los avisos: no traen carteles nuevos.
+    nuevos = sum(1 for a in ciclo.archivos if a.resultado == "importado" and a.reporte not in ADJUDICACIONES)
+    solo_adjudicaciones = ciclo.contar("importado") > nuevos
     en_espera = ciclo.contar("en_espera")
     if not errores and nuevos == 0 and en_espera:
         errores.append(f"no se importó ningún archivo nuevo: {en_espera} en espera (modificado hace menos de "
                        f"{ESPERA_S} s); vuelve a correr el ciclo en un minuto")
+    elif not errores and nuevos == 0 and solo_adjudicaciones:
+        errores.append("solo llegaron adjudicaciones (se importaron): sin carteles nuevos no hay datos de hoy para"
+                       " los avisos")
     elif not errores and nuevos == 0:
         errores.append("no llegó ningún archivo nuevo: no hay datos de hoy (no significa que no haya compras)")
 

@@ -3,7 +3,8 @@
 Relaciones (docs/MAPEO_DATOS.md, guía 16.3), solo por claves verificadas:
 * línea → cartel por `Número SICOP` (+ secuencia si SICOP la entregara; hoy no viene).
   Si el cartel no está importado, la línea es «huérfana»: se advierte, se conserva en raw_snapshots
-  y no entra a tender_lines (no se inventa el cartel).
+  y no entra a tender_lines (no se inventa el cartel). Cuando después se importa su cartel, el importador de
+  carteles la recupera de raw_snapshots (recuperar_huerfanas).
 * línea → catálogo por `Código identificación` (16 dígitos). Un código sin catálogo se advierte
   y queda marcado en la vista v_tender_lines; la línea sí se guarda.
 Estimación por línea = cantidad × precio unitario, en Decimal y en la moneda de la línea.
@@ -11,6 +12,7 @@ Estimación por línea = cantidad × precio unitario, en Decimal y en la moneda 
 
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 from pathlib import Path
@@ -31,7 +33,7 @@ COLUMNAS = {
 }
 _MONEDA = re.compile(r"^[A-Z]{3}$")
 
-ADV_HUERFANA = "Línea huérfana: su cartel no está importado (queda solo en raw_snapshots)"
+ADV_HUERFANA = "Línea huérfana: su cartel no está importado (se guarda cuando se importe el cartel)"
 ADV_SIN_CATALOGO = "Código sin catálogo: clasificación no descargada"
 ADV_NO_EN_CATALOGO = "Código no está en el catálogo de su clasificación"
 ADV_EN_CERO = "Cantidad o precio en cero: estimación 0, no informativa"
@@ -57,6 +59,32 @@ def _validar(fila: dict[str, str], linea: int, resultado: Resultado) -> Fila:
     campos["estimado_linea"] = texto_decimal(cantidad * precio)
     # Clave natural para raw_snapshots: «Número SICOP|línea» (ver migración 0001).
     return Fila(f"{nro}|{numero_linea}", campos, fila)
+
+
+def recuperar_huerfanas(conn: sqlite3.Connection, nro_sicop: str, momento: str) -> int:
+    """Pasa a tender_lines las líneas de un cartel recién importado que llegaron ANTES que él (huérfanas).
+
+    Esas líneas quedaron solo en raw_snapshots y su archivo ya no se puede importar otra vez (mismo hash).
+    De cada línea se toma su última versión guardada, tal como venía en SICOP. Devuelve cuántas se recuperaron.
+    Se llama dentro de la transacción de la importación de carteles.
+    """
+    ultimas: dict[str, tuple[str, str]] = {}
+    # Rango de texto «nro|» … «nro}» ('}' va justo después de '|'): usa el índice de raw_snapshots.
+    for clave, content_hash, payload in conn.execute(
+            "SELECT natural_key, content_hash, payload FROM raw_snapshots WHERE entity = 'linea'"
+            " AND natural_key > ? AND natural_key < ? ORDER BY id", (f"{nro_sicop}|", f"{nro_sicop}}}")):
+        ultimas[clave] = (content_hash, payload)  # ORDER BY id: la última versión manda
+    recuperadas = 0
+    for content_hash, payload in ultimas.values():
+        try:
+            fila = _validar(json.loads(payload), 0, Resultado(archivo="", file_hash=""))
+        except (FilaRechazada, ValueError, KeyError):
+            continue  # no debería pasar (la fila ya se aceptó una vez); si pasa, queda solo en raw_snapshots
+        clave = {"nro_sicop": fila.campos["nro_sicop"], "numero_linea": fila.campos["numero_linea"]}
+        campos = {k: v for k, v in fila.campos.items() if k not in clave}
+        upsert(conn, "tender_lines", clave, campos, content_hash, momento)
+        recuperadas += 1
+    return recuperadas
 
 
 def import_lineas(conn: sqlite3.Connection, path: Path, origen: str, raw_dir: Path,

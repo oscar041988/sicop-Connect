@@ -26,6 +26,7 @@ from app.config import load_settings
 from app.database import apply_migrations, connect
 from app.importers.comun import HORA_CR
 from tests.test_avisos import ProveedorSimulado
+from tests.test_competencia import armar_zip
 
 ENCABEZADO = ("Número SICOP;Cédula;Fecha Publicación;Numero de procedimiento;Cod Unidad Compra;Nombre Unidad Compra;"
               "Tipo de procedimiento;Modalidad Procedimiento;Excepción CD;Descripción;Pago Adelantado Pymes;"
@@ -373,3 +374,52 @@ def test_zip_de_pliegos_con_un_csv_cortado_se_aparta_entero(entorno):
     assert estado == "fallo" and "termina a mitad de una fila" in error
     assert _importaciones(entorno) == []  # ninguno de los dos: el ZIP se revisa completo antes de importar
     assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_PLIEGOS).exists()
+
+
+# --- ZIP de adjudicaciones (revisión del 2026-10-23: antes se apartaba a con_error) ---------------------------
+
+ZIP_ADJUDICACIONES = "Reporte de adjudicaciones en firme.zip"
+
+
+def _zip_adjudicaciones(tmp_path, **kwargs):
+    return armar_zip(tmp_path / "adjudicaciones.zip", **kwargs).read_bytes()
+
+
+def test_zip_de_adjudicaciones_se_importa_despues_de_los_carteles(entorno, tmp_path, capsys):
+    _dejar(entorno, ZIP_ADJUDICACIONES, _zip_adjudicaciones(tmp_path))
+    _dejar(entorno, "Detalle de pliegos de condiciones.csv", _carteles(GPS))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 0
+
+    assert [r for r, _ in _importaciones(entorno)] == ["carteles", "adjudicaciones", "adjudicacion_proveedores",
+                                                       "adjudicacion_lineas"]
+    assert _outbox(entorno) == [("oscar@ejemplo.test", GPS[0], "preparado")]  # los carteles sí son datos del día
+    assert (entorno.incoming_dir / "procesados" / _hoy() / ZIP_ADJUDICACIONES).exists()
+    assert f"IMPORTADO (adjudicaciones) {ZIP_ADJUDICACIONES} › Detalle Adjudicaciones.csv" in capsys.readouterr().out
+
+
+def test_solo_adjudicaciones_se_importan_pero_no_se_avisa(entorno, tmp_path):
+    _dejar(entorno, ZIP_ADJUDICACIONES, _zip_adjudicaciones(tmp_path))
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "solo llegaron adjudicaciones" in error
+    assert len(_importaciones(entorno)) == 3 and _outbox(entorno) == []
+    assert (entorno.incoming_dir / "procesados" / _hoy() / ZIP_ADJUDICACIONES).exists()
+
+
+def test_zip_de_adjudicaciones_cortado_se_aparta_entero(entorno, tmp_path):
+    with zipfile.ZipFile(tmp_path / "cortado.zip", "w") as zf:
+        with zipfile.ZipFile(io.BytesIO(_zip_adjudicaciones(tmp_path))) as completo:
+            for nombre in completo.namelist():
+                datos = completo.read(nombre)
+                zf.writestr(nombre, datos[:-10] if nombre == "Det Lineas Adjudicadas.csv" else datos)
+    _dejar(entorno, ZIP_ADJUDICACIONES, (tmp_path / "cortado.zip").read_bytes())
+
+    assert main(["run-cycle", "--origen", "sintetico"], entorno) == 1
+
+    [(_, estado, error, *_)] = _ciclos(entorno)
+    assert estado == "fallo" and "Det Lineas Adjudicadas.csv: incompleto" in error
+    assert _importaciones(entorno) == []
+    assert (entorno.incoming_dir / "con_error" / _hoy() / ZIP_ADJUDICACIONES).exists()

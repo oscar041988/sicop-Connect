@@ -23,13 +23,15 @@ class ZipInvalido(Exception):
     """El ZIP no se puede usar tal como está; el mensaje es el que verá la usuaria."""
 
 
-def es_zip_de_pliegos(path: Path) -> bool:
-    """¿Es un ZIP legible que trae alguno de los CSV del reporte de pliegos? (Si está dañado, no lo es.)"""
+def es_zip_de_pliegos(path: Path, archivos: dict[str, str] = ARCHIVOS) -> bool:
+    """¿Es un ZIP legible que trae alguno de los CSV del reporte de pliegos? (Si está dañado, no lo es.)
+
+    `archivos` permite preguntar lo mismo por otro ZIP de SICOP (p. ej. adjudicaciones)."""
     if path.suffix.lower() != ".zip" or not zipfile.is_zipfile(path):
         return False
     try:
         with zipfile.ZipFile(path) as zf:
-            return any(n in ARCHIVOS for n in zf.namelist())
+            return any(n in archivos for n in zf.namelist())
     except (zipfile.BadZipFile, OSError):
         return False
 

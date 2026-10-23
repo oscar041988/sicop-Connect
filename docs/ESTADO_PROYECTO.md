@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-23 (revisión general del código: 3 errores corregidos, `42a3386` en `desarrollo`, 476 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-23 (revisión general del código: 3 errores y 4 menores corregidos, rama `desarrollo`, 483 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -392,14 +392,20 @@
   - 476 passed (6 nuevas en `test_panel.py`, `test_reintentos.py` y `test_carga.py`; 5 fallan con el código
     anterior). Commit `42a3386`, con push de `desarrollo` a GitHub (iba 11 commits adelante, nada nuevo de Oscar).
   - **Pendiente · Ivania:** abrir en la web el PR `main` ← `desarrollo` para Oscar (`gh` no está instalado).
-  - **Menores, sin corregir (para decidir):**
-    - líneas «huérfanas» (subidas antes que sus carteles) no entran aunque después se suban los carteles, porque
-      el mismo archivo no se importa dos veces; se arregla solo con el archivo del día siguiente;
-    - la lista de bloqueos de login (`app/web/intentos.py`) casi nunca se limpia: un ataque con muchas IP la
-      haría crecer en memoria;
-    - `evaluar_base` se vuelve lento con muchos carteles (recorre todas las evaluaciones anteriores por cartel);
-    - el ciclo no reconoce el ZIP de adjudicaciones en `INCOMING_DIR` (lo aparta a `con_error`); se importa con
-      `import --report adjudicaciones`.
+  - **Menores, también corregidos el 23/10 (a pedido de Ivania):**
+    - **Líneas huérfanas** (`app/importers/lineas.py`, `carteles.py`): las que llegaron antes que su cartel no
+      entraban nunca (el mismo archivo no se importa dos veces). Ahora, al importar un cartel nuevo, se recuperan
+      de `raw_snapshots` en su última versión; la importación avisa «Se recuperaron N líneas…».
+    - **Bloqueos de login** (`app/web/intentos.py`): la lista de bloqueados crecía sin tope; ahora fallos y
+      bloqueados tienen un tope juntos (en un ataque se sueltan primero los que están por vencer).
+    - **Rendimiento de `evaluar_base`**: cada cartel revisa solo sus evaluaciones anteriores. Con 10 000 carteles
+      sintéticos, de 21,3 s a 4,8 s (medido aparte; no cambia resultados).
+    - **ZIP de adjudicaciones en el ciclo** (`app/ciclo.py`): antes iba a `con_error`; ahora se importa después de
+      los carteles (cortado → `con_error` entero). **Decisión de Claude, para que Ivania/Oscar la revisen:** no
+      cuenta como «datos del día»; si solo llegan adjudicaciones, se importan, no se avisa y el ciclo queda en
+      «fallo · solo llegaron adjudicaciones».
+    - 483 passed (7 nuevas en `test_importador_relaciones.py`, `test_acceso.py`, `test_evaluar.py` y
+      `test_ciclo.py`; 6 fallan con el código anterior; la de `evaluar` pasa en los dos porque el resultado no cambia).
 - **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
   «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
   - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix

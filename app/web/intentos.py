@@ -49,7 +49,9 @@ class LimiteIntentos:
         """Anota un fallo; devuelve True si con este fallo el par queda bloqueado."""
         with self._candado:
             ahora = self._reloj()
-            if len(self._fallos) >= MAX_CLAVES:
+            # Se cuentan las dos listas: un ataque con muchas IP llena los bloqueos, no los fallos (cada clave
+            # bloqueada sale de los fallos), y antes los bloqueos crecían sin tope.
+            if len(self._fallos) + len(self._bloqueados) >= MAX_CLAVES:
                 self._olvidar_viejos(ahora)
             recientes = [t for t in self._fallos.get(clave, []) if ahora - t < VENTANA]
             recientes.append(ahora)
@@ -67,6 +69,11 @@ class LimiteIntentos:
     def _olvidar_viejos(self, ahora: float) -> None:
         self._fallos = {c: f for c, f in self._fallos.items() if ahora - f[-1] < VENTANA}
         self._bloqueados = {c: h for c, h in self._bloqueados.items() if h > ahora}
-        if len(self._fallos) >= MAX_CLAVES:  # todos recientes: se descartan los más viejos
-            for c in sorted(self._fallos, key=lambda c: self._fallos[c][-1])[: MAX_CLAVES // 2]:
+        if len(self._fallos) >= MAX_CLAVES // 2:  # todos recientes: se descartan los más viejos
+            for c in sorted(self._fallos, key=lambda c: self._fallos[c][-1])[: len(self._fallos) - MAX_CLAVES // 4]:
                 del self._fallos[c]
+        if len(self._bloqueados) >= MAX_CLAVES // 2:
+            # Todos vigentes: se sueltan los que vencen antes. Ese par podría volver a probar antes de tiempo,
+            # pero solo pasa durante un ataque con miles de IP y es mejor que quedarse sin memoria.
+            for c in sorted(self._bloqueados, key=self._bloqueados.get)[: len(self._bloqueados) - MAX_CLAVES // 4]:
+                del self._bloqueados[c]

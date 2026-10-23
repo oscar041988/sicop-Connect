@@ -16,6 +16,7 @@ from app.cli import main
 from app.config import load_settings
 from app.database import connect
 from app.main import app, crear_app
+from app.web import intentos
 from app.web.intentos import LimiteIntentos
 from app.web.rutas import router
 from app.web.seguridad import exigir_admin, verificar_csrf
@@ -418,3 +419,18 @@ def test_una_sesion_de_antes_de_la_huella_tiene_que_volver_a_entrar(anonimo, db)
     iniciar_sesion(anonimo)
     with closing(connect(db)) as conn:
         assert not usuarios.sesion_vigente(conn, 1, None)  # sesiones viejas no guardaban la huella
+
+
+def test_un_ataque_con_muchas_ip_no_llena_la_memoria(monkeypatch):
+    """Revisión del 2026-10-23: antes la lista de bloqueados crecía sin tope (cada par bloqueado sale de los fallos)."""
+    monkeypatch.setattr(intentos, "MAX_CLAVES", 40)
+    reloj = _Reloj()
+    limite = LimiteIntentos(reloj)
+    for n in range(500):  # 500 IP distintas, cada una hasta quedar bloqueada
+        clave = limite.clave(EMAIL, f"10.0.{n // 256}.{n % 256}")
+        for _ in range(5):
+            limite.registrar_fallo(clave)
+        assert len(limite._fallos) + len(limite._bloqueados) <= 40
+
+    ultima = limite.clave(EMAIL, "10.0.1.243")  # la más reciente sigue bloqueada
+    assert limite.segundos_de_bloqueo(ultima) == 15 * 60 + 1
