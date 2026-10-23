@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`, pruebas con Python 3.12; rama `desarrollo`, 486 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`, pruebas con Python 3.12; rama `desarrollo`, 486 passed; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -433,6 +433,11 @@
   `info@sicop.go.cr`). Corregido en `app/sources/gmail_reader.py`: un remitente con defectos de formato se
   rechaza siempre; prueba nueva de que los remitentes de SICOP bien escritos siguen entrando. **486 passed con
   3.12 y con 3.14.** Descripción del PR (`docs/PR_DESARROLLO.md`) al día.
+- **PR #3 `main` ← `desarrollo` abierto (2026-10-23, Ivania, en la web):** título y descripción de
+  `docs/PR_DESARROLLO.md`; apunta a `a828c90` (58 commits sobre `main` = `162afe8`). Espera la revisión de Oscar.
+  **Pendiente · Oscar:** revisar y unir el #3; cerrar sin unir los PR de las ramas que ya están dentro de
+  `desarrollo`; decidir lo de «Para decidir» de la descripción. Después: actualizar el servidor (lección 15,
+  `docs/DESPLIEGUE.md` 9.8). Si Oscar pide cambios, se hacen en `desarrollo` y el #3 se actualiza solo.
 - **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
   «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
   - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix
