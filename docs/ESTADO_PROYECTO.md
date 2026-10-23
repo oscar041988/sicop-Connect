@@ -534,7 +534,12 @@
     del servidor.
   - ~~Destinatarios activos: confirmar que son los correctos~~ **Confirmados por Oscar (2026-10-21):** `aumana@`,
     `calvarez@` y `priaraya@`, sin cambios (anotado en `docs/ACTA_LECCION_10.md`).
-  - Copiar el respaldo más reciente a una memoria USB (hoy está en el mismo disco que la base) · Ivania.
+  - ~~Copiar el respaldo más reciente a una memoria USB~~ **Hecho 2026-10-23, sin USB (Ivania no tiene):**
+    respaldo `sicop_20261023-095705` (esquema 0013, integridad ok, huella `107ae1ed…`; 12 260 carteles,
+    5 revisiones, 4 usuarios) comprimido en `C:\Users\User\respaldos-sicop\sicop_20261023-095705.zip` (32 MB; la
+    huella de la base dentro del ZIP se comprobó contra el manifiesto) y subido por Ivania al Google Drive.
+    **Pendiente · Oscar:** confirmar la carpeta: debe ser del Drive de Hermatix, compartida solo con él, sin
+    enlace público (el ZIP tiene los usuarios del panel). Desde ahora, la copia fuera de la computadora va ahí.
 - Servidor compartido con Nexus y otras apps: puerto 8000 solo de SICOP ☑ y el proxy pasa la IP real ☑
   (2026-10-19). Falta · Oscar: respaldos que incluyan la base de SICOP (con `app.cli backup`) y quitar del
   servidor el permiso para escribir en GitHub.
