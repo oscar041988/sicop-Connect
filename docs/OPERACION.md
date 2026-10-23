@@ -4,8 +4,9 @@ Cómo se usa la app en el día a día: importar, revisar, enviar avisos, diagnos
 de la guía). La instalación, la actualización y la reversión están en `docs/DESPLIEGUE.md`.
 
 Estado: **borrador** (2026-10-16). Secciones 1 a 6 probadas paso por paso en Windows con datos reales
-(2026-10-19, Ivania con Claude) y corregidas con lo encontrado. Falta probar en el servidor las partes 🐧 y
-terminar los simulacros (sección 7).
+(2026-10-19, Ivania con Claude) y corregidas con lo encontrado. Revisado contra el código de `desarrollo` el
+2026-10-23 (ZIP sin descomprimir, adjudicaciones, A4, A5, aviso de datos sin evaluar). Falta probar en el
+servidor las partes 🐧 y terminar los simulacros (sección 7).
 
 ## Cómo se corre un comando
 
@@ -39,25 +40,29 @@ La obtención es **manual**: una persona descarga los reportes del portal de dat
 hace y qué se observó: `docs/ACCESO_SICOP.md`.
 
 - Los carteles salen del reporte **«Detalle pliego de condiciones»** (no es el pliego en PDF de un concurso).
-- Llega como **ZIP**: hay que descomprimirlo (clic derecho → «Extraer todo»). Adentro viene
-  `Detalle de pliegos de condiciones.csv`; las líneas han venido en el mismo ZIP.
-- El panel solo acepta `.csv` para carteles y líneas: se carga el CSV, no el ZIP.
+- Llega como **ZIP** con dos CSV: `Detalle de pliegos de condiciones.csv` (carteles) y `Detalles lineas.csv`
+  (líneas). **No hace falta descomprimirlo:** el panel (tipo «pliegos») y el ciclo lo importan tal como llega.
+  Si alguien ya lo descomprimió, también se pueden cargar los dos CSV; el mismo archivo nunca se importa dos veces.
+- **Adjudicaciones en firme** (página «Competencia»): también llega como ZIP, con tres CSV. Se importa tal como
+  llega, por la carpeta de entrada o por la terminal (`--report adjudicaciones`); el panel no lo carga.
 
 ### 1.2 Cargar los archivos
 
 Tres formas; las tres usan el mismo importador:
 
 - **Panel → «Cargar archivo»:** elegir el tipo de reporte, el origen (real, sintético o simulado) y el archivo.
-  Los carteles y las líneas van en `.csv`; el catálogo, en `.csv` o `.zip`.
+  «pliegos» es el ZIP del portal (carteles y líneas juntos); carteles, líneas e instituciones van en `.csv`; el
+  catálogo, en `.csv` o `.zip`.
 - **Carpeta de entrada:** dejar los archivos en `INCOMING_DIR` **antes de las 8:00**; el ciclo los importa solo
   (sección 3). 🪟 Windows: `C:\Users\User\sicop-connect\data\incoming` · 🐧 servidor:
   `/var/lib/sicop-connect/incoming`. `doctor` muestra la ruta en uso.
-- **Terminal:** `python -m app.cli import --path ARCHIVO --report carteles --origen real`.
+- **Terminal:** `python -m app.cli import --path ARCHIVO --report carteles --origen real` (también `lineas`,
+  `catalogo`, `instituciones` y `adjudicaciones`).
 
 Reglas:
 
-- **Orden:** instituciones → carteles → catálogo → líneas. Una línea cuyo cartel no se importó queda guardada,
-  pero no entra a las líneas hasta importar un archivo de líneas nuevo después del cartel.
+- **Orden:** instituciones → carteles → catálogo → líneas → adjudicaciones (el ciclo lo respeta solo). Una línea
+  cuyo cartel todavía no se importó queda guardada aparte y entra sola cuando llega su cartel.
 - **Origen:** siempre el verdadero. `real` es lo descargado de SICOP; `sintetico` y `simulado`, solo para pruebas.
 - **Repetir es seguro:** el mismo archivo (mismo hash) no se importa dos veces, y actualizar un cartel nunca
   borra sus revisiones.
@@ -73,24 +78,28 @@ Reglas:
 python -m app.cli evaluate
 ```
 
-El ciclo diario evalúa solo. Si el panel dice «Todavía no hay evaluaciones» o «Las reglas cambiaron», hay que
-correr `evaluate`. Cómo leer su salida y cómo cambiar una regla: `docs/REGLAS.md`.
+El ciclo diario evalúa solo. Si el panel dice «Todavía no hay evaluaciones», «Las reglas cambiaron» o «Hay
+datos importados después de la última evaluación», hay que correr `evaluate`. Cómo leer su salida y cómo cambiar
+una regla: `docs/REGLAS.md`.
 
-**Ojo: el panel no avisa cuando hay carteles nuevos sin evaluar.** «Todavía no hay evaluaciones» solo sale si la
-base no tiene ninguna evaluación. Con una base en uso, los carteles recién cargados simplemente no aparecen hasta
-correr `evaluate`. Por eso: cargar a mano → `evaluate`, siempre.
+El panel muestra la última evaluación **completa**: `evaluate --nro NRO_SICOP` (un solo cartel) sirve para ver
+por qué salió así, pero no cambia lo que muestra el panel.
 
 ## 2. Revisar
 
 1. **Panel de carteles:** la lista de oportunidades, con búsqueda y filtros por prioridad, plazo, familia,
    institución, tipo de procedimiento y si ya se revisó.
 2. Abrir un cartel: muestra la evidencia (las frases que coincidieron), el comprador, las líneas y el plazo.
-3. Guardar la decisión: «Interesa», «No interesa» o «Revisar requisitos»; si no interesa, con el motivo, y un
-   comentario. Queda a nombre del usuario que inició sesión.
-   Si se anota la decisión de otra persona, se escribe en el comentario.
+3. Guardar la decisión: «Interesa», «No interesa» o «Revisar requisitos» mientras se estudia; «Ofertada» o
+   «No se oferta» como decisión final. Si no interesa, con el motivo, y un comentario. Queda a nombre del
+   usuario que inició sesión. Si se anota la decisión de otra persona, se escribe en el comentario.
 
 - La prioridad dice **encaje con el portafolio de Hermatix**, no si Hermatix puede participar o ganar.
 - Un cartel que cierra el fin de semana se trata igual que cualquier otro (decisión de Ivania, 2026-10-16).
+- **Exportar a Excel:** el botón del panel de carteles baja el listado con los mismos filtros (todas las
+  páginas). Los números SICOP quedan como texto: no se dañan al abrirlos.
+- **Competencia:** quién gana qué por familia, con montos por moneda, a partir de las adjudicaciones importadas.
+  Los ganadores vienen solo con cédula; el nombre se pone en `config/competidores.yaml`.
 
 ## 3. El ciclo diario
 
@@ -109,10 +118,15 @@ python -m app.cli run-cycle --origen real --send       # envío real
   `deploy/windows/README.md`.
 - Los archivos importados pasan a `INCOMING_DIR/procesados/<fecha>/`. Uno incompleto, ilegible o no reconocido
   **no se importa**: pasa a `INCOMING_DIR/con_error/<fecha>/` y el ciclo termina en «fallo».
+- El ZIP de pliegos y el de adjudicaciones se importan sin descomprimir; el ZIP se mueve entero (a
+  `procesados` o, si uno de sus CSV falla, a `con_error`).
 - Si no llegó ningún archivo nuevo o la fuente falló, se evalúa igual (los plazos cambian con el día), pero
   **no se avisa**: un correo sin los datos del día daría a entender que no hubo compras. **El ciclo termina en
   «FALLO» y con código `1`**, a propósito, para que se note que ese día no hubo datos. También pasa si los
-  archivos se cargaron desde el panel: el ciclo solo mira `INCOMING_DIR`.
+  archivos se cargaron desde el panel (el ciclo solo mira `INCOMING_DIR`) y si solo llegaron adjudicaciones
+  (se importan, pero no traen carteles nuevos). La excepción son los avisos de **cierre próximo** (4.1): el
+  plazo corre igual, así que salen aunque falten los datos del día.
+- **Los lunes** el ciclo arma además el resumen semanal (4.1), con el mismo modo (dry-run o envío).
 - Resultado: `0` = ok · `1` = fallo (queda registrado) · `2` = ya había otro ciclo en curso. En PowerShell, el
   código del último comando se ve con `$LASTEXITCODE`.
 - **En el servidor, mientras la descarga sea manual:** cada día hábil que nadie deje los archivos en
@@ -179,7 +193,15 @@ Carteles con prioridad **Alta** o **Media**, con el plazo no vencido, cuya **ver
 correo resumen**. Se vuelve a avisar solo si el cartel cambió (otra versión u otra fecha de cierre). Los
 destinatarios se editan en el panel → «Destinatarios» (solo administradores).
 
-**La revisión no cuenta para los avisos:** un cartel marcado «No interesa» igual sale en el correo si cumple lo
+Además, en el mismo correo:
+
+- **Cierre próximo:** un cartel cuya última revisión es «Interesa» o «Revisar requisitos» (sin decisión final)
+  y que cierra en `NOTIFY_CLOSING_DAYS` días o menos (3), aunque no sea Alta ni Media. Una vez por versión.
+
+Y aparte, **los lunes**, el **resumen semanal** de la semana anterior: nuevas por familia, revisadas, pendientes
+sin revisar, cierres de los próximos 7 días y, si hay, adjudicaciones relevantes. Uno por destinatario y semana.
+
+**La revisión no cuenta para los avisos de cartel nuevo:** un cartel marcado «No interesa» igual sale en el correo si cumple lo
 anterior. El correo anuncia lo nuevo antes de que alguien lo revise. Para que un falso positivo deje de salir hay
 que ajustar la regla (`docs/REGLAS.md`). Ejemplo (2026-10-19): «Cámaras intraorales…» de la CCSS (`20261001749`)
 salió como Media por «cámaras» + «transporte».
@@ -190,6 +212,7 @@ salió como Media por «cámaras» + «transporte».
 python -m app.cli notify --dry-run                     # prepara y escribe la vista previa en EXPORTS_DIR
 python -m app.cli notify --send                        # envío real por Gmail
 python -m app.cli notify --send --solo CORREO          # solo a un destinatario activo (prueba controlada)
+python -m app.cli notify --resumen-semanal --dry-run   # el resumen semanal (el ciclo lo arma solo los lunes)
 ```
 
 `--send` exige `NOTIFICATIONS_ENABLED=true`, `NOTIFICATIONS_DRY_RUN=false` y los archivos de Google
@@ -219,6 +242,8 @@ Panel → «Avisos» (solo administradores):
   - No está → marcar «Revisé Gmail › Enviados y no está» y «Reintentar».
 - No deja reintentar si el cartel ya cerró, si el destinatario fue quitado o si ya le llegó una versión más
   nueva del cartel. Cada decisión queda en el historial de la página.
+- **Resumen semanal** fallido o incierto: aparece como «Resumen semanal AAAA-Wnn». Solo se reintenta en su misma
+  semana y sale con `notify --resumen-semanal --send`.
 
 ## 5. Diagnosticar
 
@@ -230,9 +255,6 @@ python -m app.cli doctor
 
 Muestra, sin secretos: de dónde salió la configuración, qué falta, si la base está lista, si los avisos y el
 programador están habilitados y si existen los archivos de Google.
-
-Defecto conocido: `doctor` dice «Pendientes: MAIL_TO», pero `MAIL_TO` ya no se usa (los destinatarios están en
-el panel desde la lección 7). Se puede ignorar.
 
 ### 5.2 En el servidor
 
@@ -250,12 +272,14 @@ curl -f http://127.0.0.1:8000/health                        # el panel responde
 |---|---|---|
 | Panel vacío: «Todavía no hay evaluaciones» | Se importó, pero no se evaluó. | `evaluate` (1.3). |
 | Panel vacío: «Todavía no hay evaluaciones» y `evaluate` dice 0 carteles | La base no tiene carteles: es nueva o no es la que se esperaba. | Revisar `DATABASE_PATH` con `doctor`; cargar los archivos (1.2) o restaurar el respaldo (6.2). |
-| Faltan los carteles recién cargados | Se cargaron, pero no se evaluaron (el panel no lo avisa). | `evaluate` (1.3). |
+| «Hay datos importados después de la última evaluación» | Se cargaron, pero no se evaluaron. | `evaluate` (1.3). |
 | «Las reglas cambiaron…» | Se editó el YAML después de la última evaluación. | `evaluate`. |
 | «Faltan migraciones… ejecuta migrate» | El código es más nuevo que la base. | `migrate`. |
 | «Este archivo ya se importó» | Mismo archivo (mismo hash). | Nada: no se duplicó. |
 | Ciclo «fallo · no llegó ningún archivo nuevo» (código 1) | `INCOMING_DIR` vacío (también si se cargó desde el panel). | Cargar los archivos del día. No es una falla de la app. |
+| Ciclo «fallo · solo llegaron adjudicaciones» | Se importaron, pero no hay carteles nuevos. | Cargar el ZIP de pliegos del día. |
 | Ciclo «fallo» con un archivo en `con_error/` | Archivo incompleto, ilegible o no reconocido. | Descargarlo otra vez de SICOP. |
+| «No se importó: no es UTF-8 ni cp1252…» | El archivo está dañado o no es un reporte de SICOP. | Descargarlo otra vez; no abrirlo en Excel. |
 | «Ya hay un ciclo en curso» (código 2) | Otro ciclo está corriendo. | Esperar a que termine. |
 | No deja entrar después de 5 intentos | Bloqueo de 15 min por correo + IP. | Esperar 15 min. |
 | Alguien olvidó su contraseña | — | Un administrador: «Usuarios» o `set-password`. |

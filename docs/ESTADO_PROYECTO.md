@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-23 (revisión general del código: 3 errores y 4 menores corregidos, rama `desarrollo`, 483 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`; rama `desarrollo`, 483 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -411,6 +411,22 @@
       «fallo · solo llegaron adjudicaciones».
     - 483 passed (7 nuevas en `test_importador_relaciones.py`, `test_acceso.py`, `test_evaluar.py` y
       `test_ciclo.py`; 6 fallan con el código anterior; la de `evaluar` pasa en los dos porque el resultado no cambia).
+- **Lección 18 adelantada · auditoría de documentación y `ARQUITECTURA.md` (2026-10-23, Claude a pedido de Ivania,
+  rama `desarrollo`):**
+  - Un script comparó cada `python -m app.cli …`, ruta de archivo y variable de README, OPERACION, DESPLIEGUE y
+    REGLAS con el código: ninguno roto. Lo desactualizado salió al leerlos completos.
+  - **`docs/ARQUITECTURA.md` (nuevo):** diagrama de la sección 15.1 actualizado, componentes, procesos, recorrido
+    de un dato, módulos, tablas, decisiones de diseño, seguridad, despliegue y lo pendiente de verificar.
+  - **README:** decía «sin usuarios ni contraseña»; ahora: primer usuario, comandos frecuentes y páginas del panel.
+  - **OPERACION:** ya no hay que descomprimir el ZIP; el panel sí avisa de datos sin evaluar; se agregaron
+    adjudicaciones, «Ofertada» / «No se oferta», Excel, Competencia, cierre próximo, resumen semanal y mensajes
+    nuevos; se quitó el defecto de `MAIL_TO` (ya corregido).
+  - **DESPLIEGUE:** estado real (instalado el 15/10, GitHub por ramas), Playwright en el servidor (*pendiente de
+    verificar en Ubuntu*), variables nuevas de `app.env` y `evaluate` después de `migrate` al actualizar.
+  - **REGLAS:** cifras por familia con las reglas vigentes `b880e0d350e1` (base local en solo lectura: 12 260
+    carteles, 7/7–21/10), campo de decisión y qué versión muestra el panel.
+  - **Pendiente · Ivania (lección 18, paso 2):** seguir `OPERACION.md` al pie de la letra en una instalación limpia
+    y corregir donde se trabe; después, el informe final (sección 21.3).
 - **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
   «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
   - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix

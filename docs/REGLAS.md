@@ -27,8 +27,8 @@ El detalle de cada paso está en las secciones 3 y 4.
 - El **título** del cartel (`tenders.descripcion`).
 - El **nombre de catálogo** de cada línea, solo si el código de la línea une con el catálogo (reporte 10.2).
   Las líneas sin catálogo no aportan texto, pero bajan la calidad de datos a «Código sin catálogo».
-  Hoy solo **36 de 73 991 líneas** tienen catálogo descargado (3 códigos de clasificación), así que la mayoría
-  de los carteles se evalúa solo por el título.
+  Solo **41 de 87 344 líneas** tienen catálogo descargado (3 códigos de clasificación; base local, 2026-10-23),
+  así que la mayoría de los carteles se evalúa solo por el título.
 
 ### 1.2 Cómo compara
 
@@ -74,7 +74,7 @@ Cada resultado (tabla `opportunity_assessments`) guarda por separado:
 | Encaje comercial | Alta · Media · Baja · Sin coincidencia | Las reglas |
 | Plazo / estado | Abierto · Cierra en 7 días o menos · Vencido · Por verificar | Fecha de cierre de recepción |
 | Calidad de datos | Completo · Sin líneas · Código sin catálogo | Líneas y catálogo. «Archivo parcial» (de la guía) **aún no se detecta** |
-| Requisitos | Viabilidad pendiente · Revisado | Decisión humana. **Pendiente**: llega con el panel y las revisiones (lección 5) |
+| Requisitos y decisión | Interesa · No interesa · Revisar requisitos · Ofertada · No se oferta | Decisión humana en el panel: va en `reviews`, no en esta tabla |
 
 «Alta» habla del encaje con el portafolio, **no** de que Hermatix pueda o deba participar.
 
@@ -106,19 +106,23 @@ Si todo dice «sin cambios», ni las reglas ni los datos cambiaron desde la últ
 
 ### 1.6 Familias actuales
 
-Candidatos con las reglas `92aef8277e2e` sobre 10 339 carteles reales (julio a octubre de 2026):
+Candidatos con las reglas `b880e0d350e1` sobre 12 260 carteles reales publicados del 7 de julio al 21 de
+octubre de 2026 (base local, evaluación completa del 2026-10-22):
 
 | Familia | Producto | Alta | Media | Baja |
 |---|---|---|---|---|
-| `gps_flotas` | FleetMatix | 7 | 3 | 13 |
-| `videotelematica` | Fenova IA | 0 | 0 | 33 |
+| `gps_flotas` | FleetMatix | 9 | 5 | 15 |
+| `videotelematica` | Fenova IA | 1 | 0 | 43 |
 | `seguridad_vial` | Fenova IA | 0 | 0 | 9 |
 | `transporte_corporativo` | MoveOn | 0 | 0 | 0 |
-| `rastreo_activos` | SmartTags | 0 | 2 | 18 |
-| `iot_frio` | Osmia IoT | 6 | 0 | 3 |
-| `camaras_corporales` | BodyCams | 3 | 0 | 2 |
+| `rastreo_activos` | SmartTags | 0 | 2 | 23 |
+| `iot_frio` | Osmia IoT | 7 | 0 | 3 |
+| `camaras_corporales` | BodyCams | 5 | 0 | 2 |
 | `conteo_pasajeros` | PassengerIQ | 0 | 0 | 4 |
-| `mantenimiento_flotas` | FleetRun | 0 | 0 | 97 |
+| `mantenimiento_flotas` | FleetRun | 0 | 0 | 115 |
+
+Antes, con `92aef8277e2e` sobre 10 339 carteles (2026-10-09): gps_flotas 7/3/13, iot_frio 6/0/3, camaras_corporales
+3/0/2. Desde entonces entraron 1 921 carteles y el único cambio de reglas fue la exclusión «intraoral» (sección 6).
 
 Una familia sin candidatos no es un error: en este periodo no hubo compras de ese producto.
 
@@ -188,6 +192,9 @@ python -m app.cli evaluate --nro NRO_SICOP
 - **Versión de reglas**: es una huella del archivo YAML (p. ej. `2de4846a5a7e`). Cambiar una sola palabra genera
   una versión nueva; las evaluaciones anteriores **no se borran**, así que se pueden comparar el antes y el después.
 - **Reevaluar es idempotente**: con la misma versión y los mismos datos, la segunda vez dice «sin cambios».
+- **Qué versión muestra el panel:** la de la última `evaluate` **completa**. `evaluate --nro` sirve para mirar un
+  cartel con el YAML nuevo, pero no cambia el panel ni los avisos. Si se vuelve a un YAML anterior, basta un
+  `evaluate` completo para que esa versión sea otra vez la vigente.
 - El resumen de `evaluate` muestra, por familia, cuántos carteles quedaron en Alta / Media / Baja / Sin coincidencia.
   Ese conteo es la forma rápida de ver si una familia se llenó de ruido.
 

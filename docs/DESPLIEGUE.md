@@ -5,7 +5,12 @@ Reunión de Ivania con Oscar: 2026-10-12 (lección 6, paso 3).
 
 **Estado: BORRADOR.** Lo marcado «confirmado» lo dijo Oscar en la reunión del 2026-10-12; todavía no se ha
 comprobado en el servidor con los comandos de la última columna. Los pasos de instalación (Windows → Mac →
-servidor) están en la sección 9 (lección 8, encargo B); se ejecutan en la lección 9.
+servidor) están en la sección 9 (lección 8, encargo B).
+
+> **Actualizado 2026-10-23 (revisión contra el código).** La instalación se hizo el 15/10 (acta:
+> `docs/ACTA_DESPLIEGUE.md`), con HTTPS por las herramientas de Hostinger; el servidor tiene `02b569b`. Las
+> secciones 1 a 8 son el registro de la preparación y se dejan como estaban; lo que cambió desde entonces está
+> marcado. Para actualizar el servidor a `desarrollo`: sección 9.8. Arquitectura: `docs/ARQUITECTURA.md`.
 
 ## Reglas al registrar
 
@@ -94,17 +99,20 @@ correos en la configuración (`MAIL_TO`): quiere decidir quién recibe los aviso
 si se puede, hacerlo desde el panel. Es un requisito nuevo para la lección 7 (avisos). Decisiones pendientes:
 qué usuarios del panel pueden cambiar la lista (hoy no hay roles) y si se guarda el historial de cambios.
 Los correos de Anabelle y Oscar no se anotan aquí: se cargan en la app.
+*Resuelto (lección 7):* solo los administradores editan «Destinatarios», con historial de cambios.
 
 **Nota 4 · Horario del aviso (lección 9; no se activa hasta entonces y solo con instrucción explícita).** Un
 temporizador de systemd, `deploy/systemd/sicop-cycle.timer`, ejecutará el ciclo completo
-(`python -m app.cli run-cycle`, lección 8) con
+(`python -m app.cli run-cycle --origen real --dry-run`, lección 8; `--send` cuando se autorice) con
 `OnCalendar=Mon..Fri *-*-* 08:00:00 America/Costa_Rica` y `Persistent=false` (si el servidor estaba apagado a
 las 8:00, no se manda tarde). Pendiente para el encargo B: un cartel que cierra el sábado o domingo e importado
-el viernes después de las 8:00 no se avisaría; revisarlo con Oscar.
+el viernes después de las 8:00 no se avisaría; revisarlo con Oscar. *Decidido 2026-10-16 (Ivania):* se trata
+como cualquier otro cartel; aparece en el panel (`docs/OPERACION.md`, sección 3).
 
 ## 6. Dónde se guarda el código
 
-Hoy el repositorio solo está en la computadora de Ivania (sin remoto).
+Hoy el repositorio solo está en la computadora de Ivania (sin remoto). *Actualizado:* desde el 2026-10-16 está
+en GitHub (`oscar041988/sicop-Connect`); se trabaja por ramas y Oscar une los pull request (nada directo a `main`).
 
 | Pregunta | Respuesta | Estado |
 |---|---|---|
@@ -159,7 +167,7 @@ escriben aquí, en el chat ni en el acta.
 | Marcador | Qué es | Quién lo da |
 |---|---|---|
 | `URL_REPOSITORIO` | Dirección del repositorio privado de GitHub | Oscar (bloqueo, sección 7) |
-| `NOMBRE_RAMA` | Rama que se sube (hoy `master`) | Ivania |
+| `NOMBRE_RAMA` | Rama que se sube (hoy se trabaja en `desarrollo`; al servidor va lo unido a `main`) | Ivania |
 | `COMMIT_REVISADO` | Hash completo del commit revisado (`git rev-parse HEAD`) | Ivania |
 | `USUARIO_SSH` | Usuario con el que Oscar entra al servidor | Oscar (bloqueo, sección 7) |
 | `HOST_SERVIDOR` | IP o nombre del servidor (sección 1) | Oscar |
@@ -230,6 +238,17 @@ sudo -u sicop .venv/bin/python -m pip install -r requirements.lock.txt
 
 Nunca se ejecuta la app como root ni con `--reload` en el servidor.
 
+**Solo si se va a activar la obtención automática** (`SOURCE_MODE=auto`): falta el navegador de Playwright. Se
+instala para el usuario `sicop` (queda en su carpeta, `/var/lib/sicop-connect`):
+
+```bash
+sudo -u sicop .venv/bin/python -m playwright install chromium
+sudo .venv/bin/python -m playwright install-deps chromium   # bibliotecas del sistema que pida Chromium
+```
+
+*Pendiente de verificar en el servidor:* no se ha probado en Ubuntu; la obtención automática solo se probó en
+Windows.
+
 ### 9.4 🐧 SERVIDOR — configuración privada (guía 17.3)
 
 El administrador crea `/etc/sicop-connect/app.env` (propietario `sicop`, permisos `600`). Lo escribe él, en el
@@ -267,6 +286,11 @@ GOOGLE_TOKEN_FILE=/etc/sicop-connect/google_token.json
 - `EXPORTS_DIR` y `APP_BASE_URL` no están en la lista de la guía. Hacen falta para que la vista previa no quede
   dentro del código y para que los enlaces de los correos apunten al panel real, no a `127.0.0.1`.
 - No se rellenan valores ficticios para que `doctor` «salga bien» (guía 17.3).
+- **Variables agregadas después de la instalación** (todas tienen un valor por defecto seguro; ver
+  `.env.example`): `NOTIFY_LOOKBACK_DAYS=7`, `NOTIFY_CLOSING_DAYS=3` (A4), `SESSION_MAX_AGE_HOURS=8`,
+  `UPLOAD_MAX_MB=25`. Solo para la obtención automática: `SICOP_REQUEST_EMAIL`, `GOOGLE_READ_TOKEN_FILE`,
+  `OBTAIN_CODE_TIMEOUT_MIN`, `OBTAIN_LINK_MAX_HOURS`, `OBTAIN_POLL_MINUTES`, `OBTAIN_REQUEST_HOUR` y
+  `OBTAIN_ALERT_TO`; mientras `SOURCE_MODE=manual`, no hacen falta.
 - **Archivos de Google** (`docs/GOOGLE_API.md`). El servidor no tiene navegador, así que `google-auth` no se puede
   correr ahí: se copian el JSON del cliente y el token ya autorizado de licitaciones@, que hoy están en
   `C:\Users\User\secretos-sicop\`. Oscar decide cómo pasarlos (por ejemplo, `scp` directo); **nunca** por correo
@@ -379,6 +403,9 @@ Volver al código anterior **no** revierte una migración: si el esquema cambió
 3. `sudo systemctl stop sicop-cycle.timer`. El panel también, si la migración lo exige.
 4. Instalar el paquete nuevo en `/opt/sicop-connect-NUEVA` (9.2 y 9.3) y apuntar los servicios a esa carpeta.
 5. Correr `sicop-migrate`, revisar `/health` y una oportunidad conocida.
+   - Si el lock cambió: `pip install -r requirements.lock.txt` en el entorno de la carpeta nueva.
+   - Después de `migrate`, correr **`evaluate`** con el patrón de `systemd-run` (9.5): desde la migración 0008
+     el panel pide una evaluación completa, y si las reglas cambiaron, la vigente es la de la última `evaluate`.
 6. Reiniciar `sicop-web` y reactivar el timer.
 
 **Si falla:** desactivar el timer, volver a la carpeta anterior y, si el esquema cambió, restaurar el respaldo
