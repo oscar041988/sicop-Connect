@@ -1,3 +1,14 @@
--r requirements.txt
-pytest>=8
-httpx2>=2.13
+# Para desarrollar y correr las pruebas: python -m pip install -r requirements-dev.txt
+# La app con las versiones exactas del servidor (lock) y las herramientas de prueba también fijas.
+# 2026-10-23: sin versiones fijas, httpx2 2.16 cambió el orden de las cookies y una prueba falló en un entorno
+# nuevo (no la app). Estas son las del entorno donde pasan todas las pruebas.
+-r requirements.lock.txt
+pytest==9.1.1
+colorama==0.4.6; sys_platform == "win32"
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+httpx2==2.13.1
+httpcore2==2.13.1
+truststore==0.10.4

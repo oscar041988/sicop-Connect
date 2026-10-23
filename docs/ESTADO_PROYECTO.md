@@ -375,7 +375,12 @@
   - Montos: una columna por moneda, en Decimal.
   - Dependencia nueva `openpyxl` 3.1.5 (con `et_xmlfile` 2.0.0). El lock se regeneró en un entorno limpio y no
     cambió ninguna otra versión.
-    - Hallazgo: el lock no tiene `playwright` (está en `requirements.txt`); revisarlo antes de instalar en el servidor.
+    - ~~Hallazgo: el lock no tiene `playwright`~~ **Corregido 2026-10-23:** entorno limpio con el lock +
+      `playwright==1.64.0`; solo se sumaron `playwright`, `greenlet` 3.5.6 y `pyee` 14.0.0 (ruedas para Linux y
+      Python 3.12 comprobadas). En el servidor, además: `.venv/bin/python -m playwright install chromium`.
+      En el entorno limpio falló `test_cookie_alterada_no_sirve` por `httpx2` 2.16 (orden de las cookies, no la
+      app): se arregló la prueba y `requirements-dev.txt` ahora usa el lock y fija las herramientas de prueba.
+      Entorno nuevo con `requirements-dev.txt`: 483 passed.
   - Real (copia): 29 filas candidatas y 320 con «Todas».
 - 470 passed tras A4 y A5 (11 nuevas en `tests/test_cierre_resumen.py`, 7 en `tests/test_exportar.py`).
 - **Revisión general del código (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** se leyó `app/`

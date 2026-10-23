@@ -219,7 +219,11 @@ def test_cookie_firmada_httponly_lax_y_con_vencimiento(anonimo):
 def test_cookie_alterada_no_sirve(anonimo):
     iniciar_sesion(anonimo)
     valor = anonimo.cookies["sicop_sesion"]
+    # Se quita la original: set() agrega otra cookie con el mismo nombre y el cliente envía las dos. Cuál lee el
+    # servidor dependía del orden, que cambió en httpx2 2.16 (revisión del lock, 2026-10-23).
+    anonimo.cookies.delete("sicop_sesion")
     anonimo.cookies.set("sicop_sesion", valor[:-2] + ("AA" if not valor.endswith("AA") else "BB"))
+    assert len(anonimo.cookies.jar) == 1
 
     assert anonimo.get("/oportunidades", follow_redirects=False).status_code == 303
 
