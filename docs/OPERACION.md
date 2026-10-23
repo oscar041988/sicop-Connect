@@ -296,8 +296,17 @@ Copia coherente de la base aunque esté en uso, más un manifiesto `.json` (fech
 integridad y filas por tabla). Nunca sobrescribe. La carpeta debe estar en **otro disco** u otro equipo.
 
 - 🪟 Windows: `C:\Users\User\respaldos-sicop\`, fuera de Git; se usa el más reciente de la carpeta. **Esa carpeta
-  está en el mismo disco que la base**: después de cada respaldo, copiar el `.db` y su `.json` a una memoria USB.
-  No subirlos a una nube personal: tienen datos de la empresa y los usuarios.
+  está en el mismo disco que la base**: después de cada respaldo, comprimir el `.db` y su `.json` en un ZIP y
+  subirlo a la carpeta del Drive de Hermatix que indique Oscar (compartida solo con él, sin enlace público).
+  No subirlo a una nube personal: tiene datos de la empresa y los usuarios.
+
+  ```powershell
+  $n = "sicop_AAAAMMDD-HHMMSS"   # el nombre que imprimió backup
+  Compress-Archive -Path "C:\Users\User\respaldos-sicop\$n.db", "C:\Users\User\respaldos-sicop\$n.json" `
+    -DestinationPath "C:\Users\User\respaldos-sicop\$n.zip"
+  ```
+
+  Para restaurarlo, se descomprime y se sigue 6.2 (primero se compara la huella).
 - 🐧 Servidor: destino, retención y respaldo diario automático, **pendientes con Oscar**. Debe usar `backup`, no
   copiar el `.db` a mano (una copia mientras alguien escribe puede quedar dañada).
 
