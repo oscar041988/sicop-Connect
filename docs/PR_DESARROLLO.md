@@ -1,63 +1,73 @@
-# Borrador: pull request de `desarrollo` → `main`
+# Pull request de `desarrollo` → `main`
 
-> **Borrador para el final.** Por ahora se trabaja solo en local (decisión del 2026-10-21): este PR no se crea
-> hasta que la app esté lista. Antes de usarlo, actualizar los cambios, las pruebas y las decisiones pendientes.
-> Escrito el 2026-10-22, con `desarrollo` en `150f003`.
+> Texto para pegar en GitHub al abrir el PR (título y cuerpo). Actualizado el 2026-10-23, con `desarrollo` en
+> el commit que agrega este texto.
 
-**Título sugerido:** Rama desarrollo: obtención automática (lecciones 1–3), tarea programada local y ramas pendientes
+**Título:** Rama desarrollo: obtención automática (no activada), Competencia, cierre próximo y resumen, Excel,
+revisión general y documentación
 
 ---
 
 ## Qué trae esta rama
 
-`desarrollo` junta todo el trabajo en local desde el 19/10. **Reemplaza a estas ramas, que no hace falta unir por separado:**
-`acta-despliegue`, `leccion-10`, `obtencion-automatica`, `doctor-sin-mail-to`, `regla-camaras-intraorales`,
-`panel-aviso-sin-evaluar` y `zip-pliegos`. Si alguna tiene un PR abierto, se puede cerrar.
+`desarrollo` junta todo el trabajo en local desde el 19/10: **57 commits** sobre `main`, sin conflictos.
+**Reemplaza a estas ramas**, que ya están adentro: `acta-despliegue`, `leccion-10`, `obtencion-automatica`,
+`doctor-sin-mail-to`, `regla-camaras-intraorales`, `panel-aviso-sin-evaluar` y `zip-pliegos`. Si alguna tiene un
+PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no esté en `main`.)
 
-### Obtención automática de SICOP (aprobada por Oscar el 21/10)
-- **Lección 1, lector de Gmail de solo lectura** (`app/sources/gmail_reader.py`): permiso `gmail.readonly` con un
-  token aparte del de envío; solo lee correos de `info@sicop.go.cr` con los dos asuntos de SICOP. Comandos
-  `obtain gmail-auth` y `obtain check-mail`.
-- **Lección 2, solicitud con navegador** (`app/sources/sicop_browser.py`, `obtain request [--ver]`): pide el reporte
-  con Playwright y escribe el código del correo. Una sola solicitud por día (migración 0009). Ante un CAPTCHA o un
-  bloqueo se detiene y no reintenta.
-- **Lección 3, espera, descarga y validación** (`app/sources/obtencion.py`, `obtain poll [--seguir]`,
-  `obtain status`): máquina de estados (migración 0010), descarga con SHA-256, validación del ZIP y copia a la
-  carpeta de entrada. No importa nada: eso queda para la lección 4.
-- Decisión, reglas y revisión de la normativa de SICOP en `docs/DECISION_OBTENCION.md` (§6 y §8).
+### Ampliaciones (semana 3)
+- **A2 · Competencia:** importa el ZIP «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2) y muestra, por familia,
+  quién gana, cuántas veces, con qué instituciones y el monto por moneda. El ganador viene solo con cédula: los
+  nombres se ponen en `config/competidores.yaml`.
+- **A4 · Cierre próximo y resumen semanal:** aviso para lo marcado «Interesa» o «Revisar requisitos» que cierra
+  en 3 días o menos; resumen de la semana anterior los lunes. Decisiones finales nuevas: «Ofertada» y «No se oferta».
+- **A5 · Exportar a Excel** el listado filtrado, con los números SICOP como texto.
 
-### Otros cambios
-- **Tarea programada de Windows** para el ciclo local (`deploy/windows/`): de lunes a viernes a las 8:00,
-  **siempre en dry-run**.
-- **ZIP de pliegos** tal como llega de SICOP, en el ciclo y en el panel.
-- **Regla de cámaras:** se excluyen las intraorales (falso positivo CCSS `20261001749`).
-- **Panel:** aviso si hay datos importados sin evaluar.
-- **`doctor`** ya no pide `MAIL_TO`.
-- Documentos: acta de despliegue, lección 10, `OPERACION.md` probado en Windows, métricas, bitácora y estado.
+### Obtención automática (aprobada el 21/10) · construida, **no activada**
+- Lecciones 1 a 4: lector de Gmail de solo lectura, solicitud con navegador (Playwright), espera, descarga y
+  validación, y `obtain auto` (una vuelta cada 15 min, con alerta de FALLO y plan B).
+- En la prueba real del 22/10, **SICOP bloqueó la descarga hecha por el programa**; se reporta como FALLO «control
+  no automatizable», sin reintento. Consulta enviada a soporte de SICOP el 22/10.
+- Con `SOURCE_MODE=manual` (por defecto) no hace nada.
 
-## Prueba real del 22/10 (con Oscar)
-- `obtain request --ver`: código aceptado a las 08:05.
-- El enlace llegó unos 50 min después. **SICOP bloqueó la descarga hecha por el programa** («No fue posible acceder a
-  la página solicitada… ID de soporte»). Desde `150f003`, esa página se reporta como FALLO «control no
-  automatizable», sin reintento.
-- La descarga a mano funcionó; el ciclo #28 (dry-run) importó el ZIP sin rechazos.
+### Revisión general del 23/10
+- La versión de reglas del panel y de los avisos es la de la última evaluación **completa** (antes, `evaluate --nro`
+  con otro YAML dejaba el panel con un solo cartel).
+- El resumen semanal fallido aparece en «Avisos».
+- Un CSV dañado da un mensaje claro en vez de error 500.
+- Las líneas que llegan antes que su cartel se recuperan solas.
+- Tope a la lista de bloqueos de login; evaluar 10 000 carteles pasó de 21 s a 5 s.
+- El ciclo importa también el ZIP de adjudicaciones.
 
-## Para revisar / decidir (Oscar)
-- [ ] **Descarga bloqueada:** ¿preguntamos a SICOP con el ID de soporte si se permite la descarga con un programa, o
-      la dejamos manual (la solicitud y el código siguen automáticos)?
-- [ ] Nuevas dependencias: `playwright>=1.45` en `requirements.txt` (`requirements.lock.txt` se rehace al final).
-- [ ] Migraciones 0009 y 0010 (tabla `solicitudes_sicop`). Ya aplicadas en la base local.
+### Otros
+- ZIP de pliegos tal como llega, en el ciclo y en el panel · exclusión «intraoral» · aviso de datos sin evaluar ·
+  `doctor` sin `MAIL_TO` · tarea programada de Windows (siempre dry-run).
+- Documentación verificada contra el código y **`docs/ARQUITECTURA.md`** nuevo.
+
+## Qué cambia al actualizar el servidor (`docs/DESPLIEGUE.md`, 9.8)
+- [ ] Respaldo antes de empezar.
+- [ ] `pip install -r requirements.lock.txt`: se suman `openpyxl`, `playwright`, `greenlet` y `pyee`.
+- [ ] `migrate`: migraciones **0008 a 0013**.
+- [ ] `evaluate` después de `migrate` (desde la 0008 el panel pide una evaluación completa).
+- [ ] Verificar en producción: Competencia (importar el ZIP de adjudicaciones), Excel, cierre próximo y resumen
+      (en dry-run).
+- [ ] Solo si se activa la obtención automática: `playwright install chromium` (no probado en Ubuntu).
+
+## Para decidir (Oscar)
+- [ ] Un día en que **solo** llegan adjudicaciones se importan, pero no se avisa y el ciclo queda en «fallo»
+      (no traen carteles nuevos). ¿De acuerdo?
+- [ ] Aviso de cierre próximo a **3 días**, y el contenido del resumen semanal.
+- [ ] Nombres de las cédulas ganadoras en `config/competidores.yaml`.
+- [ ] Hora del ciclo y obtención automática: dependen de la respuesta de SICOP sobre la descarga.
 - [ ] Aceptar `docs/DECISION_OBTENCION.md`.
 
 ## Pruebas
-- `pytest`: **426 passed** (Windows, 22/10). Las de SICOP y Gmail usan páginas y correos **SIMULADOS**, sin salir a
-  internet.
+- **483 passed** en un entorno nuevo creado con `requirements-dev.txt` (Windows, Python 3.14, 23/10). Lo de SICOP
+  y Gmail se prueba con páginas y correos **SIMULADOS**, sin salir a internet.
+- *Pendiente:* correr las pruebas con Python 3.12, el del servidor.
 
 ## Importante
-- **No instalar en el servidor todavía.** Se decidió trabajar solo en local; el servidor se actualiza una sola vez, al
-  final.
-- Ningún correo real se envía: avisos en dry-run (`NOTIFICATIONS_ENABLED=false`).
-- La guía `Guia_Obtencion_Automatica_SICOP.docx` no se subió a propósito, porque una captura muestra un enlace real
-  de descarga.
+- Ningún correo real se envía: avisos en dry-run.
+- `Guia_Obtencion_Automatica_SICOP.docx` no se subió a propósito: una captura muestra un enlace real de descarga.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
