@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-22 (prueba real de obtención) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-23 (revisión general del código: 3 errores corregidos, `42a3386` en `desarrollo`, 476 passed) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -363,7 +363,8 @@
     - el cartel `20261001587` («Interesa», cierra el 23/10) entra como «Cierra pronto…» para los 3 destinatarios;
     - asunto del resumen: «2 nuevas, 2 sin revisar, 3 por cerrar», más 1 familia con adjudicaciones.
   - Pendiente:
-    - un resumen «fallido» no aparece en la página «Avisos» (no es de un cartel); se ve en la salida del ciclo.
+    - ~~un resumen «fallido» no aparece en la página «Avisos» (no es de un cartel)~~ corregido el 23/10 (ver
+      «Revisión general»).
     - Que Oscar confirme N y el contenido del resumen.
 - **A5 · Exportar a Excel (2026-10-22):**
   - Botón «Exportar a Excel» en el panel de carteles (`/oportunidades.xlsx`).
@@ -377,6 +378,28 @@
     - Hallazgo: el lock no tiene `playwright` (está en `requirements.txt`); revisarlo antes de instalar en el servidor.
   - Real (copia): 29 filas candidatas y 320 con «Todas».
 - 470 passed tras A4 y A5 (11 nuevas en `tests/test_cierre_resumen.py`, 7 en `tests/test_exportar.py`).
+- **Revisión general del código (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** se leyó `app/`
+  completo; 3 errores reales, comprobados en una base temporal (nunca en `data/`), corregidos con pruebas.
+  - **Versión vigente de las reglas** (`app/panel.py`): era la de la última fila guardada. `evaluate --nro` con
+    un YAML cambiado dejaba el panel, los avisos y el resumen con **un solo cartel**; volver a un YAML anterior
+    dejaba la versión de la prueba. Ahora es la de la última evaluación completa (`evaluation_runs`).
+  - **Resumen semanal fallido o incierto** (`app/reintentos.py`, página «Avisos»): no aparecía porque no tiene
+    cartel. Ahora se lista como «Resumen semanal 2026-W43»; se reintenta solo en su misma semana y sale con
+    `notify --resumen-semanal --send`.
+  - **CSV ilegible** (`app/importers/csv_reader.py`): con un byte que no existe en cp1252 (p. ej. 0x81), el panel
+    daba error 500 y el archivo quedaba en `INCOMING_DIR`. Ahora: «No se importó: no es UTF-8 ni cp1252…» y el
+    archivo se borra. El ciclo ya lo manejaba bien.
+  - 476 passed (6 nuevas en `test_panel.py`, `test_reintentos.py` y `test_carga.py`; 5 fallan con el código
+    anterior). Commit `42a3386`, con push de `desarrollo` a GitHub (iba 11 commits adelante, nada nuevo de Oscar).
+  - **Pendiente · Ivania:** abrir en la web el PR `main` ← `desarrollo` para Oscar (`gh` no está instalado).
+  - **Menores, sin corregir (para decidir):**
+    - líneas «huérfanas» (subidas antes que sus carteles) no entran aunque después se suban los carteles, porque
+      el mismo archivo no se importa dos veces; se arregla solo con el archivo del día siguiente;
+    - la lista de bloqueos de login (`app/web/intentos.py`) casi nunca se limpia: un ataque con muchas IP la
+      haría crecer en memoria;
+    - `evaluar_base` se vuelve lento con muchos carteles (recorre todas las evaluaciones anteriores por cartel);
+    - el ciclo no reconoce el ZIP de adjudicaciones en `INCOMING_DIR` (lo aparta a `con_error`); se importa con
+      `import --report adjudicaciones`.
 - **Inteligencia competitiva · A2 (2026-10-22, rama `desarrollo`, solo local):** hecha con el archivo REAL
   «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2; mapeo en `docs/MAPEO_DATOS.md`).
   - **El adjudicatario viene solo como cédula, sin nombre.** El nombre y la unión de cédulas los pone Hermatix
