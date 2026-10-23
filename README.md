@@ -7,29 +7,60 @@ Estado y siguiente tarea: `docs/ESTADO_PROYECTO.md`. Cómo está construida: `do
 
 ## Requisitos
 
-- Python 3.12 o superior
+- Python 3.12 o superior (el servidor usa 3.12: conviene desarrollar y probar con esa versión)
 - Windows PowerShell (desarrollo) · Linux + systemd (producción)
+- Acceso al repositorio privado de GitHub con una llave SSH
 
 ## Puesta en marcha (PowerShell)
 
+Un comando por línea: si una línea larga se parte al copiarla, el comando hace otra cosa.
+
+**0. Bajar el código** (la carpeta final se llama como la última palabra; elige una que no exista):
+
 ```powershell
-# 1. Crear y activar el entorno virtual
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-# Si PowerShell bloquea el script:
-#   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-
-# 2. Instalar dependencias: las versiones exactas del servidor más las herramientas de prueba
-python -m pip install -r requirements-dev.txt
-
-# 3. Configuración local
-Copy-Item .env.example .env
-# Edita .env si hace falta. Nunca lo subas a Git.
-
-# 4. Base y primer usuario del panel
-python -m app.cli migrate
-python -m app.cli create-user --rol admin   # pide correo, nombre y contraseña (no se muestra)
+cd C:\Users\User
+git clone -b desarrollo git@github.com:oscar041988/sicop-Connect.git sicop-connect
+cd C:\Users\User\sicop-connect
 ```
+
+Si `git` no encuentra la llave SSH, agrega `-c core.sshCommand=C:/Windows/System32/OpenSSH/ssh.exe` justo
+después de `git`.
+
+**1. Crear y activar el entorno virtual.** Con Python instalado por el «Python Install Manager» de python.org, el
+comando es `py`, no `python` (si escribes `python`, Windows ofrece la Microsoft Store: «Python was not found»).
+`py list` muestra las versiones instaladas; `py install 3.12` instala la del servidor.
+
+```powershell
+py -V:3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Si PowerShell bloquea el script: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. Con el entorno activado
+aparece `(.venv)` al inicio de la línea, y desde ahí `python` sí funciona.
+
+**2. Instalar dependencias:** las versiones exactas del servidor más las herramientas de prueba. No actualices pip
+ni ningún paquete aunque lo sugiera: se prueba con las versiones fijas.
+
+```powershell
+python -m pip install -r requirements-dev.txt
+```
+
+**3. Configuración local.** Edita `.env` solo si hace falta; nunca lo subas a Git.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**4. Base y primer usuario del panel.** `create-user` pide correo, nombre y contraseña (al menos 10 caracteres;
+no se ve mientras se escribe).
+
+```powershell
+python -m app.cli migrate
+python -m app.cli create-user --rol admin
+```
+
+**5. Comprobar:** `python -m app.cli doctor`. Varios «PENDIENTE» son normales en desarrollo (`docs/OPERACION.md`,
+5.1).
 
 ## Comandos frecuentes
 

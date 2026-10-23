@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`, pruebas con Python 3.12; rama `desarrollo`, 486 passed; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`, pruebas con Python 3.12, OPERACION probado en instalación limpia; rama `desarrollo`, 486 passed; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -425,8 +425,20 @@
     verificar en Ubuntu*), variables nuevas de `app.env` y `evaluate` después de `migrate` al actualizar.
   - **REGLAS:** cifras por familia con las reglas vigentes `b880e0d350e1` (base local en solo lectura: 12 260
     carteles, 7/7–21/10), campo de decisión y qué versión muestra el panel.
-  - **Pendiente · Ivania (lección 18, paso 2):** seguir `OPERACION.md` al pie de la letra en una instalación limpia
-    y corregir donde se trabe; después, el informe final (sección 21.3).
+  - ~~Pendiente · Ivania (lección 18, paso 2): seguir `OPERACION.md` al pie de la letra en una instalación
+    limpia~~ **Hecho 2026-10-23 (Ivania, guiada por Claude):** clon nuevo de `desarrollo` en
+    `C:\Users\User\sicop-prueba`, Python 3.12, `.env` de ejemplo, datos REALES copiados de `procesados`. Se
+    siguieron el README y `OPERACION.md` 1 a 6: carga por el panel, `evaluate` (11 134 carteles, 20 candidatos),
+    revisión, Excel, adjudicaciones y Competencia, ciclo OK (#7) y FALLO sin archivos (#8), vista previa de avisos
+    (3), archivo repetido sin duplicar, respaldo, ZIP y restauración (huella igual, revisión presente). Al terminar
+    se borraron las dos carpetas de la prueba.
+  - **10 trabas encontradas y corregidas** en README y OPERACION: cómo bajar el código; `python -m venv` falla con
+    el Python Install Manager (`py -V:3.12`); comandos largos que se parten al copiarlos; qué «PENDIENTE» de
+    `doctor` son normales; «pliegos (.zip)» una sola vez (Ivania subió tres veces los carteles con tipos
+    distintos); el catálogo (sin él se pierden candidatos); lo subido por el panel queda en `INCOMING_DIR` y el
+    ciclo lo ve como «YA IMPORTADO»; números de ciclo que saltan; nombre del respaldo elegido solo; comprobar que
+    la restauración se hizo (el primer intento no se hizo y la revisión aparecía igual).
+  - **Pendiente · Ivania:** el informe final con sus palabras (sección 21.3).
 - **Pruebas con Python 3.12, el del servidor (2026-10-23, Ivania instaló 3.12.10 con `py install 3.12`):** entorno
   aparte con `requirements-dev.txt`, sin conflictos. Falló 1 prueba que con 3.14 pasaba: con 3.12, un correo con
   remitente `info@sicop.go.cr <falso@otro.test>` se aceptaba como de SICOP (Python se quedaba solo con

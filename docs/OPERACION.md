@@ -5,8 +5,10 @@ de la guía). La instalación, la actualización y la reversión están en `docs
 
 Estado: **borrador** (2026-10-16). Secciones 1 a 6 probadas paso por paso en Windows con datos reales
 (2026-10-19, Ivania con Claude) y corregidas con lo encontrado. Revisado contra el código de `desarrollo` el
-2026-10-23 (ZIP sin descomprimir, adjudicaciones, A4, A5, aviso de datos sin evaluar). Falta probar en el
-servidor las partes 🐧 y terminar los simulacros (sección 7).
+2026-10-23 (ZIP sin descomprimir, adjudicaciones, A4, A5, aviso de datos sin evaluar) y **seguido al pie de la
+letra en una instalación limpia** el mismo día (Ivania, Python 3.12, `C:\Users\User\sicop-prueba`; lección 18,
+paso 2): README, secciones 1 a 6 en Windows; se corrigieron las 10 trabas encontradas. Falta probar en el servidor
+las partes 🐧 y terminar los simulacros (sección 7).
 
 ## Cómo se corre un comando
 
@@ -24,6 +26,17 @@ Todos los comandos son `python -m app.cli <comando>`. Dónde se escriben:
   ```
 
 `python -m app.cli --help` lista todos los comandos; `python -m app.cli <comando> --help`, sus opciones.
+
+**Comandos largos:** al copiarlos, una ruta larga puede partirse en dos líneas y el comando hace otra cosa (por
+ejemplo, `Copy-Item` sin destino copia a la carpeta actual). Por eso en este manual las rutas largas van en una
+variable corta, en su propia línea, y cada comando va solo:
+
+```powershell
+$z = "C:\Users\User\sicop-connect\data\incoming\procesados\2026-10-22"
+Copy-Item "$z\Reporte de adjudicaciones en firme.zip" .
+```
+
+Una variable (`$z`) dura hasta cerrar la ventana de PowerShell: en una ventana nueva hay que escribirla otra vez.
 
 ## Niveles de acceso al panel
 
@@ -45,14 +58,26 @@ hace y qué se observó: `docs/ACCESO_SICOP.md`.
   Si alguien ya lo descomprimió, también se pueden cargar los dos CSV; el mismo archivo nunca se importa dos veces.
 - **Adjudicaciones en firme** (página «Competencia»): también llega como ZIP, con tres CSV. Se importa tal como
   llega, por la carpeta de entrada o por la terminal (`--report adjudicaciones`); el panel no lo carga.
+- **Catálogo de bienes y servicios** (reporte 10.2): da el nombre de cada código de las líneas. **Sin él se
+  pierden candidatos**: algunos carteles solo se reconocen por el nombre de catálogo de sus líneas (por ejemplo,
+  data loggers comprados como «equipo de laboratorio»), y la calidad de datos queda en «Código sin catálogo». El
+  portal lo entrega **un código de clasificación de 8 dígitos por vez**; los que se usan hoy son `83111602`
+  (GPS y flotas), `41112301` (IoT y frío) y `45121515` (cámaras corporales) (`docs/ACCESO_SICOP.md`). No cambia
+  cada día: se carga una vez y se repite solo si se agrega una clasificación.
+- **Instituciones compradoras** (reporte 11): da el nombre de cada institución. Sin él, el panel muestra la cédula.
+  Tampoco cambia cada día.
 
 ### 1.2 Cargar los archivos
 
 Tres formas; las tres usan el mismo importador:
 
 - **Panel → «Cargar archivo»:** elegir el tipo de reporte, el origen (real, sintético o simulado) y el archivo.
-  «pliegos» es el ZIP del portal (carteles y líneas juntos); carteles, líneas e instituciones van en `.csv`; el
-  catálogo, en `.csv` o `.zip`.
+  **Para los carteles del día, el tipo es «pliegos (.zip)»** con el ZIP tal como llega: trae carteles y líneas y
+  se carga **una sola vez**. Los tipos «carteles» y «lineas» son solo para un CSV que alguien ya sacó del ZIP; si
+  después se sube el ZIP, lo ya cargado sale como «Este archivo ya se importó» y no se duplica. Instituciones va en
+  `.csv`; el catálogo, en `.csv` o `.zip`.
+  Lo que se sube queda guardado en `INCOMING_DIR`; el siguiente ciclo lo ve como «YA IMPORTADO» y lo pasa a
+  `procesados` (no lo importa otra vez).
 - **Carpeta de entrada:** dejar los archivos en `INCOMING_DIR` **antes de las 8:00**; el ciclo los importa solo
   (sección 3). 🪟 Windows: `C:\Users\User\sicop-connect\data\incoming` · 🐧 servidor:
   `/var/lib/sicop-connect/incoming`. `doctor` muestra la ruta en uso.
@@ -123,12 +148,16 @@ python -m app.cli run-cycle --origen real --send       # envío real
 - Si no llegó ningún archivo nuevo o la fuente falló, se evalúa igual (los plazos cambian con el día), pero
   **no se avisa**: un correo sin los datos del día daría a entender que no hubo compras. **El ciclo termina en
   «FALLO» y con código `1`**, a propósito, para que se note que ese día no hubo datos. También pasa si los
-  archivos se cargaron desde el panel (el ciclo solo mira `INCOMING_DIR`) y si solo llegaron adjudicaciones
-  (se importan, pero no traen carteles nuevos). La excepción son los avisos de **cierre próximo** (4.1): el
-  plazo corre igual, así que salen aunque falten los datos del día.
+  archivos del día **ya se cargaron desde el panel**: quedan en `INCOMING_DIR`, pero el ciclo los ve como «YA
+  IMPORTADO», no como nuevos (y los pasa a `procesados`). Y si solo llegaron adjudicaciones (se importan, pero no
+  traen carteles nuevos). La excepción son los avisos de **cierre próximo** (4.1): el plazo corre igual, así que
+  salen aunque falten los datos del día.
 - **Los lunes** el ciclo arma además el resumen semanal (4.1), con el mismo modo (dry-run o envío).
 - Resultado: `0` = ok · `1` = fallo (queda registrado) · `2` = ya había otro ciclo en curso. En PowerShell, el
   código del último comando se ve con `$LASTEXITCODE`.
+- **El número del ciclo** («Ciclo #7») es el de su registro en `source_runs`, donde también cuenta cada
+  importación hecha desde el panel o la terminal. Por eso los números saltan: el primer ciclo de una base nueva
+  puede ser el #7. No falta nada.
 - **En el servidor, mientras la descarga sea manual:** cada día hábil que nadie deje los archivos en
   `INCOMING_DIR` antes de las 8:00, el ciclo sale en «fallo» y systemd marca `sicop-cycle.service` como fallido.
   Ese «fallo» significa **«nadie cargó los datos de hoy»**, no que la app esté rota. Se resuelve cargando los
@@ -256,6 +285,17 @@ python -m app.cli doctor
 Muestra, sin secretos: de dónde salió la configuración, qué falta, si la base está lista, si los avisos y el
 programador están habilitados y si existen los archivos de Google.
 
+**Un «PENDIENTE» no siempre es un problema.** En una instalación de desarrollo, solo con vista previa, estos son
+normales:
+
+| Pendiente | Para qué es | ¿Falta de verdad? |
+|---|---|---|
+| `MAIL_FROM`, `GOOGLE_CLIENT_FILE`, `GOOGLE_TOKEN_FILE` | Enviar avisos reales por Gmail | Solo para `--send` |
+| `SESSION_SECRET` | Firmar la sesión del panel | En desarrollo se usa uno temporal; **en el servidor es obligatorio** (la app no arranca sin él) |
+| `GOOGLE_READ_TOKEN_FILE`, `SICOP_REQUEST_EMAIL`, `OBTAIN_ALERT_TO` | Obtención automática | Solo con `SOURCE_MODE=auto` |
+
+Lo que sí hay que mirar siempre: que `Base de datos` diga «ok» y que la ruta de `DATABASE_PATH` sea la esperada.
+
 ### 5.2 En el servidor
 
 ```bash
@@ -300,13 +340,16 @@ integridad y filas por tabla). Nunca sobrescribe. La carpeta debe estar en **otr
   subirlo a la carpeta del Drive de Hermatix que indique Oscar (compartida solo con él, sin enlace público).
   No subirlo a una nube personal: tiene datos de la empresa y los usuarios.
 
+  Una línea por vez. La segunda elige sola el respaldo más reciente (escribir el nombre a mano lleva a errores):
+
   ```powershell
-  $n = "sicop_AAAAMMDD-HHMMSS"   # el nombre que imprimió backup
-  Compress-Archive -Path "C:\Users\User\respaldos-sicop\$n.db", "C:\Users\User\respaldos-sicop\$n.json" `
-    -DestinationPath "C:\Users\User\respaldos-sicop\$n.zip"
+  $r = "C:\Users\User\respaldos-sicop"
+  $n = (Get-ChildItem $r -Filter *.db | Sort-Object LastWriteTime | Select-Object -Last 1).BaseName
+  Compress-Archive -Path "$r\$n.db", "$r\$n.json" -DestinationPath "$r\$n.zip"
   ```
 
-  Para restaurarlo, se descomprime y se sigue 6.2 (primero se compara la huella).
+  `Compress-Archive` nunca sobrescribe: si el ZIP ya existe, avisa y no hace nada. Para restaurarlo, se
+  descomprime y se sigue 6.2 (primero se compara la huella).
 - 🐧 Servidor: destino, retención y respaldo diario automático, **pendientes con Oscar**. Debe usar `backup`, no
   copiar el `.db` a mano (una copia mientras alguien escribe puede quedar dañada).
 
@@ -322,14 +365,30 @@ Restaurar el último respaldo (`DESPLIEGUE.md`, 9.7).
 4. Arrancar `sicop-migrate.service` y luego `sicop-web.service`.
 5. Abrir una revisión conocida para confirmar.
 
-🪟 **Windows** (probado el 2026-10-19 en una carpeta aparte):
+🪟 **Windows** (probado el 2026-10-19 en una carpeta aparte y el 2026-10-23 en una instalación limpia), dentro de
+la carpeta del proyecto y con el entorno activado:
 
-1. Cerrar el panel (Ctrl+C en la ventana de `uvicorn`).
-2. Comprobar la huella: `(Get-FileHash ARCHIVO.db -Algorithm SHA256).Hash.ToLower()` debe ser igual al `sha256`
-   del `.json`.
-3. Guardar aparte la base dañada (no borrarla) y copiar el `.db` del respaldo como `data\sicop.db`.
-4. `.venv\Scripts\python -m app.cli migrate`.
-5. Abrir el panel y una revisión conocida.
+1. **Cerrar el panel** (Ctrl+C en la ventana de `uvicorn`) y esperar a que vuelva el `PS C:\...>`. Si sigue
+   abierto, puede estar usando la base: Windows no deja renombrarla («está siendo utilizado por otro proceso»),
+   o el panel sigue mostrando la base vieja.
+2. Elegir el respaldo y comprobar la huella. Las dos líneas que se imprimen deben ser **iguales**:
+   ```powershell
+   $r = "C:\Users\User\respaldos-sicop"
+   $n = (Get-ChildItem $r -Filter *.db | Sort-Object LastWriteTime | Select-Object -Last 1).BaseName
+   (Get-FileHash "$r\$n.db" -Algorithm SHA256).Hash.ToLower()
+   (Get-Content "$r\$n.json" -Raw | ConvertFrom-Json).sha256
+   ```
+3. Guardar aparte la base dañada (no borrarla) y poner la del respaldo:
+   ```powershell
+   Rename-Item .\data\sicop.db sicop-antes-de-restaurar.db
+   Copy-Item "$r\$n.db" .\data\sicop.db
+   ```
+4. **Comprobar que se restauró:** `Get-ChildItem .\data\*.db` debe mostrar **dos** archivos,
+   `sicop-antes-de-restaurar.db` y `sicop.db`, y `sicop.db` con la hora del respaldo. Si solo hay uno, el paso 3 no
+   se hizo: repetirlo. (Que una revisión conocida aparezca no basta: si no cambió nada desde el respaldo, la base
+   vieja también la tiene.)
+5. `python -m app.cli migrate`: con una base ya al día dice «La base ya está al día; no se aplicó nada».
+6. Abrir el panel y una revisión conocida.
 
 Para **ensayar** sin tocar la base real: copiar el respaldo a otra carpeta y, en la misma ventana de PowerShell,
 `$env:DATABASE_PATH = "CARPETA\sicop.db"` antes de `migrate` (la variable gana sobre `.env`; se pierde al cerrar
@@ -353,6 +412,6 @@ La guía pide practicar la recuperación cuando no hay emergencia y anotar el re
 |---|---|---|---|
 | 1 | Reiniciar el servicio | El panel vuelve y una decisión guardada sigue ahí. | — |
 | 2 | Reiniciar el servidor (en una ventana acordada) | El panel arranca solo y el timer sigue programado. | — |
-| 3 | Restaurar un respaldo en otra carpeta | Se lee una revisión conocida. | Windows, 2026-10-13 y 2026-10-19 (`sicop_20261019-114809`: huella igual al manifiesto, `migrate` al día, revisiones #1–#5 presentes). Falta en el servidor. |
+| 3 | Restaurar un respaldo en otra carpeta | Se lee una revisión conocida. | Windows, 2026-10-13 y 2026-10-19 (`sicop_20261019-114809`: huella igual al manifiesto, `migrate` al día, revisiones #1–#5 presentes); 2026-10-23 en la instalación limpia (`sicop_20261023-111021`: huella igual, base restaurada con la hora del respaldo, `migrate` al día, la revisión de `20261002859` presente). Falta en el servidor. |
 | 4 | Ciclo con fuente fallida | Queda error o cobertura desactualizada, nunca «cero compras». | Windows, 2026-10-19: ciclo #22 sin archivos → «FALLO · no llegó ningún archivo nuevo… (no significa que no haya compras)», código 1, no avisó. Falta en el servidor. |
 | 5 | Repetir el ciclo | No se duplican avisos. | — |
