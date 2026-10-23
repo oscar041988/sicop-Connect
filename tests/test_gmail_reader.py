@@ -106,6 +106,14 @@ def test_ignora_correos_de_otros_remitentes(remitente):
         lector.buscar_codigo(SOLICITUD)
 
 
+@pytest.mark.parametrize("remitente", ["info@sicop.go.cr", '"SICOP" <info@sicop.go.cr>', "SICOP <INFO@sicop.go.cr>"])
+def test_acepta_el_remitente_de_sicop_bien_escrito(remitente):
+    """Revisión del 2026-10-23: rechazar remitentes con defectos no debe dejar fuera los de SICOP bien escritos."""
+    otro = _cambiar(CODIGO_EML, "From: SICOP <info@sicop.go.cr>", f"From: {remitente}")
+    lector, _ = _lector({"o": (2, otro)})
+    assert lector.buscar_codigo(SOLICITUD).valor == CODIGO
+
+
 def test_ignora_un_asunto_parecido():
     otro = _cambiar(CODIGO_EML, "=?UTF-8?Q?C=C3=B3digo_verificaci=C3=B3n_para_reporte?=", "Codigo de prueba")
     lector, _ = _lector({"o": (2, otro)})

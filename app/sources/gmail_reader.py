@@ -100,13 +100,19 @@ def extraer(tipo: str, correo: EmailMessage) -> str | None:
 
 
 def _es_de_sicop(correo: EmailMessage, tipo: str) -> bool:
-    """Gmail ya filtró con la consulta; aquí se vuelve a comprobar con reglas exactas."""
+    """Gmail ya filtró con la consulta; aquí se vuelve a comprobar con reglas exactas.
+
+    Un remitente con defectos de formato se rechaza siempre: con «info@sicop.go.cr <falso@otro.test>», Python 3.12
+    (el del servidor) se queda solo con info@sicop.go.cr y pierde la dirección verdadera (revisión del 2026-10-23).
+    """
     try:
-        direcciones = correo["From"].addresses if correo["From"] else ()
+        remitente = correo["From"]
+        direcciones = remitente.addresses if remitente else ()
+        defectos = remitente.defects if remitente else ()
         asunto = str(correo["Subject"] or "").strip()
     except (AttributeError, ValueError, IndexError):
         return False
-    return (len(direcciones) == 1 and direcciones[0].addr_spec.lower() == REMITENTE_SICOP
+    return (not defectos and len(direcciones) == 1 and direcciones[0].addr_spec.lower() == REMITENTE_SICOP
             and asunto == ASUNTOS[tipo])
 
 

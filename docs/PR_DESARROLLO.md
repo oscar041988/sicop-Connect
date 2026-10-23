@@ -10,7 +10,7 @@ revisión general y documentación
 
 ## Qué trae esta rama
 
-`desarrollo` junta todo el trabajo en local desde el 19/10: **57 commits** sobre `main`, sin conflictos.
+`desarrollo` junta todo el trabajo en local desde el 19/10: **58 commits** sobre `main`, sin conflictos.
 **Reemplaza a estas ramas**, que ya están adentro: `acta-despliegue`, `leccion-10`, `obtencion-automatica`,
 `doctor-sin-mail-to`, `regla-camaras-intraorales`, `panel-aviso-sin-evaluar` y `zip-pliegos`. Si alguna tiene un
 PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no esté en `main`.)
@@ -38,6 +38,8 @@ PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no est�
 - Las líneas que llegan antes que su cartel se recuperan solas.
 - Tope a la lista de bloqueos de login; evaluar 10 000 carteles pasó de 21 s a 5 s.
 - El ciclo importa también el ZIP de adjudicaciones.
+- Lector de Gmail: un remitente con formato inválido se rechaza siempre. Con Python 3.12 (el del servidor),
+  «info@sicop.go.cr <falso@otro.test>» se aceptaba como correo de SICOP; con 3.14 no.
 
 ### Otros
 - ZIP de pliegos tal como llega, en el ciclo y en el panel · exclusión «intraoral» · aviso de datos sin evaluar ·
@@ -62,9 +64,9 @@ PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no est�
 - [ ] Aceptar `docs/DECISION_OBTENCION.md`.
 
 ## Pruebas
-- **483 passed** en un entorno nuevo creado con `requirements-dev.txt` (Windows, Python 3.14, 23/10). Lo de SICOP
+- **486 passed con Python 3.12 (el del servidor) y con 3.14**, en entornos nuevos creados con `requirements-dev.txt`
+  (Windows, 23/10). Lo de SICOP
   y Gmail se prueba con páginas y correos **SIMULADOS**, sin salir a internet.
-- *Pendiente:* correr las pruebas con Python 3.12, el del servidor.
 
 ## Importante
 - Ningún correo real se envía: avisos en dry-run.
