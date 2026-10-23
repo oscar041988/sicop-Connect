@@ -52,6 +52,14 @@ def _carteles(*filas):
     return ("﻿" + "\r\n".join([ENCABEZADO, *(_fila(*f) for f in filas)]) + "\r\n").encode("utf-8")
 
 
+@pytest.fixture(autouse=True)
+def no_es_lunes(monkeypatch):
+    """Estas pruebas usan la hora real, y los lunes el ciclo arma además el resumen semanal: corridas un lunes, la
+    outbox traía una fila más y 16 pruebas fallaban (revisión del 2026-10-23). Aquí el ciclo nunca arma el resumen;
+    lo de los lunes se prueba con fechas fijas en tests/test_cierre_resumen.py."""
+    monkeypatch.setattr(ciclo, "_resumen_del_lunes", lambda *args: None)
+
+
 @pytest.fixture
 def entorno(tmp_path):
     db = tmp_path / "data" / "sicop.db"

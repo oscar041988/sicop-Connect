@@ -463,6 +463,15 @@
   - Pruebas: 494 passed con Python 3.14 y con 3.12 (8 nuevas en `tests/test_calidad.py`; las listas de
     migraciones y la versión de esquema de las pruebas pasan a 0014). En una corrida con 3.12 falló 1 prueba que
     no se pudo identificar y no se repitió en 3 corridas más: **prueba intermitente por investigar**.
+  - **Investigada (2026-10-23):** sin identificar. Claude mostró solo la última línea de esa corrida y descartó
+    el nombre de la prueba. Sin repetirse en 8 corridas completas más con 3.12; tampoco la prueba del bloqueo
+    entre procesos (40 veces) ni las 16 de navegador Chromium real (12 veces), que son las sospechosas por
+    depender del tiempo. 1 falla en unas 12 corridas: si vuelve a pasar, anotar el nombre (línea `FAILED`).
+  - **Encontrado al investigar y corregido:** las pruebas del ciclo usan la fecha real y **fallaban los lunes**
+    (16 pruebas): ese día el ciclo arma el resumen semanal y la outbox traía una fila más. La app estaba bien.
+    Comprobado simulando un lunes. Corrección solo en `tests/test_ciclo.py` (en esas pruebas «no es lunes»; lo de
+    los lunes se prueba con fechas fijas en `tests/test_cierre_resumen.py`). Sin esto, la suite habría fallado el
+    lunes 26/10. 494 passed con 3.12 y 3.14.
 - **Lección 19, paso 1 adelantado · métricas del mes PRELIMINARES (2026-10-23):** `docs/METRICAS.md`, sección
   «Métricas del mes», desde la base local (solo lectura) y las bitácoras: 12 260 carteles, 28 oportunidades Alta o
   Media (3 solo por las líneas), 0 rechazos, 16 ciclos (12 «fallo» por falta de archivo), 0 avisos duplicados,
