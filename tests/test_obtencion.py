@@ -294,7 +294,8 @@ def test_migracion_0010_convierte_los_estados_viejos(tmp_path):
                                                   ("2026-10-22T07:30:00-06:00", 0, "en_curso", None)])
         conn.commit()
 
-    assert apply_migrations(db) == ["0010_solicitudes_estados.sql", "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql"]
+    assert apply_migrations(db) == ["0010_solicitudes_estados.sql", "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
+                                    "0014_calidad_reglas.sql"]
     assert apply_migrations(db) == []  # repetible: la segunda vez no cambia nada
     with closing(sqlite3.connect(db)) as conn:
         filas = conn.execute("SELECT estado, esperando_enlace_en, terminada_en, alerta_estado FROM solicitudes_sicop"

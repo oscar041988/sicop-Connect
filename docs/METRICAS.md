@@ -83,3 +83,62 @@ métrica que la guía considera más valiosa para Hermatix (sección 22).
 - `OPERACION.md` seguido al pie de la letra en una instalación limpia (lección 18, paso 2, adelantada).
 - Informe final escrito por Ivania (Google Docs).
 - Reto de comprensión: el de la semana 2 sigue pendiente con Oscar.
+
+## Métricas del mes (guía, sección 22) — preliminar al 23/10
+
+**Preliminar.** La lección 19 (29/10) calcula las métricas del mes con dos semanas de uso real en el servidor;
+hoy el servidor tiene una versión vieja y el uso real está en la base local de Windows. Estas cifras salen de esa
+base (`data/sicop.db`, leída en solo lectura el 23/10, reglas `b880e0d350e1`) y de las bitácoras. Hay que
+recalcularlas el 29/10 con la base del servidor.
+
+### Valor comercial
+
+| Métrica | Valor al 23/10 | Fuente |
+|---|---|---|
+| Carteles procesados | 12 260 (publicados del 07/07 al 21/10), con 87 344 líneas | `tenders`, `tender_lines` |
+| Importaciones reales | 22, todas con **0 filas rechazadas** | `imports` |
+| Oportunidades Alta / Media | 28 carteles (22 Alta y 7 Media; uno es Alta en una familia y Media en otra) | `opportunity_assessments` |
+| Que el proceso manual no habría visto (señal **solo en las líneas**) | 3 de los 28 (en 21 la evidencia incluye alguna línea) | evidencia de `opportunity_assessments` |
+| Revisadas | 4 carteles (5 revisiones): 3 «Interesa», 1 «No interesa» | `reviews` |
+| Adjudicaciones para Competencia | 9 155 carteles adjudicados (julio a octubre) | `adjudicaciones` |
+| Tiempo de revisión manual ahorrado por semana | **pendiente: estimarlo con Oscar** | — |
+
+### Calidad
+
+| Métrica | Inicio | Hoy | Fuente |
+|---|---|---|---|
+| Acierto del golden set | 25/26 = 96,2 % (09/10, primer YAML) | 34/34 = 100 % (20/10) | `docs/REGLAS.md`, sección 6 |
+| Precisión por cartel (`score-rules`) | — (A3 no existía) | 95,0 % (19/20) | `docs/REGLAS.md`, 4.1 (copia de la base real) |
+| Cobertura por cartel (`score-rules`) | — | 100 % (19/19) | ídem |
+
+La primera medición de `score-rules` es del 23/10: el «inicio vs. final» por familia se podrá comparar después del
+próximo ajuste de reglas.
+
+### Operación
+
+| Métrica | Valor al 23/10 | Fuente |
+|---|---|---|
+| Ciclos ejecutados | 16 (13/10 al 22/10, todos a mano o con la tarea de Windows, en dry-run) | `source_runs` |
+| Ciclos fallidos | 12 de 16: casi todos «no llegó ningún archivo nuevo» (correcto: sin datos no se avisa) | `source_runs` |
+| Correos enviados | 3 correos reales aceptados por Gmail, uno por destinatario, el 13/10 (9 avisos), con autorización. El envío desde el servidor del 20/10 está en la base del servidor | `notification_outbox` |
+| Avisos duplicados | **0** (meta: 0) | `notification_outbox` |
+
+### Uso de Claude
+
+| Semana | Horas humanas | Uso de Claude registrado | Fuente |
+|---|---|---|---|
+| 1 (06–09/10) | 25,5 h | % semanal al cierre: 24 % (09/10) | `docs/BITACORA.md` |
+| 2 (12–20/10) | 49 h | 33 % el 12/10; después, no registrado | sección «Semana 2» |
+| 3 (21–23/10) | 21 h | no registrado | sección «Semana 3» |
+| **Total** | **95,5 h** | incompleto | |
+
+Interacciones totales y veces que se agotó la ventana: **no registradas**. Comparación con la estimación del anexo
+A de la guía: pendiente para la lección 19.
+
+### Aprendizaje
+
+| Reto de comprensión | Estado |
+|---|---|
+| Semana 1 | Superado (Hito 1, 09/10) |
+| Semana 2 | Practicado el 20/10 (3 correctas, 1 a medias); el oficial con Oscar, pendiente |
+| Semana 3 | Pendiente |

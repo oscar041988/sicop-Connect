@@ -104,7 +104,8 @@ reporte «Contratos» (no usado).
 - Falsos positivos conocidos y sus causas: `docs/REGLAS.md`, sección 5 («Trampas conocidas»).
 
 **Límites honestos:** el golden set tiene 34 carteles y hay muy pocas revisiones humanas (5 en la base). La
-precisión y la cobertura **por familia** (`score-rules`, ampliación A3) no se hicieron.
+precisión y la cobertura **por familia** se miden desde el 23/10 con `score-rules` (A3): primera medición, 95,0 %
+de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 4.1).
 
 **Escribe tú:** ¿cuánto se puede confiar en una alerta? ¿Por qué hay falsos positivos y cómo se corrigen? (Minuto
 9–12 de la presentación.)
@@ -170,7 +171,7 @@ Pendientes conocidos al 23/10:
 - Unir el PR #3, actualizar el servidor y activar el ciclo programado.
 - Simulacros en el servidor.
 - Obtención automática: depende de la respuesta de SICOP.
-- A3, medición por familia (`score-rules`).
+- Decidir con Oscar el falso positivo de «telemetría» que encontró `score-rules` (`docs/REGLAS.md`, 4.1).
 - Nombres de los competidores en `config/competidores.yaml`.
 - Más catálogo (más códigos de clasificación).
 - Respaldos automáticos en el servidor.

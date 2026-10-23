@@ -26,7 +26,8 @@ from app.database import check_database, connect
 from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import avisos, competencia, destinatarios, exportar, historial, panel, reintentos, resumen, usuarios
+from app import (avisos, calidad, competencia, destinatarios, exportar, historial, panel, reintentos, resumen,
+                 usuarios)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -352,6 +353,26 @@ def registros_competencia(request: Request, familia: str = "", competidor: str =
         "seccion": "competencia", "filtro": filtro, "familia": familia, "competidor": competidor,
         "carteles": carteles, "version": version, "error": error_yaml,
         "volver": "/competencia" + ("?" + urlencode(filtro.consulta()) if filtro.consulta() else ""),
+    })
+
+
+# --- Calidad de las reglas (solo administradores) -------------------------------------------------------------
+
+@router.get("/calidad", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
+def pagina_calidad(request: Request) -> Response:
+    """A3: la medición con las reglas actuales del YAML (no se guarda; la guarda score-rules) y el historial."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    try:
+        reglas = cargar_reglas()
+    except (ReglasError, OSError, ValueError) as exc:
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": f"No se pudo leer config/hermatix_rules.yaml: {exc}"}, status_code=500)
+    with closing(connect(load_settings().database_path)) as conn:
+        medicion = calidad.medir(reglas, conn)
+        anteriores = calidad.historial(conn)
+    return PLANTILLAS.TemplateResponse(request, "calidad.html", {
+        "seccion": "calidad", "m": medicion, "historial": anteriores, "TOTAL": calidad.TOTAL,
     })
 
 

@@ -70,6 +70,7 @@ python -m app.cli migrate                # crea o actualiza el esquema de la bas
 python -m app.cli import --path ARCHIVO --report carteles --origen real
                                          # también lineas, catalogo, instituciones y adjudicaciones (ZIP)
 python -m app.cli evaluate               # aplica config/hermatix_rules.yaml (ver docs/REGLAS.md)
+python -m app.cli score-rules            # precisión y cobertura de las reglas por familia (docs/REGLAS.md)
 python -m app.cli compra NRO_SICOP       # un cartel con su comprador y sus líneas
 python -m app.cli run-cycle --origen real --dry-run   # recoger → importar → evaluar → avisar (vista previa)
 python -m app.cli notify --dry-run       # prepara los avisos y escribe la vista previa
@@ -92,7 +93,8 @@ Con el servidor en marcha, abrir http://127.0.0.1:8000 e iniciar sesión. Tiene:
   queda a nombre del usuario de la sesión; las revisiones no se borran ni se modifican y se conservan al
   reimportar datos.
 - **Cargar archivo** (ZIP o CSV de SICOP) y **Competencia** (quién gana qué, a partir de las adjudicaciones).
-- Solo administradores: **Usuarios**, **Destinatarios** de los avisos y **Avisos** fallidos o inciertos.
+- Solo administradores: **Usuarios**, **Destinatarios** de los avisos, **Avisos** fallidos o inciertos y
+  **Calidad de reglas** (precisión y cobertura por familia).
 
 Comprobar la salud de la app con el servidor en marcha:
 

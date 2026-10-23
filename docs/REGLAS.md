@@ -214,6 +214,66 @@ dos direcciones:
 Si se agregan carteles al golden set o se descarga catálogo nuevo, hay que **regenerar** `golden_lineas.csv`;
 si no, la medición vuelve a ver menos que el motor. Además del porcentaje, revisar los candidatos reales de `evaluate`.
 
+### 4.1 Precisión y cobertura por familia: `score-rules` (A3)
+
+El acierto del golden set dice si el cartel completo salió bien. `score-rules` dice **qué familia** falla y **de qué
+forma**:
+
+- **Precisión:** de las alertas, ¿cuántas eran correctas? Si es baja, el correo trae ruido.
+- **Cobertura:** de lo que sí interesaba, ¿cuánto se alertó? Si es baja, se pierden negocios.
+- Mejorar una suele empeorar la otra: una exclusión nueva sube la precisión, pero puede bajar la cobertura. El
+  equilibrio lo decide Oscar según qué le cuesta más a Hermatix: leer una alerta de más o perder un concurso.
+
+```powershell
+python -m app.cli score-rules                # tabla por familia, errores con su evidencia; guarda la medición
+python -m app.cli score-rules --mostrar 50   # más errores
+```
+
+En el panel: Administración → «Calidad de reglas» (la misma medición, sin guardarla, y la evolución).
+
+**Con qué compara** (código: `app/calidad.py`):
+
+- El **golden set** (solo filas confirmadas), con la familia esperada de cada cartel.
+- Las **revisiones del panel**: la última de cada cartel. Encaja si es «Interesa», «Revisar requisitos» u
+  «Ofertada»; no encaja solo si es «No interesa» con el motivo «No encaja con el portafolio». Las demás (plazo,
+  requisitos, presupuesto, «No se oferta») no cuentan: son decisiones de negocio. Las revisiones no dicen la
+  familia, así que la cobertura **por familia** sale solo del golden set.
+- Se mide con el YAML **actual**, sin pasar por `evaluate`: un cambio de reglas se ve en la medición siguiente.
+
+**Cómo se lee un error:**
+
+| Error | Qué pasó | Qué baja |
+|---|---|---|
+| Falsa alerta | El cartel no encaja y se alertó | La precisión de esa familia |
+| Otra familia | El cartel encaja, pero también salió en una familia que no es la suya | La precisión de esa familia (no es ruido en el correo: el cartel interesa) |
+| No alertado | Encajaba y no se alertó en su familia | La cobertura |
+
+Cada medición queda guardada con su versión de reglas. Si se repite con la misma versión y los mismos resultados,
+no se guarda otra. Así se ve la evolución: **antes y después de cada cambio del YAML**, corre `score-rules` y
+compara (es el paso 4 de «Cómo medir el efecto»).
+
+**Primera medición (2026-10-23, reglas `b880e0d350e1`, sobre una copia de la base real):** 34 casos del golden set
+y 3 de revisiones. Total por cartel: precisión **95,0 %** (19/20), cobertura **100 %** (19/19).
+
+| Familia | Precisión | Cobertura |
+|---|---|---|
+| `gps_flotas` | 100 % (10/10) | 100 % (9/9) |
+| `iot_frio` | 83,3 % (5/6) | 100 % (5/5) |
+| `camaras_corporales` | 100 % (3/3) | 100 % (2/2) |
+| `rastreo_activos` | 50 % (1/2) | 100 % (1/1) |
+
+Las otras 5 familias no tienen casos para medir. Los 2 errores:
+
+- **Falsa alerta en `iot_frio`:** `20261000990` («telemetría… Acueducto Municipal»), revisado como «No interesa ·
+  No encaja». «telemetria» es señal alta. **Para decidir con Oscar**, con la receta de la sección 3: ¿bajarla a
+  señal media o agregar una exclusión? Primero predecir qué otros carteles cambiarían.
+- **Otra familia en `rastreo_activos`:** `20260802605` (RFID para combustible + rastreo GPS) interesa por
+  `gps_flotas`, pero «RFID» y «etiquetas inteligentes» lo ponen también en Media en `rastreo_activos`.
+
+**Límite:** son pocos casos (34 del golden set y 3 revisiones), así que un solo error mueve mucho el porcentaje de
+una familia. La cifra sirve sobre todo para comparar antes y después de un cambio. Con más revisiones en el panel,
+la medición se vuelve más confiable.
+
 ---
 
 ## 5. Trampas conocidas

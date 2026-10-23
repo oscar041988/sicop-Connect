@@ -447,6 +447,28 @@
     **Informe escrito (2026-10-23, Ivania), en Google Docs** (no está en el repositorio; Claude no lo ha leído).
     Debe quedar en el Drive de Hermatix, compartido con Oscar. **Pendiente · Ivania:** actualizar las secciones 6
     (operación) y 9 (pendientes y plan de continuidad) después de la lección 15 y los simulacros.
+- **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
+  score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
+  (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
+  interesa · No encaja»; lo demás no cuenta). Errores con su evidencia en tres tipos (falsa alerta, otra familia,
+  no alertado). Cada medición se guarda con su versión de reglas (migración **0014**: `rule_score_runs`,
+  `rule_scores`, sin borrado); una igual a la anterior no se repite. Página «Calidad de reglas» en Administración
+  (solo admin). Documentado en `docs/REGLAS.md` 4.1.
+  - Primera medición sobre una **copia** de la base real (la base real no tiene la 0014 hasta correr `migrate`):
+    34 casos del golden set + 3 revisiones · precisión 95,0 % (19/20) · cobertura 100 % (19/19). Errores: falsa
+    alerta en `iot_frio` (`20261000990`, «telemetría… Acueducto», revisado «No encaja») y otra familia en
+    `rastreo_activos` (`20260802605`).
+  - **Pendiente · Ivania/Oscar:** decidir el caso «telemetría» con la receta de `REGLAS.md` sección 3;
+    `migrate` y `score-rules` en la base local para guardar la medición real.
+  - Pruebas: 494 passed con Python 3.14 y con 3.12 (8 nuevas en `tests/test_calidad.py`; las listas de
+    migraciones y la versión de esquema de las pruebas pasan a 0014). En una corrida con 3.12 falló 1 prueba que
+    no se pudo identificar y no se repitió en 3 corridas más: **prueba intermitente por investigar**.
+- **Lección 19, paso 1 adelantado · métricas del mes PRELIMINARES (2026-10-23):** `docs/METRICAS.md`, sección
+  «Métricas del mes», desde la base local (solo lectura) y las bitácoras: 12 260 carteles, 28 oportunidades Alta o
+  Media (3 solo por las líneas), 0 rechazos, 16 ciclos (12 «fallo» por falta de archivo), 0 avisos duplicados,
+  95,5 h humanas en 3 semanas; uso de Claude casi sin registrar. **Se recalculan el 29/10 con la base del
+  servidor.** Falta: tiempo ahorrado (con Oscar). La presentación (pasos 3 y 4) la prepara y ensaya Ivania con
+  sus palabras (guía 21.2).
 - **Pruebas con Python 3.12, el del servidor (2026-10-23, Ivania instaló 3.12.10 con `py install 3.12`):** entorno
   aparte con `requirements-dev.txt`, sin conflictos. Falló 1 prueba que con 3.14 pasaba: con 3.12, un correo con
   remitente `info@sicop.go.cr <falso@otro.test>` se aceptaba como de SICOP (Python se quedaba solo con

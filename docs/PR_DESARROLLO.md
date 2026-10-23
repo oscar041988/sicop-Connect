@@ -22,6 +22,9 @@ PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no est�
 - **A4 · Cierre próximo y resumen semanal:** aviso para lo marcado «Interesa» o «Revisar requisitos» que cierra
   en 3 días o menos; resumen de la semana anterior los lunes. Decisiones finales nuevas: «Ofertada» y «No se oferta».
 - **A5 · Exportar a Excel** el listado filtrado, con los números SICOP como texto.
+- **A3 · Calidad de reglas:** `score-rules` mide precisión y cobertura por familia contra el golden set y las
+  revisiones, con los errores y su evidencia, y guarda cada medición (migración 0014). Página «Calidad de reglas»
+  en Administración. Primera medición (copia de la base real): precisión 95,0 % (19/20), cobertura 100 % (19/19).
 
 ### Obtención automática (aprobada el 21/10) · construida, **no activada**
 - Lecciones 1 a 4: lector de Gmail de solo lectura, solicitud con navegador (Playwright), espera, descarga y
@@ -49,7 +52,7 @@ PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no est�
 ## Qué cambia al actualizar el servidor (`docs/DESPLIEGUE.md`, 9.8)
 - [ ] Respaldo antes de empezar.
 - [ ] `pip install -r requirements.lock.txt`: se suman `openpyxl`, `playwright`, `greenlet` y `pyee`.
-- [ ] `migrate`: migraciones **0008 a 0013**.
+- [ ] `migrate`: migraciones **0008 a 0014**.
 - [ ] `evaluate` después de `migrate` (desde la 0008 el panel pide una evaluación completa).
 - [ ] Verificar en producción: Competencia (importar el ZIP de adjudicaciones), Excel, cierre próximo y resumen
       (en dry-run).

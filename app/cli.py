@@ -23,7 +23,7 @@ from app.importers.instituciones import import_instituciones
 from app.importers.lineas import import_lineas
 from app.matching.evaluar import ENCAJES, ResultadoEvaluacion, evaluar_base
 from app.matching.reglas import REGLAS_PATH, ReglasError, cargar_reglas
-from app import avisos, ciclo, respaldo, resumen, usuarios
+from app import avisos, calidad, ciclo, respaldo, resumen, usuarios
 from app.usuarios import UsuarioInvalido, crear_usuario, validar_contrasena
 
 MAX_RECHAZOS_VISIBLES = 20
@@ -688,6 +688,61 @@ def run_cycle(settings: Settings, origen: str, dry_run: bool) -> int:
     return 1
 
 
+TIPOS_ERROR = {"falsa_alerta": "FALSA ALERTA (no encaja)", "otra_familia": "OTRA FAMILIA (el cartel sí encaja)",
+               "no_alertado": "NO ALERTADO (encajaba)"}
+
+
+def _pct(valor) -> str:
+    return "—" if valor is None else f"{valor} %"
+
+
+def _fila_calidad(nombre: str, c) -> str:
+    precision = f"{_pct(c.precision)} ({c.verdaderos}/{c.alertas})"
+    cobertura = f"{_pct(c.cobertura)} ({c.cubiertos}/{c.relevantes})"
+    return f"  {nombre:24}{precision:>20}{cobertura:>20}"
+
+
+def score_rules(settings: Settings, mostrar: int, reglas_path: Path = REGLAS_PATH) -> int:
+    """A3: precisión y cobertura por familia con las reglas actuales del YAML; guarda la medición."""
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}). Ejecuta python -m app.cli migrate", file=sys.stderr)
+        return 1
+    try:
+        reglas = cargar_reglas(reglas_path)
+    except (ReglasError, OSError, ValueError) as exc:
+        print(f"Error en las reglas ({reglas_path.name}): {exc}", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        m = calidad.medir(reglas, conn)
+        medicion_id, nueva = calidad.guardar(conn, m, datetime.now(HORA_CR))
+    print(f"Reglas: {reglas_path.name} · versión {m.version}")
+    print(f"Casos: {m.contar('golden')} del golden set · {m.contar('revisión')} de revisiones humanas"
+          " (las que dicen si encaja)")
+    print(f"  {'Familia':24}{'Precisión':>20}{'Cobertura':>20}")
+    for familia, c in m.por_familia.items():
+        if familia == calidad.TOTAL or not (c.alertas or c.relevantes):
+            continue
+        print(_fila_calidad(familia, c))
+    sin_casos = [f for f, c in m.por_familia.items() if f != calidad.TOTAL and not (c.alertas or c.relevantes)]
+    if sin_casos:
+        print(f"  Sin casos para medir: {', '.join(sin_casos)}")
+    print(_fila_calidad("TOTAL (por cartel)", m.por_familia[calidad.TOTAL]))
+    print(f"Errores: {len(m.errores)}" + (" (ninguno)" if not m.errores else ""))
+    for e in m.errores[:mostrar]:
+        print(f"  {TIPOS_ERROR[e.tipo]} · {e.familia or 'cualquier familia'} · {e.caso.nro_sicop} ({e.caso.fuente})")
+        print(f"      {e.caso.titulo}")
+        for ev in e.caso.evaluaciones:
+            print(f"      obtenido: {ev.familia} → {ev.encaje} · {ev.regla} · {ev.evidencia}")
+        if not e.caso.evaluaciones:
+            print("      obtenido: ninguna señal")
+    if len(m.errores) > mostrar:
+        print(f"  … y {len(m.errores) - mostrar} más (usa --mostrar)")
+    print(f"Medición #{medicion_id} guardada." if nueva else
+          f"Sin cambios desde la medición #{medicion_id} (misma versión y mismos resultados): no se guarda otra.")
+    return 0
+
+
 def backup(settings: Settings, output: Path) -> int:
     try:
         r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR))
@@ -721,6 +776,9 @@ def build_parser() -> argparse.ArgumentParser:
     ev = sub.add_parser("evaluate", help="Evalúa los carteles con config/hermatix_rules.yaml (repetible)")
     ev.add_argument("--nro", dest="nro_sicop", help="Evaluar y mostrar solo este Número SICOP")
     ev.add_argument("--mostrar", type=int, default=20, help="Cuántos candidatos mostrar (por defecto 20)")
+    sc = sub.add_parser("score-rules", help="Precisión y cobertura de las reglas por familia (golden set y "
+                                            "revisiones); guarda la medición")
+    sc.add_argument("--mostrar", type=int, default=20, help="Cuántos errores mostrar con su evidencia (por defecto 20)")
     cu = sub.add_parser("create-user", help="Crea un usuario del panel (pide la contraseña sin mostrarla)")
     cu.add_argument("--email", help="Correo con el que inicia sesión (si falta, se pregunta)")
     cu.add_argument("--nombre", help="Nombre visible en el panel (si falta, se pregunta)")
@@ -782,6 +840,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return compra(settings, args.nro_sicop)
     if args.command == "evaluate":
         return evaluate(settings, args.nro_sicop, args.mostrar)
+    if args.command == "score-rules":
+        return score_rules(settings, args.mostrar)
     if args.command == "create-user":
         return create_user(settings, args.email, args.nombre, args.rol)
     if args.command == "set-role":

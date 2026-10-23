@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Calidad de reglas{% endblock %}
+{% macro pct(valor) %}{% if valor is none %}—{% else %}{{ valor }} %{% endif %}{% endmacro %}
+{% block contenido %}
+<section>
+  <h1>Calidad de reglas</h1>
+  <p class="sub">Cuánto confiar en una alerta, medido con las reglas actuales de config/hermatix_rules.yaml (versión
+    {{ m.version }}) contra el golden set y las revisiones del panel.</p>
+  <p class="sub"><strong>Precisión:</strong> de las alertas, cuántas eran correctas (si es baja, el correo trae ruido).
+    <strong>Cobertura:</strong> de lo que sí interesaba, cuánto se alertó (si es baja, se pierden negocios).</p>
+  <p class="sub">Casos: {{ m.contar("golden") }} del golden set · {{ m.contar("revisión") }} de revisiones
+    («Interesa», «Revisar requisitos» u «Ofertada» encajan; «No interesa» solo cuenta con el motivo «No encaja con el
+    portafolio»). Las revisiones no dicen la familia, así que la cobertura por familia sale solo del golden set.</p>
+</section>
+
+<section>
+  <h2>Por familia</h2>
+  <div class="tabla-scroll">
+  <table class="comp">
+    <thead><tr><th>Familia</th><th>Precisión</th><th>Alertas correctas</th><th>Cobertura</th><th>Encontradas</th></tr></thead>
+    <tbody>
+    {% for familia, c in m.por_familia.items() if familia != TOTAL and (c.alertas or c.relevantes) %}
+      <tr><td>{{ NOMBRES_FAMILIA.get(familia, familia) }}</td><td>{{ pct(c.precision) }}</td>
+        <td>{{ c.verdaderos }} de {{ c.alertas }}</td><td>{{ pct(c.cobertura) }}</td>
+        <td>{{ c.cubiertos }} de {{ c.relevantes }}</td></tr>
+    {% endfor %}
+    {% set t = m.por_familia[TOTAL] %}
+      <tr><td><strong>Total (por cartel)</strong></td><td><strong>{{ pct(t.precision) }}</strong></td>
+        <td>{{ t.verdaderos }} de {{ t.alertas }}</td><td><strong>{{ pct(t.cobertura) }}</strong></td>
+        <td>{{ t.cubiertos }} de {{ t.relevantes }}</td></tr>
+    </tbody>
+  </table>
+  </div>
+  {% set sin_casos = [] %}
+  {% for familia, c in m.por_familia.items() if familia != TOTAL and not (c.alertas or c.relevantes) %}
+    {% set _ = sin_casos.append(NOMBRES_FAMILIA.get(familia, familia)) %}
+  {% endfor %}
+  {% if sin_casos %}<p class="vacio">Sin casos para medir: {{ sin_casos | join(", ") }}.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Errores ({{ m.errores | length }})</h2>
+  {% for e in m.errores %}
+  <div class="tarjeta">
+    <p><strong>{% if e.tipo == "falsa_alerta" %}Falsa alerta: no encaja{% elif e.tipo == "otra_familia" %}Otra familia: el cartel sí encaja, pero se alertó también aquí{% else %}No alertado: encajaba{% endif %}</strong>
+      · {{ NOMBRES_FAMILIA.get(e.familia, e.familia) if e.familia else "cualquier familia" }}
+      · <a href="/oportunidades/{{ e.caso.nro_sicop }}">{{ e.caso.nro_sicop }}</a>
+      ({{ "golden set" if e.caso.fuente == "golden" else "revisión" }})</p>
+    <p>{{ e.caso.titulo | titulo }}</p>
+    <ul class="sub">
+    {% for ev in e.caso.evaluaciones %}
+      <li>{{ NOMBRES_FAMILIA.get(ev.familia, ev.familia) }} → {{ ENCAJES[ev.encaje] }} · {{ ev.regla }} · {{ ev.evidencia }}</li>
+    {% else %}
+      <li>Ninguna señal.</li>
+    {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <p class="vacio">Sin errores con estos casos.</p>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Evolución</h2>
+  <p class="sub">Mediciones guardadas con python -m app.cli score-rules (esta página no guarda).</p>
+  {% if historial %}
+  <div class="tabla-scroll">
+  <table class="comp">
+    <thead><tr><th>#</th><th>Fecha</th><th>Reglas</th><th>Casos</th><th>Precisión</th><th>Cobertura</th></tr></thead>
+    <tbody>
+    {% for h in historial %}
+      <tr><td>{{ h.id }}</td><td>{{ h.fecha | fecha }}</td><td>{{ h.version }}</td>
+        <td>{{ h.casos_golden }} + {{ h.casos_revision }}</td>
+        <td>{{ pct(h.total.precision) }} ({{ h.total.verdaderos }}/{{ h.total.alertas }})</td>
+        <td>{{ pct(h.total.cobertura) }} ({{ h.total.cubiertos }}/{{ h.total.relevantes }})</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="vacio">Todavía no hay mediciones guardadas.</p>
+  {% endif %}
+</section>
+{% endblock %}
