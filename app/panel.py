@@ -173,7 +173,15 @@ class Detalle:
 
 
 def version_vigente(conn: sqlite3.Connection) -> str | None:
-    fila = conn.execute("SELECT rules_version FROM opportunity_assessments ORDER BY id DESC LIMIT 1").fetchone()
+    """Versión de reglas de la última evaluación COMPLETA (evaluation_runs, migración 0008).
+
+    No sirve «la última fila de opportunity_assessments»: evaluate --nro con un YAML nuevo dejaría vigente una
+    versión con un solo cartel, y volver a un YAML anterior actualiza filas viejas sin cambiar la última.
+    Una base evaluada antes de la migración 0008 no tiene registro: ahí se usa la última fila, como antes.
+    """
+    fila = conn.execute("SELECT rules_version FROM evaluation_runs ORDER BY id DESC LIMIT 1").fetchone()
+    if fila is None:
+        fila = conn.execute("SELECT rules_version FROM opportunity_assessments ORDER BY id DESC LIMIT 1").fetchone()
     return fila[0] if fila else None
 
 

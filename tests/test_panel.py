@@ -317,6 +317,32 @@ def test_aviso_si_las_reglas_cambiaron(cliente, db, tmp_path):
     assert "Las reglas cambiaron" in cliente.get("/oportunidades").text
 
 
+def test_la_version_vigente_es_la_de_la_ultima_evaluacion_completa(db, tmp_path):
+    """Revisión del 2026-10-23: antes mandaba la última fila guardada, no la última evaluación completa."""
+    otras = tmp_path / "reglas.yaml"
+    otras.write_text('familias:\n  gps_flotas:\n    producto: fleetmatix\n    senales_alta: ["gps"]\n',
+                     encoding="utf-8")
+    actual, nuevas = cargar_reglas(), cargar_reglas(otras)
+    with closing(connect(db)) as conn:
+        # Un solo cartel con el YAML nuevo: el panel no puede quedarse mostrando solo ese cartel.
+        evaluar_base(conn, nuevas, AHORA, nro_sicop="00000000001")
+        assert panel.version_vigente(conn) == actual.version
+
+        evaluar_base(conn, nuevas, AHORA)
+        assert panel.version_vigente(conn) == nuevas.version
+
+        # Volver al YAML anterior: sus filas ya existen y no cambian, pero esa es la evaluación vigente.
+        evaluar_base(conn, actual, AHORA)
+        assert panel.version_vigente(conn) == actual.version
+
+
+def test_base_vieja_sin_registro_de_evaluaciones_usa_la_ultima_fila(db):
+    """Una base evaluada antes de la migración 0008 no tiene evaluation_runs: se sigue viendo lo evaluado."""
+    with closing(connect(db)) as conn:
+        conn.execute("DELETE FROM evaluation_runs")
+        assert panel.version_vigente(conn) == cargar_reglas().version
+
+
 SIN_EVALUAR = "Hay datos importados después de la última evaluación"
 
 

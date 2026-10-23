@@ -7,6 +7,9 @@ Un aviso que falló o quedó en duda nunca se reenvía solo (app/avisos.py). Aqu
 
 No se borra nada: cambia el estado de la fila de la outbox y cada decisión queda en el historial (audit_log),
 con el estado y el detalle de antes, porque un envío posterior reemplaza el detalle de la outbox.
+
+El resumen semanal (app/resumen.py) también aparece aquí: no tiene cartel (nro_sicop vacío). Reintentarlo solo
+sirve en su misma semana; sale con el siguiente envío del resumen (notify --resumen-semanal --send).
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from app import destinatarios, historial
+from app import destinatarios, historial, resumen
 from app.database import transaccion
 from app.historial import TERMINAL, Quien
 from app.matching.evaluar import plazo_estado
@@ -31,7 +34,7 @@ class AvisoInvalido(ValueError):
 class AvisoPorRevisar:
     id: int
     para: str
-    nro_sicop: str
+    nro_sicop: str | None    # None: es el resumen semanal
     titulo: str | None
     motivo: str
     estado: str              # fallido · incierto
@@ -39,23 +42,37 @@ class AvisoPorRevisar:
     creado: str
     actualizado: str | None
     cierre: str | None
-    vencido: bool            # el cartel ya cerró: aunque se prepare, no se enviaría
+    vencido: bool            # el cartel ya cerró (o el resumen es de otra semana): aunque se prepare, no se enviaría
     destinatario_activo: bool
     superado: bool           # a ese destinatario ya le llegó una versión más nueva del cartel
+    semana: str | None = None  # solo el resumen semanal: «2026-W43»
+
+    @property
+    def es_resumen(self) -> bool:
+        return self.nro_sicop is None
+
+    @property
+    def que(self) -> str:
+        """«cartel 20261000001» o «resumen semanal 2026-W43», para los mensajes y el historial."""
+        return f"resumen semanal {self.semana}" if self.es_resumen else f"cartel {self.nro_sicop}"
 
 
 def _filas(conn: sqlite3.Connection, condicion: str, parametros: tuple) -> list[tuple]:
     return conn.execute(
         "SELECT o.id, o.recipient, o.nro_sicop, t.descripcion, o.motivo, o.status, o.detalle, o.created_at,"
-        "       o.updated_at, o.cierre,"
+        "       o.updated_at, o.cierre, o.version,"
         "       EXISTS (SELECT 1 FROM notification_outbox n WHERE n.recipient = o.recipient"
         "               AND n.nro_sicop = o.nro_sicop AND n.id > o.id AND n.status = 'aceptado')"
-        " FROM notification_outbox o JOIN tenders t ON t.nro_sicop = o.nro_sicop"
+        " FROM notification_outbox o LEFT JOIN tenders t ON t.nro_sicop = o.nro_sicop"  # el resumen no tiene cartel
         f" WHERE {condicion} ORDER BY o.id DESC", parametros).fetchall()
 
 
 def _aviso(fila: tuple, activos: set[str], ahora: datetime) -> AvisoPorRevisar:
-    id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre, superado = fila
+    id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre, version, superado = fila
+    if nro is None:  # resumen semanal: solo vale en su semana (app/resumen.py solo envía el de la semana actual)
+        return AvisoPorRevisar(id_, para, None, f"Resumen semanal {version}", motivo, estado, detalle, creado,
+                               actualizado, None, version != resumen.semana(ahora)[0], para in activos, False,
+                               semana=version)
     return AvisoPorRevisar(id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre,
                            plazo_estado(cierre, ahora) == "vencido", para in activos, bool(superado))
 
@@ -89,7 +106,7 @@ def _cambiar(conn: sqlite3.Connection, aviso: AvisoPorRevisar, estado: str, deta
             (estado, detalle, ahora.astimezone(timezone.utc).isoformat(timespec="seconds"), aviso.id, aviso.estado))
         if cursor.rowcount != 1:
             raise AvisoInvalido("Otra persona cambió este aviso hace un momento: recarga la página.")
-        historial.registrar(conn, quien, accion, f"{aviso.para} · cartel {aviso.nro_sicop} · antes {aviso.estado}:"
+        historial.registrar(conn, quien, accion, f"{aviso.para} · {aviso.que} · antes {aviso.estado}:"
                                                  f" {aviso.detalle or 'sin detalle'}")
 
 
@@ -103,6 +120,8 @@ def reintentar(conn: sqlite3.Connection, outbox_id: int, ahora: datetime, quien:
     if aviso.superado:
         raise AvisoInvalido(f"A {aviso.para} ya le llegó una versión más nueva de este cartel: no hace falta"
                             " reenviarlo.")
+    if aviso.vencido and aviso.es_resumen:
+        raise AvisoInvalido(f"El resumen semanal {aviso.semana} es de otra semana: ya no se envía.")
     if aviso.vencido:
         raise AvisoInvalido(f"El cartel {aviso.nro_sicop} ya cerró: aunque se prepare, no se enviaría.")
     if not aviso.destinatario_activo:

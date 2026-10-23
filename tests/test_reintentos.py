@@ -9,10 +9,10 @@ from datetime import timedelta
 
 import pytest
 
-from app import destinatarios, reintentos
+from app import destinatarios, reintentos, resumen
 from app.database import connect
 from app.historial import Quien
-from tests.test_avisos import (ProveedorSimulado, _enviar, _hace, _post, _registrar_version,  # noqa: F401
+from tests.test_avisos import (ProveedorSimulado, _enviar, _hace, _post, _registrar_version, _settings,  # noqa: F401
                                admin_y_encargada, base)
 from tests.test_panel import AHORA, CR, db  # noqa: F401
 
@@ -184,3 +184,53 @@ def test_la_encargada_no_revisa_avisos(admin_y_encargada, fallido):
     assert _post(encargada, f"/avisos/{primero}/reintentar").status_code == 403
     assert _post(encargada, f"/avisos/{primero}/confirmar").status_code == 403
     assert _estado(fallido, primero)[0] == "fallido"
+
+
+# --- Resumen semanal (revisión del 2026-10-23: antes no aparecía en /avisos) --------------------------------
+
+def _resumen(db, tmp_path, proveedor, ahora=AHORA):
+    with closing(connect(db)) as conn:
+        return resumen.notify(conn, _settings(db, tmp_path), ahora.astimezone(CR), dry_run=False,
+                              proveedor=proveedor)
+
+
+@pytest.fixture
+def resumen_fallido(base, tmp_path):
+    """Gmail rechazó el resumen semanal de Oscar; el de Anabelle salió."""
+    _resumen(base, tmp_path, ProveedorSimulado(oscar="rechazar"))
+    return base
+
+
+def test_el_resumen_fallido_se_lista_y_se_reintenta_en_su_semana(resumen_fallido, tmp_path):
+    semana = resumen.semana(AHORA)[0]
+    with closing(connect(resumen_fallido)) as conn:
+        lista = reintentos.por_revisar(conn, AHORA)
+    assert [(a.para, a.estado, a.es_resumen, a.semana) for a in lista] == [(OSCAR, "fallido", True, semana)]
+    assert lista[0].titulo == f"Resumen semanal {semana}" and not lista[0].vencido
+
+    (outbox_id,) = _ids(resumen_fallido, "fallido")
+    _reintentar(resumen_fallido, outbox_id)
+    assert _estado(resumen_fallido, outbox_id)[0] == "preparado"
+    assert _historial(resumen_fallido)[0][2].startswith(f"{OSCAR} · resumen semanal {semana} · antes fallido")
+
+    sim = ProveedorSimulado()
+    _resumen(resumen_fallido, tmp_path, sim, ahora=AHORA + timedelta(minutes=5))  # el siguiente envío lo lleva
+    assert [para for para, *_ in sim.llamadas] == [OSCAR] and _estado(resumen_fallido, outbox_id)[0] == "aceptado"
+
+
+def test_el_resumen_de_otra_semana_no_se_reintenta(resumen_fallido):
+    (outbox_id,) = _ids(resumen_fallido, "fallido")
+    with pytest.raises(reintentos.AvisoInvalido, match="es de otra semana"):
+        _reintentar(resumen_fallido, outbox_id, ahora=AHORA + timedelta(days=7))
+    assert _estado(resumen_fallido, outbox_id)[0] == "fallido"
+
+
+def test_el_resumen_fallido_desde_el_panel(admin_y_encargada, resumen_fallido):
+    ivania, _ = admin_y_encargada
+    semana = resumen.semana(AHORA)[0]
+    (outbox_id,) = _ids(resumen_fallido, "fallido")
+
+    pagina = ivania.get("/avisos").text
+    assert f"Resumen semanal {semana}" in pagina and "HTTP 400: Invalid To header (SIMULADO)" in pagina
+    assert _post(ivania, f"/avisos/{outbox_id}/reintentar").status_code == 303
+    assert "notify --resumen-semanal --send" in ivania.get("/avisos").text

@@ -192,6 +192,17 @@ def test_reporte_equivocado_no_importa_y_no_deja_el_archivo(cliente, carpetas, d
     assert not any(entrada.iterdir()) and _importaciones(db) == []
 
 
+def test_archivo_ilegible_no_da_error_500_ni_deja_el_archivo(cliente, carpetas, db):
+    """Revisión del 2026-10-23: un byte que no existe en cp1252 (0x81) hacía caer la carga con un error 500."""
+    entrada, _ = carpetas
+    danado = CARTELES.replace(b"\n", b"\x81\xff\n", 2)  # ni UTF-8 ni cp1252
+
+    respuesta = _subir(cliente, danado, "carteles.csv")
+
+    assert respuesta.status_code == 400 and "no es UTF-8 ni cp1252 (byte 0x81" in respuesta.text
+    assert not any(entrada.iterdir()) and _importaciones(db) == []
+
+
 def test_archivo_mas_grande_que_el_limite(cliente, carpetas, db, monkeypatch):
     entrada, _ = carpetas
     monkeypatch.setenv("UPLOAD_MAX_MB", "0.001")  # ~1 KB; el CSV sintético pesa más

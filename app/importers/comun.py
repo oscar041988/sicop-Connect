@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Iterable
 
-from app.importers.csv_reader import CsvFile
+from app.importers.csv_reader import CsvFile, ImportacionError  # noqa: F401 — se importa desde aquí
 
 ORIGENES = ("real", "sintetico", "simulado")
 
@@ -29,10 +29,6 @@ HORA_CR = timezone(timedelta(hours=-6), "America/Costa_Rica")
 
 _NOTACION_CIENTIFICA = re.compile(r"^-?\d+(?:[.,]\d+)?[Ee][+-]?\d+$")
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
-
-
-class ImportacionError(Exception):
-    """El archivo completo no se puede importar (nada se escribe en la base)."""
 
 
 class FilaRechazada(Exception):

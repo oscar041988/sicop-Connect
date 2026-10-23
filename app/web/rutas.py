@@ -26,7 +26,7 @@ from app.database import check_database, connect
 from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import avisos, competencia, destinatarios, exportar, historial, panel, reintentos, usuarios
+from app import avisos, competencia, destinatarios, exportar, historial, panel, reintentos, resumen, usuarios
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -500,7 +500,8 @@ def cambiar_estado_destinatario(request: Request, destinatario_id: int, activo: 
 
 def _render_avisos(request: Request, conn, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "avisos.html", {
-        "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()), "motivos_aviso": avisos.MOTIVOS,
+        "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()),
+        "motivos_aviso": {**avisos.MOTIVOS, resumen.MOTIVO: "Resumen semanal"},
         "historial": historial.ultimos(conn, historial.DE_AVISOS), "acciones": historial.ACCIONES,
         "hecho": request.session.pop("hecho", None), **contexto,
     }, status_code=status_code)
@@ -530,6 +531,9 @@ def pagina_avisos(request: Request) -> Response:
 def reintentar_aviso(request: Request, outbox_id: int, revise_enviados: str = Form("")) -> Response:
     def cambio(conn):
         a = reintentos.reintentar(conn, outbox_id, _ahora(), _quien(request), revise_enviados == "1")
+        if a.es_resumen:
+            return (f"Resumen semanal {a.semana} para {a.para} preparado otra vez: sale con el siguiente envío del"
+                    " resumen (python -m app.cli notify --resumen-semanal --send).")
         return (f"Aviso del cartel {a.nro_sicop} para {a.para} preparado otra vez: sale en el siguiente envío"
                 " de avisos.")
     return _cambio_de_aviso(request, cambio)
@@ -539,5 +543,5 @@ def reintentar_aviso(request: Request, outbox_id: int, revise_enviados: str = Fo
 def confirmar_aviso(request: Request, outbox_id: int) -> Response:
     def cambio(conn):
         a = reintentos.confirmar_salida(conn, outbox_id, _ahora(), _quien(request))
-        return f"Aviso del cartel {a.nro_sicop} para {a.para} marcado como enviado: no se reenviará."
+        return f"Aviso del {a.que} para {a.para} marcado como enviado: no se reenviará."
     return _cambio_de_aviso(request, cambio)
