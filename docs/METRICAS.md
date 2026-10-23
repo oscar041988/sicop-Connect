@@ -57,3 +57,29 @@ para la semana 3: anotar `/usage` al cerrar cada día.
 - Autoevaluaciones: lección 9 y lección 10 (las tres correctas en cada una, con ajustes).
 - Hito 2: **parcial**. Funciona el ciclo en dry-run y el envío real con `notify --send`; falta activar el
   temporizador y la prueba con Oscar (`docs/ACTA_LECCION_10.md`, pasos 0–4).
+
+## Semana 3 — ampliaciones y obtención automática (21 al 23/10)
+
+Desde el 21/10 todo se trabaja en local (decisión de Oscar) y las lecciones de la guía no se siguieron una por una,
+así que esta semana no se compara por lección: se registran las horas reales y lo que se hizo.
+
+### Horas reales por día
+
+| Día | Horas | Trabajo | Fuente |
+|---|---|---|---|
+| mié 21/10 | 7 h | cambio a trabajo en local y rama `desarrollo`; ciclo local en Windows con datos reales; obtención automática, lecciones 1 a 3 (pruebas simuladas) | Ivania, 23/10 · `ESTADO_PROYECTO.md` |
+| jue 22/10 | 7 h | prueba real de la obtención con Oscar (SICOP bloqueó la descarga) y consulta a soporte; lección 4 (`obtain auto`); A2 Competencia; A4 cierre próximo y resumen semanal; A5 Excel | Ivania, 23/10 · `ESTADO_PROYECTO.md` |
+| vie 23/10 | 7 h | revisión general del código (3 errores y 4 menores); lock con `playwright`; documentación verificada y `ARQUITECTURA.md`; pruebas con Python 3.12 (falla de seguridad corregida); PR #3; `OPERACION.md` en instalación limpia (10 trabas); respaldo al Drive; informe final | Ivania, 23/10 · `ESTADO_PROYECTO.md` |
+| **Total** | **21 h** | | |
+
+### Uso de Claude
+
+No registrado (no se anotó `/usage` al cerrar cada día). Para la semana 4: anotarlo cada día, porque es la
+métrica que la guía considera más valiosa para Hermatix (sección 22).
+
+### Aprendizaje y entregas
+
+- Ampliaciones A2, A4 y A5 hechas y probadas en local; falta la aceptación de Oscar y verlas en producción.
+- `OPERACION.md` seguido al pie de la letra en una instalación limpia (lección 18, paso 2, adelantada).
+- Informe final escrito por Ivania (Google Docs).
+- Reto de comprensión: el de la semana 2 sigue pendiente con Oscar.
