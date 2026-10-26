@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 import secrets
 import unicodedata
+from urllib.parse import quote
 from datetime import datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import BinaryIO
@@ -23,6 +24,20 @@ from app.config import load_settings
 from app.importers.comun import HORA_CR
 
 RUTA = "/cargar"
+
+# Ayuda de la página: dónde está el reporte. Los mismos valores que usa la obtención automática
+# (app/sources/sicop_browser.URL y app/sources/gmail_reader); una prueba comprueba que no se separen.
+URL_SICOP = "https://www.sicop.go.cr/app/module/pcont/public/ce-open-data"
+BUSQUEDA_GMAIL = 'from:info@sicop.go.cr subject:"Envío de reporte"'
+
+
+def enlace_gmail(cuenta: str) -> str:
+    """Gmail abierto en la búsqueda de los correos de SICOP con el enlace del reporte.
+
+    Con la cuenta (SICOP_REQUEST_EMAIL) se abre ese buzón aunque el navegador tenga varias cuentas abiertas.
+    """
+    base = f"https://mail.google.com/mail/u/?authuser={quote(cuenta)}" if cuenta else "https://mail.google.com/mail/u/0/"
+    return f"{base}#search/{quote(BUSQUEDA_GMAIL, safe='')}"
 PLIEGOS = "pliegos"  # no es un importador: es el ZIP con los CSV de carteles y líneas (app/importers/zip_pliegos.py)
 EXTENSIONES = {PLIEGOS: (".zip",), "carteles": (".csv",), "lineas": (".csv",), "catalogo": (".csv", ".zip"),
                "instituciones": (".csv",)}

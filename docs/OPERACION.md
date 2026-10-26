@@ -71,7 +71,9 @@ hace y qué se observó: `docs/ACCESO_SICOP.md`.
 
 Tres formas; las tres usan el mismo importador:
 
-- **Panel → «Cargar archivo»:** elegir el tipo de reporte, el origen (real, sintético o simulado) y el archivo.
+- **Panel → «Cargar archivo»:** elegir el tipo de reporte, el origen (real, sintético o simulado; «real» viene
+  elegido) y el archivo. La página trae un botón que abre en Gmail el correo «Envío de reporte» de SICOP, otro a
+  Datos abiertos de SICOP y los pasos explicados.
   **Para los carteles del día, el tipo es «pliegos (.zip)»** con el ZIP tal como llega: trae carteles y líneas y
   se carga **una sola vez**. Los tipos «carteles» y «lineas» son solo para un CSV que alguien ya sacó del ZIP; si
   después se sube el ZIP, lo ya cargado sale como «Este archivo ya se importó» y no se duplica. Instituciones va en

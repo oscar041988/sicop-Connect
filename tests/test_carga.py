@@ -284,3 +284,52 @@ def test_sin_token_no_se_sube_nada(cliente, carpetas, db):
 
     assert respuesta.status_code == 403
     assert not entrada.exists() and _importaciones(db) == []
+
+
+# --- Ayuda: dónde está el reporte (pedido de Oscar, 2026-10-26) ------------------------------------
+
+def test_la_ayuda_trae_los_enlaces_a_gmail_y_sicop(cliente, monkeypatch):
+    monkeypatch.setenv("SICOP_REQUEST_EMAIL", "buzon-sintetico@example.com")
+    monkeypatch.setenv("SOURCE_MODE", "manual")
+
+    texto = cliente.get("/cargar").text
+
+    assert 'href="https://www.sicop.go.cr/app/module/pcont/public/ce-open-data"' in texto
+    assert "https://mail.google.com/mail/u/?authuser=buzon-sintetico%40example.com#search/" in texto
+    assert "obtención automática está apagada" in texto
+    for parte in ("<dt>real</dt>", "<dt>sintetico</dt>", "<dt>simulado</dt>", "No lo abra, no lo descomprima",
+                  "Elegir archivo", "Subir e importar", "Leer el resumen", "python -m app.cli evaluate"):
+        assert parte in texto
+
+
+def test_el_css_lleva_su_huella_para_que_el_navegador_no_use_una_copia_vieja(cliente):
+    from app.web.rutas import version_estatico
+
+    assert f"estilo.css?v={version_estatico('estilo.css')}" in cliente.get("/cargar").text
+
+
+def test_formulario_con_los_botones_al_lado_e_instrucciones_al_final(cliente):
+    texto = cliente.get("/cargar").text
+
+    columnas = texto.index('class="carga-columnas"')
+    formulario, botones = texto.index('action="/cargar"'), texto.index("Abrir el correo de SICOP en Gmail")
+    assert columnas < formulario < botones < texto.index("Instrucciones: cómo cargar el reporte")
+
+
+def test_con_obtencion_automatica_la_ayuda_lo_dice(cliente, monkeypatch):
+    monkeypatch.setenv("SOURCE_MODE", "auto")
+
+    assert "obtención automática está encendida" in cliente.get("/cargar").text
+
+
+def test_el_origen_real_viene_elegido(cliente):
+    assert re.search(r'<option value="real"\s+selected>', cliente.get("/cargar").text)
+
+
+def test_los_enlaces_coinciden_con_la_obtencion_automatica():
+    """Si cambia la URL de SICOP o el asunto del correo, la ayuda tiene que cambiar también."""
+    from app.sources import gmail_reader, sicop_browser
+
+    assert carga.URL_SICOP == sicop_browser.URL
+    assert carga.BUSQUEDA_GMAIL == f'from:{gmail_reader.REMITENTE_SICOP} subject:"{gmail_reader.ASUNTOS["enlace"]}"'
+    assert carga.enlace_gmail("").startswith("https://mail.google.com/mail/u/0/#search/from%3Ainfo%40sicop.go.cr")

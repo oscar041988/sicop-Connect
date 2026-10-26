@@ -3,10 +3,13 @@
 {% block contenido %}
 <section>
   <h1>Cargar un reporte de SICOP</h1>
-  <p class="sub">Se guarda en la carpeta de entrada y se importa igual que con <code>python -m app.cli import</code>.
-    Importa primero los carteles y después sus líneas. El mismo archivo no se importa dos veces.
-    El ZIP de «Detalle pliego de condiciones» se sube tal como llega, con el tipo «pliegos»: trae los dos.</p>
+  <p class="sub">Aquí se suben los reportes descargados de SICOP para que entren al panel. Las instrucciones
+    completas, paso a paso, están al final de la página.</p>
+
+  {# Formulario a la izquierda y los botones al lado; en pantallas angostas los botones bajan (estilo.css) #}
+  <div class="carga-columnas">
   <form class="revision acceso" method="post" action="/cargar" enctype="multipart/form-data">
+    <h2>Subir el archivo</h2>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
     <label>Tipo de reporte
@@ -30,6 +33,21 @@
     </label>
     <button type="submit">Subir e importar</button>
   </form>
+
+  <div class="ayuda-carga">
+    <h2>¿Dónde está el reporte?</h2>
+    {% if automatico %}
+    <p>La obtención automática está encendida: la app pide el reporte a SICOP, lo descarga y lo importa sola.
+      Esta página es para cuando eso falló (llega un correo de alerta) o para cargar un archivo a mano.</p>
+    {% else %}
+    <p>La obtención automática está apagada (<code>SOURCE_MODE=manual</code>): el reporte se descarga y se sube a mano.</p>
+    {% endif %}
+    <div class="enlaces">
+      <a class="btn p" href="{{ url_gmail }}" target="_blank" rel="noopener">Abrir el correo de SICOP en Gmail</a>
+      <a class="btn o" href="{{ url_sicop }}" target="_blank" rel="noopener">Ir a SICOP (datos abiertos)</a>
+    </div>
+  </div>
+  </div>
 </section>
 
 {% for parte in partes or [] %}
@@ -73,4 +91,77 @@
   {% endif %}
 </section>
 {% endfor %}
+
+<section class="ayuda-carga instrucciones">
+  <h2>Instrucciones: cómo cargar el reporte de SICOP, paso a paso</h2>
+  <ol>
+    <li><strong>Buscar el correo de SICOP.</strong> Toque arriba el botón «Abrir el correo de SICOP en Gmail». Se
+      abre Gmail en otra pestaña, en el buzón de SICOP de Hermatix, mostrando solo los correos de
+      <code>info@sicop.go.cr</code> con el asunto «Envío de reporte». Abra el más reciente (el de hoy).</li>
+
+    <li><strong>Si no hay correo de hoy, pedir el reporte en SICOP.</strong> Pida un solo reporte por día: si la
+      obtención automática ya lo pidió, espere su correo en vez de pedir otro.
+      <ol type="a">
+        <li>Toque arriba «Ir a SICOP (datos abiertos)».</li>
+        <li>Despliegue «Detalle pliego de condiciones» y toque el icono <strong>CSV</strong>.</li>
+        <li>Escriba el correo del buzón de SICOP de Hermatix y toque «Continuar».</li>
+        <li>Llega un correo «Código verificación para reporte»: copie el código, escríbalo en SICOP y toque
+          «Continuar».</li>
+        <li>Toque «Aceptar». Cuando SICOP termine, llega el correo «Envío de reporte»: vuelva al paso 1.</li>
+      </ol></li>
+
+    <li><strong>Descargar el ZIP.</strong> Dentro del correo, toque «URL de descarga». Se baja un archivo
+      <code>.zip</code> a la carpeta Descargas. <strong>No lo abra, no lo descomprima y no lo cambie de nombre</strong>:
+      se sube tal como llegó.</li>
+
+    <li><strong>Tipo de reporte.</strong> En el formulario de arriba, toque «Tipo de reporte» y elija
+      <strong>«pliegos (.zip)»</strong>. Ese ZIP trae los carteles y sus líneas juntos, y la app los importa en el
+      orden correcto. Las otras opciones son para casos especiales:
+      <ul>
+        <li><strong>carteles (.csv)</strong> y <strong>lineas (.csv)</strong>: solo si alguien ya sacó esos CSV del ZIP.
+          Primero carteles y después líneas.</li>
+        <li><strong>catalogo</strong>: el catálogo de bienes y servicios (nombre de cada código). Se carga una vez.</li>
+        <li><strong>instituciones (.csv)</strong>: el nombre de cada institución. Se carga una vez.</li>
+      </ul></li>
+
+    <li><strong>Origen de los datos.</strong> Deje <strong>«real»</strong>, que ya viene elegido. Cada importación
+      queda marcada con su origen para no confundir nunca datos verdaderos con datos de prueba:
+      <dl class="origenes">
+        <div><dt>real</dt><dd>Descargado de SICOP. Es <strong>el que se usa siempre</strong> en el trabajo diario.
+          <br><small>Ejemplo: el ZIP del correo «Envío de reporte» de hoy.</small></dd></div>
+        <div><dt>sintetico</dt><dd>Datos inventados a propósito para probar la app, con el mismo formato que SICOP.
+          <br><small>Ejemplo: un CSV con el cartel «Compra de GPS para flotillas» de una institución ficticia.</small></dd></div>
+        <div><dt>simulado</dt><dd>Lo que produce una imitación de SICOP o de Gmail, para probar la app sin tocar
+          los sistemas de verdad.<br><small>Ejemplo: un reporte armado por las pruebas automáticas como si lo
+          hubiera mandado SICOP.</small></dd></div>
+      </dl>
+      Si se elige un origen equivocado, los datos entran igual pero quedan mal marcados.</li>
+
+    <li><strong>Elegir el archivo.</strong> Toque «Elegir archivo» (o «Seleccionar archivo», según el navegador).
+      Se abre una ventana de Windows: vaya a Descargas, elija el ZIP y toque «Abrir». El nombre del archivo aparece
+      junto al botón. Máximo {{ limite_mb }} MB.</li>
+
+    <li><strong>Subir e importar.</strong> Toque «Subir e importar» y espere: con un ZIP grande puede tardar unos
+      segundos. No cierre ni recargue la página mientras tanto.</li>
+
+    <li><strong>Leer el resumen.</strong> Debajo del formulario aparece un resumen de lo importado, uno por cada
+      parte (carteles y líneas):
+      <ul>
+        <li><strong>Filas leídas / aceptadas / rechazadas:</strong> una fila rechazada no detiene el resto; el
+          resumen dice la línea y el motivo.</li>
+        <li><strong>Nuevas · actualizadas · sin cambios:</strong> actualizar un cartel nunca borra su revisión.</li>
+        <li><strong>Si dice que el archivo ya se importó:</strong> ese ZIP ya estaba cargado. No se duplicó nada; no hay que
+          hacer nada más.</li>
+        <li><strong>Un mensaje rojo arriba del formulario:</strong> no se importó (archivo equivocado, muy grande o
+          dañado). Lea el mensaje, corrija y vuelva a subirlo.</li>
+      </ul></li>
+
+    <li><strong>Evaluar.</strong> Subir no evalúa: los carteles nuevos todavía no salen en el panel. En la terminal,
+      dentro de la carpeta del proyecto, ejecute <code>python -m app.cli evaluate</code>. Compara los carteles con
+      las reglas de Hermatix y les da su prioridad.</li>
+
+    <li><strong>Revisar en el panel.</strong> Vaya a «Panel de carteles» y recargue la página: ahí están los carteles
+      nuevos, ordenados por el cierre más próximo.</li>
+  </ol>
+</section>
 {% endblock %}

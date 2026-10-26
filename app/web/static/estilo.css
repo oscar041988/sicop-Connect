@@ -258,3 +258,20 @@ table.lista th:nth-child(5) { width: 10rem; }
 @media (max-width: 480px) {
   .meta, .datos, .card details dl { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Cargar archivo: ayuda de dónde está el reporte */
+.ayuda-carga { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin: 16px 0; display: grid; gap: 12px; }
+.ayuda-carga h2 { margin: 0; font-size: 1.1rem; }
+.ayuda-carga p { margin: 0; max-width: 75ch; }
+.ayuda-carga .enlaces { display: flex; flex-direction: column; gap: 10px; }
+.ayuda-carga .enlaces .btn { text-align: center; }
+.carga-columnas { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin-top: 10px; }
+.carga-columnas > form { flex: 1 1 340px; margin-top: 0; }
+.carga-columnas > form h2 { margin: 0; font-size: 1.1rem; }
+.carga-columnas > .ayuda-carga { flex: 1 1 280px; max-width: 420px; margin: 0; }
+.ayuda-carga ol, .ayuda-carga ul { margin: 8px 0; padding-left: 22px; display: grid; gap: 8px; max-width: 80ch; }
+.ayuda-carga.instrucciones { margin-top: 24px; }
+.ayuda-carga.instrucciones > ol > li { line-height: 1.5; }
+.ayuda-carga .origenes { display: grid; gap: 10px; margin: 10px 0; }
+.ayuda-carga .origenes dt { font-weight: 700; }
+.ayuda-carga .origenes dd { margin: 2px 0 0; }

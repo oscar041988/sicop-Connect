@@ -249,6 +249,15 @@
 
 ## Pendientes
 
+- **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
+  - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
+    de SICOP en Gmail» (búsqueda de «Envío de reporte» en el buzón `SICOP_REQUEST_EMAIL`) e «Ir a SICOP (datos
+    abiertos)» al lado del formulario; al final, un solo recuadro con las instrucciones completas paso a paso
+    (descargar, pedir el reporte a mano, tipo de reporte, origen real/sintético/simulado, elegir archivo, subir,
+    leer el resumen, `evaluate`). «real» viene elegido. El CSS lleva su huella en la URL (`estilo.css?v=…`) para
+    que el navegador no use una copia vieja. **512 passed** (6 nuevas en `tests/test_carga.py`). Revisado por
+    Ivania en el panel local.
+
 - **Gestor de documentos (mejora pedida por Oscar, 2026-10-26):** expediente por cartel con encargado, archivos
   (PDF, Word, Excel, ZIP; 10 MB configurable), notas, traspaso con descarga de todo, página de seguimiento y correo
   al nuevo encargado; las etapas se suman a «Ofertada» / «No se oferta». Propuesta en 5 pasos en
@@ -260,8 +269,10 @@
     (`seguimientos`, `seguimiento_asignaciones`, sin borrado), `app/seguimiento.py`, botón y marca en el cartel,
     marca en el panel, página «Seguimiento» y expediente con su historial de encargados. **504 passed** (10 nuevas
     en `tests/test_seguimiento.py`; la prueba de CSRF de `test_acceso.py` ahora incluye las 2 rutas nuevas).
-  - **Pendiente · Ivania:** respaldo, `migrate` (0015) en la base local y probarlo en el panel (dar seguimiento,
-    asignar como administrador, entrar con otro usuario y ver el «sin acceso»).
+  - ~~Respaldo y `migrate`~~ **Hecho (2026-10-26, Ivania):** respaldo `sicop_20261026-093951` (esquema 0014,
+    integridad ok, huella igual al manifiesto, ZIP creado) → `migrate` (0015); base local con integridad ok.
+    **Pendiente · Ivania:** probarlo en el panel (dar seguimiento, asignar como administradora, entrar con otro
+    usuario y ver el «sin acceso») y subir el ZIP al Drive de Hermatix.
   - **Siguiente:** paso 1B, el correo al nuevo encargado. Etapas del paso 5 **aprobadas** (26/10): preparando ·
     enviada · ganada · perdida.
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se

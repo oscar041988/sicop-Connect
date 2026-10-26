@@ -7,6 +7,7 @@ Todas, salvo /login, exigen sesión (middleware en app/web/seguridad.py) y todo 
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
 import sqlite3
@@ -42,6 +43,17 @@ def _contexto_sesion(request: Request) -> dict:
     return {"csrf_token": seguridad.csrf_token(request), "usuario": seguridad.usuario_actual(request)}
 
 
+ESTATICOS = Path(__file__).parent / "static"
+
+
+def version_estatico(nombre: str) -> str:
+    """Huella corta del archivo: va en la URL (estilo.css?v=…) para que el navegador no use una copia vieja.
+
+    Se calcula en cada página (el CSS pesa pocos KB): así sirve también con --reload, que no vigila el .css.
+    """
+    return hashlib.sha256((ESTATICOS / nombre).read_bytes()).hexdigest()[:10]
+
+
 PLANTILLAS = Jinja2Templates(directory=Path(__file__).parent / "templates",  # autoescape activo; no se desactiva
                              context_processors=[_contexto_sesion])
 PLANTILLAS.env.filters["fecha"] = panel.fecha_cr
@@ -51,7 +63,7 @@ PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
-    nombre_competidor=competencia.nombre_competidor,
+    nombre_competidor=competencia.nombre_competidor, version_estatico=version_estatico,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
 
@@ -284,10 +296,14 @@ def _importar_zip_pliegos(conn, ruta: Path, nombre: str, origen: str, raw_dir: P
 
 
 def _render_carga(request: Request, status_code: int = 200, **contexto) -> Response:
+    settings = load_settings()
     return PLANTILLAS.TemplateResponse(request, "cargar.html", {
         "seccion": "cargar", "reportes": list(carga.EXTENSIONES), "origenes": ORIGENES, "extensiones": carga.EXTENSIONES,
-        "limite_mb": carga.en_megas(load_settings().upload_max_bytes), "separadores": SEPARADORES,
-        "max_rechazos": MAX_RECHAZOS_VISIBLES, "ejemplos": EJEMPLOS_POR_ADVERTENCIA, "formulario": {},
+        "limite_mb": carga.en_megas(settings.upload_max_bytes), "separadores": SEPARADORES,
+        "max_rechazos": MAX_RECHAZOS_VISIBLES, "ejemplos": EJEMPLOS_POR_ADVERTENCIA,
+        # «real» ya elegido: es el origen del trabajo diario (decisión de Ivania, 2026-10-26).
+        "formulario": {"origen": "real"}, "url_sicop": carga.URL_SICOP,
+        "url_gmail": carga.enlace_gmail(settings.sicop_request_email), "automatico": settings.source_mode == "auto",
         **contexto,
     }, status_code=status_code)
 
