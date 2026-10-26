@@ -267,7 +267,8 @@
   en la de México). Tarea «SICOP CONNECT - ciclo diario» creada por Ivania; próxima ejecución 22/10 08:00.
   Prueba con `Start-ScheduledTask`: #26 corrió pero no escribió el registro (error del script, corregido en
   4330dd5); #27 FALLO esperado (sin ZIP nuevo), registrado en `data\logs\ciclo-2026-10.log` con código 1.
-  Pendiente · Ivania: `SCHEDULER_ENABLED=true` en `.env`; mañana revisar la entrada de las 08:00 en el log.
+  ~~Pendiente · Ivania: `SCHEDULER_ENABLED=true` en `.env`~~ **Comprobado 2026-10-26 con `doctor`: «Programador:
+  habilitado»** (leído de `.env`). Entrada de las 08:00 del 22/10: revisada (ver lección 3, «Pendientes de la prueba»).
   Enlace de SICOP: llegó 2 min después del correo del código (13:34 → 13:36; ver DECISION_OBTENCION.md §8).
 - **Obtención automática · lección 1, lector de Gmail (2026-10-21, rama `desarrollo`):** hecha con pruebas
   SIMULADAS. `app/sources/gmail_reader.py`: permiso `gmail.readonly` con token aparte
