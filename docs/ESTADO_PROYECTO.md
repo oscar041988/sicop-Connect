@@ -451,6 +451,8 @@
     **2026-10-26:** datos de apoyo de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (Claude no puede abrir
     el Google Doc). La 9 y la parte de Windows de la 6 ya se pueden escribir; la del servidor espera a la lección
     15. Simulacro 5 anotado en `OPERACION.md` §7 (Windows, dry-run, ciclo #28; 24 avisos = 24 claves distintas).
+    **Hecho 2026-10-26 (Ivania, en el Google Doc; Claude no lo ha leído):** secciones 6 (parte de Windows), 7 y 9.
+    **Queda · Ivania:** la parte del servidor de la sección 6, después de la lección 15 y los simulacros allí.
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
