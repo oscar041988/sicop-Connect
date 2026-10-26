@@ -267,7 +267,8 @@
     base real (4 usuarios y 5 revisiones intactos; copia borrada).
     `migrate` 0016 en la base real y respaldo `sicop_20261026-115002` (esquema 0016, hash igual al manifiesto)
     hechos por Ivania (2026-10-26); probado por Ivania en el panel local.
-    **Pendiente · Ivania:** comprimir `sicop_20261026-115002` (.db + .json) en un ZIP y subirlo al Drive de Hermatix.
+    ZIP `sicop_20261026-115002.zip` (integridad ok, huella del `.db` igual al manifiesto) subido por Ivania al
+    Drive de Hermatix (2026-10-26).
 
 - **Gestor de documentos (mejora pedida por Oscar, 2026-10-26):** expediente por cartel con encargado, archivos
   (PDF, Word, Excel, ZIP; 10 MB configurable), notas, traspaso con descarga de todo, página de seguimiento y correo
@@ -282,8 +283,8 @@
     en `tests/test_seguimiento.py`; la prueba de CSRF de `test_acceso.py` ahora incluye las 2 rutas nuevas).
   - ~~Respaldo y `migrate`~~ **Hecho (2026-10-26, Ivania):** respaldo `sicop_20261026-093951` (esquema 0014,
     integridad ok, huella igual al manifiesto, ZIP creado) → `migrate` (0015); base local con integridad ok.
-    **Pendiente · Ivania:** probarlo en el panel (dar seguimiento, asignar como administradora, entrar con otro
-    usuario y ver el «sin acceso») y subir el ZIP al Drive de Hermatix.
+    Probado por Ivania en el panel local (2026-10-26): funciona.
+    ZIP `sicop_20261026-093951.zip` subido por Ivania al Drive de Hermatix (confirmado el 2026-10-26).
   - **Siguiente:** paso 1B, el correo al nuevo encargado. Etapas del paso 5 **aprobadas** (26/10): preparando ·
     enviada · ganada · perdida.
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
