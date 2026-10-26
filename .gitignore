@@ -25,3 +25,6 @@ data/
 backups/
 *.bak
 *.backup
+
+# Guía de obtención: su captura 7 muestra un enlace real de descarga (processId)
+docs/Guia_Obtencion_Automatica_SICOP.docx
