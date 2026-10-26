@@ -529,7 +529,9 @@
       proveedor en SICOP); **avance 2026-10-26 (Ivania):** 7 empresas con nombre (las 7 que compiten de verdad). De las
       13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); `0702950024` es persona física
       (sin nombre, para no guardar datos personales en Git; a confirmar con Oscar).
-      Hallazgo: la página cuenta como competidor a quien ganó cualquier línea de un cartel de la familia (mejora aparte);
+      Hallazgo: la página cuenta como competidor a quien ganó cualquier línea de un cartel de la familia (mejora aparte;
+      ejemplo: `3101941043` sale primera en `iot_frio` con 2 carteles, por líneas que no eran de Hermatix);
+      **página revisada en el panel local por Ivania (2026-10-26): salen los 7 nombres**;
     - descargar «Contratos» si se quiere comparar;
     - revisar la página en el panel.
 - **Obtención automática · lección 4, integrar al ciclo (2026-10-22, rama `desarrollo`, solo local):** hecha con
