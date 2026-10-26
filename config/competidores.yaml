@@ -20,4 +20,27 @@
 #       - "3101000000"
 #       - "3101000001"
 
-competidores: {}
+# Nombres buscados por Ivania en la ficha del proveedor de SICOP (2026-10-26). Solo empresas (cédula jurídica):
+# las personas físicas se dejan sin nombre, para no guardar datos personales en el repositorio.
+competidores:
+  "Navegación Satelital de Costa Rica S.A.":
+    cedulas:
+      - "3101450326"
+  "Medios de Pago FC Costa Rica S.A.":
+    cedulas:
+      - "3101646002"
+  "Netway S.A.":
+    cedulas:
+      - "3101384584"
+  "Compañía Técnica y Comercial SATEC S.A.":
+    cedulas:
+      - "3101024094"
+  "Goltech de Costa Rica S.A.":
+    cedulas:
+      - "3101770271"
+  "Spectrum Multimedia S.A.":
+    cedulas:
+      - "3101365523"
+  "G y R Grupo Asesor S.A.":
+    cedulas:
+      - "3101576808"

@@ -526,7 +526,10 @@
   - 452 passed (15 nuevas en `tests/test_competencia.py`, datos SINTÉTICOS).
   - **Pendiente · Ivania/Oscar:**
     - poner nombre a las cédulas ganadoras en `config/competidores.yaml` (Registro Nacional o ficha del
-      proveedor en SICOP);
+      proveedor en SICOP); **avance 2026-10-26 (Ivania):** 7 empresas con nombre (las 7 que compiten de verdad). De las
+      13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); `0702950024` es persona física
+      (sin nombre, para no guardar datos personales en Git; a confirmar con Oscar).
+      Hallazgo: la página cuenta como competidor a quien ganó cualquier línea de un cartel de la familia (mejora aparte);
     - descargar «Contratos» si se quiere comparar;
     - revisar la página en el panel.
 - **Obtención automática · lección 4, integrar al ciclo (2026-10-22, rama `desarrollo`, solo local):** hecha con
