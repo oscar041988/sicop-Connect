@@ -46,7 +46,8 @@ eludirla, y la guía lo prohíbe. Por lo tanto, **ninguna opción permitida elim
 ### O1 · API oficial documentada
 
 - Requiere: que SICOP publique una API con acceso para Hermatix.
-- Evidencia: ninguna. **No viable hoy.**
+- Evidencia: ninguna. **No viable hoy.** **Confirmado por SICOP (respuesta recibida el 2026-10-26, sección 8): no
+  hay API, servicios web ni integración para terceros.**
 - Lo único posible: preguntarle a soporte de SICOP si existe (la decisión de preguntar es de Hermatix;
   `ACCESO_SICOP.md` tiene la tabla de preguntas).
 
@@ -215,6 +216,26 @@ reciente posterior a la solicitud.
 - **Pendiente · Oscar:** decidir entre preguntarle a SICOP, con el ID de soporte, si se permite descargar con un
   programa, o dejar la descarga en manual (la solicitud y el código siguen automáticos). Mientras no se decida,
   no se reintenta la descarga automática ni se cambia el navegador para evitar el bloqueo.
+  **Consulta enviada (22/10, Ivania):** a call-center@sicop.go.cr, con el ID de soporte.
+
+**Respuesta de SICOP (recibida por Ivania y reenviada a Oscar el 2026-10-26; resumen fiel del texto):**
+- «No es posible autorizar accesos externos ni mecanismos de integración directa con la base de datos».
+- «SICOP no dispone de API, servicios web ni esquemas oficiales de integración de datos para consumo externo»;
+  no hay mecanismos de interoperabilidad para conectarse desde sistemas de terceros.
+- Lo fundamentan en sus políticas de seguridad de la información y en la normativa de protección de datos y
+  control de accesos, que restringen dar acceso a terceros «sin la debida autorización institucional y
+  justificación técnica».
+
+Lectura (Claude, para que Oscar decida):
+- **O1 queda descartada con respuesta oficial:** no hay API ni integración para terceros.
+- La respuesta **no habla de forma expresa** de la descarga con un programa desde la página pública de reportes,
+  que fue lo que se bloqueó. No la permite ni la prohíbe con esas palabras.
+- Sí deja claro que SICOP no autoriza mecanismos de integración para terceros, y el bloqueo del 22/10 es un
+  control de acceso. Con la regla 2, eso basta para **no** buscar la forma de descargar con un programa.
+- **Recomendación:** dejar la descarga en manual (plan B: alerta → descarga a mano → ZIP en `INCOMING_DIR`). La
+  solicitud y el código pueden seguir automáticos, porque se hacen en la misma página pública que usa una
+  persona y SICOP no los bloqueó; si Oscar prefiere no automatizar nada, `SOURCE_MODE=manual` y no se toca código.
+- **Pendiente · Oscar:** decidir con esta respuesta. Hasta entonces sigue sin reintentarse la descarga automática.
 
 **Lección 4 (2026-10-22): `obtain auto` integra la obtención al ciclo** (`docs/OPERACION.md` 3.1). Aplica estas
 reglas así:

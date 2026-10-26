@@ -335,12 +335,15 @@
       call-center@sicop.go.cr; piden usar su formulario de reporte de incidentes.
       **Enviado (22/10):** Ivania envió la consulta a call-center@sicop.go.cr con el ID de soporte. Se espera la
       respuesta; al llegar se anota en `DECISION_OBTENCION.md` §8 y se decide la activación de `obtain auto`.
+      **Respuesta recibida (26/10), anotada en `DECISION_OBTENCION.md` §8 y reenviada a Oscar por Ivania:** SICOP no
+      tiene API ni servicios web y no autoriza accesos ni integración de terceros. No menciona de forma expresa la
+      descarga con un programa. Recomendación: descarga en manual (plan B). **Pendiente · Oscar:** decidir.
     - ~~La tarea de las 08:00 del 22/10 no dejó registro~~ **Revisado (22/10):** la computadora se encendió a las
       8:01. Windows marca 1 ejecución perdida y la tarea no la recupera (`StartWhenAvailable` apagado a propósito,
       como `Persistent=false` en el servidor). No es un error. **Decisión de Ivania: dejarla como está.**
     - **Para hablar con Oscar:** la hora del ciclo. Hoy el ZIP llegó hacia las 9:20 (solicitud a las 8:05 + enlace
       a los ≈ 50 min + descarga a mano), así que un ciclo a las 8:00 casi siempre correrá sin archivo nuevo
-      (FALLO). Se decide junto con lo de la descarga bloqueada.
+      (FALLO). Se decide junto con lo de la descarga bloqueada (respuesta de SICOP ya recibida, 26/10).
     - El OIJ `20260903798` sigue «preparado» aunque se descartó el 19/10 (cierra el 22/10). Es el comportamiento
       conocido: la revisión no saca un cartel de los avisos.
 - **A4 · Cierre próximo y resumen semanal (2026-10-22, rama `desarrollo`, solo local, dry-run):**
@@ -453,6 +456,8 @@
     15. Simulacro 5 anotado en `OPERACION.md` §7 (Windows, dry-run, ciclo #28; 24 avisos = 24 claves distintas).
     **Hecho 2026-10-26 (Ivania, en el Google Doc; Claude no lo ha leído):** secciones 6 (parte de Windows), 7 y 9.
     **Queda · Ivania:** la parte del servidor de la sección 6, después de la lección 15 y los simulacros allí.
+    **2026-10-26 (Ivania):** la parte del servidor de la sección 6 quedó escrita **como plan**. **Queda · Ivania:**
+    completarla con los resultados reales de la lección 15 y de los 5 simulacros en el servidor (`OPERACION.md` §7).
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
