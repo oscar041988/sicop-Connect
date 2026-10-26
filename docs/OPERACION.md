@@ -404,7 +404,7 @@ Lo hecho después del respaldo se pierde: cargar otra vez los archivos de SICOP 
 - **Volver a una versión anterior del código:** `DESPLIEGUE.md`, 9.8. No revierte migraciones: si el esquema
   cambió, también se restaura la base.
 
-## 7. Simulacros (pendiente)
+## 7. Simulacros (3, 4 y 5 hechos en Windows; ninguno en el servidor)
 
 La guía pide practicar la recuperación cuando no hay emergencia y anotar el resultado aquí:
 
@@ -414,4 +414,4 @@ La guía pide practicar la recuperación cuando no hay emergencia y anotar el re
 | 2 | Reiniciar el servidor (en una ventana acordada) | El panel arranca solo y el timer sigue programado. | — |
 | 3 | Restaurar un respaldo en otra carpeta | Se lee una revisión conocida. | Windows, 2026-10-13 y 2026-10-19 (`sicop_20261019-114809`: huella igual al manifiesto, `migrate` al día, revisiones #1–#5 presentes); 2026-10-23 en la instalación limpia (`sicop_20261023-111021`: huella igual, base restaurada con la hora del respaldo, `migrate` al día, la revisión de `20261002859` presente). Falta en el servidor. |
 | 4 | Ciclo con fuente fallida | Queda error o cobertura desactualizada, nunca «cero compras». | Windows, 2026-10-19: ciclo #22 sin archivos → «FALLO · no llegó ningún archivo nuevo… (no significa que no haya compras)», código 1, no avisó. Falta en el servidor. |
-| 5 | Repetir el ciclo | No se duplican avisos. | — |
+| 5 | Repetir el ciclo | No se duplican avisos. | Windows, dry-run, 2026-10-22: el ciclo #28 importó datos nuevos y actualizó 9 evaluaciones con los mismos destinatarios: 0 avisos nuevos; los 6 ya preparados el 21/10 (ciclo #25) no se repitieron. En la base (consulta de solo lectura, 26/10): 24 avisos en la outbox, 24 claves de deduplicación distintas. Archivo repetido: «YA IMPORTADO», sin duplicar (ciclo #16 y en la instalación limpia del 23/10). Falta en el servidor y con envío real. |

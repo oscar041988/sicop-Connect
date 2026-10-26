@@ -447,6 +447,9 @@
     **Informe escrito (2026-10-23, Ivania), en Google Docs** (no está en el repositorio; Claude no lo ha leído).
     Debe quedar en el Drive de Hermatix, compartido con Oscar. **Pendiente · Ivania:** actualizar las secciones 6
     (operación) y 9 (pendientes y plan de continuidad) después de la lección 15 y los simulacros.
+    **2026-10-26:** datos de apoyo de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (Claude no puede abrir
+    el Google Doc). La 9 y la parte de Windows de la 6 ya se pueden escribir; la del servidor espera a la lección
+    15. Simulacro 5 anotado en `OPERACION.md` §7 (Windows, dry-run, ciclo #28; 24 avisos = 24 claves distintas).
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No

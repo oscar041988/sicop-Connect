@@ -114,16 +114,34 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
 
 ## 6. Operación: despliegue, simulacros, recuperación
 
-**Datos de apoyo:**
-- Despliegue del 15/10 en Hostinger, con HTTPS: `docs/ACTA_DESPLIEGUE.md`. El servidor tiene `02b569b`;
-  `desarrollo` se une con el PR #3.
-- Ciclo diario en Windows (dry-run, lunes a viernes 8:00): `deploy/windows/README.md`.
-- Simulacros: `docs/OPERACION.md`, sección 7 (3 y 4 hechos en Windows; 1, 2 y 5 pendientes; ninguno en el
-  servidor todavía).
-- Respaldos: `backup` con manifiesto; copia en ZIP al Drive de Hermatix (23/10).
+> Actualizado el 2026-10-26. La parte de **Windows** ya se puede escribir; la del **servidor** espera a la
+> lección 15. Sugerencia: escribe hoy la parte de Windows y deja una línea «Servidor: pendiente de la lección 15».
+
+**Datos de apoyo — despliegue:**
+- Instalación del 15/10 en Hostinger, con HTTPS y login: `docs/ACTA_DESPLIEGUE.md`. El servidor sigue en
+  `02b569b`; desde el 21/10 (decisión de Oscar) todo se hace en local y el servidor se actualiza una sola vez,
+  cuando Oscar una el PR #3 (`docs/DESPLIEGUE.md` 9.8).
+- En el servidor los avisos están en dry-run y el ciclo programado no está activado.
+
+**Datos de apoyo — operación en Windows (hecho):**
+- Tarea «SICOP CONNECT - ciclo diario», lunes a viernes 8:00, siempre dry-run, registro en
+  `data\logs\ciclo-AAAA-MM.log` (`deploy/windows/README.md`). Si la computadora está apagada a las 8:00 no se
+  recupera (22/10: se encendió a las 8:01); decisión de Ivania, igual que `Persistent=false` en el servidor.
+- Ciclos reales a mano: #23, #25 y #28 importaron ZIP reales con 0 rechazadas.
+- Respaldos: `backup` con manifiesto y huella; copia en ZIP al Drive de Hermatix (23/10).
 - `OPERACION.md` seguido al pie de la letra en una instalación limpia (23/10): 10 trabas encontradas y corregidas.
 
-**Falta** (lecciones 15 y 16): actualizar el servidor y hacer los simulacros allí. Esta sección se completa después.
+**Datos de apoyo — simulacros** (`docs/OPERACION.md`, sección 7):
+
+| # | Simulacro | Windows | Servidor |
+|---|---|---|---|
+| 1 | Reiniciar el servicio | no aplica (no hay servicio) | pendiente |
+| 2 | Reiniciar el servidor | no aplica | pendiente |
+| 3 | Restaurar un respaldo | ☑ 13/10, 19/10 y 23/10 (huella igual, revisión presente) | pendiente |
+| 4 | Ciclo con fuente fallida | ☑ 19/10, ciclo #22: «FALLO… no significa que no haya compras», no avisó | pendiente |
+| 5 | Repetir el ciclo | ☑ 22/10, ciclo #28: 0 avisos nuevos, los 6 del 21/10 no se repitieron; 24 avisos = 24 claves distintas | pendiente |
+
+**Falta** (lecciones 15 y 16): actualizar el servidor y hacer allí los 5 simulacros, con envío real supervisado.
 
 **Escribe tú:** ¿qué sigue funcionando con tu computadora apagada? ¿Qué hace Hermatix si se pierde la base?
 (Minuto 14–16 de la presentación.)
@@ -133,11 +151,12 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
 ## 7. Uso de Claude: plan vs. real, lecciones para futuros proyectos
 
 **Datos de apoyo** (`docs/METRICAS.md`):
-- Semana 2: 37,25 h estimadas por la guía · 49 h reales (+32 %), con la lección 10 todavía abierta.
-- Uso de Claude: casi **no registrado** (solo el 12/10: 29 % y 28 % de la ventana). La guía pedía anotar `/usage`
-  al cerrar cada día.
-- Semana 1 (06–09/10): ver `docs/BITACORA.md`. Semana 3 (21–23/10): horas **no registradas**; anotarlas ya,
-  mientras te acuerdas.
+- Horas humanas: semana 1 (06–09/10) 25,5 h · semana 2 (12–20/10) 49 h · semana 3 (21–23/10) 21 h (7 h por día,
+  sin desglose por tarea) · **total 95,5 h**.
+- Semana 2: 37,25 h estimadas por la guía · 49 h reales (+32 %), con la lección 10 todavía abierta. La semana 3
+  no se compara por lección (trabajo en local y ampliaciones, fuera del orden de la guía).
+- Uso de Claude: casi **no registrado**. Semana 1: 24 % semanal al cierre (09/10). Semana 2: solo el 12/10 (29 %
+  y 28 % de la ventana, 33 % semanal). Semana 3: no registrado. La guía pedía anotar `/usage` al cerrar cada día.
 
 **Para tus lecciones aprendidas** (ejemplos reales del proyecto):
 - La revisión general del 23/10 encontró 3 errores que las 470 pruebas no detectaban.
@@ -167,14 +186,39 @@ ejemplo: la huella del archivo frente a la huella del cartel; por qué el tempor
 
 **Datos de apoyo:** `docs/ESTADO_PROYECTO.md` («Pendientes») · guía, sección 23.2 (plan de las 160 horas).
 
-Pendientes conocidos al 23/10:
-- Unir el PR #3, actualizar el servidor y activar el ciclo programado.
-- Simulacros en el servidor.
-- Obtención automática: depende de la respuesta de SICOP.
-- Decidir con Oscar el falso positivo de «telemetría» que encontró `score-rules` (`docs/REGLAS.md`, 4.1).
-- Nombres de los competidores en `config/competidores.yaml`.
-- Más catálogo (más códigos de clasificación).
-- Respaldos automáticos en el servidor.
+> Actualizado el 2026-10-26. Esta sección **ya se puede escribir**: no depende del servidor.
+
+**Pendientes conocidos al 26/10, por responsable:**
+
+*Para terminar el mes (lo que falta para que funcione solo):*
+- Oscar: revisar y unir el PR #3; cerrar los PR de ramas ya incluidas; decidir «Para decidir» de la descripción.
+- Oscar con Ivania: actualizar el servidor (lección 15), simulacros allí (lección 16), activar el ciclo
+  programado y el envío real supervisado (lección 10, sesión con Oscar pendiente).
+- Oscar: cierre del acta (JSON de Google en USB y Mac, cargas del 16 y 19/10, historial del asistente, quitar el
+  permiso de escritura en GitHub del servidor).
+- Respaldos automáticos en el servidor (los hace Oscar).
+
+*Decisiones abiertas:*
+- Obtención automática: espera la respuesta de SICOP a la consulta del 22/10 (ID de soporte). Con eso se decide
+  activar `obtain auto` y la hora del ciclo (el ZIP llegó hacia las 9:20; a las 8:00 casi siempre falla).
+- Falso positivo «telemetría… Acueducto» (`20261000990`) en `iot_frio` (`docs/REGLAS.md` 3 y 4.1).
+- Confirmar N = 3 días del cierre próximo y el contenido del resumen semanal.
+- Adjudicaciones que llegan solas: hoy el ciclo queda en «fallo» y no avisa (decisión de Claude, por revisar).
+- Que Oscar acepte `docs/DECISION_OBTENCION.md`; falta el Reglamento de SICOP.
+
+*Mejoras con valor para Hermatix:*
+- Nombre de las 13 cédulas ganadoras en `config/competidores.yaml`; decidir si se descarga «Contratos».
+- Más catálogo: buscar por nombre los códigos de las 6 familias que aún no tienen.
+- Candidatos de la guía (23.2): consolidación con el uso real, obtención automática, análisis de pliegos con IA
+  (requiere presupuesto de API aparte), integración con ventas, ampliación regional.
+
+*Técnico:*
+- Una prueba falló una vez con Python 3.12 y no se repitió (sin identificar).
+- Playwright en el servidor Ubuntu: pendiente de verificar.
+
+**Datos para estimar horas** (`docs/METRICAS.md`): semana 2, 37,25 h estimadas · 49 h reales (+32 %); semana 3,
+21 h (7 h por día, sin desglose por tarea). Total del mes hasta el 23/10: 95,5 h. Uso de Claude casi sin
+registrar: dilo así en la estimación.
 
 **Escribe tú:** ordena los pendientes por valor para Hermatix y estima las horas de cada uno con los datos del
 mes (sección 7). Este es el entregable E10: lo acepta Oscar el día 20.
