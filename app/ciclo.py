@@ -10,6 +10,9 @@ Reglas:
   aviso de cierre próximo (A4): no depende de los datos del día y el plazo corre igual.
 * Los lunes (hora de Costa Rica) el ciclo arma también el resumen semanal (app/resumen.py), con el mismo dry-run.
 * Los archivos importados (o ya importados antes) se mueven a INCOMING_DIR/procesados/<fecha>/.
+* Un archivo «ya importado» que importó el panel («Cargar archivo») o la CLI, y no un ciclo, cuenta como datos
+  nuevos: así un ZIP descargado a mano y subido en el panel también produce los avisos (2026-10-26). Cuenta una
+  sola vez, porque después de este ciclo pasa a procesados/.
 * El ZIP de pliegos se acepta tal como llega: se importan sus dos CSV (app/importers/zip_pliegos.py) y el ZIP
   se mueve entero, a procesados o, si alguno de sus CSV falló, a con_error.
 * El ZIP «Reporte de adjudicaciones en firme» también (app/importers/adjudicaciones.py): sus tres CSV se importan
@@ -77,6 +80,7 @@ class ArchivoCiclo:
     aceptadas: int = 0
     rechazadas: int = 0
     movido_a: str | None = None
+    fuera_de_ciclo: bool = False  # ya_importado por el panel o la CLI: para los avisos cuenta como nuevo
 
 
 @dataclass
@@ -289,8 +293,11 @@ def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen
                     ciclo.archivos.append(archivo)
                     continue
                 if r.ya_importado is not None:
-                    archivo = ArchivoCiclo(nombre, "ya_importado", tipo,
-                                           f"igual a la importación #{r.ya_importado}: no cambió nada", r.ya_importado)
+                    fuera = _importado_fuera_de_ciclo(conn, r.ya_importado)
+                    detalle = (f"importado antes en el panel o la CLI (importación #{r.ya_importado}): cuenta para los"
+                               " avisos" if fuera else f"igual a la importación #{r.ya_importado}: no cambió nada")
+                    archivo = ArchivoCiclo(nombre, "ya_importado", tipo, detalle, r.ya_importado,
+                                           fuera_de_ciclo=fuera)
                 else:
                     archivo = ArchivoCiclo(nombre, "importado", tipo, import_id=r.import_id,
                                            aceptadas=r.aceptadas, rechazadas=len(r.rechazos))
@@ -310,6 +317,13 @@ def _importar(conn, settings: Settings, ciclo: Ciclo, listos: list[Path], origen
             archivo.movido_a = movido
     ciclo.periodo = (min(desde), max(hasta)) if desde else (None, None)
     return errores
+
+
+def _importado_fuera_de_ciclo(conn: sqlite3.Connection, import_id: int) -> bool:
+    """True si esa importación no la hizo un ciclo (source_runs.kind = 'import': el panel o la CLI)."""
+    fila = conn.execute("SELECT r.kind FROM imports i JOIN source_runs r ON r.id = i.source_run_id WHERE i.id = ?",
+                        (import_id,)).fetchone()
+    return fila is not None and fila[0] != "ciclo"
 
 
 def run_cycle(settings: Settings, origen: str, dry_run: bool = True, ahora: datetime | None = None,
@@ -344,7 +358,8 @@ def _paso_a_paso(conn, settings, ciclo: Ciclo, origen, ahora, proveedor, reglas_
         ciclo.archivos.extend(apartados)
         errores += _importar(conn, settings, ciclo, listos, origen, f"{ahora:%Y-%m-%d}")
     # Las adjudicaciones no son «datos del día» para los avisos: no traen carteles nuevos.
-    nuevos = sum(1 for a in ciclo.archivos if a.resultado == "importado" and a.reporte not in ADJUDICACIONES)
+    nuevos = sum(1 for a in ciclo.archivos
+                 if (a.resultado == "importado" or a.fuera_de_ciclo) and a.reporte not in ADJUDICACIONES)
     solo_adjudicaciones = ciclo.contar("importado") > nuevos
     en_espera = ciclo.contar("en_espera")
     if not errores and nuevos == 0 and en_espera:

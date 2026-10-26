@@ -98,8 +98,9 @@ Reglas:
 
 ### 1.3 Evaluar
 
-**Cargar un archivo no lo evalúa.** El panel solo muestra los carteles evaluados con las reglas
-(`config/hermatix_rules.yaml`). Después de cargar a mano:
+**Subirlo en el panel («Cargar archivo») lo evalúa enseguida** (desde 2026-10-26): al terminar de importar, la
+página evalúa todos los carteles con las reglas (`config/hermatix_rules.yaml`), tarda unos 15 s con la base real y
+muestra cuántos quedaron en Alta y en Media. **Importar por la terminal (`import`) no evalúa**: después hay que correr
 
 ```
 python -m app.cli evaluate
@@ -176,25 +177,40 @@ python -m app.cli run-cycle --origen real --send       # envío real
 
 ### 3.1 Obtención automática (`obtain auto`, lección 4)
 
-**Estado (2026-10-22): construida y probada con datos SIMULADOS; no activada.** En la única prueba real, SICOP
-rechazó la descarga hecha por el programa (`DECISION_OBTENCION.md` §8): mientras eso no se resuelva con soporte de
-SICOP, la descarga cae en el plan B de abajo. No se llama «automática» hasta que un ciclo real lo demuestre.
+**Estado (2026-10-26): lista para activarse en el servidor** (`DESPLIEGUE.md` 9.9, la activa Oscar). En la única
+prueba real, SICOP rechazó la descarga hecha por el programa; Oscar decidió **descarga a mano** con recordatorio
+(`DECISION_OBTENCION.md` §8, regla 12). En local sigue `SOURCE_MODE=manual`. No se llama «automática» hasta que un
+ciclo real lo demuestre.
 
-`python -m app.cli obtain auto` es **una vuelta**; la tarea «SICOP CONNECT - obtencion» la repite cada 15 min, de
-07:00 a 20:00, de lunes a viernes (`deploy/windows/README.md`). Cada vuelta:
+**Rutina diaria en el servidor (lunes a viernes):**
+1. 06:30 y 14:00: la app pide el reporte sola. Nadie hace nada.
+2. Llega el correo «SICOP CONNECT · descargar el reporte de las 06:30» (o de las 14:00) a `OBTAIN_ALERT_TO`.
+3. Abrir el correo de SICOP «Envío de reporte» (botón «Abrir el correo de SICOP en Gmail» en «Cargar archivo»),
+   bajar el ZIP sin abrirlo y subirlo en «Cargar archivo» como «pliegos», origen «real». **El mismo día**: el
+   enlace vence. Al subirlo se importa y se evalúa: los carteles nuevos ya se ven en el panel.
+4. **08:00: sale el correo de avisos**, con todo lo subido desde el correo anterior (el de las 06:30, si se subió
+   antes de las 8:00, y el de las 14:00 del día anterior). Es el único momento en que se envían avisos.
+
+`python -m app.cli obtain auto` es **una vuelta**; en el servidor la repite `sicop-obtain.timer` cada 15 min, de
+06:00 a 19:45, de lunes a viernes. En Windows, la tarea «SICOP CONNECT - obtencion» (`deploy/windows/README.md`).
+La vuelta **no corre el ciclo ni manda avisos de oportunidades**: eso lo hace el ciclo de las 8:00
+(`sicop-cycle.timer`, `run-cycle --send`). Cada vuelta:
 
 1. Con `SOURCE_MODE=manual` no hace nada (no abre SICOP ni lee Gmail).
-2. Desde `OBTAIN_REQUEST_HOUR` (07:00), si hoy no hay solicitud, pide el reporte. **Una por día:** si la de hoy
-   falló, no se pide otra sola.
-3. Si hay una solicitud abierta, revisa el buzón: enlace → descarga → validación → el ZIP queda en `INCOMING_DIR`.
-4. Si una solicitud falló, manda **una** alerta a `OBTAIN_ALERT_TO` con el motivo y el plan B. Mientras los avisos
-   estén en dry-run (`NOTIFICATIONS_DRY_RUN=true`), la alerta es solo un archivo:
-   `EXPORTS_DIR\alerta-obtencion-<n>.txt`. La alerta nunca lleva el enlace ni el código.
-5. Si hay un archivo listo en `INCOMING_DIR` (el de la descarga automática o uno dejado a mano), corre el ciclo
-   **en dry-run**. En `source_runs` queda con modo `auto`. Un archivo recién copiado espera a la vuelta siguiente.
+2. Cada hora de `OBTAIN_REQUEST_HOUR` es un turno (servidor: `06:30,14:00`). Si el turno no tiene solicitud,
+   pide el reporte. **Una por turno:** si la del turno falló, no se pide otra hasta el turno siguiente. Si al pedir
+   la de las 14:00 sigue esperando el enlace la de las 06:30, esa se cierra como FALLO (con su alerta).
+3. Si hay una solicitud abierta, revisa el buzón. Con `OBTAIN_DOWNLOAD=manual` (por defecto), al llegar el enlace
+   la solicitud queda `ENLACE_RECIBIDO` y **no se descarga**; con `auto`: descarga → validación → `INCOMING_DIR`.
+4. Correos a `OBTAIN_ALERT_TO`, uno por solicitud: el **recordatorio** de descargar y subir, o la **alerta** de
+   FALLO con el plan B. Mientras los avisos estén en dry-run, son solo archivos:
+   `EXPORTS_DIR\recordatorio-obtencion-<n>.txt` y `EXPORTS_DIR\alerta-obtencion-<n>.txt`. Nunca llevan el enlace
+   ni el código.
+El ciclo de las 8:00 toma lo que haya en `INCOMING_DIR`. Un ZIP **subido en el panel** ya está importado y
+evaluado, pero cuenta como **datos nuevos** para el correo (una sola vez: después pasa a `procesados`).
 
 **Activar:** en `.env`, `SOURCE_MODE=auto`, `OBTAIN_ALERT_TO=` (el buzón de la alerta) y `migrate`; luego crear la
-tarea y pausar la de las 8:00 (`deploy/windows/README.md`). **Volver a manual:** `SOURCE_MODE=manual`. No hay que
+tarea, **sin** pausar la de las 8:00: esa manda los avisos (`deploy/windows/README.md`). **Volver a manual:** `SOURCE_MODE=manual`. No hay que
 tocar código ni borrar la tarea; desde la vuelta siguiente no hace nada.
 
 **Qué hacer ante cada FALLO** (aparece en el registro, en la alerta y en `obtain status`):
@@ -209,8 +225,8 @@ tocar código ni borrar la tarea; desde la vuelta siguiente no hace nada.
 | «Ciclo #n: …» | Falló el ciclo, no la obtención | Sección 3 y sección 5. |
 
 **Plan B (un clic):** abrir en el buzón de SICOP el correo «Envío de reporte» de hoy, hacer clic en el enlace,
-guardar el ZIP y dejarlo en `INCOMING_DIR` sin abrirlo en Excel. La vuelta siguiente (≤ 15 min) lo importa,
-evalúa y prepara los avisos.
+guardar el ZIP sin abrirlo en Excel y subirlo en «Cargar archivo» (se importa y evalúa al subirlo). Los avisos
+salen con el correo de las 8:00.
 
 **Renovar el acceso a Gmail (lectura):** `python -m app.cli obtain gmail-auth`, entrando con el buzón de
 `SICOP_REQUEST_EMAIL`. Después, `python -m app.cli obtain check-mail` para comprobar. El permiso de enviar avisos

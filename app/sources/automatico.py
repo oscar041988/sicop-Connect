@@ -1,16 +1,20 @@
-"""Obtención automática integrada al ciclo (lección 4): una «vuelta» de obtain auto.
+"""Obtención automática (lección 4): una «vuelta» de obtain auto.
 
-La tarea programada llama a obtain auto cada 15 minutos (07:00–20:00, lunes a viernes). Cada vuelta:
+La tarea programada llama a obtain auto cada 15 minutos (06:00–19:45, lunes a viernes). Cada vuelta:
 1. Con SOURCE_MODE=manual no hace nada: no abre SICOP ni lee Gmail.
-2. Desde OBTAIN_REQUEST_HOUR, si hoy no hay ninguna solicitud, pide el reporte (obtain request). Una por día: si
-   la de hoy falló, no se pide otra (regla 4 de DECISION_OBTENCION.md §8).
-3. Si hay una solicitud abierta, revisa el buzón una vez (obtain poll: enlace → descarga → validación → la copia
-   a INCOMING_DIR).
-4. Una solicitud que terminó «fallido» manda UNA alerta a OBTAIN_ALERT_TO con el motivo y el plan B: descargar a
-   mano con el correo «Envío de reporte» y dejar el ZIP en la carpeta de entrada. La alerta nunca lleva el enlace,
-   el código ni el processId (regla 7). Mientras los avisos estén en dry-run, solo se escribe la vista previa.
-5. Si hay un archivo listo en INCOMING_DIR (el que dejó la descarga automática o uno dejado a mano), corre el ciclo:
-   importar → evaluar → avisar, SIEMPRE en dry-run, con el bloqueo de run-cycle y modo «auto» en source_runs.
+2. Cada hora de OBTAIN_REQUEST_HOUR es un turno (06:30 y 14:00: dos por día, 2026-10-26). Si el turno vigente
+   no tiene solicitud, pide el reporte (obtain request). Una por turno: si la del turno falló, no se pide otra
+   hasta el turno siguiente (regla 4 de DECISION_OBTENCION.md §8). Si al pedir sigue abierta la del turno anterior,
+   esa se cierra «fallido» (su enlace no llegó a tiempo) y manda su alerta.
+3. Si hay una solicitud abierta, revisa el buzón una vez (obtain poll). Con OBTAIN_DOWNLOAD=manual (por defecto),
+   al llegar el enlace la solicitud queda «enlace_recibido» y no se descarga nada; con auto: descarga → validación
+   → la copia a INCOMING_DIR.
+4. Correos a OBTAIN_ALERT_TO, uno por solicitud y nunca con el enlace, el código ni el processId (regla 7):
+   - «enlace_recibido»: el RECORDATORIO de descargar el ZIP y subirlo en «Cargar archivo».
+   - «fallido»: la ALERTA con el motivo y el plan B (descargar a mano con el correo «Envío de reporte»).
+   Mientras los avisos estén en dry-run, solo se escribe la vista previa.
+La vuelta NO corre el ciclo ni manda avisos de oportunidades (Ivania, 2026-10-26): el ZIP se importa y evalúa al
+subirlo en el panel, y el correo de avisos sale una vez al día, a las 8:00, con el ciclo (sicop-cycle.timer).
 Un bloqueo propio impide dos vueltas a la vez. Ningún fallo es silencioso: cada paso deja su línea en el resultado.
 """
 
@@ -24,7 +28,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from app import ciclo
 from app.bloqueo import CicloOcupado, bloqueo
 from app.config import Settings
 from app.database import connect
@@ -42,7 +45,6 @@ class Vuelta:
     """Qué hizo una vuelta, para la salida del comando y el registro de la tarea."""
     lineas: list[str] = field(default_factory=list)
     fallo: bool = False      # algo falló en esta vuelta (la salida del comando es 1)
-    ciclo_id: int | None = None
 
     def nota(self, texto: str, fallo: bool = False) -> None:
         self.lineas.append(("FALLO · " if fallo else "") + texto)
@@ -59,7 +61,7 @@ def _ahora() -> datetime:
 
 def vuelta(settings: Settings, *, crear_lector: Callable, proveedor_alerta: Callable | None = None,
            reloj: Callable[[], datetime] = _ahora, solicitar: Callable = sicop_browser.solicitar_reporte,
-           sondear: Callable = obtencion.sondear, correr_ciclo: Callable = ciclo.run_cycle) -> Vuelta:
+           sondear: Callable = obtencion.sondear) -> Vuelta:
     """Una vuelta de obtain auto. Lanza CicloOcupado si otra vuelta está en curso.
 
     crear_lector y proveedor_alerta se llaman solo si hacen falta: en modo manual no se toca Gmail. Las pruebas
@@ -72,17 +74,31 @@ def vuelta(settings: Settings, *, crear_lector: Callable, proveedor_alerta: Call
     with bloqueo(ruta_bloqueo(settings), f"obtain auto · {ahora:%Y-%m-%d %H:%M:%S} · proceso {os.getpid()}"):
         _obtener(settings, v, ahora, crear_lector, solicitar, sondear, reloj)
         _alertar(settings, v, reloj, proveedor_alerta)
-        _ciclo(settings, v, ahora, correr_ciclo)
     return v
 
 
 # --- 2 y 3: pedir y sondear --------------------------------------------------------------------------------
 
-def _solicitud_de_hoy(settings: Settings, hoy: str) -> sqlite3.Row | None:
+def _solicitud_del_turno(settings: Settings, hoy: str, turno: str) -> sqlite3.Row | None:
     with closing(connect(settings.database_path)) as conn:
         conn.row_factory = sqlite3.Row
         return conn.execute("SELECT id, estado FROM solicitudes_sicop WHERE substr(solicitada_en, 1, 10) = ?"
-                            " ORDER BY id DESC LIMIT 1", (hoy,)).fetchone()
+                            " AND turno = ? ORDER BY id DESC LIMIT 1", (hoy, turno)).fetchone()
+
+
+def _cerrar_anteriores(settings: Settings, turno: str, reloj) -> list[int]:
+    """Antes de pedir el reporte de un turno, la solicitud que siga abierta de antes se cierra «fallido»: su enlace
+    no llegó a tiempo y el sondeo solo sigue la más reciente. Manda su alerta normal (con el plan B)."""
+    marcas = ", ".join("?" for _ in obtencion.ABIERTOS)
+    with closing(connect(settings.database_path)) as conn:
+        ids = [i for (i,) in conn.execute(f"SELECT id FROM solicitudes_sicop WHERE estado IN ({marcas})",
+                                          obtencion.ABIERTOS)]
+        for i in ids:
+            conn.execute("UPDATE solicitudes_sicop SET estado = 'fallido', motivo = ?, terminada_en = ? WHERE id = ?",
+                         (f"El correo con el enlace no llegó antes de la solicitud de las {turno}; la nueva la "
+                          "reemplaza. Si llega tarde, se puede descargar igual.",
+                          reloj().isoformat(timespec="seconds"), i))
+    return ids
 
 
 def _hay_abierta(settings: Settings) -> bool:
@@ -92,14 +108,19 @@ def _hay_abierta(settings: Settings) -> bool:
 
 
 def _obtener(settings, v: Vuelta, ahora: datetime, crear_lector, solicitar, sondear, reloj) -> None:
-    hoy = _solicitud_de_hoy(settings, ahora.date().isoformat())
-    pedir = hoy is None and ahora.time() >= settings.obtain_request_hour
-    if hoy is None and not pedir:
-        v.nota(f"Todavía no es hora de pedir el reporte (desde las {settings.obtain_request_hour:%H:%M}).")
-    elif hoy is not None and hoy["estado"] == "validado":
-        v.nota(f"La solicitud de hoy (#{hoy['id']}) ya está validada.")
-    elif hoy is not None and hoy["estado"] == "fallido":
-        v.nota(f"La solicitud de hoy (#{hoy['id']}) falló: no se pide otra hoy (una por día). Ver la alerta.")
+    horas = settings.obtain_request_hours
+    turno = sicop_browser.turno_de(settings, ahora)
+    actual = _solicitud_del_turno(settings, ahora.date().isoformat(), turno)
+    pedir = actual is None and ahora.time() >= horas[0]
+    if actual is None and not pedir:
+        v.nota(f"Todavía no es hora de pedir el reporte (desde las {horas[0]:%H:%M}).")
+    elif actual is not None and actual["estado"] == "validado":
+        v.nota(f"La solicitud del turno de las {turno} (#{actual['id']}) ya está validada.")
+    elif actual is not None and actual["estado"] == "enlace_recibido":
+        v.nota(f"La solicitud del turno de las {turno} (#{actual['id']}) ya tiene su enlace: la descarga es a mano.")
+    elif actual is not None and actual["estado"] == "fallido":
+        v.nota(f"La solicitud del turno de las {turno} (#{actual['id']}) falló: no se pide otra en este turno (una "
+               "por turno). Ver la alerta.")
     if not pedir and not _hay_abierta(settings):
         return
     try:
@@ -108,6 +129,9 @@ def _obtener(settings, v: Vuelta, ahora: datetime, crear_lector, solicitar, sond
         v.nota(f"No se pudo abrir Gmail: {exc} No se pidió ni revisó nada.", fallo=True)
         return
     if pedir:
+        for anterior in _cerrar_anteriores(settings, turno, reloj):
+            v.nota(f"La solicitud #{anterior} seguía esperando el enlace: se cerró al pedir la del turno de las "
+                   f"{turno} (se manda su alerta).", fallo=True)
         try:
             r = solicitar(settings, lector)
         except YaSolicitadoHoy as exc:
@@ -116,7 +140,7 @@ def _obtener(settings, v: Vuelta, ahora: datetime, crear_lector, solicitar, sond
             v.nota(f"Solicitud a SICOP: {exc.motivo}", fallo=True)
             return
         else:
-            v.nota(f"Solicitud #{r.solicitud_id} hecha: SICOP mostró «Procesando el reporte».")
+            v.nota(f"Solicitud #{r.solicitud_id} (turno de las {turno}) hecha: SICOP mostró «Procesando el reporte».")
     try:
         r = sondear(settings, lector, reloj=reloj)
     except CicloOcupado:
@@ -157,21 +181,46 @@ def texto_alerta(settings: Settings, fila: sqlite3.Row) -> tuple[str, str]:
     return f"SICOP CONNECT · FALLO en la obtención (solicitud #{fila['id']})", cuerpo
 
 
+def texto_recordatorio(settings: Settings, fila: sqlite3.Row) -> tuple[str, str]:
+    """(asunto, cuerpo) del recordatorio cuando llegó el enlace y la descarga es a mano. Sin enlace ni processId."""
+    turno = f"de las {fila['turno']}" if fila["turno"] else f"#{fila['id']}"
+    llegada = (fila["enlace_recibido_en"] or "")[11:16]
+    panel = settings.app_base_url.rstrip("/") + "/cargar"
+    cuerpo = "\n".join([
+        f"SICOP CONNECT · ya llegó el reporte {turno} (correo de SICOP de las {llegada}).",
+        "",
+        "Para que entre al panel y salgan los avisos:",
+        f"1. Abre en {settings.sicop_request_email or 'el buzón de SICOP'} el correo de info@sicop.go.cr «Envío de "
+        "reporte» más reciente.",
+        "2. Toca «URL de descarga» y guarda el ZIP. No lo abras ni lo descomprimas.",
+        f"3. Súbelo en el panel, «Cargar archivo» ({panel}): tipo «pliegos», origen «real».",
+        "",
+        "Al subirlo, la app lo importa y lo evalúa enseguida: los carteles nuevos se ven en el panel. El correo de",
+        "avisos sale a las 8:00 (lunes a viernes) con todo lo subido hasta esa hora.",
+        "Hazlo hoy: el enlace de SICOP vence (se vio uno vencido a las 16 h).",
+        "",
+        "No respondas este correo.",
+    ])
+    return f"SICOP CONNECT · descargar el reporte {turno} (solicitud #{fila['id']})", cuerpo
+
+
 def _alertar(settings: Settings, v: Vuelta, reloj, proveedor_alerta) -> None:
     with closing(connect(settings.database_path)) as conn:
         conn.row_factory = sqlite3.Row
-        filas = conn.execute("SELECT * FROM solicitudes_sicop WHERE estado = 'fallido' AND alerta_estado IS NULL"
-                             " ORDER BY id").fetchall()
+        filas = conn.execute("SELECT * FROM solicitudes_sicop WHERE estado IN ('fallido', 'enlace_recibido')"
+                             " AND alerta_estado IS NULL ORDER BY id").fetchall()
         for fila in filas:
-            asunto, cuerpo = texto_alerta(settings, fila)
+            recordatorio = fila["estado"] == "enlace_recibido"
+            asunto, cuerpo = (texto_recordatorio if recordatorio else texto_alerta)(settings, fila)
+            que = "Recordatorio" if recordatorio else "Alerta"
             real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
             if not real or proveedor_alerta is None:
-                ruta = settings.exports_dir / f"alerta-obtencion-{fila['id']}.txt"
+                ruta = settings.exports_dir / f"{que.lower()}-obtencion-{fila['id']}.txt"
                 ruta.parent.mkdir(parents=True, exist_ok=True)
                 ruta.write_text(f"Para: {settings.obtain_alert_to or '(falta OBTAIN_ALERT_TO)'}\n"
                                 f"Asunto: {asunto}\n\n{cuerpo}\n", encoding="utf-8")
                 _marcar(conn, fila["id"], "vista_previa", reloj)
-                v.nota(f"Alerta de la solicitud #{fila['id']}: vista previa en {ruta} (avisos en dry-run, no se envió).")
+                v.nota(f"{que} de la solicitud #{fila['id']}: vista previa en {ruta} (avisos en dry-run, no se envió).")
                 continue
             _marcar(conn, fila["id"], "incierta", reloj)  # antes de llamar a Gmail: si se cae, no se reenvía sola
             try:
@@ -179,13 +228,13 @@ def _alertar(settings: Settings, v: Vuelta, reloj, proveedor_alerta) -> None:
                                                   cuerpo)
             except EnvioRechazado as exc:
                 _marcar(conn, fila["id"], "fallida", reloj)
-                v.nota(f"Alerta de la solicitud #{fila['id']}: Gmail la rechazó ({exc}).", fallo=True)
+                v.nota(f"{que} de la solicitud #{fila['id']}: Gmail la rechazó ({exc}).", fallo=True)
             except Exception as exc:  # noqa: BLE001 — EnvioIncierto o cualquier otro: queda incierta
-                v.nota(f"Alerta de la solicitud #{fila['id']}: sin respuesta clara de Gmail ({type(exc).__name__}). "
+                v.nota(f"{que} de la solicitud #{fila['id']}: sin respuesta clara de Gmail ({type(exc).__name__}). "
                        "Revisar Gmail › Enviados; no se reenvía sola.", fallo=True)
             else:
                 _marcar(conn, fila["id"], "aceptada", reloj)
-                v.nota(f"Alerta de la solicitud #{fila['id']} enviada a {settings.obtain_alert_to}.")
+                v.nota(f"{que} de la solicitud #{fila['id']} enviado a {settings.obtain_alert_to}.")
 
 
 def _marcar(conn: sqlite3.Connection, solicitud_id: int, estado: str, reloj) -> None:
@@ -195,30 +244,3 @@ def _marcar(conn: sqlite3.Connection, solicitud_id: int, estado: str, reloj) -> 
 
 def _html(texto: str) -> str:
     return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-# --- 5: ciclo ----------------------------------------------------------------------------------------------
-
-def _ciclo(settings: Settings, v: Vuelta, ahora: datetime, correr_ciclo) -> None:
-    if not settings.incoming_dir.is_dir():
-        return
-    listos, apartados = ciclo.recoger(settings.incoming_dir)
-    if not listos:
-        if any(a.resultado == "en_espera" for a in apartados):
-            v.nota("Hay un archivo recién copiado en la carpeta de entrada: se importa en la próxima vuelta.")
-        return
-    try:
-        c = correr_ciclo(settings, "real", dry_run=True, ahora=ahora, modo="auto")
-    except CicloOcupado:
-        v.nota("Hay un ciclo en curso (¿run-cycle a mano?): el archivo se importa en la próxima vuelta.")
-        return
-    except Exception as exc:  # noqa: BLE001 — run_cycle ya lo registró como fallo en source_runs
-        v.nota(f"El ciclo se detuvo ({type(exc).__name__}: {exc}). Quedó registrado como fallo.", fallo=True)
-        return
-    v.ciclo_id = c.id
-    importados = c.contar("importado")
-    if c.estado == "ok":
-        preparados = sum(len(x) for x in c.avisos.preparados.values()) if c.avisos else 0
-        v.nota(f"Ciclo #{c.id} OK (dry-run): {importados} reporte(s) importado(s), {preparados} aviso(s) preparado(s).")
-    else:
-        v.nota(f"Ciclo #{c.id}: {c.error}", fallo=True)

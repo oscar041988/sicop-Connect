@@ -1,6 +1,7 @@
 # Ciclo completo (guía 17.4, lección 8): recoger INCOMING_DIR → importar → evaluar → avisar.
-# EMPIEZA EN DRY-RUN: prepara los avisos y la vista previa, no envía nada.
-# Pasar a --send solo con autorización de Oscar y en el orden de la guía 17.5 (ver docs/DESPLIEGUE.md).
+# ENVÍO REAL (--send): autorizado por Oscar (2026-10-26). Lo corre sicop-cycle.timer a las 8:00: toma los ZIP que
+# se subieron en el panel desde el ciclo anterior (ya importados y evaluados al subirlos) y manda el correo de
+# avisos. Para probar sin enviar: cambiar --send por --dry-run.
 # Códigos de salida: 0 = ok · 1 = fallo (queda en source_runs) · 2 = ya había otro ciclo en curso.
 [Unit]
 Description=Ciclo SICOP CONNECT
@@ -13,5 +14,5 @@ User=sicop
 Group=sicop
 WorkingDirectory=/opt/sicop-connect
 EnvironmentFile=/etc/sicop-connect/app.env
-ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli run-cycle --origen real --dry-run
+ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli run-cycle --origen real --send
 UMask=0077

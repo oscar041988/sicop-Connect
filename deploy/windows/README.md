@@ -77,14 +77,19 @@ en `false` al borrarla.
 
 ## Obtención automática (lección 4): tarea «SICOP CONNECT - obtencion»
 
-Reemplaza a la tarea de las 8:00 cuando se pase a `SOURCE_MODE=auto` (decisión de Ivania, 2026-10-22). **No se
+Va **junto con** la tarea de las 8:00 cuando se pase a `SOURCE_MODE=auto` (desde 2026-10-26 la vuelta ya no corre
+el ciclo: los avisos salen con la tarea de las 8:00). **No se
 crea sola ni se activa con este documento:** se crea cuando Oscar y Ivania lo decidan.
+
+> **Desde 2026-10-26 la obtención se activa en el servidor** (`docs/DESPLIEGUE.md` 9.9). No crear también esta
+> tarea en Windows con `SOURCE_MODE=auto`: dos lugares pidiendo el reporte gastarían los turnos y duplicarían los
+> correos.
 
 - `sicop-obtencion.ps1`: una vuelta de `obtain auto` cada 15 min, de 07:00 a 20:00, de lunes a viernes. Registro
   en `data\logs\obtencion-AAAA-MM.log`.
-- Cada vuelta, con `SOURCE_MODE=auto`: desde `OBTAIN_REQUEST_HOUR` pide el reporte (una vez por día), revisa el
-  buzón, manda la alerta si algo falló (a `OBTAIN_ALERT_TO`; en dry-run solo la vista previa) y, si hay un archivo
-  en `data\incoming`, corre el ciclo en dry-run. Con `SOURCE_MODE=manual` no hace nada.
+- Cada vuelta, con `SOURCE_MODE=auto`: en cada turno de `OBTAIN_REQUEST_HOUR` pide el reporte (uno por turno),
+  revisa el buzón y manda el recordatorio o la alerta (a `OBTAIN_ALERT_TO`; en dry-run solo la vista previa). No
+  corre el ciclo: eso lo hace la tarea de las 8:00. Con `SOURCE_MODE=manual` no hace nada.
 - Códigos de salida: `0` = ok · `1` = algo falló (ver el registro y la alerta) · `2` = otra vuelta seguía en curso.
 
 ### Antes de crearla
@@ -92,8 +97,7 @@ crea sola ni se activa con este documento:** se crea cuando Oscar y Ivania lo de
 1. En `.env`: `SOURCE_MODE=auto`, `OBTAIN_REQUEST_HOUR=07:00`, `OBTAIN_ALERT_TO=licitaciones@hermatix.com`.
 2. `.venv\Scripts\python.exe -m app.cli migrate` (aplica la 0011).
 3. Una vuelta a mano: `.venv\Scripts\python.exe -m app.cli obtain auto`.
-4. Pausar la tarea de las 8:00, porque esta la reemplaza:
-   `Disable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"`.
+4. **No** pausar la tarea de las 8:00: es la que importa lo que quede en `data\incoming` y prepara los avisos.
 
 ### Crearla (PowerShell, una sola vez)
 

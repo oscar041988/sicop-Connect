@@ -31,7 +31,7 @@ reinicio a mitad, se podrían duplicar envíos.
                                     └───────────────┬─────────────────┘                │
                                                     ▼                                  ▼
                               ┌───────────────────────────────────────────────────────────────┐
-                              │ SQLite (DATABASE_PATH) · migraciones 0001–0016                │
+                              │ SQLite (DATABASE_PATH) · migraciones 0001–0017                │
                               │ raw_snapshots · tenders · tender_lines · catálogo · instit.   │
                               │ opportunity_assessments · reviews · notification_outbox ·     │
                               │ adjudicaciones · users · audit_log · source_runs · …          │
@@ -183,7 +183,7 @@ código se reemplaza en cada versión y los datos se respaldan aparte. Pasos: `d
 
 Esto no se puede comprobar desde Windows; queda para la actualización del servidor (lección 15):
 
-- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0016.
+- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0017.
 - Que el proxy HTTPS de Hostinger pase la IP real del visitante (`--proxy-headers`; comprobado el 19/10 con la
   versión vieja).
 - El timer del ciclo y la obtención automática, cuando se activen.

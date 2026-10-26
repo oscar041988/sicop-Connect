@@ -91,6 +91,18 @@
   {% endif %}
 </section>
 {% endfor %}
+{% if evaluacion %}
+<section class="ficha resumen">
+  <h2>Evaluación</h2>
+  <p class="hecho">Listo: se evaluaron {{ evaluacion.carteles }} carteles con las reglas de Hermatix. Candidatos:
+    <strong>{{ evaluacion.alta }} en Alta</strong> y <strong>{{ evaluacion.media }} en Media</strong> (un cartel
+    puede coincidir con más de una familia). Ya se ven en el <a href="/oportunidades">panel de carteles</a>.</p>
+  {% if correo_8 %}<p>El correo de avisos sale a las 8:00, de lunes a viernes, con todo lo subido hasta esa hora.
+    No hace falta hacer nada más.</p>{% endif %}
+</section>
+{% elif error_evaluacion %}
+<p class="error">{{ error_evaluacion }}</p>
+{% endif %}
 
 <section class="ayuda-carga instrucciones">
   <h2>Instrucciones: cómo cargar el reporte de SICOP, paso a paso</h2>
@@ -141,8 +153,8 @@
       Se abre una ventana de Windows: vaya a Descargas, elija el ZIP y toque «Abrir». El nombre del archivo aparece
       junto al botón. Máximo {{ limite_mb }} MB.</li>
 
-    <li><strong>Subir e importar.</strong> Toque «Subir e importar» y espere: con un ZIP grande puede tardar unos
-      segundos. No cierre ni recargue la página mientras tanto.</li>
+    <li><strong>Subir e importar.</strong> Toque «Subir e importar» y espere: entre importar y evaluar puede tardar
+      cerca de medio minuto. No cierre ni recargue la página mientras tanto.</li>
 
     <li><strong>Leer el resumen.</strong> Debajo del formulario aparece un resumen de lo importado, uno por cada
       parte (carteles y líneas):
@@ -156,9 +168,11 @@
           dañado). Lea el mensaje, corrija y vuelva a subirlo.</li>
       </ul></li>
 
-    <li><strong>Evaluar.</strong> Subir no evalúa: los carteles nuevos todavía no salen en el panel. En la terminal,
-      dentro de la carpeta del proyecto, ejecute <code>python -m app.cli evaluate</code>. Compara los carteles con
-      las reglas de Hermatix y les da su prioridad.</li>
+    <li><strong>Evaluación automática.</strong> Al terminar de importar, la app compara enseguida todos los carteles
+      con las reglas de Hermatix y les da su prioridad (tarda unos segundos más). Debajo del resumen aparece
+      «Evaluación» con cuántos quedaron en Alta y en Media. No hay que correr nada en la terminal.</li>
+    <li><strong>Correo de avisos.</strong> No sale al subir: sale a las 8:00 de lunes a viernes, con todo lo subido
+      hasta esa hora. Por eso el reporte de las 6:30 conviene subirlo antes de las 8:00.</li>
 
     <li><strong>Revisar en el panel.</strong> Vaya a «Panel de carteles» y recargue la página: ahí están los carteles
       nuevos, ordenados por el cierre más próximo.</li>

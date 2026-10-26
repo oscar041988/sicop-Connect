@@ -247,7 +247,7 @@ sudo .venv/bin/python -m playwright install-deps chromium   # bibliotecas del si
 ```
 
 *Pendiente de verificar en el servidor:* no se ha probado en Ubuntu; la obtención automática solo se probó en
-Windows.
+Windows. La activación completa (06:30 y 14:00, correo de avisos a las 8:00) está en 9.9.
 
 ### 9.4 🐧 SERVIDOR — configuración privada (guía 17.3)
 
@@ -413,3 +413,74 @@ del paso 2.
 
 **Registros:** `sudo journalctl -u sicop-web.service -n 100 --no-pager` y lo mismo con `sicop-cycle.service`.
 Cada ciclo también queda en `source_runs` (número de ciclo, estado y cobertura).
+
+### 9.9 🐧 SERVIDOR — activar la obtención (06:30 y 14:00) y el correo de avisos de las 8:00 (para Oscar)
+
+Decidido (2026-10-26, Oscar por Ivania): dos solicitudes por día a las **06:30 y 14:00**, **descarga a mano** (SICOP
+bloquea la descarga hecha por el programa) con un **recordatorio** por correo, **evaluación al subir** el ZIP en el
+panel y **envío real** de los avisos **solo a las 8:00**. Lo hace el administrador del servidor, en este orden. Se
+habilitan **los dos** timers: `sicop-obtain.timer` (pide el reporte) y `sicop-cycle.timer` (el correo de las 8:00).
+
+**Cómo queda el día (lunes a viernes):** 06:30 la app pide el reporte y escribe el código sola → llega el correo
+«Envío de reporte» (de 2 a 50 min) → la app manda el recordatorio a `OBTAIN_ALERT_TO` → una persona baja el ZIP y lo
+sube en «Cargar archivo», que lo **importa y evalúa** al momento → **08:00** el ciclo manda el correo de avisos con
+todo lo subido desde el anterior. A las 14:00 se pide otro reporte; lo que se suba entra en el correo del día
+siguiente. Si algo falla, llega la alerta con el plan B.
+
+1. **Respaldo** (9.7) y anotar el commit y el esquema actuales (9.8, paso 1).
+2. **Código nuevo** (9.8, pasos 3–5) y `sicop-migrate`: aplica la **0016** (baja de usuarios) y la **0017** (dos
+   turnos). `doctor` debe decir esquema 0017. Después, `evaluate` (9.8, paso 5).
+3. **Navegador de Playwright** (si no se hizo en 9.3):
+   ```bash
+   sudo -u sicop /opt/sicop-connect/.venv/bin/python -m playwright install chromium
+   sudo /opt/sicop-connect/.venv/bin/python -m playwright install-deps chromium
+   ```
+4. **Permiso de lectura de Gmail** (`docs/GOOGLE_API.md`): `obtain gmail-auth` necesita un navegador, así que se
+   hace en una PC, entrando como el buzón de SICOP (licitaciones@), y el token se copia al servidor como el de
+   enviar (9.4): `/etc/sicop-connect/google_read_token.json`, propietario `sicop`, permisos `600`. Es **otro**
+   archivo que `google_token.json`.
+5. **`app.env`** (`sudo -u sicop nano /etc/sicop-connect/app.env`), además de lo de 9.4:
+   ```ini
+   SOURCE_MODE=auto
+   OBTAIN_REQUEST_HOUR=06:30,14:00
+   OBTAIN_DOWNLOAD=manual
+   SICOP_REQUEST_EMAIL=        # el buzón donde llegan los correos de SICOP
+   GOOGLE_READ_TOKEN_FILE=/etc/sicop-connect/google_read_token.json
+   OBTAIN_ALERT_TO=            # quién recibe el recordatorio y las alertas
+   NOTIFICATIONS_ENABLED=true
+   NOTIFICATIONS_DRY_RUN=false
+   SCHEDULER_ENABLED=true
+   MAIL_PROVIDER=gmail_api
+   MAIL_FROM=                  # el remitente de los avisos (sección 5)
+   ```
+   Revisar con `doctor` (patrón de `systemd-run`, 9.5): no muestra los valores sensibles.
+6. **Unidades** (`sicop-cycle.service` ya trae `--send`; `sicop-obtain.*` son nuevas):
+   ```bash
+   sudo cp /opt/sicop-connect/deploy/systemd/sicop-* /etc/systemd/system/
+   sudo systemd-analyze verify /etc/systemd/system/sicop-*.service /etc/systemd/system/sicop-*.timer
+   sudo systemctl daemon-reload
+   ```
+7. **Una vuelta supervisada**, a la hora que sea (antes de las 06:30 no pide nada; después, pide el turno vigente):
+   ```bash
+   sudo systemctl start sicop-obtain.service
+   sudo journalctl -u sicop-obtain.service -n 50 --no-pager
+   ```
+   Lo esperado: «Solicitud #N (turno de las …) hecha» y, en otra vuelta, «Llegó el correo «Envío de reporte»» y
+   «Recordatorio … enviado». Una vuelta sin nada que hacer termina con código 0. Si dice FALLO, leer el motivo
+   antes de seguir: no habilitar el timer con un FALLO sin entender.
+8. **Subir el ZIP en el panel** y ver que la página muestra «Evaluación» y los carteles en el panel. Después, **un
+   ciclo supervisado** (manda el correo de avisos de verdad):
+   ```bash
+   sudo systemctl start sicop-cycle.service
+   sudo journalctl -u sicop-cycle.service -n 50 --no-pager
+   ```
+   Verificar que el correo llegó a la bandeja (no solo «aceptado»).
+9. **Habilitar los dos horarios:**
+   ```bash
+   sudo systemctl enable --now sicop-obtain.timer sicop-cycle.timer
+   sudo systemctl list-timers 'sicop-*'   # obtain: cada 15 min de 06:00 a 19:45 · cycle: 08:00, lunes a viernes
+   ```
+
+**Pausar la obtención:** `sudo systemctl disable --now sicop-obtain.timer` (o `SOURCE_MODE=manual` en `app.env`: la
+vuelta no hace nada). **Pausar los avisos:** `sudo systemctl disable --now sicop-cycle.timer`. **Seguir en vista
+previa:** cambiar `--send` por `--dry-run` en `sicop-cycle.service` y `daemon-reload`.

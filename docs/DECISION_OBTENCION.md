@@ -174,7 +174,10 @@ Reemplazan, solo para la obtención, la regla «no se eluden códigos de validac
      uso» de datos personales, cuyo texto completo no se tiene; la descarga de datos abiertos no pide sesión.
    - **Pendiente:** el *Reglamento para la Utilización de SICOP* (cláusula 1a), no conseguido. Si aparece, se
      revisa; si prohíbe descargas con programas, se anota aquí y se vuelve a decidir.
-4. **Una sola solicitud a SICOP por día** (restricción en la base). Las pruebas reales, de una en una.
+4. **Una solicitud a SICOP por turno, dos turnos por día: 06:30 y 14:00** (aprobado por Oscar, 2026-10-26; la hora
+   de la mañana pasó de 07:30 a 06:30 el mismo día, para alcanzar el correo de avisos de las 8:00; antes,
+   una por día). La base lo impide con un índice único por (día, turno), migración 0017. Las pruebas reales, de
+   una en una.
 5. **Permiso de Gmail solo de lectura** (`gmail.readonly`), con un **token aparte** del de enviar avisos
    (`gmail.send`): cada parte de la app tiene solo el permiso que necesita. Se reutiliza el mismo cliente de
    Google (`GOOGLE_CLIENT_FILE`).
@@ -187,6 +190,11 @@ Reemplazan, solo para la obtención, la regla «no se eluden códigos de validac
    ≈ 16,5 h (sección 2).
 10. **`SOURCE_MODE=manual|auto`**, manual por defecto: volver al modo asistido no requiere tocar código.
 11. **No se declara «automática»** hasta que un ciclo real lo demuestre de punta a punta.
+12. **Descarga a mano (decisión de Oscar, 2026-10-26)**, después del bloqueo del 22/10 y de la respuesta de SICOP:
+    la app pide el reporte y lee el código y el enlace sola, pero **no abre el enlace** (`OBTAIN_DOWNLOAD=manual`).
+    Manda un **recordatorio** a `OBTAIN_ALERT_TO` (sin el enlace: regla 7) y una persona baja el ZIP del correo
+    «Envío de reporte» y lo sube en «Cargar archivo», que lo importa y lo evalúa al momento. **Los avisos salen
+    solo a las 8:00** (Ivania, 2026-10-26), con el ciclo diario. No se intenta esquivar el bloqueo.
 
 Datos por confirmar en la primera solicitud real: cuánto tarda el correo con el enlace (la guía dice horas; lo
 observado en `ACCESO_SICOP.md` fue ≈ 1 minuto) y si la ventana «Procesando el reporte» trae el `processId`.

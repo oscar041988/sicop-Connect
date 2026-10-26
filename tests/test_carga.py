@@ -70,6 +70,22 @@ def test_subir_carteles_sinteticos_importa_y_muestra_el_resumen(cliente, carpeta
     assert _importaciones(db) == [("carteles", guardados[0].name, "sintetico", 3, 5)]
 
 
+def test_al_subir_se_evalua_enseguida_y_repetido_no(cliente, carpetas, db):
+    respuesta = _subir(cliente, CARTELES, "carteles_sintetico.csv")
+
+    with closing(sqlite3.connect(db)) as conn:
+        carteles = conn.execute("SELECT count(*) FROM tenders").fetchone()[0]
+    assert f"se evaluaron {carteles} carteles con las reglas de Hermatix" in respuesta.text
+    assert "Ya se ven en el" in respuesta.text
+    otra_vez = _subir(cliente, CARTELES, "copia.csv")  # nada nuevo: no se evalúa otra vez
+    assert "Este archivo ya se import" in otra_vez.text and "se evaluaron" not in otra_vez.text
+
+
+def test_el_aviso_del_correo_de_las_8_solo_con_el_horario_activo(cliente, carpetas, monkeypatch):
+    monkeypatch.setenv("SCHEDULER_ENABLED", "true")
+    assert "El correo de avisos sale a las 8:00" in _subir(cliente, CARTELES, "carteles_sintetico.csv").text
+
+
 def test_subir_el_mismo_archivo_otra_vez_no_duplica(cliente, carpetas, db):
     entrada, _ = carpetas
     _subir(cliente, CARTELES, "carteles_sintetico.csv")
@@ -298,7 +314,8 @@ def test_la_ayuda_trae_los_enlaces_a_gmail_y_sicop(cliente, monkeypatch):
     assert "https://mail.google.com/mail/u/?authuser=buzon-sintetico%40example.com#search/" in texto
     assert "obtención automática está apagada" in texto
     for parte in ("<dt>real</dt>", "<dt>sintetico</dt>", "<dt>simulado</dt>", "No lo abra, no lo descomprima",
-                  "Elegir archivo", "Subir e importar", "Leer el resumen", "python -m app.cli evaluate"):
+                  "Elegir archivo", "Subir e importar", "Leer el resumen", "Evaluación automática",
+                  "sale a las 8:00"):
         assert parte in texto
 
 

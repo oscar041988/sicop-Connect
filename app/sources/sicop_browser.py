@@ -5,7 +5,8 @@ SICOP_REQUEST_EMAIL → «Continuar» → espera el código con el lector de Gma
 → «Procesando el reporte» → «Aceptar». Selectores por texto visible y rol, observados el 2026-10-21 (ver
 docs/ACCESO_SICOP.md). Reglas: docs/DECISION_OBTENCION.md §8.
 
-* Una sola solicitud por día: cuenta desde que se pulsa «Continuar» con el correo (SICOP manda un código).
+* Una sola solicitud por turno (OBTAIN_REQUEST_HOUR: 06:30 y 14:00, dos por día; 2026-10-26): cuenta
+  desde que se pulsa «Continuar» con el correo (SICOP manda un código).
 * CAPTCHA, bloqueo o aviso contra programas → FALLO «control no automatizable», sin reintentar.
 * Todo fallo queda en solicitudes_sicop con su motivo y una captura en EXPORTS_DIR (con los campos vaciados).
 * Nunca se muestran el correo, el código ni el processId: el código va enmascarado y el processId solo se guarda
@@ -59,7 +60,8 @@ class FalloObtencion(Exception):
 
 
 class YaSolicitadoHoy(Exception):
-    """Hoy ya se envió una solicitud a SICOP (regla: una por día). No se abrió el navegador."""
+    """Este turno ya tiene una solicitud enviada a SICOP (regla: una por turno, dos turnos por día). No se abrió el
+    navegador."""
 
 
 @dataclass(frozen=True)
@@ -224,9 +226,18 @@ class _Diagnostico:
         return ruta
 
 
-def _hoy_ya_se_envio(conn: sqlite3.Connection, hoy: str) -> bool:
-    return conn.execute("SELECT 1 FROM solicitudes_sicop WHERE substr(solicitada_en, 1, 10) = ? AND correo_enviado = 1",
-                        (hoy,)).fetchone() is not None
+def turno_de(settings: Settings, momento: datetime) -> str:
+    """El turno («06:30», «14:00») al que pertenece una solicitud hecha en ese momento: la última hora de
+    OBTAIN_REQUEST_HOUR ya pasada. Antes de la primera hora cuenta como la primera, para que una solicitud a mano
+    temprano no sume una tercera en el día."""
+    horas = settings.obtain_request_hours
+    pasadas = [h for h in horas if momento.time() >= h]
+    return f"{(pasadas or horas)[-1 if pasadas else 0]:%H:%M}"
+
+
+def _turno_ya_se_envio(conn: sqlite3.Connection, hoy: str, turno: str) -> bool:
+    return conn.execute("SELECT 1 FROM solicitudes_sicop WHERE substr(solicitada_en, 1, 10) = ? AND turno = ?"
+                        " AND correo_enviado = 1", (hoy, turno)).fetchone() is not None
 
 
 def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: Callable[[], datetime] = _ahora,
@@ -239,12 +250,14 @@ def solicitar_reporte(settings: Settings, lector, *, ver: bool = False, reloj: C
     if not settings.sicop_request_email:
         raise FalloObtencion("Falta SICOP_REQUEST_EMAIL en .env (el buzón donde llegan los correos de SICOP).")
     inicio = reloj()
+    turno = turno_de(settings, inicio)
     with closing(connect(settings.database_path)) as conn:
         try:
-            if _hoy_ya_se_envio(conn, inicio.date().isoformat()):
-                raise YaSolicitadoHoy("Hoy ya se envió una solicitud a SICOP (regla: una por día). No se pidió nada.")
-            solicitud_id = conn.execute("INSERT INTO solicitudes_sicop (solicitada_en) VALUES (?)",
-                                        (inicio.isoformat(timespec="seconds"),)).lastrowid
+            if _turno_ya_se_envio(conn, inicio.date().isoformat(), turno):
+                raise YaSolicitadoHoy(f"El turno de las {turno} de hoy ya tiene una solicitud a SICOP (regla: una por "
+                                      "turno). No se pidió nada.")
+            solicitud_id = conn.execute("INSERT INTO solicitudes_sicop (solicitada_en, turno) VALUES (?, ?)",
+                                        (inicio.isoformat(timespec="seconds"), turno)).lastrowid
         except sqlite3.OperationalError:
             raise FalloObtencion("La base no tiene la tabla solicitudes_sicop: ejecuta python -m app.cli migrate.") from None
 

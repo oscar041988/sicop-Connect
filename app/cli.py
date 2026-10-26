@@ -475,7 +475,7 @@ def obtain_poll(settings: Settings, seguir: bool) -> int:
                 print(f"{hora} · FALLO · {r.mensaje}", file=sys.stderr)
                 return 1
             print(f"{hora} · {r.mensaje}", flush=True)
-            if r.estado in (None, "validado") or not seguir:
+            if r.estado in (None, "validado", "enlace_recibido") or not seguir:
                 return 0
         time.sleep(settings.obtain_poll_minutes * 60)
 
@@ -494,7 +494,8 @@ def obtain_status(settings: Settings) -> int:
              ("enlace_recibido_en", "enlace"), ("descargado_en", "descargado"), ("validado_en", "validado"))
     for f in filas:
         pasos = " → ".join(f"{nombre} {f[col][11:16]}" for col, nombre in horas if f[col])
-        print(f"#{f['id']} · {f['solicitada_en'][:16].replace('T', ' ')} · {f['estado'].upper()}"
+        turno = f" (turno {f['turno']})" if f.get("turno") else ""
+        print(f"#{f['id']} · {f['solicitada_en'][:16].replace('T', ' ')}{turno} · {f['estado'].upper()}"
               f"{' · ' + pasos if pasos else ''}")
         if f["motivo"]:
             print(f"     motivo: {f['motivo']}")
@@ -506,7 +507,8 @@ def obtain_status(settings: Settings) -> int:
 
 
 def obtain_auto(settings: Settings) -> int:
-    """Una vuelta de la obtención automática (la tarea programada, cada 15 min). 0 = ok · 1 = fallo · 2 = ocupado."""
+    """Una vuelta de la obtención automática (la tarea programada, cada 15 min). 0 = ok · 1 = fallo · 2 = ocupado.
+    No manda avisos de oportunidades: esos salen con el ciclo de las 8:00 (run-cycle --send)."""
     from app.bloqueo import CicloOcupado
     from app.sources import automatico
     db = check_database(settings.database_path)
@@ -514,7 +516,7 @@ def obtain_auto(settings: Settings) -> int:
         print(f"Error: la base no está lista ({db['detail']}). Ejecuta python -m app.cli migrate", file=sys.stderr)
         return 1
     try:
-        settings.source_mode, settings.obtain_request_hour
+        settings.source_mode, settings.obtain_request_hours, settings.obtain_download
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

@@ -1,7 +1,8 @@
 # Revisión diaria (decisión de Oscar, 2026-10-13): de lunes a viernes a las 08:00 de Costa Rica.
 # La zona va escrita en la línea: no depende de la zona horaria del servidor (comprobar con timedatectl).
 # Persistent=false: si el servidor estaba apagado a las 8:00, no se manda tarde.
-# NO se habilita hasta el paso 6 de la activación (guía 17.5): sudo systemctl enable --now sicop-cycle.timer
+# Es EL CORREO DE AVISOS del día (Ivania, 2026-10-26): el único momento en que se envían. Va junto con
+# sicop-obtain.timer (que pide el reporte a las 06:30 y 14:00); se habilitan los dos (DESPLIEGUE.md 9.9).
 [Unit]
 Description=Revision diaria SICOP CONNECT
 

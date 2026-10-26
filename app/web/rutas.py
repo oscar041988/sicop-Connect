@@ -27,6 +27,7 @@ from app.config import load_settings
 from app.database import check_database, connect
 from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
+from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (avisos, calidad, competencia, destinatarios, exportar, historial, panel, reintentos, resumen,
                  seguimiento, usuarios)
@@ -304,6 +305,7 @@ def _render_carga(request: Request, status_code: int = 200, **contexto) -> Respo
         # «real» ya elegido: es el origen del trabajo diario (decisión de Ivania, 2026-10-26).
         "formulario": {"origen": "real"}, "url_sicop": carga.URL_SICOP,
         "url_gmail": carga.enlace_gmail(settings.sicop_request_email), "automatico": settings.source_mode == "auto",
+        "correo_8": settings.scheduler_enabled,  # el ciclo de las 8:00 manda los avisos (servidor)
         **contexto,
     }, status_code=status_code)
 
@@ -343,9 +345,27 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
     if error or all(p.resultado.ya_importado is not None for p in partes):
         # Con error, o repetido (el original ya está guardado desde la primera vez): no queda en la carpeta de entrada.
         ruta.unlink(missing_ok=True)
+    evaluacion = error_evaluacion = None
+    if any(p.resultado.ya_importado is None for p in partes):  # entró algo nuevo (aunque otra parte fallara)
+        evaluacion, error_evaluacion = _evaluar_tras_cargar(settings)
     # Sin Post/Redirect/Get: el detalle de los rechazos no se guarda en la base. Si se recarga la página y se
     # reenvía el archivo, el hash lo reconoce y no se importa dos veces.
-    return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error)
+    return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error,
+                         evaluacion=evaluacion, error_evaluacion=error_evaluacion)
+
+
+def _evaluar_tras_cargar(settings) -> tuple[dict | None, str | None]:
+    """Evalúa toda la base apenas se sube un archivo (Ivania, 2026-10-26): los carteles nuevos se ven en el panel
+    sin correr evaluate. No manda correos: los avisos salen con el ciclo de las 8:00. Con la base real tarda
+    unos 15 s. Devuelve (resumen, None) o (None, motivo) si no se pudo."""
+    try:
+        reglas = cargar_reglas()
+        with closing(connect(settings.database_path)) as conn:
+            r = evaluar_base(conn, reglas, _ahora())
+    except ReglasError as exc:
+        return None, f"Se importó, pero no se pudo evaluar: {exc}. Avisa a una administradora."
+    contar = lambda encaje: sum(c.get(encaje, 0) for c in r.por_encaje.values())  # noqa: E731
+    return {"carteles": r.carteles, "alta": contar("alta"), "media": contar("media")}, None
 
 
 # --- Competencia (todos los usuarios con sesión) ---------------------------------------------------------------

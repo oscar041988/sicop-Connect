@@ -269,6 +269,23 @@
     hechos por Ivania (2026-10-26); probado por Ivania en el panel local.
     ZIP `sicop_20261026-115002.zip` (integridad ok, huella del `.db` igual al manifiesto) subido por Ivania al
     Drive de Hermatix (2026-10-26).
+  - **3. Obtención y envío real en el servidor (hecho en código, 2026-10-26, rama `desarrollo`):**
+    aprobado por Oscar (por Ivania): dos solicitudes por día, **06:30 y 14:00** (la de la mañana pasó de 07:30 a
+    06:30 para alcanzar el correo de las 8:00); **descarga a mano** con un **recordatorio** a `OBTAIN_ALERT_TO`
+    (SICOP bloquea la del programa); **«Cargar archivo» evalúa al subir** (≈ 15 s con la base real; ya no hay que
+    correr `evaluate`); **envío real** de los avisos **solo a las 8:00** (`sicop-cycle.timer`, `run-cycle --send`).
+    Migración **0017** (`turno` + índice único por día y turno + estado `enlace_recibido`),
+    `OBTAIN_REQUEST_HOUR=06:30,14:00`, `OBTAIN_DOWNLOAD=manual`, `sicop-obtain.service` + `sicop-obtain.timer` (cada
+    15 min de 06:00 a 19:45, lunes a viernes; la vuelta no corre el ciclo ni manda avisos), y el ciclo cuenta como
+    nuevo un ZIP subido en el panel (antes no avisaba). Pasos para Oscar en `DESPLIEGUE.md` 9.9. En local nada se
+    activó (`SOURCE_MODE=manual`).
+    Respaldo `sicop_20261026-135112` (esquema 0016, huella igual al manifiesto) y `migrate` 0017 hechos por Ivania
+    (2026-10-26); base local con integridad ok (4 usuarios, 5 revisiones, 3 solicitudes intactos).
+    Evaluación al subir comprobada por Ivania (2026-10-26): importación 14:04:52 → evaluación 14:05:03, 12 820
+    carteles (69 nuevos).
+    **Pendiente · Ivania:** subir el ZIP del respaldo `sicop_20261026-135112` al Drive.
+    **Pendiente · Oscar:** desplegar y
+    activar (9.9); primera prueba real de punta a punta.
 
 - **Gestor de documentos (mejora pedida por Oscar, 2026-10-26):** expediente por cartel con encargado, archivos
   (PDF, Word, Excel, ZIP; 10 MB configurable), notas, traspaso con descarga de todo, página de seguimiento y correo

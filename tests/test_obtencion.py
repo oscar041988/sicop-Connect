@@ -98,17 +98,21 @@ class _Portal:
 def _settings(tmp_path, **extra):
     db = tmp_path / "sicop.db"
     apply_migrations(db)
+    # OBTAIN_DOWNLOAD=auto: estas pruebas son de la descarga automática; la manual tiene las suyas.
     valores = {"DATABASE_PATH": str(db), "RAW_DATA_DIR": str(tmp_path / "raw"),
-               "INCOMING_DIR": str(tmp_path / "incoming"), "EXPORTS_DIR": str(tmp_path / "exports")}
+               "INCOMING_DIR": str(tmp_path / "incoming"), "EXPORTS_DIR": str(tmp_path / "exports"),
+               "OBTAIN_DOWNLOAD": "auto"}
     valores.update(extra)
     return load_settings(env_file=None, environ=valores)
 
 
-def _solicitud(settings, estado="esperando_enlace", process_id=PID, cuando=SOLICITUD) -> int:
-    """Una solicitud como la deja obtain request (lección 2)."""
+def _solicitud(settings, estado="esperando_enlace", process_id=PID, cuando=SOLICITUD, turno=None) -> int:
+    """Una solicitud como la deja obtain request (lección 2), con el turno que le toca a esa hora."""
+    turno = sb.turno_de(settings, cuando) if turno is None else turno
     with closing(sqlite3.connect(settings.database_path)) as conn:
-        sid = conn.execute("INSERT INTO solicitudes_sicop (solicitada_en, correo_enviado, estado, process_id)"
-                           " VALUES (?, 1, ?, ?)", (cuando.isoformat(timespec="seconds"), estado, process_id)).lastrowid
+        sid = conn.execute("INSERT INTO solicitudes_sicop (solicitada_en, turno, correo_enviado, estado, process_id)"
+                           " VALUES (?, ?, 1, ?, ?)",
+                           (cuando.isoformat(timespec="seconds"), turno, estado, process_id)).lastrowid
         conn.commit()
     return sid
 
@@ -296,7 +300,7 @@ def test_migracion_0010_convierte_los_estados_viejos(tmp_path):
 
     assert apply_migrations(db) == ["0010_solicitudes_estados.sql", "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                     "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                    "0016_baja_usuarios.sql"]
+                                    "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql"]
     assert apply_migrations(db) == []  # repetible: la segunda vez no cambia nada
     with closing(sqlite3.connect(db)) as conn:
         filas = conn.execute("SELECT estado, esperando_enlace_en, terminada_en, alerta_estado FROM solicitudes_sicop"

@@ -1,0 +1,20 @@
+# Una vuelta de la obtención automática (app/sources/automatico.py), cada 15 min por sicop-obtain.timer.
+# Pide el reporte a SICOP en los turnos de OBTAIN_REQUEST_HOUR (06:30 y 14:00), lee el código y el enlace del buzón y
+# manda el recordatorio de descargar a mano (OBTAIN_DOWNLOAD=manual) o la alerta si algo falló.
+# NO corre el ciclo ni manda avisos de oportunidades: el ZIP se evalúa al subirlo en el panel y el correo de avisos
+# sale a las 8:00 con sicop-cycle.timer (decisión de Ivania, 2026-10-26). Con SOURCE_MODE=manual no hace nada.
+# Códigos de salida: 0 = ok · 1 = algo falló (ver journalctl y la alerta) · 2 = otra vuelta seguía en curso.
+[Unit]
+Description=Obtencion automatica SICOP CONNECT (una vuelta)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=sicop
+Group=sicop
+WorkingDirectory=/opt/sicop-connect
+EnvironmentFile=/etc/sicop-connect/app.env
+ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli obtain auto
+UMask=0077
+TimeoutStartSec=30min

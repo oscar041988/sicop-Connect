@@ -116,7 +116,7 @@ def test_modo_manual_no_toca_sicop_ni_gmail(tmp_path):
         raise AssertionError("en modo manual no se toca SICOP ni Gmail")
 
     v = automatico.vuelta(settings, crear_lector=prohibido, solicitar=prohibido, sondear=prohibido,
-                          correr_ciclo=prohibido, reloj=_Reloj(DESPUES))
+                          reloj=_Reloj(DESPUES))
     assert not v.fallo and "SOURCE_MODE=manual" in v.lineas[0]
     with closing(sqlite3.connect(settings.database_path)) as conn:
         assert conn.execute("SELECT COUNT(*) FROM solicitudes_sicop").fetchone() == (0,)
@@ -135,29 +135,27 @@ def test_antes_de_la_hora_no_pide_ni_abre_gmail(tmp_path):
 
 # --- Camino completo ---------------------------------------------------------------------------------------
 
-def test_auto_pide_valida_y_la_siguiente_vuelta_importa(tmp_path):
+def test_auto_pide_valida_y_deja_el_zip_para_el_ciclo_de_las_8(tmp_path):
     settings = _auto(tmp_path)
     solicitar = _Solicitar()
 
     v1 = _vuelta(settings, _Reloj(DESPUES), solicitar=solicitar)
     assert not v1.fallo and solicitar.llamadas == 1
     assert any("ZIP validado" in linea for linea in v1.lineas)
-    assert any("recién copiado" in linea for linea in v1.lineas)  # el ciclo espera su minuto
-    assert _ciclos(settings) == []
 
     _envejecer(settings.incoming_dir)
     v2 = _vuelta(settings, _Reloj(DESPUES + timedelta(minutes=15)), solicitar=solicitar)
     assert not v2.fallo, v2.lineas
-    assert solicitar.llamadas == 1  # una por día
+    assert solicitar.llamadas == 1  # una por turno
     assert any("ya está validada" in linea for linea in v2.lineas)
-    assert any(linea.startswith(f"Ciclo #{v2.ciclo_id} OK (dry-run): 2 reporte(s)") for linea in v2.lineas)
-    assert _ciclos(settings) == [("auto", "ok")]
-    assert not any(p.is_file() for p in settings.incoming_dir.iterdir())  # el ZIP pasó a procesados
+    # La vuelta no corre el ciclo (Ivania, 2026-10-26): el ZIP espera en la carpeta al correo de las 8:00.
+    assert _ciclos(settings) == []
+    assert any(p.suffix == ".zip" for p in settings.incoming_dir.iterdir())
 
 
-def test_zip_dejado_a_mano_se_importa(tmp_path):
+def test_con_la_solicitud_del_turno_fallida_no_pide_otra_ni_corre_el_ciclo(tmp_path):
     settings = _auto(tmp_path)
-    _solicitud(settings, estado="fallido", cuando=DESPUES)  # hoy ya se pidió y falló
+    _solicitud(settings, estado="fallido", cuando=DESPUES)  # este turno ya se pidió y falló
     with closing(sqlite3.connect(settings.database_path)) as conn:
         conn.execute("UPDATE solicitudes_sicop SET alerta_estado = 'vista_previa'")
         conn.commit()
@@ -168,8 +166,8 @@ def test_zip_dejado_a_mano_se_importa(tmp_path):
 
     v = _vuelta(settings, _Reloj(DESPUES + timedelta(hours=1)), solicitar=solicitar)
     assert solicitar.llamadas == 0
-    assert any("no se pide otra hoy" in linea for linea in v.lineas)
-    assert _ciclos(settings) == [("auto", "ok")]
+    assert any("no se pide otra en este turno" in linea for linea in v.lineas)
+    assert _ciclos(settings) == []
 
 
 # --- Fallos y alerta ---------------------------------------------------------------------------------------

@@ -1,0 +1,15 @@
+# Vueltas de obtain auto: de lunes a viernes, cada 15 min de 06:00 a 19:45, hora de Costa Rica.
+# La vuelta decide sola qué hacer: pide el reporte en los turnos de OBTAIN_REQUEST_HOUR (06:30 y 14:00, 2026-10-26)
+# y revisa el buzón. Funciona junto con sicop-cycle.timer (el correo de avisos de las 8:00): se habilitan los dos.
+# Persistent=false: si el servidor estaba apagado, no se recuperan vueltas atrasadas (la siguiente sigue donde quedó).
+# Se habilita en docs/DESPLIEGUE.md, sección 9.9:  sudo systemctl enable --now sicop-obtain.timer
+[Unit]
+Description=Obtencion automatica SICOP CONNECT cada 15 minutos
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 06..19:00/15:00 America/Costa_Rica
+Persistent=false
+Unit=sicop-obtain.service
+
+[Install]
+WantedBy=timers.target

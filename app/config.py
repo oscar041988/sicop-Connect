@@ -48,6 +48,7 @@ DEFAULTS: dict[str, str] = {
     "OBTAIN_LINK_MAX_HOURS": "12",
     "OBTAIN_POLL_MINUTES": "5",
     "OBTAIN_REQUEST_HOUR": "07:00",
+    "OBTAIN_DOWNLOAD": "manual",
     "OBTAIN_ALERT_TO": "",
 }
 
@@ -215,12 +216,29 @@ class Settings:
         return modo
 
     @property
-    def obtain_request_hour(self) -> time:
-        """Desde qué hora obtain auto pide el reporte del día (OBTAIN_REQUEST_HOUR, HH:MM; 07:00)."""
+    def obtain_request_hours(self) -> list[time]:
+        """Horas a las que obtain auto pide el reporte (OBTAIN_REQUEST_HOUR, HH:MM; una o dos separadas por coma,
+        p. ej. 06:30,14:00). Cada hora es un «turno»: una solicitud por turno (dos por día, Oscar, 2026-10-26)."""
+        texto = self.get("OBTAIN_REQUEST_HOUR")
         try:
-            return datetime.strptime(self.get("OBTAIN_REQUEST_HOUR").strip(), "%H:%M").time()
+            horas = sorted(datetime.strptime(h.strip(), "%H:%M").time() for h in texto.split(","))
         except ValueError:
-            raise ValueError("OBTAIN_REQUEST_HOUR debe ser una hora HH:MM, por ejemplo 07:00") from None
+            raise ValueError("OBTAIN_REQUEST_HOUR debe ser una o dos horas HH:MM separadas por coma, "
+                             "por ejemplo 06:30,14:00") from None
+        if len(horas) > 2:
+            raise ValueError("OBTAIN_REQUEST_HOUR admite como máximo dos horas (dos solicitudes por día).")
+        if len(set(horas)) != len(horas):
+            raise ValueError("OBTAIN_REQUEST_HOUR tiene una hora repetida.")
+        return horas
+
+    @property
+    def obtain_download(self) -> str:
+        """manual (por defecto; SICOP bloqueó la descarga hecha por el programa): al llegar el enlace se avisa para
+        descargarlo a mano · auto: la app lo descarga (OBTAIN_DOWNLOAD)."""
+        modo = self.get("OBTAIN_DOWNLOAD").strip().lower()
+        if modo not in ("manual", "auto"):
+            raise ValueError("OBTAIN_DOWNLOAD debe ser manual o auto")
+        return modo
 
     @property
     def obtain_alert_to(self) -> str:

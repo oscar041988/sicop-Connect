@@ -2,9 +2,12 @@
 
 Máquina de estados de cada solicitud (tabla solicitudes_sicop, migración 0010), solo hacia adelante:
     solicitado → codigo_ingresado → esperando_enlace → descargado → validado,  o  fallido (con su motivo).
+    Con OBTAIN_DOWNLOAD=manual (por defecto): esperando_enlace → enlace_recibido, y la descarga la hace una persona.
 obtain request (app/sources/sicop_browser.py) llega hasta esperando_enlace. obtain poll (sondear) sigue desde ahí:
 1. Revisa el buzón con el lector de la lección 1. Si el correo no llega en OBTAIN_LINK_MAX_HOURS → fallido.
-2. Descarga el ZIP con el enlace a RAW_DATA_DIR/descargas (el original se conserva) y guarda su SHA-256.
+2. Con OBTAIN_DOWNLOAD=manual se detiene aquí: SICOP bloqueó la descarga hecha por el programa (2026-10-22) y Oscar
+   decidió descargar a mano (2026-10-26). La solicitud queda enlace_recibido y obtain auto manda el recordatorio.
+   Con auto: descarga el ZIP con el enlace a RAW_DATA_DIR/descargas (el original se conserva) y guarda su SHA-256.
 3. Lo valida: el ZIP de pliegos con sus dos CSV, UTF-8 con BOM, separador «;», encabezados esperados y filas > 0.
    Un archivo vacío o raro es un FALLO, nunca «cero oportunidades».
 4. Si es válido, lo copia a INCOMING_DIR, donde el ciclo de la lección 4 lo importa. Aquí no se importa nada.
@@ -166,6 +169,11 @@ def _avanzar(conn, settings: Settings, fila: dict, lector, reloj, descargar) -> 
                                                         "ventana de SICOP); se sigue esperando el de esta.")
         if ahora - correo.recibido > VIGENCIA_ENLACE:
             return fallar("El enlace tiene más de 24 h: ya venció. No se pide otro reporte hoy.")
+        if settings.obtain_download == "manual":
+            actualizar(estado="enlace_recibido", enlace_recibido_en=_momento(correo.recibido),
+                       process_id=fila["process_id"] or process_id, terminada_en=_momento(reloj()))
+            return ResultadoSondeo(sid, "enlace_recibido", "Llegó el correo «Envío de reporte»: la descarga es a mano "
+                                                           "(descargar el ZIP y subirlo en «Cargar archivo»).")
         nombre = f"sicop-pliegos-{solicitada:%Y%m%d}-{sid}.zip"
         try:
             ruta = descargar(correo.valor, settings.raw_data_dir / "descargas", nombre)
