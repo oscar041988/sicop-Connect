@@ -1,5 +1,5 @@
 """Historial de cambios de administración (tabla audit_log, migración 0005): quién cambió qué y cuándo.
-Hoy: usuarios, destinatarios de los avisos y avisos revisados a mano.
+Hoy: usuarios, destinatarios de los avisos, avisos revisados a mano y seguimiento de carteles.
 
 No se borra ni se modifica (triggers). Nunca guarda contraseñas ni hashes.
 """
@@ -21,10 +21,13 @@ ACCIONES = {
     "desactivar_destinatario": "Quitó un destinatario de avisos",
     "reintentar_aviso": "Volvió a preparar un aviso",
     "confirmar_aviso": "Confirmó que un aviso sí salió",
+    "abrir_seguimiento": "Dio seguimiento a un cartel",
+    "asignar_encargado": "Asignó el encargado de un cartel",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
 DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")
+DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado")
 
 
 @dataclass(frozen=True)

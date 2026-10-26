@@ -249,6 +249,25 @@
 
 ## Pendientes
 
+- **Gestor de documentos (mejora pedida por Oscar, 2026-10-26):** expediente por cartel con encargado, archivos
+  (PDF, Word, Excel, ZIP; 10 MB configurable), notas, traspaso con descarga de todo, página de seguimiento y correo
+  al nuevo encargado; las etapas se suman a «Ofertada» / «No se oferta». Propuesta en 5 pasos en
+  `docs/GESTOR_DOCUMENTOS.md`. Decidido: cada expediente lo ven y editan solo su encargado y los
+  administradores; los demás ven «En seguimiento · <nombre>», sin acceso; botón «Dar seguimiento» en la página
+  del cartel para **cualquier usuario** (queda «sin encargado» hasta que un administrador lo asigne); solo un
+  administrador asigna o cambia el encargado; el correo sale con el ciclo diario; paso 1 en dos entregas.
+  - **Paso 1A hecho (2026-10-26, Claude a pedido de Ivania, rama `desarrollo`, solo local):** migración **0015**
+    (`seguimientos`, `seguimiento_asignaciones`, sin borrado), `app/seguimiento.py`, botón y marca en el cartel,
+    marca en el panel, página «Seguimiento» y expediente con su historial de encargados. **504 passed** (10 nuevas
+    en `tests/test_seguimiento.py`; la prueba de CSRF de `test_acceso.py` ahora incluye las 2 rutas nuevas).
+  - **Pendiente · Ivania:** respaldo, `migrate` (0015) en la base local y probarlo en el panel (dar seguimiento,
+    asignar como administrador, entrar con otro usuario y ver el «sin acceso»).
+  - **Siguiente:** paso 1B, el correo al nuevo encargado. Etapas del paso 5 **aprobadas** (26/10): preparando ·
+    enviada · ganada · perdida.
+- **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
+  calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
+  mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel
+  ajustadas y 1 nueva en `tests/test_seguimiento.py`).
 - **Cambio de método (2026-10-21, Oscar):** todo se desarrolla y se prueba **en local**. El servidor queda fuera
   de las siguientes partes del proyecto; se actualiza una sola vez, cuando la app esté lista. Los pasos de
   servidor de este documento y de las actas (lección 10: dry-run, envío supervisado, timer, reinicio) quedan en

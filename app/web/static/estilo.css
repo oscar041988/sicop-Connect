@@ -125,6 +125,9 @@ h3 { margin: 0; }
 .tag.w { background: var(--warn-bg); color: var(--warn); } /* cierra pronto / por verificar */
 .tag.g { background: var(--no-bg); color: var(--no); }     /* vencido / no interesa */
 .tag.r { background: var(--azul-bg); color: var(--azul); } /* revisar requisitos */
+.tag.seg, .en-seguimiento { background: var(--azul-bg); color: var(--azul); border: 1px solid var(--azul); } /* gestor de documentos */
+.en-seguimiento { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.seguimiento-acciones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0 0 16px; }
 .score { text-align: center; min-width: 78px; }
 .score b { display: block; font-size: 1.35rem; line-height: 1.1; font-weight: 800; color: var(--g7); }
 .score span { font-size: .75rem; color: var(--mut); }

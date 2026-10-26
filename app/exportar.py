@@ -63,7 +63,7 @@ def descripcion_filtros(conn: sqlite3.Connection, f: panel.Filtros) -> list[tupl
         ("Prioridad", prioridad),
         ("Familia", panel.NOMBRES_FAMILIA.get(f.familia, f.familia) if f.familia else "Todas"),
         ("Institución", institucion),
-        ("Plazo", panel.PLAZOS.get(f.plazo, f.plazo) if f.plazo else "Todos"),
+        ("Plazo", panel.PLAZOS.get(f.plazo, f.plazo) if f.plazo else "Vigentes (sin vencidos)"),
         ("Revisión", revisado),
         ("Tipo de procedimiento", f.tipo or "Todos"),
         ("Búsqueda", f.q or "—"),

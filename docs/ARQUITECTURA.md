@@ -31,7 +31,7 @@ reinicio a mitad, se podrían duplicar envíos.
                                     └───────────────┬─────────────────┘                │
                                                     ▼                                  ▼
                               ┌───────────────────────────────────────────────────────────────┐
-                              │ SQLite (DATABASE_PATH) · migraciones 0001–0014                │
+                              │ SQLite (DATABASE_PATH) · migraciones 0001–0015                │
                               │ raw_snapshots · tenders · tender_lines · catálogo · instit.   │
                               │ opportunity_assessments · reviews · notification_outbox ·     │
                               │ adjudicaciones · users · audit_log · source_runs · …          │
@@ -108,6 +108,7 @@ app/
   avisos.py · resumen.py · reintentos.py · destinatarios.py   avisos por correo
   competencia.py     quién gana qué (adjudicaciones)
   calidad.py         precisión y cobertura de las reglas por familia (score-rules, página «Calidad de reglas»)
+  seguimiento.py     gestor de documentos: carteles en seguimiento y su encargado (página «Seguimiento»)
   exportar.py        listado a Excel (identificadores como texto)
   usuarios.py · historial.py   usuarios (Argon2) y auditoría de cambios de administración
   respaldo.py        respaldo consistente con manifiesto
@@ -131,6 +132,7 @@ app/
 | Evaluación | `opportunity_assessments`, `evaluation_runs` | Una fila por cartel × familia × versión de reglas |
 | Calidad de reglas | `rule_score_runs`, `rule_scores` | Cada medición de `score-rules`, por familia; no se borra (trigger) |
 | Revisión | `reviews` | Solo se agrega: triggers impiden borrar o modificar |
+| Seguimiento | `seguimientos`, `seguimiento_asignaciones` | Un seguimiento por cartel; el encargado vigente es la última asignación; no se borran ni se modifican (triggers) |
 | Avisos | `notification_recipients`, `notification_outbox` | La outbox no se borra (trigger) |
 | Obtención | `solicitudes_sicop` | Máquina de estados de cada solicitud automática |
 | Acceso | `users`, `audit_log` | `audit_log` no se borra ni se modifica (triggers) |
@@ -181,7 +183,7 @@ código se reemplaza en cada versión y los datos se respaldan aparte. Pasos: `d
 
 Esto no se puede comprobar desde Windows; queda para la actualización del servidor (lección 15):
 
-- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0014.
+- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0015.
 - Que el proxy HTTPS de Hostinger pase la IP real del visitante (`--proxy-headers`; comprobado el 19/10 con la
   versión vieja).
 - El timer del ciclo y la obtención automática, cuando se activen.

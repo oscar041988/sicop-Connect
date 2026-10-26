@@ -116,8 +116,10 @@ def test_por_defecto_solo_candidatos_ordenados_por_cierre(db):
     ({"institucion": "3000000002"}, ["00000000002", "00000000004"]),
     ({"plazo": "abierto"}, ["00000000002"]),
     ({"tipo": "Licitación Reducida"}, ["00000000001"]),
-    ({"prioridad": "baja"}, ["00000000004", "00000000003"]),  # el 4 también es Baja en videotelematica
-    ({"prioridad": "todas", "familia": "gps_flotas"}, ["00000000001", "00000000002", "00000000003"]),
+    ({"prioridad": "baja"}, ["00000000004"]),  # el 4 también es Baja en videotelematica; el 3 está vencido
+    ({"prioridad": "todas", "familia": "gps_flotas"}, ["00000000001", "00000000002"]),
+    # Un vencido sale del panel (decisión de Ivania, 2026-10-26), pero se ve eligiendo «Vencido».
+    ({"prioridad": "todas", "plazo": "vencido"}, ["00000000003"]),
     ({"prioridad": "inventada", "plazo": "inventado"}, ["00000000001", "00000000002", "00000000004"]),  # se ignoran
 ])
 def test_filtros(db, filtros, esperado):

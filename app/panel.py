@@ -232,6 +232,11 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
         if valor:
             condiciones.append(f"{campo} = :{campo}")
             params[campo] = valor
+    if not f.plazo:
+        # Un cartel vencido sale solo del panel en cuanto pasa su cierre (decisión de Ivania, 2026-10-26): el plazo
+        # se calcula con «ahora» en cada consulta. Se ve eligiendo «Vencido» en el filtro; nada se borra, y la
+        # página «Seguimiento» lo sigue mostrando (las etapas «enviada», «ganada» y «perdida» son después del cierre).
+        condiciones.append("plazo != 'vencido'")
     if f.revisado == "si":
         condiciones.append("decision IS NOT NULL")
     elif f.revisado == "no":

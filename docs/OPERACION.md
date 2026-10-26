@@ -120,11 +120,18 @@ por qué salió así, pero no cambia lo que muestra el panel.
    usuario que inició sesión. Si se anota la decisión de otra persona, se escribe en el comentario.
 
 - La prioridad dice **encaje con el portafolio de Hermatix**, no si Hermatix puede participar o ganar.
+- **Un cartel vencido sale solo del panel** en cuanto pasa su fecha de cierre (decisión de Ivania, 2026-10-26).
+  No se borra nada: se ve eligiendo «Vencido» en el filtro de Plazo (y la exportación a Excel hace lo mismo), y
+  si está en «Seguimiento» sigue apareciendo allí.
 - Un cartel que cierra el fin de semana se trata igual que cualquier otro (decisión de Ivania, 2026-10-16).
 - **Exportar a Excel:** el botón del panel de carteles baja el listado con los mismos filtros (todas las
   páginas). Los números SICOP quedan como texto: no se dañan al abrirlos.
 - **Competencia:** quién gana qué por familia, con montos por moneda, a partir de las adjudicaciones importadas.
   Los ganadores vienen solo con cédula; el nombre se pone en `config/competidores.yaml`.
+- **Seguimiento (gestor de documentos):** en la página del cartel, «Dar seguimiento» (cualquier usuario) lo pone
+  en la página «Seguimiento» como «sin encargado». Un administrador abre el expediente y elige el encargado (o lo
+  cambia: el anterior queda en el historial). El expediente lo ven solo su encargado y los administradores; los
+  demás ven «En seguimiento · <nombre>» en el panel. Detalle: `docs/GESTOR_DOCUMENTOS.md`.
 
 ## 3. El ciclo diario
 

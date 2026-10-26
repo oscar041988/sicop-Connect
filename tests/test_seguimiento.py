@@ -1,0 +1,239 @@
+"""Gestor de documentos, paso 1A: seguimiento de un cartel y su encargado (docs/GESTOR_DOCUMENTOS.md).
+
+Datos SINTÉTICOS en una base temporal; nunca toca data/.
+"""
+
+import sqlite3
+from contextlib import closing
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app import historial, seguimiento, usuarios
+from app.database import apply_migrations, connect
+from app.historial import Quien
+from app.importers.carteles import import_carteles
+from app.main import app
+from app.matching.evaluar import evaluar_base
+from app.matching.reglas import cargar_reglas
+from tests.test_panel import CARTELES_SINTETICO, CONTRASENA, iniciar_sesion, token_csrf
+
+AHORA = datetime.now(timezone.utc).replace(microsecond=0)
+CR = timezone(timedelta(hours=-6))
+CIERRE = (AHORA + timedelta(days=5)).astimezone(CR).isoformat(timespec="seconds")
+NRO = "00000000001"     # GPS sintético: sale en el panel (Alta)
+OTRO = "00000000002"
+
+
+@pytest.fixture
+def db(tmp_path):
+    path = tmp_path / "sicop.db"
+    apply_migrations(path)
+    t = "2026-10-01T00:00:00+00:00"
+    with closing(connect(path)) as conn:
+        conn.execute("INSERT INTO institutions (cedula, nombre, first_seen, last_seen) VALUES (?, ?, ?, ?)",
+                     ("3000000001", "Municipalidad Sintética A", t, t))
+        conn.executemany(
+            "INSERT INTO tenders (nro_sicop, descripcion, institution_cedula, fecha_cierre_recepcion, content_hash,"
+            " first_seen, last_seen) VALUES (?, ?, '3000000001', ?, 'h', ?, ?)",
+            [(NRO, "Servicio de monitoreo GPS de vehículos", CIERRE, t, t),
+             (OTRO, "Monitoreo GPS para la flotilla municipal", CIERRE, t, t)])
+        evaluar_base(conn, cargar_reglas(), AHORA)
+        usuarios.crear_usuario(conn, "oscar@ejemplo.test", "Oscar", CONTRASENA, usuarios.ADMIN)
+        usuarios.crear_usuario(conn, "ivania@ejemplo.test", "Ivania", CONTRASENA)
+        usuarios.crear_usuario(conn, "ana@ejemplo.test", "Ana", CONTRASENA)
+    return path
+
+
+def _id(db, email):
+    with closing(connect(db)) as conn:
+        return usuarios.buscar_id(conn, email)
+
+
+def _quien(db, email):
+    with closing(connect(db)) as conn:
+        u = usuarios.obtener(conn, usuarios.buscar_id(conn, email))
+    return Quien(u.id, u.nombre)
+
+
+@pytest.fixture
+def clientes(db, monkeypatch):
+    """Un cliente con sesión por persona: Oscar (admin), Ivania y Ana (encargadas)."""
+    monkeypatch.setenv("DATABASE_PATH", str(db))
+    resultado = {}
+    for nombre, email in (("oscar", "oscar@ejemplo.test"), ("ivania", "ivania@ejemplo.test"),
+                          ("ana", "ana@ejemplo.test")):
+        cliente = TestClient(app)
+        assert iniciar_sesion(cliente, email).status_code == 303
+        resultado[nombre] = cliente
+    return resultado
+
+
+def _dar_seguimiento(cliente, nro=NRO):
+    token = token_csrf(cliente.get(f"/oportunidades/{nro}").text)
+    return cliente.post(f"/oportunidades/{nro}/seguimiento", data={"csrf_token": token}, follow_redirects=False)
+
+
+def _asignar(cliente, encargado_id, nro=NRO):
+    token = token_csrf(cliente.get("/oportunidades").text)
+    return cliente.post(f"/seguimiento/{nro}/encargado", data={"csrf_token": token, "encargado": str(encargado_id)},
+                        follow_redirects=False)
+
+
+# --- Lógica (sin web) ---------------------------------------------------------------------------------------------
+
+def test_abrir_dos_veces_no_duplica_y_queda_sin_encargado(db):
+    quien = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        assert seguimiento.abrir(conn, NRO, quien, AHORA) is True
+        assert seguimiento.abrir(conn, NRO, quien, AHORA) is False
+        estado = seguimiento.estado(conn, NRO)
+        assert conn.execute("SELECT count(*) FROM seguimientos").fetchone()[0] == 1
+        eventos = historial.ultimos(conn, historial.DE_SEGUIMIENTO)
+
+    assert (estado.abierto_por, estado.encargado_id, estado.encargado) == ("Ivania", None, None)
+    assert [(e.accion, e.detalle) for e in eventos] == [("abrir_seguimiento", NRO)]
+
+
+def test_cambiar_de_encargado_guarda_el_historial(db):
+    admin = _quien(db, "oscar@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, admin, AHORA)
+        assert seguimiento.asignar(conn, NRO, _id(db, "ivania@ejemplo.test"), admin, AHORA) is True
+        assert seguimiento.asignar(conn, NRO, _id(db, "ivania@ejemplo.test"), admin, AHORA) is False  # ya lo era
+        assert seguimiento.asignar(conn, NRO, _id(db, "ana@ejemplo.test"), admin, AHORA + timedelta(hours=1)) is True
+        estado = seguimiento.estado(conn, NRO)
+        asignaciones = seguimiento.historial_de(conn, NRO)
+        eventos = [e.detalle for e in historial.ultimos(conn, ("asignar_encargado",))]
+
+    assert estado.encargado == "Ana"
+    assert [(a.encargado, a.asignado_por) for a in asignaciones] == [("Ana", "Oscar"), ("Ivania", "Oscar")]
+    assert eventos == [f"{NRO}: Ivania → Ana", f"{NRO}: sin encargado → Ivania"]
+
+
+def test_no_se_asigna_a_un_usuario_desactivado_ni_sin_seguimiento(db):
+    admin = _quien(db, "oscar@ejemplo.test")
+    with closing(connect(db)) as conn:
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="no está en seguimiento"):
+            seguimiento.asignar(conn, NRO, _id(db, "ivania@ejemplo.test"), admin, AHORA)
+        seguimiento.abrir(conn, NRO, admin, AHORA)
+        usuarios.cambiar_estado(conn, _id(db, "ana@ejemplo.test"), False)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="desactivado"):
+            seguimiento.asignar(conn, NRO, _id(db, "ana@ejemplo.test"), admin, AHORA)
+        assert [u.nombre for u in seguimiento.asignables(conn)] == ["Ivania", "Oscar"]
+
+
+def test_los_seguimientos_y_las_asignaciones_no_se_borran_ni_se_cambian(db):
+    admin = _quien(db, "oscar@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, admin, AHORA)
+        seguimiento.asignar(conn, NRO, _id(db, "ivania@ejemplo.test"), admin, AHORA)
+        for sql in ("DELETE FROM seguimientos", "UPDATE seguimientos SET abierto_por_nombre = 'x'",
+                    "DELETE FROM seguimiento_asignaciones", "UPDATE seguimiento_asignaciones SET encargado_id = 1"):
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(sql)
+        assert seguimiento.estado(conn, NRO).encargado == "Ivania"
+
+
+def test_reimportar_y_reevaluar_no_toca_el_seguimiento(tmp_path):
+    db = tmp_path / "sicop.db"
+    apply_migrations(db)
+    raw = tmp_path / "raw"
+    with closing(connect(db)) as conn:
+        import_carteles(conn, CARTELES_SINTETICO, "sintetico", raw)
+        usuarios.crear_usuario(conn, "oscar@ejemplo.test", "Oscar", CONTRASENA, usuarios.ADMIN)
+        admin = Quien(usuarios.buscar_id(conn, "oscar@ejemplo.test"), "Oscar")
+        seguimiento.abrir(conn, "20269900001", admin, AHORA)
+        seguimiento.asignar(conn, "20269900001", admin.user_id, admin, AHORA)
+
+    modificado = tmp_path / "carteles_v2.csv"
+    modificado.write_bytes(CARTELES_SINTETICO.read_bytes().replace(
+        b"monitoreo GPS de flotilla vehicular;", b"monitoreo GPS de flotilla vehicular (enmienda);"))
+    with closing(connect(db)) as conn:
+        assert import_carteles(conn, modificado, "sintetico", raw).actualizadas == 1
+        evaluar_base(conn, cargar_reglas(), AHORA)
+        estado = seguimiento.estado(conn, "20269900001")
+
+    assert (estado.abierto_por, estado.encargado) == ("Oscar", "Oscar")
+
+
+# --- Rutas web ----------------------------------------------------------------------------------------------------
+
+def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
+    ana = clientes["ana"]
+    assert 'action="/oportunidades/00000000001/seguimiento"' in ana.get(f"/oportunidades/{NRO}").text
+
+    respuesta = _dar_seguimiento(ana)
+
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/oportunidades/{NRO}"
+    detalle = ana.get(f"/oportunidades/{NRO}").text
+    assert "En seguimiento · sin encargado" in detalle and "Dar seguimiento</button>" not in detalle
+    lista = ana.get("/seguimiento").text
+    assert NRO in lista and "Sin encargado" in lista and "lo abrió Ana" in lista
+    assert f'href="/seguimiento/{NRO}"' not in lista  # sin encargado, solo entran los administradores
+    assert _dar_seguimiento(ana).status_code == 303  # dos veces: no falla ni duplica
+
+
+def test_solo_un_administrador_asigna(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+
+    assert _asignar(clientes["ana"], _id(db, "ana@ejemplo.test")).status_code == 403
+    respuesta = _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}"
+    pagina = clientes["oscar"].get(f"/seguimiento/{NRO}").text
+    assert "Encargado asignado." in pagina and "Ivania · asignado por Oscar" in pagina
+    assert 'name="encargado"' in pagina  # el administrador ve el formulario
+
+
+def test_el_expediente_solo_lo_ven_su_encargado_y_los_administradores(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    ivania = clientes["ivania"].get(f"/seguimiento/{NRO}")
+    ana = clientes["ana"].get(f"/seguimiento/{NRO}")
+
+    assert ivania.status_code == 200 and 'name="encargado"' not in ivania.text  # la encargada no reasigna
+    assert ana.status_code == 403 and "Este expediente es de Ivania y de los administradores" in ana.text
+    assert clientes["oscar"].get(f"/seguimiento/{NRO}").status_code == 200
+    # Ana no entra, pero ve quién lo tiene: en el panel, en el cartel y en la página de seguimiento.
+    assert "En seguimiento · Ivania" in clientes["ana"].get("/oportunidades").text
+    detalle = clientes["ana"].get(f"/oportunidades/{NRO}").text
+    assert "En seguimiento · Ivania" in detalle and f'href="/seguimiento/{NRO}"' not in detalle
+    assert f'href="/seguimiento/{NRO}"' in clientes["ivania"].get(f"/oportunidades/{NRO}").text
+
+
+def test_un_cartel_vencido_sale_del_panel_pero_sigue_en_seguimiento(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    vencido = (AHORA - timedelta(minutes=1)).astimezone(CR).isoformat(timespec="seconds")
+    with closing(connect(db)) as conn:  # el cierre pasó hace un minuto
+        conn.execute("UPDATE tenders SET fecha_cierre_recepcion = ? WHERE nro_sicop = ?", (vencido, NRO))
+
+    assert f'href="/oportunidades/{NRO}"' not in clientes["ana"].get("/oportunidades").text
+    assert f'href="/oportunidades/{NRO}"' in clientes["ana"].get("/oportunidades?plazo=vencido").text
+    assert f'href="/oportunidades/{NRO}"' in clientes["ana"].get("/seguimiento").text
+    assert clientes["ana"].get(f"/oportunidades/{NRO}").status_code == 200  # nada se borra
+
+
+def test_sin_token_csrf_no_se_da_seguimiento_ni_se_asigna(clientes, db):
+    assert clientes["ana"].post(f"/oportunidades/{NRO}/seguimiento", follow_redirects=False).status_code == 403
+    _dar_seguimiento(clientes["ana"])
+    sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/encargado",
+                                       data={"encargado": str(_id(db, "ivania@ejemplo.test"))}, follow_redirects=False)
+
+    assert sin_token.status_code == 403
+    with closing(connect(db)) as conn:
+        assert seguimiento.estado(conn, NRO).encargado is None
+
+
+def test_errores_claros(clientes):
+    token = token_csrf(clientes["ana"].get("/oportunidades").text)
+    no_existe = clientes["ana"].post("/oportunidades/99999999999/seguimiento", data={"csrf_token": token},
+                                     follow_redirects=False)
+    assert no_existe.status_code == 404
+    assert clientes["oscar"].get(f"/seguimiento/{OTRO}").status_code == 404  # no está en seguimiento
+    _dar_seguimiento(clientes["ana"])
+    elegir_nada = _asignar(clientes["oscar"], "")
+    assert elegir_nada.status_code == 400 and "Elige un encargado de la lista." in elegir_nada.text

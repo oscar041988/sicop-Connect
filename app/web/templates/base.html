@@ -18,7 +18,8 @@
       </a>
       {% if usuario %}
       <nav>
-        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "usuarios", "destinatarios", "avisos", "calidad") %} aria-current="page"{% endif %}>Panel de carteles</a>
+        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "seguimiento", "usuarios", "destinatarios", "avisos", "calidad") %} aria-current="page"{% endif %}>Panel de carteles</a>
+        <a href="/seguimiento"{% if seccion == "seguimiento" %} aria-current="page"{% endif %}>Seguimiento</a>
         <a href="/competencia"{% if seccion == "competencia" %} aria-current="page"{% endif %}>Competencia</a>
         <a href="/cargar"{% if seccion == "cargar" %} aria-current="page"{% endif %}>Cargar archivo</a>
         {% if usuario.rol == "admin" %}

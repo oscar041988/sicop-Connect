@@ -1,5 +1,6 @@
 """Rutas del panel: inicio y cierre de sesión, lista de oportunidades, detalle, revisión y carga de archivos;
-para administradores, usuarios, destinatarios y avisos fallidos o inciertos.
+seguimiento de carteles (gestor de documentos); para administradores, usuarios, destinatarios y avisos
+fallidos o inciertos.
 
 Todas, salvo /login, exigen sesión (middleware en app/web/seguridad.py) y todo POST lleva token CSRF.
 """
@@ -27,7 +28,7 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (avisos, calidad, competencia, destinatarios, exportar, historial, panel, reintentos, resumen,
-                 usuarios)
+                 seguimiento, usuarios)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -154,9 +155,11 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         resultado = panel.listar(conn, version, filtros, ahora) if version else panel.Pagina([], 0, 1, 1)
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
         sin_evaluar = panel.importado_sin_evaluar(conn)
+        seguimientos = seguimiento.de_carteles(conn, [f.nro_sicop for f in resultado.filas])
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
+        "seguimientos": seguimientos,
         "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
@@ -196,8 +199,10 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
     if datos is None:
         return PLANTILLAS.TemplateResponse(
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
+    seg = seguimiento.estado(conn, nro_sicop)
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
+        "seg": seg, "puede_entrar": seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
     }, status_code=status_code)
@@ -229,6 +234,23 @@ def revisar(request: Request, nro_sicop: str, decision: str = Form(""), motivo: 
             return _render_detalle(request, conn, nro_sicop, str(exc), formulario, status_code=400)
     # Post/Redirect/Get: recargar la página no vuelve a enviar el formulario.
     return RedirectResponse(f"/oportunidades/{nro_sicop}#revisiones", status_code=303)
+
+
+@router.post("/oportunidades/{nro_sicop}/seguimiento", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def dar_seguimiento(request: Request, nro_sicop: str) -> Response:
+    """Gestor de documentos (paso 1A): cualquier usuario pone el cartel en seguimiento, sin encargado."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    if not SOLO_DIGITOS.match(nro_sicop):
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": "El Número SICOP solo lleva dígitos."}, status_code=404)
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            seguimiento.abrir(conn, nro_sicop, _quien(request), _ahora())
+        except seguimiento.SeguimientoInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, str(exc), status_code=400)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
 
 
 @dataclass
@@ -354,6 +376,69 @@ def registros_competencia(request: Request, familia: str = "", competidor: str =
         "carteles": carteles, "version": version, "error": error_yaml,
         "volver": "/competencia" + ("?" + urlencode(filtro.consulta()) if filtro.consulta() else ""),
     })
+
+
+# --- Seguimiento: gestor de documentos, paso 1A ----------------------------------------------------------------
+# La lista la ve cualquier usuario; cada expediente, solo su encargado y los administradores (seguimiento.puede_entrar).
+# El nivel del usuario de la sesión es el que el middleware leyó de la base en esta misma petición.
+
+@router.get("/seguimiento", response_class=HTMLResponse)
+def pagina_seguimiento(request: Request) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    ahora = _ahora()
+    usuario = seguridad.usuario_actual(request)
+    with closing(connect(load_settings().database_path)) as conn:
+        filas = seguimiento.listar(conn)
+    return PLANTILLAS.TemplateResponse(request, "seguimiento.html", {
+        "seccion": "seguimiento", "filas": filas,
+        "puede_entrar": lambda estado: seguimiento.puede_entrar(usuario, estado),
+        "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
+    })
+
+
+def _render_expediente(request: Request, conn, nro_sicop: str, status_code: int = 200, **contexto) -> Response:
+    ahora = _ahora()
+    actual = seguimiento.estado(conn, nro_sicop) if SOLO_DIGITOS.match(nro_sicop) else None
+    if actual is None:
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": f"El cartel {nro_sicop} no está en seguimiento."}, status_code=404)
+    if not seguimiento.puede_entrar(seguridad.usuario_actual(request), actual):
+        de = actual.encargado or "su encargado (todavía sin asignar)"
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": f"Este expediente es de {de} y de los administradores."}, status_code=403)
+    datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), ahora)
+    return PLANTILLAS.TemplateResponse(request, "expediente.html", {
+        "seccion": "seguimiento", "seg": actual, "d": datos, "asignaciones": seguimiento.historial_de(conn, nro_sicop),
+        "asignables": seguimiento.asignables(conn) if seguridad.es_admin(request) else [],
+        "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
+        "hecho": request.session.pop("hecho", None), **contexto,
+    }, status_code=status_code)
+
+
+@router.get("/seguimiento/{nro_sicop}", response_class=HTMLResponse)
+def expediente(request: Request, nro_sicop: str) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_expediente(request, conn, nro_sicop)
+
+
+@router.post("/seguimiento/{nro_sicop}/encargado", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf), Depends(seguridad.exigir_admin)])
+def asignar_encargado(request: Request, nro_sicop: str, encargado: str = Form("")) -> Response:
+    """Solo un administrador asigna o cambia el encargado (decisión de Oscar, 2026-10-26)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            if not SOLO_DIGITOS.match(encargado):
+                raise seguimiento.SeguimientoInvalido("Elige un encargado de la lista.")
+            cambio = seguimiento.asignar(conn, nro_sicop, int(encargado), _quien(request), _ahora())
+        except seguimiento.SeguimientoInvalido as exc:
+            return _render_expediente(request, conn, nro_sicop, 400, error=str(exc))
+    request.session["hecho"] = "Encargado asignado." if cambio else "No se cambió nada: ya era el encargado."
+    return RedirectResponse(f"/seguimiento/{nro_sicop}", status_code=303)
 
 
 # --- Calidad de las reglas (solo administradores) -------------------------------------------------------------

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Seguimiento{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Carteles en seguimiento</h1>
+  <p class="sub">Carteles que alguien está trabajando. Todos ven quién es el encargado; el expediente lo abren
+    solo su encargado y los administradores. Para agregar uno, entra al cartel y usa «Dar seguimiento».</p>
+
+  {% for f in filas %}
+  <div class="tarjeta">
+    <p>
+      {% if f.estado.encargado %}<span class="en-seguimiento">{{ f.estado.encargado }}</span>
+      {% else %}<span class="tag w">Sin encargado</span>{% endif %}
+      <a href="/oportunidades/{{ f.estado.nro_sicop }}">{{ f.estado.nro_sicop }}</a>
+      · {{ f.titulo | titulo | legible or "(sin título)" }}
+    </p>
+    <p class="sub">{{ f.institucion | legible or "Sin datos de la institución" }}
+      · {% if f.cierre %}{{ regresiva(f.cierre) }} (cierre {{ f.cierre | fecha }}){% else %}cierre sin fecha{% endif %}
+      · lo abrió {{ f.estado.abierto_por }} el {{ f.estado.abierto_en | fecha }}</p>
+    {% if puede_entrar(f.estado) %}
+    <p><a class="btn o" href="/seguimiento/{{ f.estado.nro_sicop }}">Abrir expediente</a></p>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="vacio">Todavía no hay carteles en seguimiento.</p>
+  {% endfor %}
+</section>
+{% endblock %}

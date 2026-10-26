@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set c = d.compra %}
+{% block titulo %}Expediente {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="/seguimiento">← Seguimiento</a> · <a href="/oportunidades/{{ c.nro_sicop }}">Ver el cartel</a></p>
+
+<section class="ficha">
+  <div class="op-etiquetas">
+    <span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }}</span>
+    {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>{% endif %}
+  </div>
+  <h1 class="titulo-cartel">{{ c.descripcion | titulo | legible or "(sin título)" }}</h1>
+  <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
+  <div class="regresiva plazo-{{ d.plazo }}">
+    <strong>{{ regresiva }}</strong>
+    <span>{{ PLAZOS[d.plazo] }} · cierre {{ c.fecha_cierre_recepcion | fecha }}</span>
+  </div>
+</section>
+
+<section>
+  <h2>Encargado</h2>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <p>{% if seg.encargado %}<strong>{{ seg.encargado }}</strong>{% else %}Todavía <strong>sin encargado</strong>.{% endif %}
+    <small class="sub">· en seguimiento desde el {{ seg.abierto_en | fecha }} (lo abrió {{ seg.abierto_por }})</small></p>
+
+  {% if asignables %}
+  <form method="post" action="/seguimiento/{{ c.nro_sicop }}/encargado">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>{% if seg.encargado %}Cambiar el encargado{% else %}Asignar el encargado{% endif %}
+      <select name="encargado" required>
+        <option value="">—</option>
+        {% for u in asignables %}
+        <option value="{{ u.id }}" {% if u.id == seg.encargado_id %}selected{% endif %}>{{ u.nombre }} · {{ u.email }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Guardar</button>
+  </form>
+  <p class="sub">Solo los administradores asignan. Cambiar de encargado no borra nada: queda en el historial.</p>
+  {% endif %}
+
+  <h3>Historial de encargados</h3>
+  {% if asignaciones %}
+  <ol class="historial">
+    {% for a in asignaciones %}
+    <li>{{ a.encargado }} · asignado por {{ a.asignado_por }} · {{ a.fecha | fecha }}{% if loop.first %} <small>(vigente)</small>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin asignaciones todavía.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Documentos y notas</h2>
+  <p class="vacio">Próximamente: subir el pliego y los borradores (paso 2), notas (paso 3) y descargar todo el
+    expediente (paso 4).</p>
+</section>
+{% endblock %}

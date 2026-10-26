@@ -12,6 +12,7 @@
     {% endfor %}
     {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>
     {% else %}<span class="sin-revisar">Sin revisar</span>{% endif %}
+    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }}</span>{% endif %}
   </div>
   <h1 class="titulo-cartel">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
   <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
@@ -20,6 +21,21 @@
     <span>{{ PLAZOS[d.plazo] }} · cierre {{ c.fecha_cierre_recepcion | fecha }}</span>
   </div>
 </section>
+
+<div class="seguimiento-acciones" id="seguimiento">
+  {% if not seg %}
+  <form method="post" action="/oportunidades/{{ c.nro_sicop }}/seguimiento">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit">Dar seguimiento</button>
+  </form>
+  <small class="sub">Lo pone en la página «Seguimiento». El encargado lo asigna un administrador.</small>
+  {% elif puede_entrar %}
+  <a class="btn p" href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
+  {% else %}
+  <small class="sub">Lo abrió {{ seg.abierto_por }} el {{ seg.abierto_en | fecha }}. El expediente lo ven
+    {% if seg.encargado %}{{ seg.encargado }}{% else %}su encargado (todavía sin asignar){% endif %} y los administradores.</small>
+  {% endif %}
+</div>
 
 <dl class="datos">
   <div><dt>Número SICOP</dt><dd><strong>{{ c.nro_sicop }}</strong><br><small>Búscalo con este número en el portal de SICOP (no hay un enlace directo estable).</small></dd></div>

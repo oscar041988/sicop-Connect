@@ -246,6 +246,7 @@ def test_todas_las_rutas_post_exigen_el_token():
     assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
+                             "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/encargado",
                              "/usuarios", "/usuarios/{user_id}/contrasena", "/usuarios/{user_id}/estado",
                              "/usuarios/{user_id}/nivel"]
     assert all(verificar_csrf in dependencias for dependencias in rutas.values())
