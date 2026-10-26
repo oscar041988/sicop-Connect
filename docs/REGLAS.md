@@ -265,8 +265,8 @@ y 3 de revisiones. Total por cartel: precisión **95,0 %** (19/20), cobertura **
 Las otras 5 familias no tienen casos para medir. Los 2 errores:
 
 - **Falsa alerta en `iot_frio`:** `20261000990` («telemetría… Acueducto Municipal»), revisado como «No interesa ·
-  No encaja». «telemetria» es señal alta. **Para decidir con Oscar**, con la receta de la sección 3: ¿bajarla a
-  señal media o agregar una exclusión? Primero predecir qué otros carteles cambiarían.
+  No encaja». «telemetria» es señal alta. **Propuesta lista (2026-10-26), pendiente de Oscar:** bajarla a señal
+  media (sección 6, «Pendiente de decidir con Oscar»).
 - **Otra familia en `rastreo_activos`:** `20260802605` (RFID para combustible + rastreo GPS) interesa por
   `gps_flotas`, pero «RFID» y «etiquetas inteligentes» lo ponen también en Media en `rastreo_activos`.
 
@@ -318,7 +318,34 @@ de antes y de después.
 
 ### Pendiente de decidir con Oscar
 
-- Nada por ahora: los 4 provisionales del golden set se confirmaron el 2026-10-12.
+- Los 4 provisionales del golden set se confirmaron el 2026-10-12.
+- **«telemetria» en `iot_frio` (propuesta del 2026-10-26, Ivania con Claude; pendiente de Oscar).**
+  - **Caso** (paso 1 de la sección 3): `20261000990`, «Solución integral de telemetría para el monitoreo en tiempo
+    real y control remoto de los sistemas del Acueducto Municipal». Sale **Alta** en `iot_frio` y la revisión dice
+    «No interesa · No encaja». Es la falsa alerta que encontró `score-rules` (sección 4.1).
+  - **Causa** (paso 2): `evaluate --nro 20261000990` → `senales_alta: telemetria`, evidencia «telemetría»
+    (título). Una señal alta basta sola para marcar Alta.
+  - **Pregunta para Oscar:** ¿Osmia IoT vende telemetría para acueductos (sensores de nivel, bombas)?
+    - **Sí:** el cartel encajaba y hay que corregir la revisión, no la regla.
+    - **No:** se aplica el cambio propuesto.
+  - **Cambio propuesto** (paso 3): pasar «telemetria» de `senales_alta` a `senales_media` en `iot_frio`. Sola da
+    Baja (no se avisa, pero se ve en el panel con «Todas»); junto a otra señal o a un contexto, como «vacunas», da
+    Media y sí se avisa.
+  - **Simulado en memoria** (2026-10-26, base local en solo lectura, 12 260 carteles; el YAML real sin tocar): solo
+    3 carteles mencionan «telemetría» y solo cambia el falso positivo.
+
+    | Cartel | Hoy | Con el cambio |
+    |---|---|---|
+    | `20261000990` Acueducto | Alta | Baja |
+    | `20260802530` telemetría cardiaca | sin coincidencia (exclusión «rehabilitacion») | igual |
+    | `20260700797` calibradores de proceso | sin coincidencia (exclusión «calibradores de proceso») | igual |
+
+    En `gps_flotas` no cambia nada: ya era señal media. El golden set no tiene casos que dependan de «telemetria»
+    como señal alta.
+  - **Descartado:** exclusión «acueducto». Sería ajustar la regla a un solo caso (sobreajuste) y dejaría fuera de
+    `iot_frio` cualquier compra de un acueducto, aunque sí le interesara a Hermatix.
+  - **Si Oscar aprueba,** siguen los pasos 4 a 8: predicción escrita por Ivania, YAML con comentario (quién y
+    cuándo), `score-rules` y pruebas, y la fila en la tabla de arriba.
 
 ---
 
