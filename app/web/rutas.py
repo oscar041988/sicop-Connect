@@ -555,6 +555,17 @@ def cambiar_estado(request: Request, user_id: int, activo: str = Form("")) -> Re
                               "Usuario desactivado: su sesión abierta se cerró y sus revisiones se conservan.")
 
 
+@router.post("/usuarios/{user_id}/eliminar", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def eliminar_usuario(request: Request, user_id: int, confirmar: str = Form("")) -> Response:
+    def cambio(conn):
+        if confirmar != "si":
+            raise usuarios.UsuarioInvalido("Para eliminar, marca la casilla «Entiendo que no se puede deshacer».")
+        nombre = usuarios.eliminar(conn, user_id, _quien(request))
+        return (f"{nombre} fue eliminado: ya no puede entrar y su sesión abierta se cerró. Sus revisiones y su "
+                "historial se conservan.")
+    return _cambio_de_usuario(request, cambio, "Usuario eliminado.")
+
+
 @router.post("/usuarios/{user_id}/contrasena", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
 def cambiar_contrasena(request: Request, user_id: int, contrasena: str = Form(""), repetir: str = Form("")) -> Response:
     def cambio(conn):

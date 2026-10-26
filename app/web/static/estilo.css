@@ -188,6 +188,11 @@ table.lista th { background: var(--line); color: var(--g9); font-size: .8rem; }
 .usuario .acciones { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-top: 10px; }
 .usuario .acciones form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
 .usuario .acciones label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; }
+.usuario .acciones form.eliminar { flex-basis: 100%; flex-direction: column; align-items: flex-start; border-top: 1px solid var(--line); padding-top: 12px; }
+.usuario .acciones form.eliminar p { margin: 0; max-width: 70ch; font-size: .9rem; }
+.usuario .acciones label.casilla { flex-direction: row; align-items: center; gap: 8px; }
+.btn.peligro { background: #fff; border-color: var(--rojo); color: var(--rojo); }
+.btn.peligro:hover { background: var(--rojo); color: #fff; }
 .fila-destinatario { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
 .fila-destinatario p { margin: 0; }
 .historial { padding-left: 20px; }

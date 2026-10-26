@@ -4,7 +4,9 @@
 <section>
   <h1>Usuarios del panel</h1>
   <p class="sub">Encargado: ve oportunidades, guarda revisiones y sube archivos. Administrador: además gestiona
-    usuarios. Un usuario no se borra, se desactiva: sus revisiones lo siguen nombrando.</p>
+    usuarios. «Desactivar» le quita el acceso por un tiempo y se puede deshacer. «Eliminar» es la baja definitiva
+    (por ejemplo, si la persona deja la empresa): no se puede deshacer, desaparece de esta lista y su correo queda
+    libre; sus revisiones y el historial la siguen nombrando.</p>
   <p class="sub">Contraseñas de al menos {{ min_contrasena }} caracteres. Consejo: {{ consejo }}.</p>
   {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
@@ -44,6 +46,16 @@
           </label>
           <button type="submit" class="btn o">Poner contraseña</button>
         </form>
+        {% if u.id != usuario.id %}
+        <form class="eliminar" method="post" action="/usuarios/{{ u.id }}/eliminar">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <p><strong>Eliminar a {{ u.nombre }}</strong>: no podrá volver a entrar y no se puede deshacer. Si es
+            encargado de un expediente o recibe los avisos, primero hay que cambiar eso.</p>
+          <label class="casilla"><input type="checkbox" name="confirmar" value="si" required>
+            Entiendo que no se puede deshacer</label>
+          <button type="submit" class="btn peligro">Eliminar usuario</button>
+        </form>
+        {% endif %}
       </div>
     </details>
   </div>

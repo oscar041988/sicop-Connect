@@ -31,7 +31,7 @@ reinicio a mitad, se podrían duplicar envíos.
                                     └───────────────┬─────────────────┘                │
                                                     ▼                                  ▼
                               ┌───────────────────────────────────────────────────────────────┐
-                              │ SQLite (DATABASE_PATH) · migraciones 0001–0015                │
+                              │ SQLite (DATABASE_PATH) · migraciones 0001–0016                │
                               │ raw_snapshots · tenders · tender_lines · catálogo · instit.   │
                               │ opportunity_assessments · reviews · notification_outbox ·     │
                               │ adjudicaciones · users · audit_log · source_runs · …          │
@@ -135,7 +135,7 @@ app/
 | Seguimiento | `seguimientos`, `seguimiento_asignaciones` | Un seguimiento por cartel; el encargado vigente es la última asignación; no se borran ni se modifican (triggers) |
 | Avisos | `notification_recipients`, `notification_outbox` | La outbox no se borra (trigger) |
 | Obtención | `solicitudes_sicop` | Máquina de estados de cada solicitud automática |
-| Acceso | `users`, `audit_log` | `audit_log` no se borra ni se modifica (triggers) |
+| Acceso | `users`, `audit_log` | `audit_log` no se borra ni se modifica (triggers); un usuario no se borra: «Eliminar» es una baja definitiva (`eliminado_en`, 0016) |
 | Esquema | `schema_migrations` | Versión y huella de cada migración aplicada |
 
 ## 7. Decisiones de diseño
@@ -183,7 +183,7 @@ código se reemplaza en cada versión y los datos se respaldan aparte. Pasos: `d
 
 Esto no se puede comprobar desde Windows; queda para la actualización del servidor (lección 15):
 
-- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0015.
+- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0016.
 - Que el proxy HTTPS de Hostinger pase la IP real del visitante (`--proxy-headers`; comprobado el 19/10 con la
   versión vieja).
 - El timer del ciclo y la obtención automática, cuando se activen.

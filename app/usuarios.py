@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import re
+import secrets
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -133,10 +134,13 @@ def buscar_id(conn: sqlite3.Connection, email: str) -> int:
 
 
 def obtener(conn: sqlite3.Connection, user_id: int) -> Usuario:
-    fila = conn.execute("SELECT id, email, nombre, role, active, created_at FROM users WHERE id = ?",
+    """El usuario vigente con ese id. Uno dado de baja (eliminar) ya no se puede cambiar: UsuarioInvalido."""
+    fila = conn.execute("SELECT id, email, nombre, role, active, created_at, eliminado_en FROM users WHERE id = ?",
                         (user_id,)).fetchone()
     if fila is None:
         raise UsuarioInvalido("Ese usuario no existe.")
+    if fila[6] is not None:
+        raise UsuarioInvalido(f"{fila[2] or 'Ese usuario'} fue eliminado: ya no se puede cambiar.")
     return Usuario(fila[0], fila[1], fila[2] or fila[1], fila[3], bool(fila[4]), fila[5])
 
 
@@ -192,7 +196,42 @@ def cambiar_nivel(conn: sqlite3.Connection, user_id: int, rol: str, quien: Quien
     return True
 
 
+def expedientes_a_cargo(conn: sqlite3.Connection, user_id: int) -> list[str]:
+    """N.º SICOP de los carteles en seguimiento cuyo encargado vigente (la última asignación) es este usuario."""
+    return [nro for (nro,) in conn.execute(
+        "SELECT s.nro_sicop FROM seguimientos s WHERE (SELECT a.encargado_id FROM seguimiento_asignaciones a"
+        " WHERE a.seguimiento_id = s.id ORDER BY a.id DESC LIMIT 1) = ? ORDER BY s.nro_sicop", (user_id,))]
+
+
+def eliminar(conn: sqlite3.Connection, user_id: int, quien: Quien = TERMINAL) -> str:
+    """Baja definitiva (migración 0016; decisión de Ivania, 2026-10-26), p. ej. cuando alguien deja la empresa.
+
+    No borra la fila: sus revisiones, seguimientos e historial lo siguen nombrando. Lo desactiva, cambia su
+    contraseña por una que no es de nadie (sus sesiones abiertas se cierran) y libera su correo para otra cuenta.
+    No se deshace: un trigger impide modificarlo después. Devuelve el nombre del usuario eliminado.
+    """
+    usuario = obtener(conn, user_id)
+    if quien.user_id == user_id:
+        raise UsuarioInvalido("No puedes eliminarte a ti misma o a ti mismo.")
+    if _quedaria_sin_admin(conn, usuario):
+        raise UsuarioInvalido("Debe quedar al menos un administrador activo.")
+    if expedientes := expedientes_a_cargo(conn, user_id):
+        raise UsuarioInvalido(f"{usuario.nombre} es encargado de {len(expedientes)} expediente(s) en seguimiento "
+                              f"({', '.join(expedientes)}). Asigna otro encargado en «Seguimiento» y vuelve a intentarlo.")
+    if conn.execute("SELECT 1 FROM notification_recipients WHERE email = ? AND active = 1",
+                    (usuario.email,)).fetchone():
+        raise UsuarioInvalido(f"El correo {usuario.email} sigue recibiendo los avisos: quítalo primero en "
+                              "«Destinatarios».")
+    with transaccion(conn):  # la baja y su línea del historial, juntas
+        conn.execute(
+            "UPDATE users SET active = 0, email = ?, password_hash = ?, eliminado_en = ? WHERE id = ?",
+            (f"eliminado-{user_id}@baja.invalid", _hasher.hash(secrets.token_urlsafe(32)),
+             datetime.now(timezone.utc).isoformat(timespec="seconds"), user_id))
+        historial.registrar(conn, quien, "eliminar_usuario", f"{usuario.nombre} ({usuario.email})")
+    return usuario.nombre
+
+
 def listar(conn: sqlite3.Connection) -> list[Usuario]:
-    """Todos los usuarios, nunca el hash."""
+    """Los usuarios vigentes (sin los eliminados), nunca el hash."""
     return [Usuario(i, e, n or e, r, bool(a), c) for i, e, n, r, a, c in conn.execute(
-        "SELECT id, email, nombre, role, active, created_at FROM users ORDER BY email")]
+        "SELECT id, email, nombre, role, active, created_at FROM users WHERE eliminado_en IS NULL ORDER BY email")]

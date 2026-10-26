@@ -257,6 +257,17 @@
     leer el resumen, `evaluate`). «real» viene elegido. El CSS lleva su huella en la URL (`estilo.css?v=…`) para
     que el navegador no use una copia vieja. **512 passed** (6 nuevas en `tests/test_carga.py`). Revisado por
     Ivania en el panel local.
+  - **2. «Eliminar usuario» (hecho, 2026-10-26, rama `desarrollo`, solo local):** baja definitiva,
+    no un borrado (las revisiones, seguimientos e historial lo siguen nombrando). Migración **0016**
+    (`users.eliminado_en` + triggers: un eliminado no se modifica ni se reactiva; ningún usuario se borra). La baja
+    lo desactiva, cambia su contraseña por una que no es de nadie, libera su correo y lo quita de la lista. Se
+    bloquea si es encargado vigente de un expediente (primero reasignar), si su correo recibe los avisos, si es uno
+    mismo o el último administrador. Casilla «Entiendo que no se puede deshacer». Va al historial
+    (`eliminar_usuario`). **520 passed** (8 nuevas en `tests/test_baja_usuarios.py`). Probada en una copia de la
+    base real (4 usuarios y 5 revisiones intactos; copia borrada).
+    `migrate` 0016 en la base real y respaldo `sicop_20261026-115002` (esquema 0016, hash igual al manifiesto)
+    hechos por Ivania (2026-10-26); probado por Ivania en el panel local.
+    **Pendiente · Ivania:** comprimir `sicop_20261026-115002` (.db + .json) en un ZIP y subirlo al Drive de Hermatix.
 
 - **Gestor de documentos (mejora pedida por Oscar, 2026-10-26):** expediente por cartel con encargado, archivos
   (PDF, Word, Excel, ZIP; 10 MB configurable), notas, traspaso con descarga de todo, página de seguimiento y correo

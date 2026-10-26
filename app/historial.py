@@ -16,6 +16,7 @@ ACCIONES = {
     "activar": "Activó un usuario",
     "desactivar": "Desactivó un usuario",
     "cambiar_contrasena": "Puso una contraseña nueva",
+    "eliminar_usuario": "Eliminó un usuario",
     "agregar_destinatario": "Agregó un destinatario de avisos",
     "activar_destinatario": "Volvió a activar un destinatario",
     "desactivar_destinatario": "Quitó un destinatario de avisos",
@@ -24,7 +25,7 @@ ACCIONES = {
     "abrir_seguimiento": "Dio seguimiento a un cartel",
     "asignar_encargado": "Asignó el encargado de un cartel",
 }
-DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena")
+DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
 DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")
 DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado")

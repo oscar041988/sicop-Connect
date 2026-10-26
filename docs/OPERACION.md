@@ -332,6 +332,7 @@ curl -f http://127.0.0.1:8000/health                        # el panel responde
 | «Ya hay un ciclo en curso» (código 2) | Otro ciclo está corriendo. | Esperar a que termine. |
 | No deja entrar después de 5 intentos | Bloqueo de 15 min por correo + IP. | Esperar 15 min. |
 | Alguien olvidó su contraseña | — | Un administrador: «Usuarios» o `set-password`. |
+| Alguien deja la empresa | — | Un administrador: reasignar sus expedientes en «Seguimiento», quitar su correo de «Destinatarios» y en «Usuarios › Cambiar» usar «Eliminar usuario». No se deshace; sus revisiones se conservan. Para una ausencia temporal, «Desactivar». |
 
 ## 6. Recuperar
 
