@@ -50,6 +50,9 @@ DEFAULTS: dict[str, str] = {
     "OBTAIN_REQUEST_HOUR": "07:00",
     "OBTAIN_DOWNLOAD": "manual",
     "OBTAIN_ALERT_TO": "",
+    "BROWSER_HEADLESS": "false",
+    "RECORDINGS_DIR": "data/grabaciones",
+    "ENRICH_DELAY_SECONDS": "8",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -244,6 +247,23 @@ class Settings:
     def obtain_alert_to(self) -> str:
         """Buzón que recibe la alerta de FALLO de la obtención automática (OBTAIN_ALERT_TO)."""
         return self.get("OBTAIN_ALERT_TO").strip().lower()
+
+    @property
+    def browser_headless(self) -> bool:
+        """false (por defecto): la consulta de fichas abre el navegador CON ventana, para que se vea qué consulta
+        (BROWSER_HEADLESS; guía de enriquecimiento). En pytest va sin ventana."""
+        return _as_bool(self.get("BROWSER_HEADLESS"))
+
+    @property
+    def recordings_dir(self) -> Path:
+        """Videos y capturas de cada consulta de ficha (RECORDINGS_DIR; data/grabaciones). Fuera de Git."""
+        path = Path(self.get("RECORDINGS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def enrich_delay_seconds(self) -> int:
+        """Pausa entre una consulta de ficha y la siguiente (ENRICH_DELAY_SECONDS; 8): el portal es de todos."""
+        return self._entero("ENRICH_DELAY_SECONDS", 1, 600, "segundos")
 
     @property
     def notifications_enabled(self) -> bool:

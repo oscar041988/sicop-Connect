@@ -1,0 +1,38 @@
+[
+ {
+  "id": {
+   "cartelNo": "20261001258",
+   "cartelSeq": "142889",
+   "criteriaId": 2,
+   "impactId": 2
+  },
+  "impactDesc": "Acreditación vigente otorgada por el SIREA (Sistema de Reconocimientos\r\nAmbientales) (N°17086)"
+ },
+ {
+  "id": {
+   "cartelNo": "20261001258",
+   "cartelSeq": "142889",
+   "criteriaId": 2,
+   "impactId": 6
+  },
+  "impactDesc": "Manejo integral de residuos (N°17078)"
+ },
+ {
+  "id": {
+   "cartelNo": "20261001258",
+   "cartelSeq": "142889",
+   "criteriaId": 2,
+   "impactId": 11
+  },
+  "impactDesc": "Plan de Gestión ambiental (17079)"
+ },
+ {
+  "id": {
+   "cartelNo": "20261001258",
+   "cartelSeq": "142889",
+   "criteriaId": 3,
+   "impactId": 1
+  },
+  "impactDesc": null
+ }
+]

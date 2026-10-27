@@ -1,0 +1,53 @@
+{
+ "content": [
+  {
+   "instCartelNo": "2026LD-000031-0018000001",
+   "cartelNo": "20261002859",
+   "cartelNm": "Servicio de Monitoreo y Localización Satelital mediante el Sistema GPS",
+   "regDt": "21/10/2026 15:36",
+   "cartelSeq": "00",
+   "biddocStartDt": "21/10/2026 17:00",
+   "biddocEndDt": null,
+   "openbidDt": "28/10/2026 09:00",
+   "cartelInstCd": "3101253502",
+   "releaseYn": "Y",
+   "cartelInstNm": "OPERADORA DE PLANES DE PENSIONES COMPLEMENTARIAS DEL BANCO POPULAR Y DE DESARROLLO COMUNAL SOCIEDAD ANÓNIMA",
+   "proceType": "LD",
+   "cartelClsYn": "",
+   "biddocType": "XM",
+   "proceTypeDetail": "",
+   "proceTypeDetailCd": "02",
+   "cartelStat": "En recepción de ofertas",
+   "cartelSecretYn": "",
+   "contReqYn": "Y",
+   "reqPriceAmtYn": null,
+   "cartelStatStr": "En recepción de ofertas",
+   "total": 1
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 10,
+  "sort": {
+   "unsorted": false,
+   "sorted": true,
+   "empty": false
+  },
+  "offset": 0,
+  "unpaged": false,
+  "paged": true
+ },
+ "totalPages": 1,
+ "totalElements": 1,
+ "last": true,
+ "numberOfElements": 1,
+ "size": 10,
+ "number": 0,
+ "sort": {
+  "unsorted": false,
+  "sorted": true,
+  "empty": false
+ },
+ "first": true,
+ "empty": false
+}

@@ -1,0 +1,46 @@
+{
+ "content": [
+  {
+   "id": {
+    "cartelNo": "20261001587",
+    "cartelSeq": "00",
+    "cartelCate": "1",
+    "cateSeqno": 1
+   },
+   "prodId": "8111990192379046",
+   "prodNm": "SERVICIO DE ALQUILER DE CAMARA CORPORAL",
+   "prodQty": 1,
+   "prodUnit": "NA",
+   "prodPrc": 652190,
+   "currencyType": "CRC",
+   "budgetAmt": 652190,
+   "sampleReqYn": "N",
+   "cate": "1"
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 100,
+  "sort": {
+   "unsorted": true,
+   "sorted": false,
+   "empty": true
+  },
+  "offset": 0,
+  "unpaged": false,
+  "paged": true
+ },
+ "totalPages": 1,
+ "totalElements": 1,
+ "last": true,
+ "numberOfElements": 1,
+ "size": 100,
+ "number": 0,
+ "sort": {
+  "unsorted": true,
+  "sorted": false,
+  "empty": true
+ },
+ "first": true,
+ "empty": false
+}

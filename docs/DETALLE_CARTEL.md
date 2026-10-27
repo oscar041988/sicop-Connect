@@ -26,10 +26,13 @@ SICOP dice que se modificó el 26/10 y que el cierre es el **30/10 a las 23:59**
 |---|---|---|
 | Abrir la consulta | página `…/bid/public/tenders` | — |
 | Búsqueda avanzada | encabezado plegable | rol `button`, texto «Búsqueda avanzada» |
-| Número SICOP | casilla de texto | la etiqueta «Número de SICOP» **no está unida** a su casilla (`get_by_label` no la halla). Probable: `#attr_cartelNo` (el JSON llama `cartelNo` al Número SICOP); confirmar en la lección 2 |
-| Número de procedimiento | casilla de texto | probable `#instCartelNo` (el JSON lo llama `instCartelNo`) |
+| Número SICOP | casilla de texto | **etiqueta flotante**, no unida a su casilla (`get_by_label` no la halla): en el HTML va DESPUÉS de su casilla, en el mismo contenedor, y se ve como texto gris dentro de la casilla vacía. La app usa «la casilla del mismo contenedor que la etiqueta». (La primera versión tomaba la casilla siguiente y escribió en «Código de clasificación»: prueba real del 2026-10-27, 09:26) |
+| Número de procedimiento | casilla de texto | placeholder «Número de procedimiento» |
 | Consultar | botón | rol `button`, texto «Consultar» |
-| Abrir el resultado | fila del resultado | el número no se encontró como texto de un enlace: se abrió a mano. Revisar en la lección 2 |
+| Abrir el resultado | fila del resultado | el resultado **no muestra el Número SICOP**, sí el número de procedimiento. La app busca la fila con el `instCartelNo` que trajo la búsqueda y su enlace «[LD] …» / «[LY] …» (por confirmar en la prueba real) |
+
+- **Filtro «Estado de concurso»:** viene puesto en «En recepción de ofertas», pero el convenio de abarrotes
+  («Objetado») salió igual. La app no lo toca; si un cartel no sale, es FALLO «no encontrado» y se revisa a mano.
 
 - La búsqueda trae por defecto **publicados en los últimos 6 meses** (`regDtFrom`/`pubHasta`) y apertura hasta
   2 meses adelante (`apDesde`/`apHasta`). Un cartel más viejo podría no salir.
@@ -137,3 +140,26 @@ Lista en `getCartelFilesById` y en la tabla «11. Documento del pliego de condic
       otro programa; `.xlsm` y similares, solo guardados. Falta el tope por cartel (lección 3).
 - [ ] Confirmar la casilla del Número SICOP y cómo se abre el resultado (pasos que se hicieron a mano; lección 2).
 - [x] Campos útiles marcados por Oscar (sección 3) y datos de funcionarios: no se guardan (2026-10-27).
+- [x] Prueba real de la lección 2 (2026-10-27, Ivania): el «Monto total estimado» está en **colones** en la
+      pantalla de SICOP, como lo guarda la app.
+
+## 7. Dónde queda cada campo (lección 2)
+
+`python -m app.cli enrich --nro N` guarda una fila por versión en `tender_details` (migración 0018,
+`app/sources/sicop_tender_detail.py`):
+
+| Columna | De dónde sale |
+|---|---|
+| `copia_fiel` | las respuestas `busqueda` (el resultado), `ficha`, `lineas` (1.ª página), `documentos`, `criterios` e `impactos`, tal como llegaron, sin campos de personas |
+| `campos_quitados` | los nombres de los campos de personas que se quitaron |
+| `content_hash` | SHA-256 de la copia fiel sin lo que cambia solo con el reloj (`startPassYn`, `endPassYn`, `openbidPassYn`, `…EndYn`, `isDateTrue`, paginación) |
+| `estado_concurso` | `cartelStatStr` |
+| `version_pliego` · `secuencia` · `modificado` | `cartelVersion` · `cartelSeq` · `cartelModYn` |
+| `numero_procedimiento` · `descripcion` · `tipo_procedimiento` · `tipo_modalidad` | `instCartelNo` · `cartelNm` · `proceTypeNm` · `proceTypeDetailNm` |
+| `tipo_recepcion` | `biddocTypeNm` · `onlineYnNm` |
+| `inicio_recepcion` · `cierre_recepcion` · `apertura` · `limite_aclaraciones` | `biddocStartDt` · `biddocEndDt` · `openbidDt` · `explainRcvEndDt`, con zona de Costa Rica |
+| `monto_estimado` + `moneda_monto` · `monto_estimado_usd` | `cartelBudget` (Decimal, CRC) · `cartelBudgetUsd` |
+| `garantias` | garantías de participación, cumplimiento y colateral, pago adelantado, multa (`fine`, `fineArticle`), reajuste y vigencia/prórroga del contrato, con sus nombres de SICOP |
+| `criterios` | `criterioCont` e `impactDesc` |
+| `lineas_total` | `totalElements` de las líneas |
+| `documentos` | `docFileSeqno`, `fileTypeNm`, `docNm`, `clientFileNm`, `fileSizeMb`, `serverFileNm`, `fileServerPath` (para la lección 3) |

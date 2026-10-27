@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import json
 import sqlite3
 import sys
 from contextlib import closing
@@ -367,6 +368,58 @@ def google_auth(settings: Settings) -> int:
         return 1
     print(f"Autorizado: {cuenta} puede enviar los avisos. Token guardado en GOOGLE_TOKEN_FILE (no se muestra).")
     return 0
+
+
+def _opciones_enrich() -> dict:
+    """Opciones extra de la consulta de fichas. Las pruebas devuelven aquí un SICOP SIMULADO."""
+    return {}
+
+
+def _fecha_corta(iso: str | None) -> str:
+    return datetime.fromisoformat(iso).strftime("%d/%m/%Y %H:%M") if iso else "sin dato"
+
+
+def enrich(settings: Settings, nros: list[str]) -> int:
+    """Ficha de SICOP de 1 a 3 carteles (enriquecimiento, lección 2). 0 = ok · 1 = algún FALLO · 2 = CAPTCHA o
+    bloqueo (se detuvo todo)."""
+    from app.sources import sicop_tender_detail as std
+    print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · grabaciones en "
+          f"{settings.recordings_dir} · pausa de {settings.enrich_delay_seconds} s entre consultas.")
+    try:
+        consultas = std.enriquecer(settings, nros, avisar=print, **_opciones_enrich())
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        for c in consultas:
+            if c.resultado in ("nueva", "sin_cambios"):
+                g, campos = c.guardado, c.campos
+                titulo = (f"NUEVA versión guardada (#{g.detalle_id}; {g.versiones} en total)" if g.nueva
+                          else f"sin cambios desde {_fecha_corta(g.desde)} (#{g.detalle_id})")
+                print(f"\n{c.nro_sicop} · {titulo}")
+                monto = (f"{campos['monto_estimado']} {campos['moneda_monto']}" if campos["monto_estimado"]
+                         else "sin dato")
+                print(f"  Estado: {campos['estado_concurso']} · modificado: {campos['modificado'] or '?'} · "
+                      f"versión {campos['version_pliego']}")
+                print(f"  Cierre de recepción: {_fecha_corta(campos['cierre_recepcion'])} · apertura: "
+                      f"{_fecha_corta(campos['apertura'])} · aclaraciones hasta "
+                      f"{_fecha_corta(campos['limite_aclaraciones'])}")
+                (cierre_base,) = conn.execute("SELECT fecha_cierre_recepcion FROM tenders WHERE nro_sicop = ?",
+                                              (c.nro_sicop,)).fetchone()
+                if cierre_base != campos["cierre_recepcion"]:
+                    print(f"  ATENCIÓN: en los datos abiertos el cierre es {_fecha_corta(cierre_base)}; "
+                          "la ficha de SICOP dice otra fecha.")
+                print(f"  Modalidad: {campos['tipo_modalidad']} · monto estimado: {monto} · líneas: "
+                      f"{campos['lineas_total']} · documentos: {len(json.loads(campos['documentos']))}")
+            elif c.resultado == "no_consultado":
+                print(f"\n{c.nro_sicop} · NO CONSULTADO: {c.motivo}")
+            else:
+                print(f"\n{c.nro_sicop} · FALLO: {c.motivo}", file=sys.stderr)
+    if any(c.resultado == "control" for c in consultas):
+        print("\nSICOP mostró un CAPTCHA o un bloqueo: se detuvo todo, no se reintenta. Avisar a Oscar.",
+              file=sys.stderr)
+        return 2
+    return 1 if any(c.resultado == "fallo" for c in consultas) else 0
 
 
 def _crear_lector(settings: Settings):
@@ -816,6 +869,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Repetir cada OBTAIN_POLL_MINUTES hasta validado, fallido o el plazo (Ctrl+C es seguro)")
     ob_sub.add_parser("status", help="Las últimas solicitudes automáticas con su estado y horas")
     ob_sub.add_parser("auto", help="Una vuelta de la obtención automática (tarea programada; solo con SOURCE_MODE=auto)")
+    en = sub.add_parser("enrich", help="Ficha del concurso en la consulta pública de SICOP (con ventana; 1 a 3 carteles)")
+    en.add_argument("--nro", dest="nros", action="append", required=True, metavar="NUMERO_SICOP",
+                    help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -873,6 +929,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         if args.obtain_command == "auto":
             return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
+    if args.command == "enrich":
+        return enrich(settings, [n.strip() for n in args.nros])
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

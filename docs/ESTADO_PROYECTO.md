@@ -264,6 +264,29 @@
     clasificación del objeto y funcionarios); no se guardan datos de funcionarios; se guardan todos los tipos de
     documento. Commit `fa8fc4b`.
   - **Pendiente:** autoevaluación de la lección 1; tope de documentos por cartel (lección 3).
+- **Enriquecimiento · lección 2, buscar el cartel y guardar su ficha (2026-10-27, rama `desarrollo`, solo local):**
+  plan aprobado por Ivania.
+  - `python -m app.cli enrich --nro N [--nro N…]` (1 a 3): navegador con ventana (`BROWSER_HEADLESS=false`),
+    búsqueda avanzada como una persona y lectura del JSON que recibe la página (`app/sources/sicop_tender_detail.py`).
+    Video y capturas en `RECORDINGS_DIR/<fecha>/<nro>/`; pausa `ENRICH_DELAY_SECONDS` (8) entre consultas.
+  - Migración **0018** `tender_details`: una fila por versión de la ficha (copia fiel sin datos de personas, hash
+    sin los campos que cambian con el reloj, campos marcados por Oscar); no se modifica ni se borra.
+  - FALLO con captura: no encontrado, varios resultados, otro cartel, estructura o fecha cambiada, no JSON;
+    CAPTCHA, «No fue posible acceder» o HTTP 403/429 detienen todo sin reintentar (código 2).
+  - La terminal avisa si el cierre de la ficha no coincide con el de los datos abiertos (caso Santa Ana).
+  - **561 passed** (25 nuevas en `tests/test_ficha.py`, SICOP SIMULADO en `tests/fixtures/ficha_simulada/`).
+  - Ivania: respaldo y `migrate` (0018). **Primera prueba real (09:26): los 3 «no encontrado»**, sin bloqueo y sin
+    guardar nada. Las capturas mostraron el número en «Código de clasificación»: la etiqueta «Número de SICOP» es
+    flotante (va después de su casilla). Corregido: se usa la casilla del mismo contenedor que la etiqueta; la
+    página simulada ahora tiene etiquetas flotantes y una prueba nueva lo comprueba (falla con el código anterior).
+  - **Segunda prueba real (2026-10-27, Ivania): los 3 guardados** (fichas #1–#3), sin bloqueo. GPS: En
+    recepción, cierre 28/10 09:00, 291782.16 CRC, 1 línea, 5 documentos · abarrotes: Objetado, cierre 09/11 08:30,
+    sin monto, 432 líneas, 49 documentos · Santa Ana: modificado, cierre **30/10 23:59** (la terminal avisó que los
+    datos abiertos dicen 23/10), 652190 CRC, 7 documentos. Coincide con lo explorado en la lección 1.
+  - Comprobado por Ivania: el monto sale en **colones** en la pantalla de SICOP (la app lo guarda como CRC); el
+    video muestra la consulta. Al repetir, un número quedó cortado (`202610015`): la app no abrió SICOP y avisó
+    que no está en la base.
+  - **Pendiente · Ivania:** repetir `enrich` con los 3 números completos (debe decir «sin cambios»).
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

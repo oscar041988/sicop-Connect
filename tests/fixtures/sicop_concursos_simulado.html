@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SICOP</title>
+<!-- SIMULADO: imita la consulta pública de concursos observada el 2026-10-27 (docs/DETALLE_CARTEL.md): encabezado
+     «Búsqueda avanzada» con rol button, la etiqueta «Número de SICOP» NO unida a su casilla, «Consultar», la fila del
+     resultado con su enlace «[tipo] descripción» y la ficha que pide sus datos con fetch a las mismas rutas de
+     prod-api.sicop.go.cr. No es la página real. Las pruebas reemplazan __VARIANTE__ y responden los fetch con
+     tests/fixtures/ficha_simulada/. Variantes: normal · captcha · bloqueo · captcha_en_ficha · sin_avanzada. -->
+<style>
+  #avanzada { display: none; }
+  table { border-collapse: collapse; }
+  td { border: 1px solid #999; padding: 4px; }
+</style>
+</head>
+<body>
+<h5>Consulta de procedimientos de compra publicados</h5>
+<div role="button" tabindex="0" id="cab-simple">Búsqueda simple</div>
+<div role="button" tabindex="0" id="cab-avanzada">Búsqueda avanzada</div>
+<div id="avanzada">
+  <label>Desde</label> <input id="regDtFrom" value="27/04/2026">
+  <label>Hasta</label> <input id="pubHasta" value="27/10/2026">
+  <!-- Etiquetas flotantes, como en SICOP (prueba real del 2026-10-27): la etiqueta va DESPUÉS de su casilla, en
+       el mismo contenedor. La casilla que sigue a «Número de SICOP» es la de «Código de clasificación». -->
+  <span class="p-floatlabel"><input id="instCartelNo"><label>Número de procedimiento</label></span>
+  <span class="p-floatlabel"><input id="attr_cartelNo"><label>Número de SICOP</label></span>
+  <span class="p-floatlabel"><input id="attr_identi"><label>Código de clasificación</label></span>
+  <label>Estado de concurso</label>
+  <select><option>En recepción de ofertas</option></select>
+  <button type="button" id="consultar">Consultar</button>
+</div>
+<table><tbody id="resultados"></tbody></table>
+<div id="ficha"></div>
+<script>
+  const VARIANTE = "__VARIANTE__";
+  const API = "https://prod-api.sicop.go.cr";
+  const pedir = (ruta, metodo, cuerpo) => fetch(API + ruta,
+    {method: metodo, body: metodo === "POST" ? (cuerpo || "{}") : undefined}).then(r => r.text());
+  const captcha = () => document.body.insertAdjacentHTML("beforeend",
+    '<iframe src="https://www.google.com/recaptcha/api2/anchor" title="reCAPTCHA"></iframe><p>No soy un robot</p>');
+
+  if (VARIANTE === "captcha") captcha();
+  if (VARIANTE === "bloqueo") {
+    document.body.innerHTML = "<p>No fue posible acceder a la página solicitada. Por favor, póngase en contacto " +
+      "con nosotros.</p><p>ID de soporte: 0123456789abcdef</p>";
+  }
+  if (VARIANTE === "sin_avanzada") document.getElementById("cab-avanzada").remove();
+
+  const cab = document.getElementById("cab-avanzada");
+  if (cab) cab.addEventListener("click", () => { document.getElementById("avanzada").style.display = "block"; });
+
+  const consultar = document.getElementById("consultar");
+  if (consultar) consultar.addEventListener("click", async () => {
+    const valor = (id) => document.getElementById(id).value;
+    const datos = JSON.parse(await pedir("/bid/api/v1/public/epCartel/searchEpCartelsSp", "POST",
+      JSON.stringify({instCartelNo: valor("instCartelNo"), cartelNo: valor("attr_cartelNo"),
+                      identi: valor("attr_identi")})));
+    const filas = document.getElementById("resultados");
+    filas.innerHTML = "";
+    for (const c of datos.content || []) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${c.instCartelNo}<br>${c.cartelInstNm}</td>` +
+        `<td><a href="#" class="cartel">[${c.proceType}] ${c.cartelNm}</a><br>Encargado de publicación: ` +
+        `<a href="#">PERSONA SIMULADA</a></td><td>${c.cartelStatStr}</td>`;
+      filas.appendChild(tr);
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    if (!e.target.classList || !e.target.classList.contains("cartel")) return;
+    e.preventDefault();
+    history.pushState({}, "", "/app/module/bid/public/cartel-specification-published");
+    document.getElementById("ficha").innerHTML = "<h5>Ingreso del pliego de condiciones</h5>" +
+      "<label>Estado del concurso</label> <input readonly>";
+    if (VARIANTE === "captcha_en_ficha") { captcha(); return; }
+    await pedir("/bid/api/v1/public/epCartel/findPublishedById", "POST");
+    await pedir("/bid/api/v1/public/epCartelRoleStaff/findByEpCartelId", "POST");
+    await pedir("/bid/api/v1/public/epCartelProd/findByEpCartelId", "POST");
+    await pedir("/bid/api/v1/public/epCartelSustCriteria/findAllByCartelId", "GET");
+    await pedir("/bid/api/v1/public/epCartelSustCriteriaImpact/findAllByCartelId", "GET");
+    await pedir("/bid/api/v1/public/epCartelFile/getCartelFilesById", "GET");
+  });
+</script>
+</body>
+</html>

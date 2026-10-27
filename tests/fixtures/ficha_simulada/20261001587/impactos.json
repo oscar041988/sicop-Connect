@@ -1,0 +1,20 @@
+[
+ {
+  "id": {
+   "cartelNo": "20261001587",
+   "cartelSeq": "144563",
+   "criteriaId": 2,
+   "impactId": 6
+  },
+  "impactDesc": "Documentación verificable,\r\ncertificados, resoluciones,\r\nconstancias,\r\nprocedimientos internos,\r\nconvenios o contratos con\r\ngestores autorizados,\r\nregistros de entrega o\r\nrecuperación de residuos,\r\ninformes de gestión u otro\r\ndocumento equivalente\r\nque permita comprobar la\r\npráctica ambiental y su\r\nrelación con el objeto\r\ncontractual."
+ },
+ {
+  "id": {
+   "cartelNo": "20261001587",
+   "cartelSeq": "144563",
+   "criteriaId": 3,
+   "impactId": 1
+  },
+  "impactDesc": null
+ }
+]

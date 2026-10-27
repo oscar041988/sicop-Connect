@@ -1,0 +1,53 @@
+{
+ "content": [
+  {
+   "instCartelNo": "2026LE-000013-0002400001",
+   "cartelNo": "20261001587",
+   "cartelNm": "Alquiler de cámaras corporales (body cam) y almacenamiento",
+   "regDt": "13/10/2026 08:29",
+   "cartelSeq": "00",
+   "biddocStartDt": "13/10/2026 08:30",
+   "biddocEndDt": null,
+   "openbidDt": "02/11/2026 08:00",
+   "cartelInstCd": "3014042059",
+   "releaseYn": "Y",
+   "cartelInstNm": "MUNICIPALIDAD DEL CANTÓN DE SANTA ANA",
+   "proceType": "LE",
+   "cartelClsYn": "",
+   "biddocType": "XM",
+   "proceTypeDetail": "",
+   "proceTypeDetailCd": "02",
+   "cartelStat": "En recepción de ofertas",
+   "cartelSecretYn": "",
+   "contReqYn": "Y",
+   "reqPriceAmtYn": null,
+   "cartelStatStr": "En recepción de ofertas",
+   "total": 1
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 10,
+  "sort": {
+   "sorted": true,
+   "unsorted": false,
+   "empty": false
+  },
+  "offset": 0,
+  "paged": true,
+  "unpaged": false
+ },
+ "totalPages": 1,
+ "totalElements": 1,
+ "last": true,
+ "numberOfElements": 1,
+ "size": 10,
+ "number": 0,
+ "sort": {
+  "sorted": true,
+  "unsorted": false,
+  "empty": false
+ },
+ "first": true,
+ "empty": false
+}

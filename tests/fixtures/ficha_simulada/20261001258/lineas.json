@@ -1,0 +1,1729 @@
+{
+ "content": [
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "1",
+    "cateSeqno": 1
+   },
+   "prodId": "5040701892056014",
+   "prodNm": "GARBANZOS SECOS 100% LIBRES DE INSECTOS EMPACADO EN BOLSA PLASTICA DE 1000 g SELLADA TERMICAMENTE",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "1"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "1",
+    "cateSeqno": 2
+   },
+   "prodId": "5042450292026169",
+   "prodNm": "LENTEJAS, VERDES, SECAS, PRESENTACIÓN DE 1000 g",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "1"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "1",
+    "cateSeqno": 3
+   },
+   "prodId": "5040181492026180",
+   "prodNm": "FRIJOL, COLOR BLANCO, PRESENTACIÓN EMPAQUE DE 1000 g",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "1"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 4
+   },
+   "prodId": "5046700792153825",
+   "prodNm": "ATÚN EN TROZOS EN AGUA, PESO NETO DE 230 g A 260 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 5
+   },
+   "prodId": "5046700792021219",
+   "prodNm": "ATUN EN TROZOS DE LOMO, DEBE CONTENER ACEITE VEGETAL PARCIALMENTE HIDROGENADO, AGUA, SAL, PRESENTACION LATA DE 240±10 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 6
+   },
+   "prodId": "5012159992324264",
+   "prodNm": "ATUN EN TROZOS EN ACEITE, EN ENVASE DOYPACK ALUMINIZADO, PESO NETO 1000 g Y PESO ESCURRIDO DE 900 g +/- 50 g, SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 7
+   },
+   "prodId": "5012159892325082",
+   "prodNm": "ATUN EN TROZOS ENVASADO EN AGUA, EMPAQUE DOYPACK ALUMINIZADO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 8
+   },
+   "prodId": "5046700792173767",
+   "prodNm": "ATÚN EN TROZOS, EN ACEITE, PESO NETO ENTRE 100 g A 110 g.",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "2",
+    "cateSeqno": 9
+   },
+   "prodId": "5012159992021490",
+   "prodNm": "SARDINA EN SALSA DE TOMATE Y SIN CHILE PICANTE, PRESENTACION EN LATA OVALADA DE 425 ± 15 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "2"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "3",
+    "cateSeqno": 10
+   },
+   "prodId": "5019240492173755",
+   "prodNm": "GELATINA PREPARADA CON AZÚCAR EN EMPAQUE INDIVIDUAL COLOR ROJO EN PRESENTACIÓN DE 80 g A 120 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "3"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "3",
+    "cateSeqno": 11
+   },
+   "prodId": "5019240492173799",
+   "prodNm": "GELATINA PREPARADA CON SUSTITUTO DE AZÚCAR EN EMPAQUE INDIVIDUAL COLOR ROJO EN PRESENTACIÓN DE 80 g A 120 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "3"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "3",
+    "cateSeqno": 12
+   },
+   "prodId": "5019240492173823",
+   "prodNm": "GELATINA PREPARADA CON AZÚCAR EN EMPAQUE INDIVIDUAL COLOR VERDE EN PRESENTACIÓN DE 80 g A 120 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "3"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "3",
+    "cateSeqno": 13
+   },
+   "prodId": "5019240492173805",
+   "prodNm": "GELATINA PREPARADA CON SUSTITUTO DE AZÚCAR EN EMPAQUE INDIVIDUAL COLOR VERDE EN PRESENTACIÓN DE 80 g A 120 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "3"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "4",
+    "cateSeqno": 14
+   },
+   "prodId": "5019240492324261",
+   "prodNm": "GELATINA, EN POLVO, COLOR ROJA, CON AZUCAR, BOLSA DE POLIETILENO, GRADO ALIMENTARIO Y CON CIERRE HERMETICO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "4"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "4",
+    "cateSeqno": 15
+   },
+   "prodId": "5019240492324259",
+   "prodNm": "GELATINA, EN POLVO, COLOR VERDE, CON AZUCAR, BOLSA DE POLIETILENO, GRADO ALIMENTARIO Y CON CIERRE HERMETICO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "4"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "4",
+    "cateSeqno": 16
+   },
+   "prodId": "5019240492265990",
+   "prodNm": "GELATINA, BLANCA, SIN SABOR, LIBRE DE CONTAMINANTES,  PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "4"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "4",
+    "cateSeqno": 17
+   },
+   "prodId": "5019240492325255",
+   "prodNm": "GELATINA, COLOR ROJA, SIN AZUCAR, CON EDULCORANTE, EMPACADO BOLSA DE POLIETILENO, GRADO ALIMENTARIO Y CON CIERRE HERMETICO, PRESENTACION DE 20 ± 5 g, SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "4"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "4",
+    "cateSeqno": 18
+   },
+   "prodId": "5019240492325254",
+   "prodNm": "GELATINA, COLOR VERDE, SIN AZUCAR, CON EDULCORANTE, EMPACADO BOLSA DE POLIETILENO, GRADO ALIMENTARIO Y CON CIERRE HERMETICO, PRESENTACION DE 20 ± 5 g, SOLICITUD A GRANEL (",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "4"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 19
+   },
+   "prodId": "5013170292153857",
+   "prodNm": "MARGARINA EN EMPAQUE INDIVIDUAL TERMO FORMADO DE PVC,  CON UN PESO APROXIMADO DE 8 g +/- 2 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 20
+   },
+   "prodId": "5019240192287801",
+   "prodNm": "MERMELADA SABOR FRESA, PREPARADA CON AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 21
+   },
+   "prodId": "5019240192287802",
+   "prodNm": "MERMELADA SABOR PIÑA, PREPARADA CON AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 22
+   },
+   "prodId": "5019240192288297",
+   "prodNm": "MERMELADA, SABOR GUAYABA, PREPARADA CON AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 23
+   },
+   "prodId": "5019240192288298",
+   "prodNm": "MERMELADA, SABOR MORA, PREPARADA CON AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 24
+   },
+   "prodId": "5019240192288301",
+   "prodNm": "MERMELADA, SABOR FRESA, PREPARADA CON SUSTITUTO DE AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 25
+   },
+   "prodId": "5019240192288300",
+   "prodNm": "MERMELADA, SABOR GUAYABA, PREPARADA CON SUSTITUTO DE AZUCAR, EMPAQUE PLASTICO SELLADO CON 15 g (+- 1 g)",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "5",
+    "cateSeqno": 26
+   },
+   "prodId": "5019240392153808",
+   "prodNm": "MIEL DE ABEJA, PRESENTACION EN ENVASE DE 15 g ± 1 g, CIERRE HERMÉTICO, FÁCIL DE ABRIR",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "5"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 27
+   },
+   "prodId": "5017183092316452",
+   "prodNm": "MAYONESA PREPARADA, SABOR NATURAL, PASTEURIZADA, ENVASADA EN EMPAQUE PLÁSTICO SELLADO, PRESENTACION: A GRANEL",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 28
+   },
+   "prodId": "5017183092153863",
+   "prodNm": "MAYONESA EN EMPAQUE INDIVIDUAL PLASTICO, CON UN CONTENIDO APROXIMADO DE 8 g A 12 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 29
+   },
+   "prodId": "5017183092324557",
+   "prodNm": "MAYONESA PREPARADA, NATURAL, PASTEURIZADA, EN ENVASES DE 3,75 kg, SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 30
+   },
+   "prodId": "5048649992321058",
+   "prodNm": "PASTA DE TOMATE, PREPARADA, CONTENIDO A GRANEL EN kg, USO CONSUMO ALIMENTARIO",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 31
+   },
+   "prodId": "5048649992324741",
+   "prodNm": "PASTA DE TOMATE, PURO, EMPACADA EN RECIPIENTE HERMÉTICO, PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 32
+   },
+   "prodId": "5017183192324300",
+   "prodNm": "SALSA TIPO CHINA, COLOR OSCURO, ENVASADA EN BOTELLAS PLASTICAS, PRESENTACIÓN A GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 33
+   },
+   "prodId": "5017183192324273",
+   "prodNm": "SALSA INGLESA BAJA EN SODIO, ENVASA EN RECIPIENTE PLASTICO, PRESENTACIÓN A GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 34
+   },
+   "prodId": "5017170792324307",
+   "prodNm": "VINAGRE BLANCO, ENVASADO EN RECIPIENTE PLASTICO DE 700 ml +/-30 ml,  SOLICITUD A GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 35
+   },
+   "prodId": "5017170792307625",
+   "prodNm": "VINAGRE, BLANCO, PRESENTACION GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 36
+   },
+   "prodId": "5017183092054465",
+   "prodNm": "SALSA  DE TOMATE EN SOBRE PLASTICO CON SELLO TERMICO DE 10 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 37
+   },
+   "prodId": "5017183092324294",
+   "prodNm": "SALSA DE TOMATE ( TIPO KETCHUP), ENVASADA EN RECIPIENTES DE 3780 ml +/- 200 ml, SOLICITUD A GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "6",
+    "cateSeqno": 38
+   },
+   "prodId": "5017183092321064",
+   "prodNm": "SALSA DE MOSTAZA, PRESENTACIÓN EN EMPAQUE PLÁSTICO RESISTENTE Y CON CIERRE HERMÉTICO, CONTENIDO A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "6"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 39
+   },
+   "prodId": "5017155092324748",
+   "prodNm": "ACHIOTE LIQUIDO, COLOR ROJO, ENVASADO EN RECIPIENTE SELLADO, PRESENTACIÓN A GRANEL (L)",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 40
+   },
+   "prodId": "5017155792324793",
+   "prodNm": "SABORIZANTE EN ESCENCIA, DE VAINILLA, COLOR CARAMELO, PRESENTACION A GRANEL (L), GRADO ALIMENTARIO",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 41
+   },
+   "prodId": "5040703092324873",
+   "prodNm": "JENJIBRE PURO DESECADO MOLIDO, EN PRESENTACION A GRANEL(kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 42
+   },
+   "prodId": "5040412092324792",
+   "prodNm": "ROMERO PURO DESECADO, MOLIDO, EN PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 43
+   },
+   "prodId": "5040412592321389",
+   "prodNm": "TOMILLO MOLIDO EN POLVO, PRESENTACION BOLSA PLASTICA, CONTENIDO A GRANEL EN kg, USO CONSUMO ALIMENTARIO.",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 44
+   },
+   "prodId": "5040704992153795",
+   "prodNm": "PAPRIKA, EN POLVO, COLOR CAFÉ ROJIZO, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 45
+   },
+   "prodId": "5040411592268946",
+   "prodNm": "ORÉGANO, SECO, EN POLVO, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 46
+   },
+   "prodId": "5017155992267874",
+   "prodNm": "CANELA, EN POLVO, COLOR CAFÉ OSCURO, OLOR Y SABOR CARACTERÍSTICOS A CANELA, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 47
+   },
+   "prodId": "5017155592153793",
+   "prodNm": "CLAVO DE OLOR EN POLVO (MOLIDO), PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 48
+   },
+   "prodId": "5040410292268915",
+   "prodNm": "LAUREL, EN HOJA, COLOR VERDE OSCURO, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 49
+   },
+   "prodId": "5017156092219070",
+   "prodNm": "NUEZ MOSCADA, PURA, MOLIDA, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "7",
+    "cateSeqno": 50
+   },
+   "prodId": "5040412692301301",
+   "prodNm": "CÚRCUMA PURA (RAÍZ), DESECADA Y MOLIDA EN POLVO, PRESENTACIÓN EN BOLSA A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "7"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "8",
+    "cateSeqno": 51
+   },
+   "prodId": "5039596592176924",
+   "prodNm": "COLADO DE CIRUELA, EN PRESNTACION DE 115 g +/-5 g.",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "8"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "8",
+    "cateSeqno": 52
+   },
+   "prodId": "5039157292176305",
+   "prodNm": "COLADO DE MANZANA, EN PRESENTACION DE 115 g +/- 5 g.",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "8"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "8",
+    "cateSeqno": 53
+   },
+   "prodId": "5038580692176325",
+   "prodNm": "COLADO DE MELOCOTON, EN  PRESENTACION DE 115 g +/- 5 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "8"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "8",
+    "cateSeqno": 54
+   },
+   "prodId": "5039555992176326",
+   "prodNm": "COLADO DE PERA, EN PRESENTACION DE 115 g +/- 5 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "8"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 55
+   },
+   "prodId": "5019260392324890",
+   "prodNm": "FRIJOL NEGRO MOLIDO, EMPAQUE DE 3 kg EN PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 56
+   },
+   "prodId": "5019260392324710",
+   "prodNm": "FRIJOL NEGRO MOLIDO, EMPAQUE DE 1 kg EN PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 57
+   },
+   "prodId": "5040701892324913",
+   "prodNm": "GARBANZOS, COCIDOS Y PROCESADOS, ENVASADOS EN RECIPIENTE HERMÉTICO,  EMPAQUE EN PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 58
+   },
+   "prodId": "5040323392324914",
+   "prodNm": "MAIZ DULCE EN GRANO, COCIDO Y  PROCESADO, ENVASADO EN LATAS, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 59
+   },
+   "prodId": "5019310792324786",
+   "prodNm": "PURE DE PAPA DESHIDRATADO, LISTO PARA PREPARAR, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 60
+   },
+   "prodId": "5017190192321095",
+   "prodNm": "PALMITO EN TROZOS EN CONSERVA, ENLATADO,  CONTENIDO A GRANEL EN kg, USO CONSUMO ALIMENTARIO",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 61
+   },
+   "prodId": "5017190192324796",
+   "prodNm": "HONGOS REBANADOS, PROCESADOS, ENVASADOS EN SALMUERA, EN LATAS, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 62
+   },
+   "prodId": "5013170292325896",
+   "prodNm": "LECHE CONDENSADA EN ENVASE METALICO DE 425 ± 30 g, SOLICITUD GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "9",
+    "cateSeqno": 63
+   },
+   "prodId": "5013170292325894",
+   "prodNm": "LECHE EVAPORADA, PRESENTACION DE 500 g ± 100 g, SOLICITUD A GRANEL (L).",
+   "prodQty": 1,
+   "prodUnit": "L",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "9"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "10",
+    "cateSeqno": 64
+   },
+   "prodId": "5017155192324750",
+   "prodNm": "SAL, REFINADA, YODADA Y FLUORADA, COLOR BLANCO, PARA USO EN ALIMENTOS, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "10"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "10",
+    "cateSeqno": 65
+   },
+   "prodId": "5017155192173856",
+   "prodNm": "SAL REFINADA, EMPAQUE INDIVIDUAL DE 1,5 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "10"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 66
+   },
+   "prodId": "5020171390020823",
+   "prodNm": "TE MANZANILLA CAJA DE 100 BOLSITAS",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 67
+   },
+   "prodId": "5020171392003960",
+   "prodNm": "TE DE MENTA EN PRESENTACION DE 25 SOBRES",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 68
+   },
+   "prodId": "5020171392176318",
+   "prodNm": "CANELA DESECADA, EN BOLSAS INDIVIDUALES (TE DE CANELA), PRESENTACIÓN 20 - 25 SOBRES",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 69
+   },
+   "prodId": "5020171390020824",
+   "prodNm": "TE NEGRO CAJA DE 100 UNIDADES",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 70
+   },
+   "prodId": "5020171392176339",
+   "prodNm": "TILO DESECADO, BOLSAS INDIVIDUALES (TE DE TILO), EN PRESENTACIÓN DE 20 - 25 UNIDADES",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "11",
+    "cateSeqno": 71
+   },
+   "prodId": "5020171392173876",
+   "prodNm": "SEN DESECADO, EN BOLSAS INDIVIDUALES (TE DE SEN), PRESENTACIÓN 20 - 25 UNIDADES",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "11"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 72
+   },
+   "prodId": "5020231192324942",
+   "prodNm": "MEZCLA EN  POLVO,FORTIFICADA, PARA ELABORAR BEBIDAS, PREPARADA A BASE DE MAIZ Y  SOYA CON SABOR GALLETA, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 73
+   },
+   "prodId": "5020231192324941",
+   "prodNm": "MEZCLA FORTIFICADA, EN POLVO, PARA PREPARAR  BEBIDA A BASE DE MAIZ Y SOYA CON SABOR VAINILLA,SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 74
+   },
+   "prodId": "5020231192324940",
+   "prodNm": "MEZCLA FORTIFICADA, EN POLVO, PARA PREPARAR  BEBIDA A BASE DE MAIZ Y SOYA CON SABOR FRESA,SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 75
+   },
+   "prodId": "5015151592454551",
+   "prodNm": "BEBIDA LIQUIDA FORTIFICADA, PREPARADA A BASE DE MAIZ Y SOYA, SABOR A VAINILLA, PRESENTACION DE 200 mL",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 76
+   },
+   "prodId": "5015151592454552",
+   "prodNm": "BEBIDA LIQUIDA FORTIFICADA, PREPARADA A BASE DE MAIZ Y SOYA, SABOR A FRESA, PRESENTACION 200 mL",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "12",
+    "cateSeqno": 77
+   },
+   "prodId": "5015151592454550",
+   "prodNm": "MEZCLA LIQUIDA FORTIFICADA, BASE DE MAIZ Y SOYA, SABOR CHOCOLATE, PRESENTACION 200 mL",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "12"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "13",
+    "cateSeqno": 78
+   },
+   "prodId": "5020231192325131",
+   "prodNm": "MEZCLA EN POLVO A BASE DE SOYA PARA PREPARAR BEBIDAS (LECHE DE SOYA), SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "13"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "13",
+    "cateSeqno": 79
+   },
+   "prodId": "5040705392289937",
+   "prodNm": "PROTEINA DE SOYA TEXTURIZADA, ESTRUCTURA Y SABOR A CARNE, PRESENTACIONA GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "13"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 80
+   },
+   "prodId": "5022130392324761",
+   "prodNm": "FECULA DE MAIZ, EN POLVO, EMPACADA EN RECIPIENTE HERMETICO CON UN CONTENIDO DE 1000 g, SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 81
+   },
+   "prodId": "5022130392324708",
+   "prodNm": "FECULA DE MAIZ EN POLVO, CON SABOR A VAINILLA EN EMPAQUE SELLADO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 82
+   },
+   "prodId": "5022110292324749",
+   "prodNm": "HARINA DE TRIGO FORTIFICADA, EN POLVO, ENVASADA EN EMPAQUE SELLADO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 83
+   },
+   "prodId": "5022110292216019",
+   "prodNm": "HARINA ARROZ, FORTIFICADA, EN POLVO, EMPACADO HERMETICO, PRESENTACIÓN A GRANEL EN kg, USO INDUSTRIA ALIMENTARIA.",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 84
+   },
+   "prodId": "5022130392324747",
+   "prodNm": "HARINA DE MAIZ BLANCO (MASA) EN POLVO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "14",
+    "cateSeqno": 85
+   },
+   "prodId": "5018171192321382",
+   "prodNm": "POLVO DE HORNEAR PARA UTILIZAR EN REPOSTERIA, PRESENTACION A GRANEL EN kg, EMPACADO EN BOLSA PLASTICA, USO CONSUMO ALIMENTARIO",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "14"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "15",
+    "cateSeqno": 86
+   },
+   "prodId": "5020231192324944",
+   "prodNm": "MEZCLA EN POLVO BASE CEREAL DE CEBADA MOLIDA, EN PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "15"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "15",
+    "cateSeqno": 87
+   },
+   "prodId": "5022110492325030",
+   "prodNm": "AVENA EN POLVO FINO, SIN PRESERVANTES,LIBRE DE IMPUREZAS, EMPACADO EN BOLSA SELLADA, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "15"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "15",
+    "cateSeqno": 88
+   },
+   "prodId": "5020231192267230",
+   "prodNm": "HORCHATA, EN POLVO, PARA HACER BEBIDAS, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "15"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "16",
+    "cateSeqno": 89
+   },
+   "prodId": "5022120192324864",
+   "prodNm": "CEREAL INSTANTANEO, ELABORADO A BASE DE VARIOS CEREALES,  LIBRE DE IMPUREZAS, EMPAQUE HERMETICO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "16"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "16",
+    "cateSeqno": 90
+   },
+   "prodId": "5022110192271468",
+   "prodNm": "GRANOLA, MEZCLA DE CEREALES , FRUTAS DESECADAS Y FRUTAS SECAS, LIBRE DE CONTAMINANTES, PRESENTACIÓN A GRANEL EN kg",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "16"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "16",
+    "cateSeqno": 91
+   },
+   "prodId": "5022120192324866",
+   "prodNm": "CEREAL INSTANTANEO, BASE DE ARROZ, LISTO PARA PREPARAR, EMPAQUE HERMETICO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "16"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "16",
+    "cateSeqno": 92
+   },
+   "prodId": "5022120192324700",
+   "prodNm": "CEREAL INSTANTÁNEO, BASE DE HARINA DE TRIGO, AZÚCAR Y MIEL DE ABEJA, EMPAQUE HERMÉTICO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "16"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "16",
+    "cateSeqno": 93
+   },
+   "prodId": "5022120192324698",
+   "prodNm": "HOJUELAS DE MAIZ (CEREAL), SIN AZÚCAR ADICIONADA, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "16"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 94
+   },
+   "prodId": "5019240192324648",
+   "prodNm": "JALEA ENDULZADA CON AZUCAR SABOR A GUAYABA, ENVASE PLÁSTICO DE POLIETILENO, LIBRE DE BISFENOL A, GRADO ALIMENTARIO, RESISTENTE Y CON CIERRE HERMÉTICO PRESENTACION A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 95
+   },
+   "prodId": "5019240192324646",
+   "prodNm": "JALEA, CON SUSTITUTO DE AZUCAR, SABOR A  GUAYABA ENVASADA EN RECIPIENTES SELLADOS, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 96
+   },
+   "prodId": "5019240392321082",
+   "prodNm": "MIEL DE ABEJA, 100 % PURA, PRESENTACIÓN ENVASE PLÁSTICO, CONTENIDO A GRANEL EN kg, CONSUMO ALIMENTARIO.",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 97
+   },
+   "prodId": "5020231192324820",
+   "prodNm": "DULCE DE CAÑA MOLIDO,  EMPACADO EN BOLSA PLASTICA SELLADA CON UN CONENIDO DE 900 g +/-100 g, SOLICITUD A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 98
+   },
+   "prodId": "5016150992324863",
+   "prodNm": "SUSTITUTO  DE AZUCAR 100 % NATURAL, ELABORADO A BASE DE ESTEVIA, EMPACADO EN BOLSAS DE POLIPROPILENO, GRADO ALIMENTARIO, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "17",
+    "cateSeqno": 99
+   },
+   "prodId": "5016150992454757",
+   "prodNm": "SUSTITUTO DE AZUCAR, ELABORADO A BASE DE ESTEVIA, EMPACADO EN SOBRES INDIVIDUALES, PRESENTACION EN UNIDAD, CON UN CONTENIDO DE 1 g",
+   "prodQty": 1,
+   "prodUnit": "c/u",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "17"
+  },
+  {
+   "id": {
+    "cartelNo": "20261001258",
+    "cartelSeq": "00",
+    "cartelCate": "18",
+    "cateSeqno": 100
+   },
+   "prodId": "5019310492324795",
+   "prodNm": "MEZCLA EN POLVO PREPARADA, PARA ELABORAR  SOPA TIPO CREMA COLA DE RES, ENVASADA EN EMPAQUES SELLADOS, PRESENTACIÓN A GRANEL (kg)",
+   "prodQty": 1,
+   "prodUnit": "kg",
+   "prodPrc": 0.1,
+   "currencyType": "CRC",
+   "budgetAmt": 0.1,
+   "sampleReqYn": "Y",
+   "cate": "18"
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 100,
+  "sort": {
+   "unsorted": true,
+   "sorted": false,
+   "empty": true
+  },
+  "offset": 0,
+  "unpaged": false,
+  "paged": true
+ },
+ "totalPages": 5,
+ "totalElements": 432,
+ "last": false,
+ "numberOfElements": 100,
+ "size": 100,
+ "number": 0,
+ "sort": {
+  "unsorted": true,
+  "sorted": false,
+  "empty": true
+ },
+ "first": true,
+ "empty": false
+}

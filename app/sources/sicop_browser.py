@@ -75,16 +75,23 @@ def _ahora() -> datetime:
     return datetime.now(HORA_CR)
 
 
-def _revisar_control(page, respuesta=None) -> None:
-    """Se detiene ante un CAPTCHA, un bloqueo o un aviso contra programas: es un control que no se salta."""
+def detectar_control(page, respuesta=None) -> str | None:
+    """CAPTCHA, bloqueo o aviso contra programas: devuelve el motivo («control no automatizable: …») o None.
+    También lo usa la ficha del concurso (sicop_tender_detail.py)."""
     if respuesta is not None and respuesta.status in (403, 429):
-        raise FalloObtencion(f"control no automatizable: SICOP respondió HTTP {respuesta.status} (bloqueo). "
-                             "No se reintenta: volver al modo manual y avisar.", control=True)
+        return f"control no automatizable: SICOP respondió HTTP {respuesta.status} (bloqueo)"
     if page.locator("iframe[src*='captcha' i]").count() or page.get_by_text(CONTROL).count():
         soporte = ID_SOPORTE.search(page.inner_text("body"))
         detalle = f" (ID de soporte de SICOP: {soporte.group(1)})" if soporte else ""
-        raise FalloObtencion(f"control no automatizable: la página muestra un CAPTCHA o un aviso de bloqueo{detalle}. "
-                             "No se reintenta: volver al modo manual y avisar.", control=True)
+        return f"control no automatizable: la página muestra un CAPTCHA o un aviso de bloqueo{detalle}"
+    return None
+
+
+def _revisar_control(page, respuesta=None) -> None:
+    """Se detiene ante un CAPTCHA, un bloqueo o un aviso contra programas: es un control que no se salta."""
+    motivo = detectar_control(page, respuesta)
+    if motivo:
+        raise FalloObtencion(f"{motivo}. No se reintenta: volver al modo manual y avisar.", control=True)
 
 
 def _esperar_codigo(lector, desde: datetime, minutos: int, reloj, dormir):

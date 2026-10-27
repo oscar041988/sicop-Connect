@@ -1,0 +1,53 @@
+{
+ "content": [
+  {
+   "instCartelNo": "2026LY-000006-0001102304",
+   "cartelNo": "20261001258",
+   "cartelNm": "Convenio Marco para la adquisicion de Abarrotes",
+   "regDt": "12/10/2026 09:34",
+   "cartelSeq": "00",
+   "biddocStartDt": "13/10/2026 07:00",
+   "biddocEndDt": null,
+   "openbidDt": "09/11/2026 08:31",
+   "cartelInstCd": "4000042147",
+   "releaseYn": "Y",
+   "cartelInstNm": "CAJA COSTARRICENSE DE SEGURO SOCIAL",
+   "proceType": "LY",
+   "cartelClsYn": "",
+   "biddocType": "XM",
+   "proceTypeDetail": "",
+   "proceTypeDetailCd": "CM",
+   "cartelStat": "Objetado",
+   "cartelSecretYn": "",
+   "contReqYn": "Y",
+   "reqPriceAmtYn": "Y",
+   "cartelStatStr": "Objetado",
+   "total": 1
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 10,
+  "sort": {
+   "sorted": true,
+   "unsorted": false,
+   "empty": false
+  },
+  "offset": 0,
+  "paged": true,
+  "unpaged": false
+ },
+ "totalPages": 1,
+ "totalElements": 1,
+ "last": true,
+ "numberOfElements": 1,
+ "size": 10,
+ "number": 0,
+ "sort": {
+  "sorted": true,
+  "unsorted": false,
+  "empty": false
+ },
+ "first": true,
+ "empty": false
+}

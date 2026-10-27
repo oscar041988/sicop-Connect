@@ -99,5 +99,22 @@ Todas tienen `Cod Unidad Compra` con ceros iniciales (`00001`, `01142`, `02102`)
   visibles, como en el portal real el 2026-10-21), `dos_csv` y `codigo_se_cierra` (la ventana del código
   desaparece sola, como el 2026-10-21 a las 15:18).
 
+## `sicop_concursos_simulado.html` y `ficha_simulada/`
+
+- **Datos: SIMULADOS** (las respuestas del servidor son de mentira). Sirven para `tests/test_ficha.py`
+  (enriquecimiento, lección 2).
+- `sicop_concursos_simulado.html` imita la consulta pública de concursos observada el 2026-10-27
+  (`docs/DETALLE_CARTEL.md`): «Búsqueda avanzada» con `role=button`, la etiqueta «Número de SICOP» sin unir a su
+  casilla, «Consultar», la fila del resultado con el enlace `[tipo] descripción` y los `fetch` de la ficha a las
+  mismas rutas de `prod-api.sicop.go.cr`. Variantes: `normal`, `captcha`, `bloqueo`, `captcha_en_ficha`,
+  `sin_avanzada`.
+- `ficha_simulada/<Número SICOP>/` (`busqueda`, `ficha`, `lineas`, `documentos`, `criterios`, `impactos`.json):
+  copiadas de las respuestas que SICOP le dio a la exploración de la lección 1 para los carteles públicos
+  `20261002859` (GPS, abierto), `20261001258` (abarrotes, objetado, 432 líneas y 49 documentos) y `20261001587`
+  (Santa Ana, modificado el 26/10), **sin los campos de personas** (funcionarios, identificaciones, correos,
+  teléfonos y quien presentó un recurso; el mismo patrón `PERSONALES` de `app/sources/sicop_tender_detail.py`).
+  Los números se dejaron tal como venían en el texto. Las líneas son solo la primera página (100), como la
+  recibe la página.
+
 **No editar estos archivos** (ni abrirlo y guardarlo con Excel). Si hace falta otro caso, agregar un fixture nuevo
 y anotarlo aquí con su origen (real / sintético / simulado).
