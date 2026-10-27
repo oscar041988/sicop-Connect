@@ -260,8 +260,10 @@
   - Exploración de `20261001258` (Objetado; 432 líneas en páginas de 100; 49 documentos, la mayoría ZIP) y
     `20261001587`, sin bloqueo. **`20261001587` (Santa Ana, «Interesa») se modificó el 26/10 y cierra el 30/10
     23:59**, pero los datos abiertos de hoy siguen diciendo 23/10: el panel lo oculta como vencido. Avisado a Ivania.
-  - **Pendiente:** Oscar marca los campos útiles, decide sobre los datos de funcionarios y qué tipos de documento
-    se guardan; autoevaluación; commit.
+  - Decisiones de Oscar (2026-10-27, por Ivania): campos útiles marcados en `DETALLE_CARTEL.md` §3 (todos menos
+    clasificación del objeto y funcionarios); no se guardan datos de funcionarios; se guardan todos los tipos de
+    documento. Commit `fa8fc4b`.
+  - **Pendiente:** autoevaluación de la lección 1; tope de documentos por cartel (lección 3).
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

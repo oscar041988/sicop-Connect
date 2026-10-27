@@ -54,27 +54,28 @@ Servidor `prod-api.sicop.go.cr`, rutas `…/public/…`, respuestas JSON:
 
 ## 3. Campos de la ficha
 
-Ejemplo del cartel `20261002859`. «¿Sirve para decidir?» es la propuesta; Oscar marca la última columna.
+Ejemplo del cartel `20261002859`. «¿Sirve para decidir?» es la propuesta; la última columna es la decisión de Oscar
+(2026-10-27, comunicada por Ivania). Los campos con ☑ se guardan en columnas propias en la lección 2.
 
 | Campo en pantalla | Campo JSON | Ejemplo | ¿Sirve para decidir? | Oscar |
 |---|---|---|---|---|
-| Estado del concurso | `cartelStatStr` (búsqueda) | En recepción de ofertas | Sí: pasa «por verificar» a un estado real | ☐ |
-| Número de SICOP | `cartelNo` | 20261002859 | Clave de unión (texto) | ☐ |
-| Número de procedimiento | `instCartelNo` | 2026LD-000031-0018000001 | Ya lo tenemos | ☐ |
-| Versión del pliego | `cartelSeq` · `cartelVersion` · `cartelModYn` | 00 · 21102026153640 · N | Sí: detecta modificaciones | ☐ |
-| Descripción | `cartelNm` | Servicio de Monitoreo y Localización Satelital… | Ya lo tenemos | ☐ |
-| Tipo de procedimiento | `proceTypeNm` | LICITACIÓN REDUCIDA | Ya lo tenemos | ☐ |
-| Tipo de modalidad | `proceTypeDetailNm` | Según demanda | Sí: cambia cómo leer el monto | ☐ |
-| Clasificación del objeto | `ppsTypeNm` | BIENES/SERVICIOS | Poco | ☐ |
-| Tipo de recepción de ofertas | `biddocTypeNm` · `onlineYnNm` | Común - firma digital de XML · En línea | Sí (requisito para ofertar) | ☐ |
-| Inicio / cierre de recepción | `biddocStartDt` / `biddocEndDt` | 2026-10-21T17:00 / 2026-10-28T09:00 | Sí: confirma el plazo (coincide con la base) | ☐ |
-| Apertura de ofertas | `openbidDt` | 2026-10-28T09:00 | Sí | ☐ |
-| Límite de aclaraciones | `explainRcvEndDt` | 2026-10-22T23:59 | Sí: fecha para preguntar | ☐ |
-| Monto total estimado | `cartelBudget` | 291782.16 | Sí (moneda por confirmar: hay `cartelBudgetUsd` aparte) | ☐ |
-| Garantías, pago adelantado, multas, reajuste | secciones 6 y 8, `amtReadjustYn`… | — | Sí (riesgo del contrato) | ☐ |
-| Criterios sociales, ambientales… | `epCartelSustCriteria` | 2 criterios | Poco | ☐ |
-| Funcionarios encargados | `epCartelRoleStaff`, `umUser` | (no se copia aquí) | Ver sección 5 | ☐ |
-| Líneas | `prodId`, `prodNm`, `prodQty`, `prodUnit`, `prodPrc`, `currencyType` | 8311160292034727 · 1 NA · 4052.53 CRC | Ya las tenemos; sirve para comparar | ☐ |
+| Estado del concurso | `cartelStatStr` (búsqueda) | En recepción de ofertas | Sí: pasa «por verificar» a un estado real | ☑ sí |
+| Número de SICOP | `cartelNo` | 20261002859 | Clave de unión (texto) | ☑ sí |
+| Número de procedimiento | `instCartelNo` | 2026LD-000031-0018000001 | Ya lo tenemos | ☑ sí |
+| Versión del pliego | `cartelSeq` · `cartelVersion` · `cartelModYn` | 00 · 21102026153640 · N | Sí: detecta modificaciones | ☑ sí |
+| Descripción | `cartelNm` | Servicio de Monitoreo y Localización Satelital… | Ya lo tenemos | ☑ sí |
+| Tipo de procedimiento | `proceTypeNm` | LICITACIÓN REDUCIDA | Ya lo tenemos | ☑ sí |
+| Tipo de modalidad | `proceTypeDetailNm` | Según demanda | Sí: cambia cómo leer el monto | ☑ sí |
+| Clasificación del objeto | `ppsTypeNm` | BIENES/SERVICIOS | Poco | ✗ no |
+| Tipo de recepción de ofertas | `biddocTypeNm` · `onlineYnNm` | Común - firma digital de XML · En línea | Sí (requisito para ofertar) | ☑ sí |
+| Inicio / cierre de recepción | `biddocStartDt` / `biddocEndDt` | 2026-10-21T17:00 / 2026-10-28T09:00 | Sí: confirma el plazo (coincide con la base) | ☑ sí |
+| Apertura de ofertas | `openbidDt` | 2026-10-28T09:00 | Sí | ☑ sí |
+| Límite de aclaraciones | `explainRcvEndDt` | 2026-10-22T23:59 | Sí: fecha para preguntar | ☑ sí |
+| Monto total estimado | `cartelBudget` | 291782.16 | Sí (moneda por confirmar: hay `cartelBudgetUsd` aparte) | ☑ sí |
+| Garantías, pago adelantado, multas, reajuste | secciones 6 y 8, `amtReadjustYn`… | — | Sí (riesgo del contrato) | ☑ sí |
+| Criterios sociales, ambientales… | `epCartelSustCriteria` | 2 criterios | Poco | ☑ sí |
+| Funcionarios encargados | `epCartelRoleStaff`, `umUser` | (no se copia aquí) | Ver sección 5 | ✗ no |
+| Líneas | `prodId`, `prodNm`, `prodQty`, `prodUnit`, `prodPrc`, `currencyType` | 8311160292034727 · 1 NA · 4052.53 CRC | Ya las tenemos; sirve para comparar | ☑ sí |
 
 Secciones de la ficha en pantalla: 1 Información general · 2 Funcionarios · 3 Criterios de compra pública
 estratégica · 4 Aclaración y recurso · 5 Pago para PYMES · 6 Garantías · 7 Oferta · 8 Condiciones de contrato ·
@@ -126,12 +127,13 @@ Lista en `getCartelFilesById` y en la tabla «11. Documento del pliego de condic
 - **Escuchar el JSON dentro del navegador** (`page.on("response")`) no hace ninguna petición extra a SICOP: son las
   mismas que hace la página para una persona. Da datos ordenados (fechas, montos, versión, documentos) y la
   copia fiel de la lección 2 es ese JSON.
-- Datos personales: se propone **no guardar** las respuestas de funcionarios (`epCartelRoleStaff`, `umUser`:
-  nombres, correos, teléfonos). Si Oscar quiere el contacto del encargado, se decide qué campo y se anota aquí.
+- Datos personales: **no se guardan** las respuestas de funcionarios (`epCartelRoleStaff`, `umUser`: nombres,
+  correos, teléfonos), ni en columnas ni en la copia fiel (decisión de Oscar, 2026-10-27).
 
 ## 6. Pendiente
 
 - [x] Explorar los otros 2 carteles (2026-10-27, Ivania): sin bloqueo; resultados arriba.
-- [ ] Decidir con Oscar qué tipos de documento se guardan (PDF, ZIP, Word, Excel) y el tope por cartel (lección 3).
-- [ ] Confirmar la casilla del Número SICOP y cómo se abre el resultado (pasos que se hicieron a mano).
-- [ ] Oscar marca qué campos sirven para decidir (sección 3) y decide sobre los datos de funcionarios.
+- [x] Tipos de documento (Oscar, 2026-10-27): **se guardan todos** (PDF, ZIP, Word, Excel). Ninguno se abre con
+      otro programa; `.xlsm` y similares, solo guardados. Falta el tope por cartel (lección 3).
+- [ ] Confirmar la casilla del Número SICOP y cómo se abre el resultado (pasos que se hicieron a mano; lección 2).
+- [x] Campos útiles marcados por Oscar (sección 3) y datos de funcionarios: no se guardan (2026-10-27).
