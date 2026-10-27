@@ -280,3 +280,17 @@ table.lista th:nth-child(5) { width: 10rem; }
 .ayuda-carga .origenes { display: grid; gap: 10px; margin: 10px 0; }
 .ayuda-carga .origenes dt { font-weight: 700; }
 .ayuda-carga .origenes dd { margin: 2px 0 0; }
+/* Enriquecimiento (entrega 4B): video y capturas de la bitácora de consultas */
+video.grabacion { width: 100%; max-width: 960px; border: 1px solid var(--line); border-radius: 14px; background: #000; }
+.captura { margin: 12px 0; }
+.captura img { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+/* Tablas del enriquecimiento: columnas a la medida del contenido (los anchos fijos de table.lista son de la tabla de
+   líneas). Las palabras solo se parten si no caben enteras; en pantallas angostas la tabla se desplaza en su caja. */
+.tabla-scroll table.lista.auto { table-layout: auto; min-width: 640px; margin-top: 0; border: 0; border-radius: 0; }
+table.lista.auto th { width: auto; }
+table.lista.auto tbody th { width: 30%; }
+table.lista.auto th, table.lista.auto td { overflow-wrap: break-word; }
+table.lista.auto .btn { white-space: nowrap; }
+@media (max-width: 760px) {
+  table.lista.auto th:nth-child(2), table.lista.auto td:nth-child(2) { display: table-cell; }
+}

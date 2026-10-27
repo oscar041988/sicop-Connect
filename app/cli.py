@@ -527,7 +527,9 @@ def enrich_status(settings: Settings) -> int:
             corridas = conn.execute("SELECT id, iniciada_en, terminada_en, estado, en_cola, consultados, fallos,"
                                     " resumen_estado FROM enrich_runs ORDER BY id DESC LIMIT 5").fetchall()
             consultas = conn.execute("SELECT iniciada_en, nro_sicop, resultado, duracion_s, documentos_guardados,"
-                                     " documentos_fallo, grabacion, motivo, es_reintento FROM enrich_consultas"
+                                     " documentos_fallo, grabacion, motivo, es_reintento,"
+                                     " (SELECT nombre FROM enrich_revisiones r WHERE r.consulta_id = c.id)"
+                                     " FROM enrich_consultas c"
                                      " ORDER BY id DESC LIMIT 15").fetchall()
         except sqlite3.OperationalError:
             print("Error: a la base le faltan tablas: ejecuta python -m app.cli migrate.", file=sys.stderr)
@@ -543,7 +545,9 @@ def enrich_status(settings: Settings) -> int:
     for c in consultas:
         print(f"  {_fecha_corta(c[0])} · {c[1]} · {c[2]} · {c[3]} s · documentos {c[4]} guardados, {c[5]} con FALLO"
               f" · grabación {c[6]}" + (" · reintento" if c[8] else "")
-              + (f" · {c[7]}" if c[2] in ("fallo", "control") else ""))
+              + (f" · {c[7]}" if c[2] in ("fallo", "control") else "")
+              + ((f" · revisada por {c[9]}" if c[9] else " · grabación SIN REVISAR (panel › Bitácora)")
+                 if c[2] in ("fallo", "control") else ""))
     return 0
 
 

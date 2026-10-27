@@ -243,7 +243,8 @@ def test_en_produccion_la_cookie_es_secure_y_el_secreto_es_obligatorio(db):
 def test_todas_las_rutas_post_exigen_el_token():
     rutas = _rutas_post()
 
-    assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar", "/cargar",
+    assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar",
+                             "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
                              "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/encargado",

@@ -1,6 +1,6 @@
 """Rutas del panel: inicio y cierre de sesión, lista de oportunidades, detalle, revisión y carga de archivos;
-seguimiento de carteles (gestor de documentos); para administradores, usuarios, destinatarios y avisos
-fallidos o inciertos.
+seguimiento de carteles (gestor de documentos); información y documentos de SICOP (enriquecimiento); para
+administradores, usuarios, destinatarios, avisos fallidos o inciertos y la bitácora de consultas con sus videos.
 
 Todas, salvo /login, exigen sesión (middleware en app/web/seguridad.py) y todo POST lleva token CSRF.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
@@ -29,8 +29,8 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (avisos, calidad, competencia, destinatarios, exportar, historial, panel, reintentos, resumen,
-                 seguimiento, usuarios)
+from app import (avisos, calidad, competencia, destinatarios, exportar, fichas_panel, historial, panel, reintentos,
+                 resumen, seguimiento, usuarios)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -218,6 +218,10 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         "seg": seg, "puede_entrar": seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
+        # Enriquecimiento (lección 4, entrega 4B): la ficha más reciente de SICOP y sus documentos.
+        "sicop": fichas_panel.informacion(conn, nro_sicop), "documentos": fichas_panel.documentos(conn, nro_sicop),
+        "retiro": fichas_panel.retiro(conn, nro_sicop), "TEXTO_DOC": fichas_panel.TEXTO,
+        "ESTADO_DOC": fichas_panel.ESTADOS,
     }, status_code=status_code)
 
 
@@ -698,3 +702,94 @@ def confirmar_aviso(request: Request, outbox_id: int) -> Response:
         a = reintentos.confirmar_salida(conn, outbox_id, _ahora(), _quien(request))
         return f"Aviso del {a.que} para {a.para} marcado como enviado: no se reenviará."
     return _cambio_de_aviso(request, cambio)
+
+
+# --- Documentos de la ficha y bitácora de consultas (enriquecimiento, lección 4, entrega 4B) ----------------
+
+def _no_encontrado(request: Request, mensaje: str) -> Response:
+    return PLANTILLAS.TemplateResponse(request, "error.html", {"mensaje": mensaje}, status_code=404)
+
+
+def _archivo(ruta: Path, nombre: str | None = None, tipo: str = "application/octet-stream") -> FileResponse:
+    """Un archivo del disco. Con nombre: como adjunto (se descarga; el navegador no lo abre dentro del panel)."""
+    respuesta = FileResponse(ruta, media_type=tipo, filename=nombre,
+                             content_disposition_type="attachment" if nombre else "inline")
+    respuesta.headers["X-Content-Type-Options"] = "nosniff"
+    return respuesta
+
+
+@router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}")
+def descargar_documento(request: Request, nro_sicop: str, doc_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        hallado = fichas_panel.documento_guardado(conn, settings.documents_dir, nro_sicop, doc_id)
+    if hallado is None:
+        return _no_encontrado(request, "Ese documento no está guardado (o se borró al cierre del cartel).")
+    log.info("Descarga de documento %s del cartel %s · usuario %s", doc_id, nro_sicop,
+             (seguridad.usuario_actual(request) or {}).get("id"))
+    return _archivo(*hallado)
+
+
+@router.get("/bitacora", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
+def pagina_bitacora(request: Request, por_revisar: str = "") -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        datos = fichas_panel.bitacora(conn, solo_por_revisar=por_revisar == "1")
+    return PLANTILLAS.TemplateResponse(request, "bitacora.html", {
+        "seccion": "bitacora", **datos, "solo_por_revisar": por_revisar == "1", "hecho": request.session.pop("hecho", None),
+        "activado": settings.enrich_enabled, "maximo": settings.enrich_max_per_day,
+        "dias": settings.recordings_keep_days, "RESULTADOS": fichas_panel.RESULTADOS, "CORRIDAS": fichas_panel.CORRIDAS,
+    })
+
+
+def _render_grabacion(request: Request, conn, consulta_id: int, status_code: int = 200, error: str | None = None
+                      ) -> Response:
+    settings = load_settings()
+    c = fichas_panel.consulta(conn, consulta_id)
+    if c is None:
+        return _no_encontrado(request, "Esa consulta no está en la bitácora.")
+    video, capturas = fichas_panel.archivos_grabacion(settings.recordings_dir, c)
+    return PLANTILLAS.TemplateResponse(request, "grabacion.html", {
+        "seccion": "bitacora", "c": c, "video": video, "capturas": capturas, "error": error,
+        "dias": settings.recordings_keep_days, "RESULTADOS": fichas_panel.RESULTADOS,
+        "hecho": request.session.pop("hecho", None),
+    }, status_code=status_code)
+
+
+@router.get("/bitacora/consultas/{consulta_id}", response_class=HTMLResponse,
+            dependencies=[Depends(seguridad.exigir_admin)])
+def pagina_grabacion(request: Request, consulta_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_grabacion(request, conn, consulta_id)
+
+
+@router.get("/bitacora/consultas/{consulta_id}/archivos/{nombre}", dependencies=[Depends(seguridad.exigir_admin)])
+def archivo_grabacion(request: Request, consulta_id: int, nombre: str) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        c = fichas_panel.consulta(conn, consulta_id)
+    ruta = fichas_panel.archivo_grabacion(settings.recordings_dir, c, nombre) if c else None
+    if ruta is None:
+        return _no_encontrado(request, f"La grabación ya no está (se guardan {settings.recordings_keep_days} días).")
+    return _archivo(ruta, tipo="video/webm" if nombre.endswith(".webm") else "image/png")
+
+
+@router.post("/bitacora/consultas/{consulta_id}/revisada", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def marcar_grabacion_revisada(request: Request, consulta_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            fichas_panel.marcar_revisada(conn, consulta_id, _quien(request), _ahora())
+        except fichas_panel.RevisionInvalida as exc:
+            return _render_grabacion(request, conn, consulta_id, 400, error=str(exc))
+    request.session["hecho"] = "Grabación marcada como revisada: desde ahora sigue la retención normal."
+    return RedirectResponse(f"/bitacora/consultas/{consulta_id}", status_code=303)

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block titulo %}Bitácora de consultas{% endblock %}
+{% block contenido %}
+<section>
+  <h1>Bitácora de consultas</h1>
+  <p class="sub">Lo que hizo el enriquecimiento en SICOP: cada corrida de las 10:00 y cada consulta, con su video y
+    capturas. Enriquecimiento {% if activado %}<strong>activado</strong>{% else %}<strong>desactivado</strong>
+    (ENRICH_ENABLED=false){% endif %} · máximo {{ maximo }} por día · los videos se guardan {{ dias }} días; los de un
+    FALLO o CAPTCHA, hasta que alguien los marque revisados.</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if por_revisar %}
+  <p class="aviso">{{ por_revisar }} grabación{{ "es" if por_revisar != 1 }} de un FALLO o CAPTCHA
+    espera{{ "n" if por_revisar != 1 }} revisión. <a href="/bitacora?por_revisar=1">Ver solo esas</a></p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Corridas</h2>
+  {% if corridas %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>#</th><th>Empezó</th><th>Terminó</th><th>Resultado</th><th>En cola</th><th>Consultados</th><th>FALLO</th><th>Resumen</th></tr></thead>
+    <tbody>
+      {% for r in corridas %}
+      <tr>
+        <td>{{ r[0] }}</td><td>{{ r[1] | fecha }}</td><td>{{ r[2] | fecha if r[2] else "en curso" }}</td>
+        <td>{% if r[3] in ("con_fallos", "detenida") %}<span class="falta">{{ CORRIDAS.get(r[3], r[3]) }}</span>{% else %}{{ CORRIDAS.get(r[3], r[3]) }}{% endif %}</td>
+        <td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td><td><small>{{ (r[7] or "—") | replace("_", " ") }}</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">Todavía no hay corridas de enrich run.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Consultas{% if solo_por_revisar %} · solo FALLO o CAPTCHA sin revisar{% endif %}</h2>
+  {% if solo_por_revisar %}<p><a href="/bitacora">Ver todas</a></p>{% endif %}
+  {% if consultas %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Hora</th><th>Cartel</th><th>Resultado</th><th>Duración</th><th>Documentos</th><th>Grabación</th></tr></thead>
+    <tbody>
+      {% for q in consultas %}
+      <tr>
+        <td>{{ q.iniciada_en | fecha }}<br><small>{% if q.run_id %}corrida #{{ q.run_id }}{% else %}a mano (enrich --nro){% endif %}</small></td>
+        <td><a href="/oportunidades/{{ q.nro_sicop }}">{{ q.nro_sicop }}</a></td>
+        <td>{% if q.resultado in ("fallo", "control") %}<span class="falta">{{ RESULTADOS.get(q.resultado, q.resultado) }}</span>{% else %}{{ RESULTADOS.get(q.resultado, q.resultado) }}{% endif %}{% if q.es_reintento %} <small>(reintento)</small>{% endif %}
+          {% if q.motivo and q.resultado in ("fallo", "control") %}<br><small>{{ q.motivo }}</small>{% endif %}</td>
+        <td>{% if q.duracion_s is not none %}{{ "%.0f" | format(q.duracion_s) }} s{% else %}—{% endif %}</td>
+        <td><small>{{ q.documentos_guardados }} guardados{% if q.documentos_fallo %}, <span class="falta">{{ q.documentos_fallo }} con FALLO</span>{% endif %}</small></td>
+        <td>{% if q.grabacion %}<a href="/bitacora/consultas/{{ q.id }}">Ver grabación</a>{% else %}—{% endif %}
+          {% if q.por_revisar %}<br><small class="falta">sin revisar</small>{% elif q.revisada_por %}<br><small>revisada por {{ q.revisada_por }}</small>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">{% if solo_por_revisar %}No hay grabaciones de FALLO o CAPTCHA por revisar.{% else %}Todavía no hay consultas en la bitácora.{% endif %}</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Borrados al cierre</h2>
+  <p class="sub">Ficha, documentos y texto de carteles ya cerrados que nadie marcó «Interesa» u «Ofertada» ni puso en
+    seguimiento. El cartel, sus revisiones y la bitácora se quedan.</p>
+  {% if retiros %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Cartel</th><th>Cerró</th><th>Borrado</th><th>Documentos</th></tr></thead>
+    <tbody>
+      {% for x in retiros %}
+      <tr><td><a href="/oportunidades/{{ x[0] }}">{{ x[0] }}</a></td><td>{{ x[2] | fecha }}</td><td>{{ x[1] | fecha }}</td>
+        <td>{{ x[3] }} · {{ "%.1f" | format(x[4] / 1000000) }} MB</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">Todavía no se borró nada al cierre.</p>
+  {% endif %}
+</section>
+{% endblock %}

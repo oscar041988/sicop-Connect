@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-23 (revisión general del código, lock con playwright, auditoría de documentación y `ARQUITECTURA.md`, pruebas con Python 3.12, OPERACION probado en instalación limpia; rama `desarrollo`, 486 passed; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-27 (enriquecimiento lección 4, entrega 4B: el panel muestra la ficha, los documentos y la bitácora de consultas; rama `desarrollo`, 626 passed, solo local; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -353,6 +353,25 @@
     13 (Santa Ana alta + 12 baja) y se borrarían GPS 20261002692 y 20261002859.
   - **Pendiente · Ivania:** respaldo y `migrate` (0021) **antes de las 10:00 del 28/10**; revisar esa corrida
     automática; autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
+- **Enriquecimiento · lección 4, entrega 4B (2026-10-27, rama `desarrollo`, solo local):**
+  - `app/fichas_panel.py` (solo lee; lo único que escribe es `marcar_revisada`). Detalle del cartel: bloque
+    «Información de SICOP» (estado, recepción, apertura, monto, garantías y contrato, criterios; aviso si el cierre de
+    SICOP no coincide con los datos abiertos; mensaje si se borró al cierre o si todavía no se consultó) y tabla de
+    documentos con «Descargar» (`/oportunidades/{nro}/documentos/{id}`, como adjunto).
+  - «Administración › Bitácora de consultas» (solo admin): corridas, consultas, borrados al cierre y filtro «por
+    revisar»; página de cada grabación (video y capturas) con el botón «marcar revisada».
+  - Migración **0022** (`enrich_revisiones`, no se borra ni se modifica): una grabación de FALLO o CAPTCHA se conserva
+    hasta que un administrador la marca revisada; después sigue `RECORDINGS_KEEP_DAYS`. `enrich status` muestra
+    «revisada por…» o «SIN REVISAR».
+  - Tablas nuevas con columnas a la medida del contenido (`table.lista.auto` dentro de `.tabla-scroll`): Ivania vio
+    palabras cortadas y columnas encimadas por los anchos fijos de la tabla de líneas; corregido y revisado por ella.
+  - **626 passed** (10 nuevas en `tests/test_panel_enriquecimiento.py`; la ruta POST nueva se agregó a
+    `test_todas_las_rutas_post_exigen_el_token`).
+  - Base local: respaldo `sicop_20261027-144635` (esquema 0021, en la carpeta temporal de la sesión de Claude) →
+    `migrate` (0022), aplicado por Claude para abrir el panel.
+  - **Pendiente:** commit en `desarrollo`; decidir si `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx` entra al
+    repositorio; siguen los pendientes de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4);
+    después, entrega 4C (reglas sobre el texto de los PDF).
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

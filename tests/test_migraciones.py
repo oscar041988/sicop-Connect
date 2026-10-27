@@ -51,7 +51,7 @@ def test_migrate_crea_las_tablas_de_16_3(db):
                                    "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql", "0010_solicitudes_estados.sql",
                                    "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                    "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql"]
+                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql"]
 
     with closing(sqlite3.connect(db)) as conn:
         tablas = {fila[0] for fila in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
@@ -204,7 +204,7 @@ def test_0004_conserva_revisiones_y_rellena_tipo_de_procedimiento(tmp_path, db):
                                     "0007_ciclo.sql", "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql", "0010_solicitudes_estados.sql",
                                     "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                     "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql"]
+                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql"]
 
     with closing(_conn(db)) as conn:
         assert conn.execute("SELECT tipo_procedimiento FROM tenders").fetchone()[0] == "Licitación Reducida"
@@ -251,4 +251,4 @@ def test_migracion_con_error_no_deja_nada_a_medias(tmp_path, db):
 
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT name FROM sqlite_master WHERE name = 'tabla_nueva'").fetchone() is None
-        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021"]
+        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022"]

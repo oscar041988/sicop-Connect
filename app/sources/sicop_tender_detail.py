@@ -449,6 +449,7 @@ def revisar_base(conn: sqlite3.Connection, nros: list[str], documentos: bool) ->
         conn.execute("SELECT 1 FROM tender_details LIMIT 1")
         conn.execute("SELECT es_reintento FROM enrich_consultas LIMIT 1")
         conn.execute("SELECT 1 FROM enrich_retiros LIMIT 1")
+        conn.execute("SELECT 1 FROM enrich_revisiones LIMIT 1")
         if documentos:
             conn.execute("SELECT 1 FROM tender_documents LIMIT 1")
     except sqlite3.OperationalError:

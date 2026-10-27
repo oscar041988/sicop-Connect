@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Grabación {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="/bitacora">← Bitácora de consultas</a></p>
+<section>
+  <h1>Consulta de <a href="/oportunidades/{{ c.nro_sicop }}">{{ c.nro_sicop }}</a></h1>
+  <p class="sub">{{ c.iniciada_en | fecha }} · {% if c.run_id %}corrida #{{ c.run_id }}{% else %}a mano (enrich --nro){% endif %}
+    · {{ RESULTADOS.get(c.resultado, c.resultado) }}{% if c.es_reintento %} (reintento){% endif %}
+    {% if c.duracion_s is not none %}· {{ "%.0f" | format(c.duracion_s) }} s{% endif %}
+    · documentos: {{ c.documentos_guardados }} guardados{% if c.documentos_fallo %}, {{ c.documentos_fallo }} con FALLO{% endif %}</p>
+  {% if c.motivo %}<p class="{{ 'error' if c.resultado in ('fallo', 'control') else 'sub' }}">{{ c.motivo }}</p>{% endif %}
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% if c.resultado in ("fallo", "control") %}
+  {% if c.revisada_por %}
+  <p class="sub">Revisada por {{ c.revisada_por }} el {{ c.revisada_en | fecha }}: el video sigue la retención normal
+    ({{ dias }} días).</p>
+  {% else %}
+  <form method="post" action="/bitacora/consultas/{{ c.id }}/revisada">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p class="sub">Mientras no se marque revisada, esta grabación no se borra. Mírala, anota lo que haga falta (avisar
+      a Oscar, pedir un ajuste) y márcala.</p>
+    <button type="submit">Marcar revisada</button>
+  </form>
+  {% endif %}
+  {% endif %}
+</section>
+
+<section>
+  {% if video or capturas %}
+  {% if video %}
+  <h2>Video</h2>
+  <video class="grabacion" controls preload="metadata" src="/bitacora/consultas/{{ c.id }}/archivos/{{ video }}"></video>
+  {% endif %}
+  {% if capturas %}
+  <h2>Capturas ({{ capturas | length }})</h2>
+  {% for nombre in capturas %}
+  <figure class="captura">
+    <a href="/bitacora/consultas/{{ c.id }}/archivos/{{ nombre }}"><img src="/bitacora/consultas/{{ c.id }}/archivos/{{ nombre }}" alt="Captura {{ nombre }}" loading="lazy"></a>
+    <figcaption><small>{{ nombre }}</small></figcaption>
+  </figure>
+  {% endfor %}
+  {% endif %}
+  {% elif c.grabacion %}
+  <p class="vacio">La grabación ya no está en este equipo (se guardan {{ dias }} días; carpeta {{ c.grabacion }}).</p>
+  {% else %}
+  <p class="vacio">Esta consulta no tiene grabación.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -44,6 +44,67 @@
   <div><dt>Estimado</dt><dd>{% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}<br><small>Publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
 </dl>
 
+<section id="sicop">
+  <h2>Información de SICOP</h2>
+  {% if sicop %}
+  <p class="sub">Ficha de la consulta pública de SICOP · consultada el {{ sicop.consultado_en | fecha }}
+    {% if sicop.versiones > 1 %}· {{ sicop.versiones }} versiones guardadas (se muestra la última){% endif %}</p>
+  {% if sicop.cierre_distinto %}
+  <p class="aviso">SICOP dice que la recepción cierra el {{ sicop.cierre | fecha }}; los datos abiertos todavía dicen
+    {{ c.fecha_cierre_recepcion | fecha }}. Vale la fecha de SICOP.</p>
+  {% endif %}
+  <dl class="datos">
+    <div><dt>Estado del concurso</dt><dd><strong>{{ sicop.estado or "—" }}</strong><br><small>Versión del pliego {{ sicop.version_pliego or "—" }}{% if sicop.modificado %} · modificado: {{ sicop.modificado }}{% endif %}</small></dd></div>
+    <div><dt>Recepción de ofertas</dt><dd>Cierra <strong>{{ sicop.cierre | fecha }}</strong><br><small>Desde {{ sicop.inicio | fecha }} · {{ sicop.recepcion | legible or "—" }}</small></dd></div>
+    <div><dt>Apertura y aclaraciones</dt><dd>Apertura {{ sicop.apertura | fecha }}<br><small>Aclaraciones hasta {{ sicop.aclaraciones | fecha }}</small></dd></div>
+    <div><dt>Monto estimado</dt><dd><strong>{{ monto(sicop.monto, sicop.moneda) }}</strong>{% if sicop.monto_usd is not none %}<br>{{ monto(sicop.monto_usd, "USD") }}{% endif %}<br><small>{{ sicop.tipo_procedimiento | legible or "—" }}{% if sicop.modalidad %} · {{ sicop.modalidad | legible }}{% endif %}{% if sicop.lineas is not none %} · {{ sicop.lineas }} líneas{% endif %}</small></dd></div>
+  </dl>
+  {% if sicop.garantias or sicop.contrato %}
+  <h3>Garantías y contrato</h3>
+  <div class="tabla-scroll"><table class="lista auto">
+    <tbody>
+      {% for g in sicop.garantias %}
+      <tr><th>{{ g.nombre }}</th><td>{{ g.se_pide }}{% if g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% if g.tipo %} ({{ g.tipo }}){% endif %}{% endif %}{% if g.plazo %} · plazo {{ g.plazo }}{% endif %}</td></tr>
+      {% endfor %}
+      {% for dato, valor in sicop.contrato %}
+      <tr><th>{{ dato }}</th><td>{{ valor | legible }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+  {% if sicop.criterios or sicop.impactos %}
+  <h3>Criterios de evaluación</h3>
+  <ul>{% for x in sicop.criterios %}<li>{{ x | legible }}</li>{% endfor %}</ul>
+  {% if sicop.impactos %}<p><small>Impactos:</small></p>
+  <ul>{% for x in sicop.impactos %}<li>{{ x | legible }}</li>{% endfor %}</ul>{% endif %}
+  {% endif %}
+  {% elif retiro %}
+  <p class="vacio">La información de SICOP y los documentos de este cartel se borraron al cierre, el
+    {{ retiro | fecha }} (no estaba marcado «Interesa» ni en seguimiento).</p>
+  {% else %}
+  <p class="vacio">Todavía no se consultó en SICOP. El enriquecimiento diario lo consulta si está en la cola
+    (Alta → Media → Baja, con el plazo abierto).</p>
+  {% endif %}
+
+  {% if documentos %}
+  <h3 id="documentos">Documentos ({{ documentos | selectattr("estado", "equalto", "guardado") | list | length }} guardados de {{ documentos | length }})</h3>
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Documento</th><th>Archivo</th><th>Tamaño</th><th>Texto</th><th></th></tr></thead>
+    <tbody>
+      {% for doc in documentos %}
+      <tr>
+        <td>{{ doc.nombre | legible or "—" }}<br><small>{{ doc.tipo | legible or "" }}</small></td>
+        <td><small>{{ doc.archivo | legible or "—" }}</small></td>
+        <td><small>{% if doc.tamano %}{{ "%.1f" | format(doc.tamano / 1000000) }} MB{% else %}—{% endif %}</small></td>
+        <td><small>{% if doc.estado == "guardado" %}{{ TEXTO_DOC.get(doc.texto, doc.texto or "—") }}{% if doc.texto == "extraido" and doc.paginas %}, {{ doc.paginas }} páginas{% endif %}{% else %}<span class="falta">{{ ESTADO_DOC.get(doc.estado, doc.estado) }}</span>{% if doc.motivo %}: {{ doc.motivo }}{% endif %}{% endif %}</small></td>
+        <td>{% if doc.estado == "guardado" %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Descargar</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</section>
+
 <section>
   <h2>Por qué aparece</h2>
   {% for e in d.evaluaciones %}
