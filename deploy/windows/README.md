@@ -147,6 +147,9 @@ iniciada y **sin bloqueo de pantalla ni suspensión** (Configuración › Sistem
 
 ### Crearla (PowerShell, una sola vez)
 
+Lo más sencillo (evita los errores al copiar varias líneas):
+`powershell -ExecutionPolicy Bypass -File deploy\windows\crear-tarea-enriquecimiento.ps1`. Hace lo mismo que:
+
 ```powershell
 $proyecto = "C:\Users\User\sicop-connect"
 $accion = New-ScheduledTaskAction -Execute "powershell.exe" `

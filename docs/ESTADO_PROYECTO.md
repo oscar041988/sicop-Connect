@@ -340,8 +340,10 @@
     `ENRICH_ENABLED=true` → `enrich run --max 3`: corrida #1 `ok`, 3 consultados, 0 FALLO, sin CAPTCHA. GPS
     20261002692 y RFID 20261003242 fichas nuevas (2 + 5 documentos); 20261002859 sin cambios (documentos ya
     guardados). Bitácora y grabaciones correctas; resumen en vista previa (falta `OBTAIN_ALERT_TO`).
-  - **Pendiente · Ivania:** crear la tarea (README) y probarla con `Start-ScheduledTask` (hoy debe dar «sin cola»);
-    autoevaluación de la lección 4. **Pendiente · Oscar:** confirmar máximo 20 y horario 10:00.
+  - **Tarea «SICOP CONNECT - enriquecimiento» creada por Ivania (27/10)** con
+    `deploy/windows/crear-tarea-enriquecimiento.ps1` (evita pegar líneas largas); `Start-ScheduledTask` → corrida #2
+    `sin_cola` (lo consultado hoy no se repite), código de salida 0, registro en `data\logs`.
+  - **Pendiente · Ivania:** revisar la corrida automática del 28/10 a las 10:00; autoevaluación de la lección 4. **Pendiente · Oscar:** confirmar máximo 20 y horario 10:00.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
