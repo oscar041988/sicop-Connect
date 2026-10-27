@@ -286,7 +286,9 @@
   - Comprobado por Ivania: el monto sale en **colones** en la pantalla de SICOP (la app lo guarda como CRC); el
     video muestra la consulta. Al repetir, un número quedó cortado (`202610015`): la app no abrió SICOP y avisó
     que no está en la base.
-  - **Pendiente · Ivania:** repetir `enrich` con los 3 números completos (debe decir «sin cambios»).
+  - Repetido por Ivania con los 3 números completos: **los 3 «sin cambios»** (fichas #1–#3, sin filas nuevas).
+    Comprobación de la lección 2 cumplida (commit `02b289e`).
+  - **Pendiente · Ivania:** autoevaluación de la lección 2.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
