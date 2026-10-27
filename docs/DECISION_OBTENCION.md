@@ -274,14 +274,14 @@ Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
 | Punto | Propuesta | Decisión de Oscar |
 |---|---|---|
 | ¿Se hace la exploración guiada con Playwright (lección 1, encargo 1)? | Sí, una sola consulta, con ventana visible, sin descargar nada | ☑ aprobado (27/10) |
-| Qué carteles se consultan | Solo encaje Alta o Media con plazo abierto (o que cierran en ≤ 3 días) | ☐ |
+| Qué carteles se consultan | Solo encaje Alta o Media con plazo abierto (o que cierran en ≤ 3 días) | ☑ **cambia** (27/10, por Ivania): todos los del panel con plazo abierto, en orden **Alta → Media → Baja** hasta llenar el máximo; sin repetir los que no cambiaron (entran los nunca consultados, los que cambiaron en los datos abiertos y los que cierran en ≤ 3 días) — hecho (migración 0021) |
 | Máximo por día | 20 (`ENRICH_MAX_PER_DAY`) | ☑ confirmado (27/10, por Ivania) |
-| Pausa entre consultas | 8 s (`ENRICH_DELAY_SECONDS`) | ☐ |
-| Condición de corte | CAPTCHA, bloqueo o «No fue posible acceder…»: se detiene todo, sin reintentar, y se avisa | ☐ |
-| Términos de uso de la consulta pública | Releer las Condiciones Generales (sección 8, regla 3): 5c no sobrecargar, 5d no compartir datos fuera de Hermatix | ☐ revisados |
+| Pausa entre consultas | 8 s (`ENRICH_DELAY_SECONDS`) | ☑ confirmado (27/10, por Ivania) |
+| Condición de corte | CAPTCHA, bloqueo o «No fue posible acceder…»: se detiene todo, sin reintentar, y se avisa | ☑ **cambia** (27/10, por Ivania): **un solo reintento después de 15 min**, sin resolver nunca el CAPTCHA; si vuelve a salir, se detiene todo y se avisa — hecho (migración 0021) |
+| Términos de uso de la consulta pública | Releer las Condiciones Generales (sección 8, regla 3): 5c no sobrecargar, 5d no compartir datos fuera de Hermatix | ☑ «hacer lo recomendado» (27/10, por Ivania): el diseño cumple 5c (20/día, 8 s, corte) y 5d (todo queda en Hermatix). ☐ Falta que una persona relea el texto vigente de las Condiciones |
 | Equipo de consulta y horario | La PC de Ivania mientras el proyecto sea local; tarea a las **10:00, lunes a viernes** (Ivania, 27/10), con ventana; encendida, sesión iniciada, sin bloqueo de pantalla | ☑ horario 10:00 confirmado (27/10, por Ivania) |
-| Dónde se guarda | Directo en la base local; la dirección con token hacia el servidor se hace al desplegar (Ivania, 27/10, método solo local) | ☐ |
-| Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☐ |
+| Dónde se guarda | Directo en la base local; la dirección con token hacia el servidor se hace al desplegar (Ivania, 27/10, método solo local) | ☑ confirmado (27/10, por Ivania): base local por ahora; después, el servidor de la empresa |
+| Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☑ **decidido** (27/10, por Ivania): al llegar la fecha límite del cartel (la más reciente, por si se prorroga) se borran sus documentos y su información de SICOP, **menos los marcados «Interesa»** en la revisión — hecho (migración 0021) |
 
 - Fecha de la decisión: 2026-10-27 · Decidió: Oscar · Comentarios: ____
 

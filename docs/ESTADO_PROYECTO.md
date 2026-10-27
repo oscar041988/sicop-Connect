@@ -343,7 +343,16 @@
   - **Tarea «SICOP CONNECT - enriquecimiento» creada por Ivania (27/10)** con
     `deploy/windows/crear-tarea-enriquecimiento.ps1` (evita pegar líneas largas); `Start-ScheduledTask` → corrida #2
     `sin_cola` (lo consultado hoy no se repite), código de salida 0, registro en `data\logs`.
-  - **Pendiente · Ivania:** revisar la corrida automática del 28/10 a las 10:00; autoevaluación de la lección 4. **Oscar confirmó (27/10, por Ivania): máximo 20 por día, a las 10:00.**
+  - **Oscar confirmó (27/10, por Ivania): máximo 20 por día, a las 10:00**, y decidió el resto de la tabla §9.
+  - **Cambios de §9 (27/10, migración 0021):** cola con todos los del panel (Alta → Media → Baja, por cierre dentro
+    de cada uno); ante CAPTCHA o bloqueo, **un** reintento tras 15 min con el navegador cerrado
+    (`ENRICH_RETRY_WAIT_MINUTES`), si vuelve a salir se detiene y avisa; **borrado al cierre** de ficha, documentos
+    y texto (cierre más tardío entre la ficha y los datos abiertos), menos «Interesa», «Ofertada» o con seguimiento,
+    anotado en `enrich_retiros` (los triggers solo dejan borrar lo que cubre un retiro). `enrich cola` muestra el
+    encaje y lo que se borrará. **616 passed** (9 nuevas). En una copia de la base real: mañana 28/10 la cola tiene
+    13 (Santa Ana alta + 12 baja) y se borrarían GPS 20261002692 y 20261002859.
+  - **Pendiente · Ivania:** respaldo y `migrate` (0021) **antes de las 10:00 del 28/10**; revisar esa corrida
+    automática; autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

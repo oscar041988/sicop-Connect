@@ -5,11 +5,15 @@ Mientras el proyecto es solo local, guarda directo en la base local; la direcci�
 hace al desplegar (decisión de Ivania, 2026-10-27).
 
 * Desactivado por defecto (ENRICH_ENABLED=false). Un solo enrich run a la vez (bloqueo del sistema operativo).
-* Cola: carteles con encaje alta o media en la evaluación vigente, plazo abierto, y que nunca se enriquecieron, o
-  que los datos abiertos vieron después de la última ficha, o que cierran en NOTIFY_CLOSING_DAYS días o menos. Sin
-  los ya consultados hoy; hasta ENRICH_MAX_PER_DAY por día. Primero los que cierran antes.
-* Cada cartel con su ficha y sus documentos (lecciones 2 y 3), con pausa. Un FALLO no detiene la cola; un CAPTCHA o
-  bloqueo detiene todo y manda una alerta inmediata.
+* Cola: los carteles del panel (encaje alta, media o baja en la evaluación vigente) con plazo abierto, y que nunca
+  se enriquecieron, o que los datos abiertos vieron después de la última ficha, o que cierran en NOTIFY_CLOSING_DAYS
+  días o menos. Sin los ya consultados hoy; hasta ENRICH_MAX_PER_DAY por día. Orden: Alta → Media → Baja y, dentro
+  de cada uno, el que cierra antes (DECISION_OBTENCION.md §9, Oscar, 2026-10-27).
+* Cada cartel con su ficha y sus documentos (lecciones 2 y 3), con pausa. Un FALLO no detiene la cola. Ante un
+  CAPTCHA o bloqueo se espera ENRICH_RETRY_WAIT_MINUTES (15) con el navegador cerrado y se reintenta UNA vez (el
+  CAPTCHA nunca se resuelve); si vuelve a salir, se detiene todo y se manda una alerta inmediata.
+* Borrado al cierre: pasado el cierre de un cartel se borran su ficha, sus documentos y su texto, menos los marcados
+  «Interesa» u «Ofertada» o con seguimiento. Cada borrado queda anotado en enrich_retiros (migración 0021).
 * Bitácora (enrich_runs, enrich_consultas) y un resumen al terminar, con los días hábiles sin corrida.
 * Videos y capturas: se borran después de RECORDINGS_KEEP_DAYS días, menos los de una consulta con FALLO.
 * Alerta y resumen van a OBTAIN_ALERT_TO con las mismas reglas que los avisos: en dry-run, solo vista previa.
@@ -34,6 +38,10 @@ from app.panel import version_vigente
 from app.sources.sicop_tender_detail import Consulta, consultar_uno, registrar_consulta, revisar_base
 
 DIA = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+NUMERO = re.compile(r"^\d+$")
+PRIORIDAD = {"alta": 0, "media": 1, "baja": 2}  # los encajes del panel, en el orden en que se consultan
+ETIQUETAS = {"alta": "Alta", "media": "Media", "baja": "Baja"}
+CONSERVAR = ("interesa", "ofertada")  # una revisión así en algún momento: no se borra al cierre
 NOMBRES = {"nueva": "ficha nueva", "sin_cambios": "sin cambios", "fallo": "FALLO", "control": "CAPTCHA o bloqueo"}
 
 
@@ -43,6 +51,18 @@ class EnCola:
     descripcion: str
     cierre: str
     motivo: str
+    encaje: str = "alta"
+
+
+@dataclass(frozen=True)
+class Retiro:
+    nro_sicop: str
+    cierre: str
+    hasta_detalle_id: int | None   # None: solo queda la carpeta (un borrado anterior no pudo con ella)
+    fichas: int = 0
+    documentos: int = 0
+    paginas: int = 0
+    bytes: int = 0
 
 
 @dataclass
@@ -52,6 +72,8 @@ class Corrida:
     en_cola: int = 0
     consultas: list[Consulta] = field(default_factory=list)
     grabaciones_borradas: int = 0
+    retiros: list[Retiro] = field(default_factory=list)
+    reintentada: Consulta | None = None  # la consulta con CAPTCHA o bloqueo que se repitió (una por corrida)
     resumen: str = ""                 # dónde quedó la vista previa o a quién se envió
     alerta: str = ""
 
@@ -76,23 +98,25 @@ def consultados_hoy(conn: sqlite3.Connection, hoy: date) -> set[str]:
 
 
 def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[EnCola]:
-    """Todos los carteles que hoy tocaría enriquecer, en orden de cierre (sin aplicar el máximo del día)."""
+    """Todos los carteles que hoy tocaría enriquecer, Alta → Media → Baja y por cierre (sin aplicar el máximo)."""
     version = version_vigente(conn)
     if version is None:
         return []
     hoy = consultados_hoy(conn, ahora.date())
     filas = conn.execute(
         "SELECT t.nro_sicop, t.descripcion, t.fecha_cierre_recepcion, t.last_seen, d.cierre_recepcion,"
-        "       d.consultado_en"
+        "       d.consultado_en, a.rango"
         " FROM tenders t"
-        " JOIN (SELECT DISTINCT nro_sicop FROM opportunity_assessments"
-        "       WHERE rules_version = ? AND encaje IN ('alta', 'media')) a ON a.nro_sicop = t.nro_sicop"
+        " JOIN (SELECT nro_sicop, min(CASE encaje WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END) AS rango"
+        "       FROM opportunity_assessments WHERE rules_version = ? AND encaje IN ('alta', 'media', 'baja')"
+        "       GROUP BY nro_sicop) a ON a.nro_sicop = t.nro_sicop"
         " LEFT JOIN (SELECT nro_sicop, max(id) AS id FROM tender_details GROUP BY nro_sicop) u"
         "        ON u.nro_sicop = t.nro_sicop"
         " LEFT JOIN tender_details d ON d.id = u.id", (version,)).fetchall()
     pronto = timedelta(days=settings.notify_closing_days)
     lista = []
-    for nro, descripcion, cierre_datos, visto, cierre_ficha, consultado in filas:
+    encaje_de = {rango: encaje for encaje, rango in PRIORIDAD.items()}
+    for nro, descripcion, cierre_datos, visto, cierre_ficha, consultado, rango in filas:
         if nro in hoy:
             continue
         cierre_iso = cierre_ficha or cierre_datos  # la ficha es más reciente que los datos abiertos
@@ -107,8 +131,8 @@ def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[
             motivo = f"cierra en {settings.notify_closing_days} días o menos"
         else:
             continue
-        lista.append(EnCola(nro, descripcion or "", cierre_iso, motivo))
-    return sorted(lista, key=lambda e: _fecha(e.cierre))
+        lista.append(EnCola(nro, descripcion or "", cierre_iso, motivo, encaje_de[rango]))
+    return sorted(lista, key=lambda e: (PRIORIDAD[e.encaje], _fecha(e.cierre)))
 
 
 def cupo_de_hoy(conn: sqlite3.Connection, settings: Settings, ahora: datetime, maximo: int | None = None) -> int:
@@ -138,6 +162,86 @@ def limpiar_grabaciones(conn: sqlite3.Connection, settings: Settings, hoy: date)
     return borradas
 
 
+def _cierre_mas_tardio(*fechas: str | None) -> datetime | None:
+    conocidas = [f for f in (_fecha(x) for x in fechas) if f is not None]
+    return max(conocidas) if conocidas else None
+
+
+def por_retirar(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[Retiro]:
+    """Carteles cuya información de SICOP se borra al correr: el cierre más tardío conocido (la última ficha o los
+    datos abiertos, por si se prorrogó) ya pasó, y nadie los marcó «Interesa» u «Ofertada» ni les dio seguimiento.
+    También las carpetas que un borrado anterior no pudo quitar (hasta_detalle_id None)."""
+    marcas = ", ".join("?" for _ in CONSERVAR)
+    filas = conn.execute(
+        "SELECT u.nro_sicop, u.hasta, d.cierre_recepcion, t.fecha_cierre_recepcion,"
+        "       (SELECT count(*) FROM tender_details x WHERE x.nro_sicop = u.nro_sicop),"
+        "       (SELECT count(*) FROM tender_documents x WHERE x.nro_sicop = u.nro_sicop),"
+        "       (SELECT count(*) FROM tender_document_text x JOIN tender_documents y ON y.id = x.documento_id"
+        "         WHERE y.nro_sicop = u.nro_sicop),"
+        "       (SELECT coalesce(sum(tamano_bytes), 0) FROM tender_documents x"
+        "         WHERE x.nro_sicop = u.nro_sicop AND x.estado = 'guardado')"
+        " FROM (SELECT nro_sicop, max(id) AS hasta FROM tender_details GROUP BY nro_sicop) u"
+        " JOIN tender_details d ON d.id = u.hasta"
+        " JOIN tenders t ON t.nro_sicop = u.nro_sicop"
+        f" WHERE NOT EXISTS (SELECT 1 FROM reviews r WHERE r.nro_sicop = u.nro_sicop AND r.decision IN ({marcas}))"
+        "   AND NOT EXISTS (SELECT 1 FROM seguimientos s WHERE s.nro_sicop = u.nro_sicop)"
+        " ORDER BY u.nro_sicop", CONSERVAR).fetchall()
+    lista = []
+    for nro, hasta, cierre_ficha, cierre_datos, fichas, documentos, paginas, tamano in filas:
+        cierre = _cierre_mas_tardio(cierre_ficha, cierre_datos)
+        if cierre is not None and cierre <= ahora:
+            lista.append(Retiro(nro, cierre.isoformat(timespec="seconds"), hasta, fichas, documentos, paginas, tamano))
+    raiz = settings.documents_dir
+    if raiz.is_dir():
+        for carpeta in sorted(raiz.iterdir()):
+            if not carpeta.is_dir() or not NUMERO.match(carpeta.name):
+                continue
+            retiro = conn.execute("SELECT cierre FROM enrich_retiros WHERE nro_sicop = ? ORDER BY id DESC LIMIT 1",
+                                  (carpeta.name,)).fetchone()
+            guardados = conn.execute("SELECT 1 FROM tender_documents WHERE nro_sicop = ? AND estado = 'guardado'"
+                                     " LIMIT 1", (carpeta.name,)).fetchone()
+            if retiro and not guardados and all(r.nro_sicop != carpeta.name for r in lista):
+                lista.append(Retiro(carpeta.name, retiro[0], None))
+    return lista
+
+
+def _borrar_carpeta(settings: Settings, nro: str) -> None:
+    raiz = settings.documents_dir.resolve()
+    carpeta = (raiz / nro).resolve()
+    if NUMERO.match(nro) and carpeta.parent == raiz and carpeta.is_dir():
+        shutil.rmtree(carpeta)
+
+
+def retirar(conn: sqlite3.Connection, settings: Settings, ahora: datetime, run_id: int | None) -> list[Retiro]:
+    """Borra la información de SICOP de los carteles de por_retirar (ficha, documentos, texto y su carpeta). Primero
+    anota el retiro: sin él, los triggers de la migración 0021 no dejan borrar. No toca tenders, revisiones,
+    seguimientos ni grabaciones. Si una carpeta no se puede borrar, la próxima corrida lo vuelve a intentar."""
+    hechos = []
+    for r in por_retirar(conn, settings, ahora):
+        if r.hasta_detalle_id is not None:
+            with transaccion(conn):
+                conn.execute(
+                    "INSERT INTO enrich_retiros (nro_sicop, retirado_en, run_id, cierre, hasta_detalle_id, fichas,"
+                    " documentos, paginas, bytes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (r.nro_sicop, ahora.isoformat(timespec="seconds"), run_id, r.cierre, r.hasta_detalle_id,
+                     r.fichas, r.documentos, r.paginas, r.bytes))
+                conn.execute("UPDATE enrich_consultas SET detalle_id = NULL WHERE nro_sicop = ? AND detalle_id <= ?",
+                             (r.nro_sicop, r.hasta_detalle_id))
+                conn.execute("DELETE FROM tender_document_text WHERE documento_id IN (SELECT id FROM tender_documents"
+                             " WHERE nro_sicop = ? AND detalle_id <= ?)", (r.nro_sicop, r.hasta_detalle_id))
+                conn.execute("DELETE FROM tender_documents WHERE nro_sicop = ? AND detalle_id <= ?",
+                             (r.nro_sicop, r.hasta_detalle_id))
+                conn.execute("DELETE FROM tender_details WHERE nro_sicop = ? AND id <= ?",
+                             (r.nro_sicop, r.hasta_detalle_id))
+        try:
+            _borrar_carpeta(settings, r.nro_sicop)
+        except OSError:
+            pass  # queda la carpeta sin filas en la base: por_retirar la vuelve a encontrar
+        if r.hasta_detalle_id is not None or not (settings.documents_dir / r.nro_sicop).exists():
+            hechos.append(r)
+    return hechos
+
+
 def dias_habiles_sin_corrida(conn: sqlite3.Connection, hoy: date, run_id: int) -> list[date]:
     """Días hábiles (lunes a viernes) entre la corrida anterior y hoy en que no hubo corrida (equipo apagado…)."""
     fila = conn.execute("SELECT max(substr(iniciada_en, 1, 10)) FROM enrich_runs WHERE id < ? AND"
@@ -154,15 +258,25 @@ def dias_habiles_sin_corrida(conn: sqlite3.Connection, hoy: date, run_id: int) -
 
 # --- Alerta y resumen -----------------------------------------------------------------------------------------
 
-def texto_alerta(settings: Settings, c: Consulta) -> tuple[str, str]:
+def texto_alerta(settings: Settings, c: Consulta, reintentada: Consulta | None = None) -> tuple[str, str]:
+    minutos = settings.enrich_retry_wait_minutes
+    if reintentada is None:
+        reintento = "No hubo reintento."
+    elif reintentada.nro_sicop == c.nro_sicop:
+        reintento = (f"Ya se reintentó UNA vez, después de {minutos} min con el navegador cerrado, y SICOP volvió a "
+                     "mostrarlo.")
+    else:
+        reintento = (f"El único reintento de la corrida ya se usó con {reintentada.nro_sicop}; este segundo "
+                     "CAPTCHA o bloqueo detiene todo.")
     cuerpo = "\n".join([
         "SICOP CONNECT · el enriquecimiento se DETUVO: SICOP mostró un CAPTCHA o un bloqueo.",
         "",
         f"Cartel que se estaba consultando: {c.nro_sicop} ({c.iniciada_en[:16].replace('T', ' a las ')}).",
         f"Motivo: {c.motivo}",
         f"Video y capturas: {settings.recordings_dir / (c.grabacion or '')}*",
+        reintento,
         "",
-        "No se reintenta ni se intenta evitar (docs/DECISION_OBTENCION.md §8, regla 2). Qué hacer:",
+        "El CAPTCHA nunca se resuelve ni se intenta evitar (docs/DECISION_OBTENCION.md §9). Qué hacer:",
         "1. Mirar el video o la captura para ver qué mostró SICOP.",
         "2. No volver a correr el enriquecimiento hoy.",
         "3. Avisar a Oscar. Para pausar la tarea: ENRICH_ENABLED=false en .env (docs/OPERACION.md).",
@@ -180,6 +294,13 @@ def texto_resumen(settings: Settings, corrida: Corrida, ahora: datetime, faltaro
         lineas += [f"ATENCIÓN: no hubo corrida {len(faltaron)} día(s) hábil(es) antes de hoy "
                    f"({', '.join(f'{d:%d/%m}' for d in faltaron)}). ¿El equipo de consulta estuvo apagado o con la "
                    "sesión cerrada? La cola esperó: no se perdió nada.", ""]
+    if corrida.reintentada is not None:
+        r = corrida.reintentada
+        final = next((c for c in corrida.consultas if c.nro_sicop == r.nro_sicop), None)
+        lineas += [f"CAPTCHA o bloqueo con {r.nro_sicop} ({r.motivo}). Se esperó "
+                   f"{settings.enrich_retry_wait_minutes} min y se reintentó una vez: "
+                   f"{NOMBRES.get(final.resultado, final.resultado) if final else 'sin resultado'}.",
+                   f"    Video y capturas: {settings.recordings_dir / (r.grabacion or '')}*", ""]
     if corrida.estado == "sin_cola":
         lineas.append("No había carteles en la cola (o ya se llegó al máximo del día).")
     for c in corrida.consultas:
@@ -197,6 +318,12 @@ def texto_resumen(settings: Settings, corrida: Corrida, ahora: datetime, faltaro
         if c.resultado in ("fallo", "control"):
             lineas.append(f"    {c.motivo}")
             lineas.append(f"    Video y capturas: {settings.recordings_dir / (c.grabacion or '')}*")
+    retirados = [r for r in corrida.retiros if r.hasta_detalle_id is not None]
+    if retirados:
+        megas = sum(r.bytes for r in retirados) / 1_000_000
+        lineas += ["", f"Borrado al cierre: {len(retirados)} cartel(es) ya cerrado(s), sin «Interesa» ni seguimiento "
+                       f"({sum(r.documentos for r in retirados)} documentos, {megas:.1f} MB):"]
+        lineas += [f"- {r.nro_sicop} · cerró {_fecha(r.cierre):%d/%m/%Y %H:%M}" for r in retirados]
     if corrida.grabaciones_borradas:
         lineas += ["", f"Se borraron {corrida.grabaciones_borradas} grabaciones de más de "
                        f"{settings.recordings_keep_days} días."]
@@ -249,6 +376,10 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
                                   (inicio.isoformat(timespec="seconds"), settings.enrich_max_per_day)).lastrowid
         corrida = Corrida("ok", run_id)
         corrida.grabaciones_borradas = limpiar_grabaciones(conn, settings, inicio.date())
+        corrida.retiros = retirar(conn, settings, inicio, run_id)
+        borrados = [r.nro_sicop for r in corrida.retiros if r.hasta_detalle_id is not None]
+        if borrados:
+            avisar(f"Borrado al cierre: {len(borrados)} cartel(es) ({', '.join(borrados)}).")
         lista = cola(conn, settings, inicio)
         hoy = lista[:cupo_de_hoy(conn, settings, inicio, maximo)]
         corrida.en_cola = len(lista)
@@ -257,10 +388,20 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
             if i:
                 avisar(f"Pausa de {settings.enrich_delay_seconds} s antes del siguiente cartel…")
                 dormir(settings.enrich_delay_seconds)
-            avisar(f"[{i + 1}/{len(hoy)}] {item.nro_sicop} · {item.motivo}")
+            avisar(f"[{i + 1}/{len(hoy)}] {item.nro_sicop} · {ETIQUETAS[item.encaje]} · {item.motivo}")
             c = consultar_uno(conn, settings, item.nro_sicop, documentos=True, dormir=dormir, reloj=reloj,
                               avisar=avisar, **opciones)
             consulta_id = registrar_consulta(conn, c, run_id)
+            if c.resultado == "control" and corrida.reintentada is None:
+                # Decisión de Oscar (§9): una sola vez por corrida, con el navegador cerrado; nunca se resuelve.
+                corrida.reintentada = c
+                minutos = settings.enrich_retry_wait_minutes
+                avisar(f"SICOP mostró un CAPTCHA o bloqueo ({c.motivo}). Espero {minutos} min con el navegador "
+                       "cerrado y reintento una vez…")
+                dormir(minutos * 60)
+                c = consultar_uno(conn, settings, item.nro_sicop, documentos=True, dormir=dormir, reloj=reloj,
+                                  avisar=avisar, **opciones)
+                consulta_id = registrar_consulta(conn, c, run_id, es_reintento=True)
             corrida.consultas.append(c)
             if c.resultado == "control":
                 corrida.estado = "detenida"
@@ -268,7 +409,7 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
                 def marcar(estado, consulta_id=consulta_id):
                     with transaccion(conn):
                         conn.execute("UPDATE enrich_consultas SET aviso_estado = ? WHERE id = ?", (estado, consulta_id))
-                asunto, cuerpo = texto_alerta(settings, c)
+                asunto, cuerpo = texto_alerta(settings, c, corrida.reintentada)
                 corrida.alerta = _avisar(settings, asunto, cuerpo, f"alerta-enriquecimiento-{run_id}", proveedor,
                                          marcar)
                 break

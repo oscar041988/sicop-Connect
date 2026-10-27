@@ -447,7 +447,8 @@ def revisar_base(conn: sqlite3.Connection, nros: list[str], documentos: bool) ->
     """ValueError (sin abrir el navegador) si falta la migración o un número no está en la base."""
     try:
         conn.execute("SELECT 1 FROM tender_details LIMIT 1")
-        conn.execute("SELECT 1 FROM enrich_consultas LIMIT 1")
+        conn.execute("SELECT es_reintento FROM enrich_consultas LIMIT 1")
+        conn.execute("SELECT 1 FROM enrich_retiros LIMIT 1")
         if documentos:
             conn.execute("SELECT 1 FROM tender_documents LIMIT 1")
     except sqlite3.OperationalError:
@@ -501,19 +502,21 @@ def consultar_uno(conn: sqlite3.Connection, settings: Settings, nro: str, *, doc
     return consulta
 
 
-def registrar_consulta(conn: sqlite3.Connection, consulta: Consulta, run_id: int | None = None) -> int | None:
-    """Anota la consulta en la bitácora (enrich_consultas, migración 0020). Las «no consultadas» no se anotan."""
+def registrar_consulta(conn: sqlite3.Connection, consulta: Consulta, run_id: int | None = None,
+                       es_reintento: bool = False) -> int | None:
+    """Anota la consulta en la bitácora (enrich_consultas, migraciones 0020 y 0021). Las «no consultadas» no se
+    anotan. es_reintento: la consulta repetida de enrich run tras un CAPTCHA o bloqueo."""
     if consulta.resultado == "no_consultado":
         return None
     documentos = consulta.documentos or []
     with transaccion(conn):
         return conn.execute(
             "INSERT INTO enrich_consultas (run_id, nro_sicop, iniciada_en, duracion_s, resultado, motivo, detalle_id,"
-            " documentos_guardados, documentos_fallo, grabacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " documentos_guardados, documentos_fallo, grabacion, es_reintento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (run_id, consulta.nro_sicop, consulta.iniciada_en, consulta.duracion_s, consulta.resultado,
              consulta.motivo or None, consulta.guardado.detalle_id if consulta.guardado else None,
              sum(d.estado == "guardado" for d in documentos), sum(d.estado == "fallo" for d in documentos),
-             consulta.grabacion)).lastrowid
+             consulta.grabacion, int(es_reintento))).lastrowid
 
 
 def enriquecer(settings: Settings, nros: list[str], *, dormir: Callable[[float], None] = time.sleep,

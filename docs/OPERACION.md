@@ -247,24 +247,34 @@ Trae de la consulta pública de SICOP la **ficha** del concurso (estado, fechas,
 | Comando | Qué hace |
 |---|---|
 | `enrich --nro N [--nro N…] [--documentos]` | 1 a 3 carteles a mano |
-| `enrich cola` | La cola de hoy (sin consultar SICOP) y cuáles caben en el máximo del día |
+| `enrich cola` | La cola de hoy (sin consultar SICOP), cuáles caben en el máximo del día y qué se borrará al cierre |
 | `enrich run [--max N]` | La corrida automática (la tarea de las 10:00): la cola del día con fichas y documentos |
 | `enrich status` | Últimas corridas y consultas (la bitácora) |
 
 **Activar o pausar:** `ENRICH_ENABLED=true` / `false` en `.env`. Con `false`, `enrich run` no consulta nada (la
 tarea programada puede seguir activa). La tarea: `deploy/windows/README.md`.
 
-**Qué entra en la cola:** encaje Alta o Media, plazo abierto (según la ficha si ya existe), y que nunca se haya
-enriquecido, o que los datos abiertos lo vieran después de la última ficha, o que cierre en 3 días o menos. Lo ya
-consultado hoy no vuelve. Máximo `ENRICH_MAX_PER_DAY` (20) por día, primero lo que cierra antes.
+**Qué entra en la cola:** los carteles del panel (encaje Alta, Media o Baja), con plazo abierto (según la ficha si
+ya existe), y que nunca se hayan enriquecido, o que los datos abiertos los vieran después de la última ficha, o que
+cierren en 3 días o menos. Lo ya consultado hoy no vuelve. Máximo `ENRICH_MAX_PER_DAY` (20) por día, en orden
+**Alta → Media → Baja** y, dentro de cada uno, primero lo que cierra antes (decisión de Oscar, 27/10).
 
 **Ante un FALLO de un cartel** (no encontrado, la página cambió, un documento no llegó): queda en `enrich status` y
 en el resumen con su motivo; la cola sigue con los demás. Mirar el video y la captura; si SICOP cambió la página,
 pedir el ajuste con el prompt «Cuando la ficha de SICOP cambia» de la guía.
 
-**Ante un CAPTCHA, un bloqueo o «No fue posible acceder…»:** la corrida se **detiene** y sale la alerta (a
-`OBTAIN_ALERT_TO`; en dry-run, `data\exports\alerta-enriquecimiento-<n>.txt`). No se reintenta ni se intenta evitar.
-Poner `ENRICH_ENABLED=false`, mirar el video y avisar a Oscar.
+**Ante un CAPTCHA, un bloqueo o «No fue posible acceder…»:** se espera `ENRICH_RETRY_WAIT_MINUTES` (15) con el
+navegador cerrado y se reintenta **una sola vez** por corrida (decisión de Oscar, 27/10); el CAPTCHA nunca se
+resuelve ni se intenta evitar. Si vuelve a salir, la corrida se **detiene** y sale la alerta (a `OBTAIN_ALERT_TO`;
+en dry-run, `data\exports\alerta-enriquecimiento-<n>.txt`). Poner `ENRICH_ENABLED=false`, mirar el video y avisar
+a Oscar. Si el reintento salió bien, el resumen lo dice.
+
+**Borrado al cierre:** al empezar cada `enrich run` se borran la ficha, los documentos (y su carpeta en
+`data\documentos`) y el texto de los carteles cuyo cierre ya pasó (la fecha más tardía entre la ficha y los datos
+abiertos, por si se prorrogó), **menos** los que alguien marcó «Interesa» u «Ofertada» o que tienen seguimiento
+(decisión de Oscar, 27/10). El cartel, sus revisiones y la bitácora quedan; cada borrado se anota en
+`enrich_retiros`. `enrich cola` muestra lo que se borrará en la próxima corrida. Los respaldos anteriores lo
+conservan. Para conservar uno, marcarlo «Interesa» **antes** de su cierre.
 
 **Ver un video:** la bitácora dice la carpeta de cada consulta (`AAAA-MM-DD/<nro>/HHMMSS`) dentro de
 `RECORDINGS_DIR` (`data\grabaciones`): ahí están `HHMMSS-video.webm` (se abre con el navegador) y una captura por

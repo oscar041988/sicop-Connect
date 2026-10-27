@@ -59,6 +59,7 @@ DEFAULTS: dict[str, str] = {
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
+    "ENRICH_RETRY_WAIT_MINUTES": "15",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -301,6 +302,11 @@ class Settings:
     def recordings_keep_days(self) -> int:
         """Días que se guardan los videos y capturas (RECORDINGS_KEEP_DAYS; 30). Los de un FALLO se conservan."""
         return self._entero("RECORDINGS_KEEP_DAYS", 1, 3650, "días")
+
+    @property
+    def enrich_retry_wait_minutes(self) -> int:
+        """Espera antes del único reintento ante un CAPTCHA o bloqueo (ENRICH_RETRY_WAIT_MINUTES; 15; §9, Oscar)."""
+        return self._entero("ENRICH_RETRY_WAIT_MINUTES", 1, 120, "minutos")
 
     @property
     def notifications_enabled(self) -> bool:

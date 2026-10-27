@@ -475,6 +475,13 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
     for c in corrida.consultas:
         print(f"  {c.nro_sicop} · {c.resultado} · {c.duracion_s} s"
               + (f" · {c.motivo}" if c.resultado in ("fallo", "control") else ""))
+    if corrida.reintentada is not None:
+        print(f"  Reintento: {corrida.reintentada.nro_sicop} dio CAPTCHA o bloqueo; se esperó "
+              f"{settings.enrich_retry_wait_minutes} min y se reintentó una vez.")
+    retirados = [r for r in corrida.retiros if r.hasta_detalle_id is not None]
+    if retirados:
+        print(f"  Borrado al cierre: {', '.join(r.nro_sicop for r in retirados)} "
+              f"({sum(r.documentos for r in retirados)} documentos).")
     if corrida.alerta:
         print(f"Alerta por CAPTCHA o bloqueo: {corrida.alerta}", file=sys.stderr)
     print(f"Resumen: {corrida.resumen}")
@@ -492,6 +499,7 @@ def enrich_cola(settings: Settings) -> int:
         try:
             lista = enriquecimiento.cola(conn, settings, ahora)
             cupo = enriquecimiento.cupo_de_hoy(conn, settings, ahora)
+            retirar = [r for r in enriquecimiento.por_retirar(conn, settings, ahora) if r.hasta_detalle_id is not None]
         except sqlite3.OperationalError:
             print("Error: a la base le faltan tablas: ejecuta python -m app.cli migrate.", file=sys.stderr)
             return 1
@@ -499,7 +507,12 @@ def enrich_cola(settings: Settings) -> int:
           f" Enriquecimiento {'activado' if settings.enrich_enabled else 'DESACTIVADO (ENRICH_ENABLED=false)'}.")
     for i, e in enumerate(lista):
         marca = "hoy " if i < cupo else "    "
-        print(f"  {marca}{e.nro_sicop} · cierra {_fecha_corta(e.cierre)} · {e.motivo} · {legible_corto(e.descripcion)}")
+        print(f"  {marca}{enriquecimiento.ETIQUETAS[e.encaje]:<5} {e.nro_sicop} · cierra {_fecha_corta(e.cierre)}"
+              f" · {e.motivo} · {legible_corto(e.descripcion)}")
+    if retirar:
+        print(f"Al correr se borrarán (cerrados, sin «Interesa» ni seguimiento): {len(retirar)} cartel(es)")
+        for r in retirar:
+            print(f"  {r.nro_sicop} · cerró {_fecha_corta(r.cierre)} · {r.documentos} documentos")
     return 0
 
 
@@ -514,7 +527,7 @@ def enrich_status(settings: Settings) -> int:
             corridas = conn.execute("SELECT id, iniciada_en, terminada_en, estado, en_cola, consultados, fallos,"
                                     " resumen_estado FROM enrich_runs ORDER BY id DESC LIMIT 5").fetchall()
             consultas = conn.execute("SELECT iniciada_en, nro_sicop, resultado, duracion_s, documentos_guardados,"
-                                     " documentos_fallo, grabacion, motivo FROM enrich_consultas"
+                                     " documentos_fallo, grabacion, motivo, es_reintento FROM enrich_consultas"
                                      " ORDER BY id DESC LIMIT 15").fetchall()
         except sqlite3.OperationalError:
             print("Error: a la base le faltan tablas: ejecuta python -m app.cli migrate.", file=sys.stderr)
@@ -529,7 +542,8 @@ def enrich_status(settings: Settings) -> int:
     print("Últimas consultas (bitácora):")
     for c in consultas:
         print(f"  {_fecha_corta(c[0])} · {c[1]} · {c[2]} · {c[3]} s · documentos {c[4]} guardados, {c[5]} con FALLO"
-              f" · grabación {c[6]}" + (f" · {c[7]}" if c[2] in ("fallo", "control") else ""))
+              f" · grabación {c[6]}" + (" · reintento" if c[8] else "")
+              + (f" · {c[7]}" if c[2] in ("fallo", "control") else ""))
     return 0
 
 
