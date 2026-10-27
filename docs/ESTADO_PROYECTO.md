@@ -322,7 +322,26 @@
     Ana 7/7 (3,4 MB), abarrotes 49/49 (44,3 MB; 5 páginas de la tabla: **paginación confirmada en el SICOP
     real**). En la base: 603 páginas con texto, 147 PDF leídos dentro de 30 ZIP, ningún error de texto;
     `data/documentos` = 50 MB (tope por cartel: 100 MB).
-  - **Pendiente · Ivania:** `backup` con `_documentos.zip` (61 archivos); autoevaluación de la lección 3.
+  - `backup` con `_documentos.zip` hecho por Ivania (27/10). **Pendiente · Ivania:** autoevaluación de la lección 3.
+- **Enriquecimiento · lección 4, entrega 4A (2026-10-27, rama `desarrollo`, solo local):**
+  - Decisiones de Ivania: guardar en la base local (la dirección con token, al desplegar); lección en entregas 4A
+    (cola y corrida), 4B (panel), 4C (reglas sobre el texto de los PDF); tarea a las 10:00, lunes a viernes.
+  - `enrich run [--max N]`, `enrich cola`, `enrich status` (`app/sources/enriquecimiento.py`). Desactivado por defecto
+    (`ENRICH_ENABLED=false`); bloqueo contra dos corridas; cola alta/media abierta (nunca enriquecido, datos abiertos
+    más nuevos o cierra en ≤ 3 días), sin lo consultado hoy, máximo `ENRICH_MAX_PER_DAY` (20); fichas y documentos;
+    un FALLO no detiene la cola; CAPTCHA o bloqueo la detienen y mandan una alerta inmediata; resumen al terminar
+    (con los días hábiles sin corrida); videos borrados después de `RECORDINGS_KEEP_DAYS` (30), menos los de FALLO.
+    Alerta y resumen a `OBTAIN_ALERT_TO` con las reglas de los avisos (dry-run: vista previa en `data\exports`).
+  - Migración **0020** (`enrich_runs`, `enrich_consultas`: la bitácora; `enrich --nro` también se anota).
+  - `deploy/windows/sicop-enriquecimiento.ps1` + README (tarea interactiva «Ejecutar solo cuando el usuario haya
+    iniciado sesión»), `docs/OPERACION.md` §3.2, `DECISION_OBTENCION.md` §9.
+  - **607 passed** (15 nuevas en `tests/test_enriquecimiento.py`, SICOP SIMULADO).
+  - **Prueba real (Ivania, 27/10):** respaldo (esquema 0019) → `migrate` (0020) → `enrich cola` (3 carteles) →
+    `ENRICH_ENABLED=true` → `enrich run --max 3`: corrida #1 `ok`, 3 consultados, 0 FALLO, sin CAPTCHA. GPS
+    20261002692 y RFID 20261003242 fichas nuevas (2 + 5 documentos); 20261002859 sin cambios (documentos ya
+    guardados). Bitácora y grabaciones correctas; resumen en vista previa (falta `OBTAIN_ALERT_TO`).
+  - **Pendiente · Ivania:** crear la tarea (README) y probarla con `Start-ScheduledTask` (hoy debe dar «sin cola»);
+    autoevaluación de la lección 4. **Pendiente · Oscar:** confirmar máximo 20 y horario 10:00.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

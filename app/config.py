@@ -56,6 +56,9 @@ DEFAULTS: dict[str, str] = {
     "DOCUMENTS_DIR": "data/documentos",
     "DOCUMENT_MAX_MB": "50",
     "DOCUMENTS_MAX_MB_PER_TENDER": "100",
+    "ENRICH_ENABLED": "false",
+    "ENRICH_MAX_PER_DAY": "20",
+    "RECORDINGS_KEEP_DAYS": "30",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -283,6 +286,21 @@ class Settings:
     def documents_max_mb_per_tender(self) -> int:
         """Tope de documentos guardados por cartel (DOCUMENTS_MAX_MB_PER_TENDER; 100; decisión del 2026-10-27)."""
         return self._entero("DOCUMENTS_MAX_MB_PER_TENDER", 1, 5000, "MB")
+
+    @property
+    def enrich_enabled(self) -> bool:
+        """false (por defecto): enrich run no consulta SICOP. Se activa a mano en .env (lección 4)."""
+        return _as_bool(self.get("ENRICH_ENABLED"))
+
+    @property
+    def enrich_max_per_day(self) -> int:
+        """Máximo de carteles consultados por día con enrich run (ENRICH_MAX_PER_DAY; 20)."""
+        return self._entero("ENRICH_MAX_PER_DAY", 1, 200, "carteles")
+
+    @property
+    def recordings_keep_days(self) -> int:
+        """Días que se guardan los videos y capturas (RECORDINGS_KEEP_DAYS; 30). Los de un FALLO se conservan."""
+        return self._entero("RECORDINGS_KEEP_DAYS", 1, 3650, "días")
 
     @property
     def notifications_enabled(self) -> bool:

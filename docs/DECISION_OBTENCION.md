@@ -279,7 +279,8 @@ Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
 | Pausa entre consultas | 8 s (`ENRICH_DELAY_SECONDS`) | ☐ |
 | Condición de corte | CAPTCHA, bloqueo o «No fue posible acceder…»: se detiene todo, sin reintentar, y se avisa | ☐ |
 | Términos de uso de la consulta pública | Releer las Condiciones Generales (sección 8, regla 3): 5c no sobrecargar, 5d no compartir datos fuera de Hermatix | ☐ revisados |
-| Equipo de consulta y horario | Por definir (Windows encendido, sesión iniciada, sin bloqueo de pantalla) | ☐ |
+| Equipo de consulta y horario | La PC de Ivania mientras el proyecto sea local; tarea a las **10:00, lunes a viernes** (Ivania, 27/10), con ventana; encendida, sesión iniciada, sin bloqueo de pantalla | ☐ |
+| Dónde se guarda | Directo en la base local; la dirección con token hacia el servidor se hace al desplegar (Ivania, 27/10, método solo local) | ☐ |
 | Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☐ |
 
 - Fecha de la decisión: 2026-10-27 · Decidió: Oscar · Comentarios: ____

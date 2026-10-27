@@ -447,6 +447,92 @@ def enrich(settings: Settings, nros: list[str], documentos: bool = False) -> int
     return 1 if any(c.resultado == "fallo" for c in consultas) else 0
 
 
+def enrich_run(settings: Settings, maximo: int | None) -> int:
+    """0 = ok, sin cola o desactivado · 1 = algún FALLO · 2 = CAPTCHA o bloqueo, u otra corrida en curso."""
+    from app.bloqueo import CicloOcupado
+    from app.sources import enriquecimiento
+    if maximo is not None and maximo < 1:
+        print("Error: --max debe ser 1 o más.", file=sys.stderr)
+        return 1
+    if not settings.enrich_enabled:
+        print("Enriquecimiento desactivado (ENRICH_ENABLED=false en .env): no se consultó SICOP.")
+        return 0
+    print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · máximo {settings.enrich_max_per_day} "
+          f"por día · pausa de {settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
+    real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
+    try:
+        corrida = enriquecimiento.correr(settings, maximo=maximo, avisar=print,
+                                         proveedor=_crear_proveedor_alerta if real else None, **_opciones_enrich())
+    except CicloOcupado as exc:
+        print(f"Error: ya hay otro enrich run en curso ({exc or 'sin detalle'}). No se hizo nada.", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    fallos = sum(c.resultado in ("fallo", "control") for c in corrida.consultas)
+    print(f"\nCorrida #{corrida.run_id}: {corrida.estado} · en cola {corrida.en_cola} · consultados "
+          f"{len(corrida.consultas)} · FALLO {fallos} · grabaciones viejas borradas {corrida.grabaciones_borradas}")
+    for c in corrida.consultas:
+        print(f"  {c.nro_sicop} · {c.resultado} · {c.duracion_s} s"
+              + (f" · {c.motivo}" if c.resultado in ("fallo", "control") else ""))
+    if corrida.alerta:
+        print(f"Alerta por CAPTCHA o bloqueo: {corrida.alerta}", file=sys.stderr)
+    print(f"Resumen: {corrida.resumen}")
+    return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
+
+
+def _crear_proveedor_alerta(settings: Settings):
+    return _crear_proveedor(settings)
+
+
+def enrich_cola(settings: Settings) -> int:
+    from app.sources import enriquecimiento
+    ahora = enriquecimiento._ahora()
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            lista = enriquecimiento.cola(conn, settings, ahora)
+            cupo = enriquecimiento.cupo_de_hoy(conn, settings, ahora)
+        except sqlite3.OperationalError:
+            print("Error: a la base le faltan tablas: ejecuta python -m app.cli migrate.", file=sys.stderr)
+            return 1
+    print(f"Cola de hoy: {len(lista)} carteles · cupo de hoy: {cupo} (máximo {settings.enrich_max_per_day} por día)."
+          f" Enriquecimiento {'activado' if settings.enrich_enabled else 'DESACTIVADO (ENRICH_ENABLED=false)'}.")
+    for i, e in enumerate(lista):
+        marca = "hoy " if i < cupo else "    "
+        print(f"  {marca}{e.nro_sicop} · cierra {_fecha_corta(e.cierre)} · {e.motivo} · {legible_corto(e.descripcion)}")
+    return 0
+
+
+def legible_corto(texto: str, largo: int = 60) -> str:
+    texto = " ".join(texto.split())  # split() también corta en los espacios duros (NBSP) de SICOP
+    return texto if len(texto) <= largo else texto[:largo - 1] + "…"
+
+
+def enrich_status(settings: Settings) -> int:
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            corridas = conn.execute("SELECT id, iniciada_en, terminada_en, estado, en_cola, consultados, fallos,"
+                                    " resumen_estado FROM enrich_runs ORDER BY id DESC LIMIT 5").fetchall()
+            consultas = conn.execute("SELECT iniciada_en, nro_sicop, resultado, duracion_s, documentos_guardados,"
+                                     " documentos_fallo, grabacion, motivo FROM enrich_consultas"
+                                     " ORDER BY id DESC LIMIT 15").fetchall()
+        except sqlite3.OperationalError:
+            print("Error: a la base le faltan tablas: ejecuta python -m app.cli migrate.", file=sys.stderr)
+            return 1
+    if not corridas and not consultas:
+        print("Todavía no hay consultas en la bitácora.")
+        return 0
+    print("Últimas corridas de enrich run:")
+    for r in corridas:
+        print(f"  #{r[0]} · {_fecha_corta(r[1])} → {_fecha_corta(r[2]) if r[2] else 'en curso'} · {r[3]} · cola {r[4]}"
+              f" · consultados {r[5]} · FALLO {r[6]} · resumen: {r[7] or '—'}")
+    print("Últimas consultas (bitácora):")
+    for c in consultas:
+        print(f"  {_fecha_corta(c[0])} · {c[1]} · {c[2]} · {c[3]} s · documentos {c[4]} guardados, {c[5]} con FALLO"
+              f" · grabación {c[6]}" + (f" · {c[7]}" if c[2] in ("fallo", "control") else ""))
+    return 0
+
+
 def _crear_lector(settings: Settings):
     """El lector real de Gmail (solo lectura). Las pruebas lo reemplazan por uno SIMULADO."""
     from app.sources import gmail_reader
@@ -898,8 +984,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Repetir cada OBTAIN_POLL_MINUTES hasta validado, fallido o el plazo (Ctrl+C es seguro)")
     ob_sub.add_parser("status", help="Las últimas solicitudes automáticas con su estado y horas")
     ob_sub.add_parser("auto", help="Una vuelta de la obtención automática (tarea programada; solo con SOURCE_MODE=auto)")
-    en = sub.add_parser("enrich", help="Ficha del concurso en la consulta pública de SICOP (con ventana; 1 a 3 carteles)")
-    en.add_argument("--nro", dest="nros", action="append", required=True, metavar="NUMERO_SICOP",
+    en = sub.add_parser("enrich", help="Ficha del concurso en SICOP: --nro N (a mano, 1 a 3) o run / cola / status")
+    en_sub = en.add_subparsers(dest="enrich_command")
+    er = en_sub.add_parser("run", help="Enriquecimiento automático: la cola del día con fichas y documentos (tarea "
+                                       "programada; solo con ENRICH_ENABLED=true)")
+    er.add_argument("--max", type=int, metavar="N", help="Consultar como máximo N carteles (para probar)")
+    en_sub.add_parser("cola", help="Muestra la cola de hoy sin consultar SICOP")
+    en_sub.add_parser("status", help="Últimas corridas y consultas de la bitácora")
+    en.add_argument("--nro", dest="nros", action="append", metavar="NUMERO_SICOP",
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
@@ -961,6 +1053,15 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
             return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
     if args.command == "enrich":
+        if args.enrich_command == "run":
+            return enrich_run(settings, args.max)
+        if args.enrich_command == "cola":
+            return enrich_cola(settings)
+        if args.enrich_command == "status":
+            return enrich_status(settings)
+        if not args.nros:
+            print("Error: indica --nro NUMERO_SICOP (o run, cola, status).", file=sys.stderr)
+            return 1
         return enrich(settings, [n.strip() for n in args.nros], args.documentos)
     if args.command == "backup":
         return backup(settings, args.output)

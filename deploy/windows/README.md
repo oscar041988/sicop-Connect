@@ -126,3 +126,57 @@ Disable-ScheduledTask -TaskName "SICOP CONNECT - obtencion"
 Unregister-ScheduledTask -TaskName "SICOP CONNECT - obtencion" -Confirm:$false
 Enable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"    # si se vuelve al ciclo de las 8:00
 ```
+
+## Enriquecimiento (guía de enriquecimiento, lección 4): tarea «SICOP CONNECT - enriquecimiento»
+
+`sicop-enriquecimiento.ps1` corre `enrich run` **a las 10:00, lunes a viernes** (decisión del 2026-10-27): consulta
+en SICOP la cola del día (fichas y documentos), con la **ventana del navegador visible**, y deja el registro en
+`data\logs\enriquecimiento-AAAA-MM.log`. Códigos: `0` = ok · `1` = algún FALLO · `2` = CAPTCHA o bloqueo (se detuvo)
+u otra corrida en curso. Con `ENRICH_ENABLED=false` (por defecto) no consulta nada.
+
+**Modo interactivo:** para que se vea la ventana, la tarea tiene que ser «**Ejecutar solo cuando el usuario haya
+iniciado sesión**». Si se elige «Ejecutar tanto si el usuario inició sesión como si no», el navegador corre
+escondido y no se puede supervisar. Además, en ese horario la computadora tiene que estar encendida, con la sesión
+iniciada y **sin bloqueo de pantalla ni suspensión** (Configuración › Sistema › Inicio/apagado y suspensión).
+
+### Antes de crearla
+
+1. `migrate` (0020) y una prueba a mano mirando la ventana: `.venv\Scripts\python.exe -m app.cli enrich run --max 3`.
+2. Revisar la cola: `.venv\Scripts\python.exe -m app.cli enrich cola`.
+3. `ENRICH_ENABLED=true` en `.env` (sin eso, la tarea no consulta nada).
+
+### Crearla (PowerShell, una sola vez)
+
+```powershell
+$proyecto = "C:\Users\User\sicop-connect"
+$accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-enriquecimiento.ps1`"" `
+    -WorkingDirectory $proyecto
+$horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 10:00
+$ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$usuario = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive
+Register-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento" -Action $accion -Trigger $horario `
+    -Settings $ajustes -Principal $usuario `
+    -Description "enrich run, lunes a viernes 10:00, con ventana. Registro en data\logs."
+```
+
+- `-LogonType Interactive` es «Ejecutar solo cuando el usuario haya iniciado sesión»: así se ve la ventana.
+- 3 horas de límite: 20 carteles con sus documentos y las pausas de 8 s pueden tardar más de una hora.
+- Si a las 10:00 la computadora estaba apagada, ese día no corre: la cola espera en la base y el resumen del día
+  siguiente avisa cuántos días hábiles no hubo corrida.
+
+### Probarla y revisarla
+
+```powershell
+Start-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
+Get-Content "C:\Users\User\sicop-connect\data\logs\enriquecimiento-$(Get-Date -Format yyyy-MM).log" -Tail 30 -Encoding UTF8
+.venv\Scripts\python.exe -m app.cli enrich status
+```
+
+El resumen queda en `data\exports\resumen-enriquecimiento-<n>.txt` mientras los avisos estén en dry-run.
+
+### Pausarla
+
+`ENRICH_ENABLED=false` en `.env` (la tarea sigue corriendo pero no consulta) o
+`Disable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"`.

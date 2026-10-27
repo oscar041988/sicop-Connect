@@ -238,6 +238,45 @@ es otro (`google-auth`, sección 4).
 - `EXPORTS_DIR`: capturas de los fallos de la solicitud (`obtencion-fallo-…png`) y las alertas en vista previa.
 - `RAW_DATA_DIR\descargas`: los ZIP descargados tal como llegaron y la captura de un fallo de descarga.
 
+### 3.2 Enriquecimiento de carteles (`enrich`, guía de enriquecimiento)
+
+Trae de la consulta pública de SICOP la **ficha** del concurso (estado, fechas, versión, garantías…) y sus
+**documentos** (PDF con su texto, ZIP, Word, Excel), unidos al cartel por su Número SICOP. Detalle de los campos:
+`docs/DETALLE_CARTEL.md`. Siempre con la ventana del navegador visible y grabando cada consulta.
+
+| Comando | Qué hace |
+|---|---|
+| `enrich --nro N [--nro N…] [--documentos]` | 1 a 3 carteles a mano |
+| `enrich cola` | La cola de hoy (sin consultar SICOP) y cuáles caben en el máximo del día |
+| `enrich run [--max N]` | La corrida automática (la tarea de las 10:00): la cola del día con fichas y documentos |
+| `enrich status` | Últimas corridas y consultas (la bitácora) |
+
+**Activar o pausar:** `ENRICH_ENABLED=true` / `false` en `.env`. Con `false`, `enrich run` no consulta nada (la
+tarea programada puede seguir activa). La tarea: `deploy/windows/README.md`.
+
+**Qué entra en la cola:** encaje Alta o Media, plazo abierto (según la ficha si ya existe), y que nunca se haya
+enriquecido, o que los datos abiertos lo vieran después de la última ficha, o que cierre en 3 días o menos. Lo ya
+consultado hoy no vuelve. Máximo `ENRICH_MAX_PER_DAY` (20) por día, primero lo que cierra antes.
+
+**Ante un FALLO de un cartel** (no encontrado, la página cambió, un documento no llegó): queda en `enrich status` y
+en el resumen con su motivo; la cola sigue con los demás. Mirar el video y la captura; si SICOP cambió la página,
+pedir el ajuste con el prompt «Cuando la ficha de SICOP cambia» de la guía.
+
+**Ante un CAPTCHA, un bloqueo o «No fue posible acceder…»:** la corrida se **detiene** y sale la alerta (a
+`OBTAIN_ALERT_TO`; en dry-run, `data\exports\alerta-enriquecimiento-<n>.txt`). No se reintenta ni se intenta evitar.
+Poner `ENRICH_ENABLED=false`, mirar el video y avisar a Oscar.
+
+**Ver un video:** la bitácora dice la carpeta de cada consulta (`AAAA-MM-DD/<nro>/HHMMSS`) dentro de
+`RECORDINGS_DIR` (`data\grabaciones`): ahí están `HHMMSS-video.webm` (se abre con el navegador) y una captura por
+paso. Se guardan `RECORDINGS_KEEP_DAYS` (30) días; las de una consulta con FALLO o CAPTCHA no se borran.
+
+**Si el equipo de consulta estuvo apagado** (o con la sesión cerrada o la pantalla bloqueada a las 10:00): ese día
+no hubo consultas; no se pierde nada, la cola espera. El resumen del día siguiente dice cuántos días hábiles no hubo
+corrida. Se puede correr a mano: `enrich run`.
+
+**Resumen diario:** al terminar cada corrida, «N consultados, M FALLO» con lo nuevo de cada cartel (a
+`OBTAIN_ALERT_TO`; en dry-run, `data\exports\resumen-enriquecimiento-<n>.txt`).
+
 ## 4. Enviar avisos
 
 ### 4.1 Qué se avisa
