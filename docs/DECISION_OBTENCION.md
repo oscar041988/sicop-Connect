@@ -252,3 +252,43 @@ reglas así:
 - Regla 7: la alerta no lleva el enlace, el código ni el `processId`.
 - Regla 10: con `SOURCE_MODE=manual` no hace nada.
 - Regla 11: sigue sin declararse «automática» hasta que un ciclo real lo demuestre.
+
+## 9. Enriquecimiento de carteles (2026-10-27)
+
+**Aprobado por Oscar** (la idea es suya; revisó el proyecto; comunicado por Ivania el 2026-10-27), incluida la
+exploración con Playwright de la lección 1. Los valores de la tabla son la propuesta con la que se trabaja; se
+confirman con Oscar cuando se usen (lecciones 2 y 4).
+
+Mejora pedida por Oscar: con el Número SICOP de cada cartel, abrir su ficha en la consulta pública de concursos
+(`https://www.sicop.go.cr/app/module/bid/public/tenders`), guardar su información y sus PDF y unirlos al cartel.
+Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
+
+**Antes de decidir, Oscar debe tener en cuenta tres hechos:**
+- La respuesta de SICOP del 26/10 (sección 8): no autoriza «accesos externos ni mecanismos de integración» para
+  terceros. No habla de forma expresa de consultar la página pública con un programa.
+- La guía dice que al abrir la página de concursos con un programa sencillo, SICOP respondió «No fue posible
+  acceder a la página solicitada».
+- El 22/10, SICOP bloqueó la descarga del ZIP hecha con Playwright (sección 8). Es posible que la consulta de
+  concursos también se bloquee; si pasa, el proyecto se detiene (regla 2), sin intentar evitarlo.
+
+| Punto | Propuesta | Decisión de Oscar |
+|---|---|---|
+| ¿Se hace la exploración guiada con Playwright (lección 1, encargo 1)? | Sí, una sola consulta, con ventana visible, sin descargar nada | ☑ aprobado (27/10) |
+| Qué carteles se consultan | Solo encaje Alta o Media con plazo abierto (o que cierran en ≤ 3 días) | ☐ |
+| Máximo por día | 20 (`ENRICH_MAX_PER_DAY`) | ☐ |
+| Pausa entre consultas | 8 s (`ENRICH_DELAY_SECONDS`) | ☐ |
+| Condición de corte | CAPTCHA, bloqueo o «No fue posible acceder…»: se detiene todo, sin reintentar, y se avisa | ☐ |
+| Términos de uso de la consulta pública | Releer las Condiciones Generales (sección 8, regla 3): 5c no sobrecargar, 5d no compartir datos fuera de Hermatix | ☐ revisados |
+| Equipo de consulta y horario | Por definir (Windows encendido, sesión iniciada, sin bloqueo de pantalla) | ☐ |
+| Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☐ |
+
+- Fecha de la decisión: 2026-10-27 · Decidió: Oscar · Comentarios: ____
+
+**Exploración manual (lección 1, Ivania, 2026-10-27):**
+- La búsqueda avanzada encontró el cartel por Número SICOP.
+- Casillas de la búsqueda avanzada (algunas): rango de fechas de publicación (por defecto, los últimos 6 meses),
+  rango de fechas de apertura, número de procedimiento, Número de SICOP, código de clasificación y estado del
+  concurso. El rango de publicación por defecto podría dejar fuera carteles más viejos: revisar en el encargo 1.
+- **La ficha no tiene URL propia:** al pegar su dirección se abre la página de búsqueda, no el cartel. Por ahora
+  hay que repetir la búsqueda por cada cartel (afecta el tiempo de la lección 4), salvo que el encargo 1 encuentre
+  una respuesta JSON que sirva.

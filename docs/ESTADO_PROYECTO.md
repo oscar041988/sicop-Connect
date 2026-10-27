@@ -249,6 +249,20 @@
 
 ## Pendientes
 
+- **Enriquecimiento de carteles · lección 1, explorar la consulta (2026-10-27, rama `desarrollo`, solo local):**
+  idea y aprobación de Oscar (`DECISION_OBTENCION.md` §9). Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
+  - Exploración manual de Ivania: la búsqueda avanzada encuentra el cartel por Número SICOP; la ficha no tiene URL
+    propia.
+  - Encargo 1: `scripts/explorar_concursos.py` (ventana visible, una consulta, sin descargas), corrido por Ivania
+    con `20261002859`: **sin CAPTCHA ni bloqueo**. La ficha llega en respuestas JSON de `prod-api.sicop.go.cr`
+    (ficha, líneas, documentos: 5, con PDF y `.xlsx`). Resultado y recomendación en `docs/DETALLE_CARTEL.md`:
+    navegador + leer el JSON que recibe la página; no llamar a la API directamente.
+  - Exploración de `20261001258` (Objetado; 432 líneas en páginas de 100; 49 documentos, la mayoría ZIP) y
+    `20261001587`, sin bloqueo. **`20261001587` (Santa Ana, «Interesa») se modificó el 26/10 y cierra el 30/10
+    23:59**, pero los datos abiertos de hoy siguen diciendo 23/10: el panel lo oculta como vencido. Avisado a Ivania.
+  - **Pendiente:** Oscar marca los campos útiles, decide sobre los datos de funcionarios y qué tipos de documento
+    se guardan; autoevaluación; commit.
+
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
     de SICOP en Gmail» (búsqueda de «Envío de reporte» en el buzón `SICOP_REQUEST_EMAIL`) e «Ir a SICOP (datos
