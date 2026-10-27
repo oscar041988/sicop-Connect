@@ -60,9 +60,11 @@ class _Sicop:
     """SIMULADO: sirve la página y responde los fetch con las fichas de tests/fixtures/ficha_simulada/.
     cambios = {nro: {respuesta: texto}} reemplaza una respuesta; estados = {respuesta: código HTTP}."""
 
-    def __init__(self, variante="normal", cambios=None, estados=None):
+    def __init__(self, variante="normal", cambios=None, estados=None, archivos=None):
+        """archivos = {serverFileNm: bytes o código HTTP}: lo que responde el almacén de documentos (lección 3)."""
         self.variante, self.cambios, self.estados = variante, cambios or {}, estados or {}
-        self.nro, self.peticiones, self.busquedas = None, [], []
+        self.archivos = archivos or {}
+        self.nro, self.peticiones, self.busquedas, self.pedidos_al_almacen = None, [], [], []
 
     def cuerpo(self, nombre):
         if nombre is None:
@@ -88,6 +90,14 @@ class _Sicop:
                     self.nro = casillas["cartelNo"]
                 route.fulfill(status=self.estados.get(nombre, 200), body=self.cuerpo(nombre),
                               headers={"content-type": "application/json", "access-control-allow-origin": "*"})
+            elif partes.netloc == "objectstorage.us-ashburn-1.oraclecloud.com":
+                archivo = partes.path.rsplit("/", 1)[-1]
+                self.pedidos_al_almacen.append(archivo)
+                contenido = self.archivos.get(archivo, 404)
+                route.fulfill(status=contenido if isinstance(contenido, int) else 200,
+                              body=b"" if isinstance(contenido, int) else contenido,
+                              headers={"content-type": "application/octet-stream", "access-control-allow-origin": "*",
+                                       "content-disposition": f'attachment; filename="{archivo}"'})
             else:
                 route.abort()
         contexto.route("**/*", manejar)
@@ -101,7 +111,8 @@ def _settings(tmp_path, nros=(GPS, ABARROTES, SANTA_ANA), **extra):
             conn.execute("INSERT INTO tenders (nro_sicop, fecha_cierre_recepcion, content_hash, first_seen, last_seen)"
                          " VALUES (?, ?, 'h', '2026-10-27', '2026-10-27')", (nro, CIERRES_EN_LA_BASE.get(nro)))
     valores = {"DATABASE_PATH": str(db), "EXPORTS_DIR": str(tmp_path / "exports"),
-               "RECORDINGS_DIR": str(tmp_path / "grabaciones"), "BROWSER_HEADLESS": "true"}
+               "RECORDINGS_DIR": str(tmp_path / "grabaciones"), "DOCUMENTS_DIR": str(tmp_path / "documentos"),
+               "BROWSER_HEADLESS": "true"}  # todas las carpetas en tmp_path: nunca en data/ del proyecto
     valores.update(extra)
     return load_settings(env_file=None, environ=valores)
 

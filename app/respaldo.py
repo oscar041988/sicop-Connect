@@ -29,7 +29,8 @@ from app.config import PROJECT_ROOT
 # En el paquete del servidor (git archive) este archivo trae el commit; en desarrollo dice $Format y se pregunta a git.
 ARCHIVO_COMMIT = PROJECT_ROOT / "app" / "COMMIT"
 # Tablas que se cuentan en el manifiesto: lo que más importa no perder.
-TABLAS = ("tenders", "tender_lines", "reviews", "notification_outbox", "users", "source_runs")
+TABLAS = ("tenders", "tender_lines", "reviews", "notification_outbox", "users", "source_runs", "tender_details",
+          "tender_documents")
 
 
 class RespaldoError(Exception):
@@ -69,8 +70,27 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def respaldar(origen: Path, carpeta: Path, ahora: datetime) -> Respaldo:
-    """Copia consistente de `origen` en `carpeta`, con su manifiesto. No sobrescribe nada."""
+def _respaldar_documentos(documentos: Path, destino: Path) -> dict:
+    """Los documentos de las fichas (lección 3) en un ZIP, sin volver a comprimir (ya vienen comprimidos o son PDF).
+    Los archivos nunca se modifican: basta con copiarlos. Se escribe con otro nombre y se renombra al final."""
+    import zipfile
+    archivos = sorted(p for p in documentos.rglob("*") if p.is_file() and not p.name.startswith("."))
+    temporal = destino.with_name(f".{destino.name}.parcial")
+    try:
+        with zipfile.ZipFile(temporal, "x", zipfile.ZIP_STORED) as zf:
+            for archivo in archivos:
+                zf.write(archivo, archivo.relative_to(documentos).as_posix())
+        os.replace(temporal, destino)
+    finally:
+        temporal.unlink(missing_ok=True)
+    return {"archivo": destino.name, "archivos": len(archivos), "bytes": sum(p.stat().st_size for p in archivos),
+            "sha256": sha256(destino)}
+
+
+def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None) -> Respaldo:
+    """Copia consistente de `origen` en `carpeta`, con su manifiesto. No sobrescribe nada.
+
+    Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip."""
     if not origen.is_file():
         raise RespaldoError(f"no existe la base {origen}")
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -110,6 +130,8 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime) -> Respaldo:
         "filas": filas,
         "base_original": str(origen),
     }
+    if documentos is not None and documentos.is_dir() and any(p.is_file() for p in documentos.rglob("*")):
+        datos["documentos"] = _respaldar_documentos(documentos, carpeta / f"{nombre}_documentos.zip")
     with open(manifiesto, "x", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=2)
         f.write("\n")

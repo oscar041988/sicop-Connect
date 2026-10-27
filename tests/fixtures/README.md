@@ -115,6 +115,18 @@ Todas tienen `Cod Unidad Compra` con ceros iniciales (`00001`, `01142`, `02102`)
   teléfonos y quien presentó un recurso; el mismo patrón `PERSONALES` de `app/sources/sicop_tender_detail.py`).
   Los números se dejaron tal como venían en el texto. Las líneas son solo la primera página (100), como la
   recibe la página.
+- Lección 3: la ficha simulada muestra la tabla de documentos (10 por página, botones «Página anterior» y
+  «Página siguiente») y, al hacer clic en un archivo, pide `downloadWithPAR` y luego el archivo al «almacén»
+  (`objectstorage…/p/CLAVE-SIMULADA-NO-ANOTAR/…`; la prueba revisa que esa clave no quede en ningún lado).
+  Variantes nuevas: `captcha_en_descarga` y `orden_distinto`.
+
+## `documentos_simulados/`
+
+- **Datos: SIMULADOS.** Documentos de prueba de `tests/test_documentos.py`, hechos con
+  `hacer_documentos.py` (está en la misma carpeta; volver a correrlo da los mismos archivos):
+  `con_texto.pdf` (2 páginas con texto «SIMULADO…», con tildes), `escaneado.pdf` (solo una imagen: sin texto),
+  `falso.pdf` (HTML con extensión .pdf), `pliego.zip` (un PDF con texto adentro y un .txt) y `formulario.xlsx`
+  (un ZIP mínimo). Las pruebas generan además un archivo distinto por documento con las mismas funciones.
 
 **No editar estos archivos** (ni abrirlo y guardarlo con Excel). Si hace falta otro caso, agregar un fixture nuevo
 y anotarlo aquí con su origen (real / sintético / simulado).

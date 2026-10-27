@@ -106,6 +106,7 @@ class Consulta:
     motivo: str = ""
     guardado: Guardado | None = None
     campos: dict | None = None
+    documentos: list | None = None  # ResultadoDocumento de sicop_documentos (con --documentos)
 
 
 def _ahora() -> datetime:
@@ -385,8 +386,11 @@ def _foto(page, ruta: Path) -> None:
 
 def buscar_ficha(nro: str, settings: Settings, *, reloj: Callable[[], datetime] = _ahora,
                  preparar_contexto: Callable | None = None, espera_ms: int = ESPERA_MS,
-                 headless: bool | None = None) -> Ficha:
-    """Una consulta en SICOP. Lanza FalloFicha (control=True ante CAPTCHA o bloqueo)."""
+                 headless: bool | None = None, al_abrir_ficha: Callable | None = None) -> Ficha:
+    """Una consulta en SICOP. Lanza FalloFicha (control=True ante CAPTCHA o bloqueo).
+
+    al_abrir_ficha(page, contexto, ficha, revisar): se llama con la ficha todavía abierta (lección 3: guardar la
+    ficha y bajar sus documentos en la misma ventana, porque los documentos solo se bajan desde ahí)."""
     inicio = reloj()
     carpeta = settings.recordings_dir / f"{inicio:%Y-%m-%d}" / nro
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -409,6 +413,8 @@ def buscar_ficha(nro: str, settings: Settings, *, reloj: Callable[[], datetime] 
                                     espera_ms)
                     ficha = ficha_desde_textos(nro, textos)
                     _validar(ficha)
+                    if al_abrir_ficha is not None:
+                        al_abrir_ficha(page, contexto, ficha, lambda: _revisar(page, escucha))
                 except FalloFicha as fallo:
                     settings.exports_dir.mkdir(parents=True, exist_ok=True)
                     fallo.captura = settings.exports_dir / f"ficha-fallo-{inicio:%Y%m%d-%H%M%S}-{nro}.png"
@@ -434,9 +440,11 @@ def buscar_ficha(nro: str, settings: Settings, *, reloj: Callable[[], datetime] 
 
 def enriquecer(settings: Settings, nros: list[str], *, dormir: Callable[[float], None] = time.sleep,
                reloj: Callable[[], datetime] = _ahora, avisar: Callable[[str], None] = lambda _: None,
-               **opciones) -> list[Consulta]:
+               documentos: bool = False, espera_documento_ms: int | None = None, **opciones) -> list[Consulta]:
     """Consulta los carteles uno por uno con ENRICH_DELAY_SECONDS de pausa. Un CAPTCHA o bloqueo detiene todo.
+    Con documentos=True también baja y guarda los documentos de cada ficha (lección 3, sicop_documentos.py).
     Lanza ValueError (sin abrir el navegador) si un número no está en la base o falta la migración."""
+    from app.sources import sicop_documentos as sd
     if not 1 <= len(nros) <= MAX_POR_CORRIDA:
         raise ValueError(f"Se consultan de 1 a {MAX_POR_CORRIDA} carteles por corrida.")
     if len(set(nros)) != len(nros):
@@ -445,8 +453,10 @@ def enriquecer(settings: Settings, nros: list[str], *, dormir: Callable[[float],
     with closing(connect(settings.database_path)) as conn:
         try:
             conn.execute("SELECT 1 FROM tender_details LIMIT 1")
+            if documentos:
+                conn.execute("SELECT 1 FROM tender_documents LIMIT 1")
         except sqlite3.OperationalError:
-            raise ValueError("La base no tiene la tabla tender_details: ejecuta python -m app.cli migrate.") from None
+            raise ValueError("A la base le faltan tablas de las fichas: ejecuta python -m app.cli migrate.") from None
         faltan = [n for n in nros
                   if conn.execute("SELECT 1 FROM tenders WHERE nro_sicop = ?", (n,)).fetchone() is None]
         if faltan:
@@ -458,15 +468,34 @@ def enriquecer(settings: Settings, nros: list[str], *, dormir: Callable[[float],
                 avisar(f"Pausa de {pausa} s antes de la siguiente consulta…")
                 dormir(pausa)
             avisar(f"Consultando {nro} en SICOP…")
-            try:
-                ficha = buscar_ficha(nro, settings, reloj=reloj, **opciones)
+            hecho: dict = {"documentos": [] if documentos else None}
+
+            def al_abrir(page, contexto, ficha, revisar, nro=nro, hecho=hecho):
                 with transaccion(conn):
-                    guardado, campos = guardar_ficha(conn, ficha, reloj())
+                    hecho["guardado"], hecho["campos"] = guardar_ficha(conn, ficha, reloj())
+                if not documentos:
+                    return
+                lista = ficha.respuestas["documentos"]
+                avisar(f"Ficha guardada. Documentos: {len(lista)}.")
+                extra = {"espera_ms": espera_documento_ms} if espera_documento_ms else {}
+                try:
+                    sd.descargar_documentos(page, contexto, conn, settings, nro, hecho["guardado"].detalle_id, lista,
+                                            hecho["documentos"], revisar=revisar, dormir=dormir, reloj=reloj,
+                                            avisar=avisar, **extra)
+                except sd._Control as exc:
+                    raise FalloFicha(f"{exc} (al bajar los documentos). No se reintenta: se detiene todo y se "
+                                     "avisa.", control=True) from None
+
+            try:
+                buscar_ficha(nro, settings, reloj=reloj, al_abrir_ficha=al_abrir, **opciones)
+                guardado = hecho["guardado"]
                 consultas.append(Consulta(nro, "nueva" if guardado.nueva else "sin_cambios", guardado=guardado,
-                                          campos=campos))
+                                          campos=hecho["campos"], documentos=hecho["documentos"]))
             except FalloFicha as fallo:
                 captura = f" Captura: {fallo.captura}" if fallo.captura else ""
-                consultas.append(Consulta(nro, "control" if fallo.control else "fallo", fallo.motivo + captura))
+                consultas.append(Consulta(nro, "control" if fallo.control else "fallo", fallo.motivo + captura,
+                                          guardado=hecho.get("guardado"), campos=hecho.get("campos"),
+                                          documentos=hecho["documentos"]))
                 if fallo.control:
                     consultas += [Consulta(n, "no_consultado", "se detuvo por el control de SICOP")
                                   for n in nros[i + 1:]]

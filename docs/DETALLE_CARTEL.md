@@ -12,7 +12,7 @@ Los 3 carteles explorados (2026-10-27, 08:23, 08:29 y 08:32; carpetas `…-08231
 | Cartel | Para qué | Estado en SICOP | Líneas | Documentos |
 |---|---|---|---|---|
 | `20261002859` GPS | Alta, abierto | En recepción de ofertas | 1 | 5 (3 PDF, 2 xlsx) |
-| `20261001258` abarrotes, convenio marco | muchas líneas | **Objetado** | 432, de 100 en 100 (5 páginas) | **49** (28 zip, 17 PDF, 2 docx, 1 xlsm, …) |
+| `20261001258` abarrotes, convenio marco | muchas líneas | **Objetado** | 432, de 100 en 100 (5 páginas) | **49** (30 zip, 16 PDF, 2 docx, 1 xlsm) |
 | `20261001587` cámaras corporales, Santa Ana | «cerrado» | **En recepción de ofertas**: modificado (`cartelModYn` = Y, versión del 26/10 08:46), cierre **30/10 23:59** | 1 | 7 (5 PDF, 2 xlsx) |
 
 **Hallazgo importante:** `20261001587` está en nuestra base con cierre 23/10 23:59 (dato de los archivos de datos
@@ -108,14 +108,35 @@ Lista en `getCartelFilesById` y en la tabla «11. Documento del pliego de condic
 | 4 | Documentos del Pliego de condiciones | Instructivo de Conducta del Proveedor.pdf | 0.22 |
 | 5 | Especificaciones técnicas | 2026-10-21 Final…Espec.Técn.yRequis.Plie.Condic.GPS.pdf | 0.9 |
 
-- **No todos son PDF:** en los 3 carteles hay `.xlsx`, `.xlsm`, `.docx` y muchos `.zip` (28 de 49 en el convenio
+- **No todos son PDF:** en los 3 carteles hay `.xlsx`, `.xlsm`, `.docx` y muchos `.zip` (30 de 49 en el convenio
   marco). La lección 3 debe decidir qué hacer con ellos (guardarlos sin extraer texto, abrir los ZIP con las
   mismas reglas que `zip_pliegos`, o extraer también de Word y Excel). Un `.xlsm` trae macros: se guarda como
   dato y nunca se abre.
 - Volumen: un convenio marco puede tener ~50 documentos y ~45 MB; conviene un tope por cartel además de
   `DOCUMENT_MAX_MB` por archivo.
 - El documento útil para las reglas es el de «Especificaciones técnicas».
-- El nombre del archivo es texto de una celda, no un enlace: cómo se descarga queda para la lección 3.
+- El nombre del archivo es texto de una celda (`td`) que **no descarga nada** al hacer clic. Cada fila tiene en la
+  última columna un **botón de descarga** (ícono azul): ese es el que descarga (primera prueba real de `enrich
+  --documentos`, 2026-10-27 10:39: con clic en la celda, los 5 documentos dieron «no llegó en 60 s»; el video lo
+  confirmó). En la exploración, la descarga que se vio fue probablemente un clic a mano en ese botón.
+- **La columna «No.» es el número de FILA (1, 2, 3…), no `docFileSeqno`.** Santa Ana tiene los documentos 1, 2,
+  4…8 y abarrotes no tiene el 2: buscar la fila por ese número falló desde el primer hueco (prueba real del
+  2026-10-27: Santa Ana 2 de 7, abarrotes 1 de 49). La fila se busca por el nombre del archivo y el nombre del documento;
+  los espacios seguidos cuentan como uno (hay nombres con doble espacio).
+
+**Cómo se descarga (lección 3, explorado el 2026-10-27 por Ivania, a mano y con `scripts/explorar_documento.py`;
+documento 4 del GPS, 0.22 MB), sin bloqueo:**
+1. Clic en el botón de descarga de la fila → la página pide `GET prod-api.sicop.go.cr/comn/api/v1/public/comnFile/downloadWithPAR`
+   (JSON de 224 bytes).
+2. Con eso pide el archivo a `objectstorage.us-ashburn-1.oraclecloud.com/p/<clave>/…/o/EDOCS/attach/bid/202610/<serverFileNm>`
+   (`application/octet-stream`, 230 996 bytes, con `content-disposition`).
+3. Se abre una pestaña con el porcentaje de descarga. Como llega como «datos binarios» y no como PDF, el
+   navegador lo descarga en vez de mostrarlo.
+- El objeto descargado es `fileServerPath` + `serverFileNm` de la lista de documentos: la descarga se une a su
+  documento por `serverFileNm`, no por el título.
+- **`/p/<clave>/` es un enlace pre-autorizado temporal: es un secreto.** No se anota, no se guarda y no se
+  muestra (igual que el `processId`, DECISION_OBTENCION.md §8 regla 7).
+- Las dos peticiones aparecieron dos veces (la página pidió el archivo dos veces).
 
 ## 5. Recomendación de acceso
 
@@ -137,7 +158,11 @@ Lista en `getCartelFilesById` y en la tabla «11. Documento del pliego de condic
 
 - [x] Explorar los otros 2 carteles (2026-10-27, Ivania): sin bloqueo; resultados arriba.
 - [x] Tipos de documento (Oscar, 2026-10-27): **se guardan todos** (PDF, ZIP, Word, Excel). Ninguno se abre con
-      otro programa; `.xlsm` y similares, solo guardados. Falta el tope por cartel (lección 3).
+      otro programa; `.xlsm` y similares, solo guardados.
+- [x] Lección 3 (2026-10-27, comunicado por Ivania): tope de **100 MB por cartel** (además de `DOCUMENT_MAX_MB`
+      por archivo); de los **ZIP** se guardan el ZIP y se extrae el texto de sus PDF (con los límites de
+      `zip_pliegos`); **Word y Excel solo se guardan** (sin extraer texto).
+- [x] Lección 3: observar cómo descarga SICOP un documento (sección 4).
 - [ ] Confirmar la casilla del Número SICOP y cómo se abre el resultado (pasos que se hicieron a mano; lección 2).
 - [x] Campos útiles marcados por Oscar (sección 3) y datos de funcionarios: no se guardan (2026-10-27).
 - [x] Prueba real de la lección 2 (2026-10-27, Ivania): el «Monto total estimado» está en **colones** en la
@@ -163,3 +188,25 @@ Lista en `getCartelFilesById` y en la tabla «11. Documento del pliego de condic
 | `criterios` | `criterioCont` e `impactDesc` |
 | `lineas_total` | `totalElements` de las líneas |
 | `documentos` | `docFileSeqno`, `fileTypeNm`, `docNm`, `clientFileNm`, `fileSizeMb`, `serverFileNm`, `fileServerPath` (para la lección 3) |
+
+## 8. Documentos guardados (lección 3)
+
+`python -m app.cli enrich --nro N --documentos` (`app/sources/sicop_documentos.py`, migración 0019), en la misma
+ventana de la ficha:
+
+- Recorre la lista de documentos en el orden de SICOP; si la tabla tiene páginas, usa «siguiente» y, si hace
+  falta, vuelve a la primera (paginación confirmada en el SICOP real el 2026-10-27: abarrotes, 49 documentos en
+  5 páginas, todos guardados). Hace clic en el botón de descarga de la fila (la que tiene ese nombre de archivo y de documento) y escucha lo que llega del almacén: el archivo se
+  reconoce por su `serverFileNm`; la dirección con la clave temporal no se guarda.
+- Antes de pedirlo: si ya está guardado, no se pide; si SICOP dice que pesa más de `DOCUMENT_MAX_MB` (50) o no cabe
+  en el tope del cartel (`DOCUMENTS_MAX_MB_PER_TENDER`, 100), se registra como omitido y no se pide.
+- Al llegar: firma según la extensión (`%PDF`, ZIP, OLE…); tipos ejecutables no se aceptan; lo que no cuadra es
+  «rechazado» y no se escribe en disco. Mismo SHA-256 que otro ya guardado del cartel → «duplicado».
+- Se guarda en `DOCUMENTS_DIR/<Número SICOP>/<serverFileNm>` (nunca con el nombre original como ruta).
+- Texto con pdfplumber, página por página (máx. 500): PDF y PDF dentro de un ZIP (en memoria, con topes). Sin
+  texto → «sin_texto» (escaneado; sin OCR). Word, Excel y otros → «no_aplica».
+- Pausa `ENRICH_DELAY_SECONDS` antes de cada documento. Un documento que no llega es «fallo» y se sigue; CAPTCHA o
+  bloqueo detienen todo (la ficha ya guardada queda).
+- `tender_documents` (una fila por intento; un documento se guarda una sola vez) y `tender_document_text` (texto
+  por página): no se modifican ni se borran.
+- `backup` agrega `sicop_<fecha>_documentos.zip` con la carpeta de documentos.

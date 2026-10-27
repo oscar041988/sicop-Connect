@@ -53,6 +53,9 @@ DEFAULTS: dict[str, str] = {
     "BROWSER_HEADLESS": "false",
     "RECORDINGS_DIR": "data/grabaciones",
     "ENRICH_DELAY_SECONDS": "8",
+    "DOCUMENTS_DIR": "data/documentos",
+    "DOCUMENT_MAX_MB": "50",
+    "DOCUMENTS_MAX_MB_PER_TENDER": "100",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -264,6 +267,22 @@ class Settings:
     def enrich_delay_seconds(self) -> int:
         """Pausa entre una consulta de ficha y la siguiente (ENRICH_DELAY_SECONDS; 8): el portal es de todos."""
         return self._entero("ENRICH_DELAY_SECONDS", 1, 600, "segundos")
+
+    @property
+    def documents_dir(self) -> Path:
+        """Documentos de las fichas (DOCUMENTS_DIR; data/documentos). Fuera de Git; entran en el respaldo."""
+        path = Path(self.get("DOCUMENTS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def document_max_mb(self) -> int:
+        """Tamaño máximo de UN documento de la ficha (DOCUMENT_MAX_MB; 50)."""
+        return self._entero("DOCUMENT_MAX_MB", 1, 500, "MB")
+
+    @property
+    def documents_max_mb_per_tender(self) -> int:
+        """Tope de documentos guardados por cartel (DOCUMENTS_MAX_MB_PER_TENDER; 100; decisión del 2026-10-27)."""
+        return self._entero("DOCUMENTS_MAX_MB_PER_TENDER", 1, 5000, "MB")
 
     @property
     def notifications_enabled(self) -> bool:

@@ -7,7 +7,9 @@
      «Búsqueda avanzada» con rol button, la etiqueta «Número de SICOP» NO unida a su casilla, «Consultar», la fila del
      resultado con su enlace «[tipo] descripción» y la ficha que pide sus datos con fetch a las mismas rutas de
      prod-api.sicop.go.cr. No es la página real. Las pruebas reemplazan __VARIANTE__ y responden los fetch con
-     tests/fixtures/ficha_simulada/. Variantes: normal · captcha · bloqueo · captcha_en_ficha · sin_avanzada. -->
+     tests/fixtures/ficha_simulada/. Variantes: normal · captcha · bloqueo · captcha_en_ficha · sin_avanzada ·
+     captcha_en_descarga · orden_distinto. -->
+
 <style>
   #avanzada { display: none; }
   table { border-collapse: collapse; }
@@ -32,6 +34,7 @@
 </div>
 <table><tbody id="resultados"></tbody></table>
 <div id="ficha"></div>
+<div id="documentos"></div>
 <script>
   const VARIANTE = "__VARIANTE__";
   const API = "https://prod-api.sicop.go.cr";
@@ -79,8 +82,40 @@
     await pedir("/bid/api/v1/public/epCartelProd/findByEpCartelId", "POST");
     await pedir("/bid/api/v1/public/epCartelSustCriteria/findAllByCartelId", "GET");
     await pedir("/bid/api/v1/public/epCartelSustCriteriaImpact/findAllByCartelId", "GET");
-    await pedir("/bid/api/v1/public/epCartelFile/getCartelFilesById", "GET");
+    const documentos = JSON.parse(await pedir("/bid/api/v1/public/epCartelFile/getCartelFilesById", "GET"));
+    mostrarDocumentos(documentos, 0);
   });
+
+  // Documentos (lección 3, observado el 2026-10-27): tabla de 10 por página. El nombre del archivo es una celda que
+  // NO hace nada al hacer clic (primera prueba real); se descarga con el botón de la última columna → downloadWithPAR
+  // → el archivo desde el almacén, con una clave temporal en la ruta; la página lo pide dos veces, como la real.
+  const ALMACEN = "https://objectstorage.us-ashburn-1.oraclecloud.com/p/CLAVE-SIMULADA-NO-ANOTAR/n/sim/b/sim/o";
+  function mostrarDocumentos(lista, pagina) {
+    // orden_distinto: la tabla no sigue el orden de la lista (obliga a volver a la primera página).
+    const documentos = VARIANTE === "orden_distinto" ? [...lista].reverse() : lista;
+    // «No.» es el número de FILA (1, 2, 3…), no docFileSeqno: Santa Ana tiene los documentos 1, 2, 4… (prueba real).
+    const filas = documentos.slice(pagina * 10, pagina * 10 + 10).map((d, i) =>
+      `<tr><td>${pagina * 10 + i + 1}</td><td>No</td><td>${d.fileTypeNm}</td><td>${d.docNm}</td>` +
+      `<td class="text-center">${d.clientFileNm}</td>` +
+      `<td><button type="button" class="p-button descargar" data-server="${d.serverFileNm}" ` +
+      `data-ruta="${d.fileServerPath}"><i class="pi pi-download"></i></button></td></tr>`).join("");
+    const hay = (pagina + 1) * 10 < documentos.length;
+    const antes = pagina > 0;
+    document.getElementById("documentos").innerHTML =
+      `<div class="p-datatable"><table><tr><th>No.</th><th>Confidencial</th><th>Tipo de documento</th>` +
+      `<th>Nombre del documento</th><th>Documento</th><th></th></tr>${filas}</table>` +
+      `<button type="button" class="p-paginator-prev" aria-label="Página anterior" ${antes ? "" : "disabled"}>` +
+      `&lt;</button>` +
+      `<button type="button" class="p-paginator-next" aria-label="Página siguiente" ${hay ? "" : "disabled"}>` +
+      `&gt;</button></div>`;
+    document.querySelector(".p-paginator-prev").addEventListener("click", () => mostrarDocumentos(lista, pagina - 1));
+    document.querySelector(".p-paginator-next").addEventListener("click", () => mostrarDocumentos(lista, pagina + 1));
+    document.querySelectorAll("button.descargar").forEach(b => b.addEventListener("click", async () => {
+      if (VARIANTE === "captcha_en_descarga") { captcha(); return; }
+      await pedir("/comn/api/v1/public/comnFile/downloadWithPAR", "GET");
+      for (let i = 0; i < 2; i++) await fetch(`${ALMACEN}${b.dataset.ruta}/${b.dataset.server}`);
+    }));
+  }
 </script>
 </body>
 </html>

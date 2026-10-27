@@ -379,14 +379,33 @@ def _fecha_corta(iso: str | None) -> str:
     return datetime.fromisoformat(iso).strftime("%d/%m/%Y %H:%M") if iso else "sin dato"
 
 
-def enrich(settings: Settings, nros: list[str]) -> int:
+_ESTADOS_DOCUMENTO = {"guardado": "guardados", "ya_guardado": "ya estaban guardados", "duplicado": "duplicados",
+                      "rechazado": "rechazados", "omitido_tamano": "omitidos por tamaño",
+                      "omitido_tope": "omitidos por el tope del cartel", "fallo": "con FALLO"}
+
+
+def _resumen_documentos(documentos: list) -> None:
+    from collections import Counter
+    cuenta = Counter(d.estado for d in documentos)
+    partes = [f"{n} {_ESTADOS_DOCUMENTO[e]}" for e, n in cuenta.items()]
+    textos = Counter(d.texto_estado for d in documentos if d.estado == "guardado")
+    detalle = (f" (texto: {textos['extraido']} con texto, {textos['sin_texto']} sin texto/escaneados, "
+               f"{textos['no_aplica']} Word/Excel/otros, {textos['error']} con error)" if textos else "")
+    print(f"  Documentos: {len(documentos)} · {', '.join(partes) or 'ninguno'}{detalle}")
+    for d in documentos:
+        if d.estado not in ("guardado", "ya_guardado") or d.texto_estado in ("error", "sin_texto"):
+            print(f"    {d.doc_seq} · {d.nombre} · {d.estado}{' · ' + d.texto_estado if d.texto_estado else ''}"
+                  f"{' · ' + d.motivo if d.motivo else ''}")
+
+
+def enrich(settings: Settings, nros: list[str], documentos: bool = False) -> int:
     """Ficha de SICOP de 1 a 3 carteles (enriquecimiento, lección 2). 0 = ok · 1 = algún FALLO · 2 = CAPTCHA o
     bloqueo (se detuvo todo)."""
     from app.sources import sicop_tender_detail as std
     print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · grabaciones en "
           f"{settings.recordings_dir} · pausa de {settings.enrich_delay_seconds} s entre consultas.")
     try:
-        consultas = std.enriquecer(settings, nros, avisar=print, **_opciones_enrich())
+        consultas = std.enriquecer(settings, nros, avisar=print, documentos=documentos, **_opciones_enrich())
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -411,10 +430,16 @@ def enrich(settings: Settings, nros: list[str]) -> int:
                           "la ficha de SICOP dice otra fecha.")
                 print(f"  Modalidad: {campos['tipo_modalidad']} · monto estimado: {monto} · líneas: "
                       f"{campos['lineas_total']} · documentos: {len(json.loads(campos['documentos']))}")
+                if c.documentos is not None:
+                    _resumen_documentos(c.documentos)
             elif c.resultado == "no_consultado":
                 print(f"\n{c.nro_sicop} · NO CONSULTADO: {c.motivo}")
             else:
                 print(f"\n{c.nro_sicop} · FALLO: {c.motivo}", file=sys.stderr)
+                if c.guardado is not None:
+                    print(f"  La ficha sí quedó guardada (#{c.guardado.detalle_id}).")
+                if c.documentos:
+                    _resumen_documentos(c.documentos)
     if any(c.resultado == "control" for c in consultas):
         print("\nSICOP mostró un CAPTCHA o un bloqueo: se detuvo todo, no se reintenta. Avisar a Oscar.",
               file=sys.stderr)
@@ -800,7 +825,7 @@ def score_rules(settings: Settings, mostrar: int, reglas_path: Path = REGLAS_PAT
 
 def backup(settings: Settings, output: Path) -> int:
     try:
-        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR))
+        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir)
     except respaldo.RespaldoError as exc:
         print(f"Error: {exc}. No se hizo el respaldo.", file=sys.stderr)
         return 1
@@ -810,6 +835,10 @@ def backup(settings: Settings, output: Path) -> int:
     print(f"Commit {d['commit'][:12]} · esquema {d['version_esquema']} · integridad {d['integridad']}"
           f" · SHA-256 {d['sha256'][:16]}…")
     print("Filas: " + " · ".join(f"{t} {n}" for t, n in d["filas"].items()))
+    if "documentos" in d:
+        doc = d["documentos"]
+        print(f"Documentos: {output / doc['archivo']} · {doc['archivos']} archivos · {doc['bytes']} bytes"
+              f" · SHA-256 {doc['sha256'][:16]}…")
     return 0
 
 
@@ -872,6 +901,8 @@ def build_parser() -> argparse.ArgumentParser:
     en = sub.add_parser("enrich", help="Ficha del concurso en la consulta pública de SICOP (con ventana; 1 a 3 carteles)")
     en.add_argument("--nro", dest="nros", action="append", required=True, metavar="NUMERO_SICOP",
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
+    en.add_argument("--documentos", action="store_true",
+                    help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -930,7 +961,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
             return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
     if args.command == "enrich":
-        return enrich(settings, [n.strip() for n in args.nros])
+        return enrich(settings, [n.strip() for n in args.nros], args.documentos)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

@@ -289,6 +289,40 @@
   - Repetido por Ivania con los 3 números completos: **los 3 «sin cambios»** (fichas #1–#3, sin filas nuevas).
     Comprobación de la lección 2 cumplida (commit `02b289e`).
   - **Pendiente · Ivania:** autoevaluación de la lección 2.
+- **Enriquecimiento · lección 3, documentos (2026-10-27, rama `desarrollo`, solo local):**
+  - Decisiones (comunicadas por Ivania): tope 100 MB por cartel; de los ZIP se lee el texto de sus PDF; Word y
+    Excel solo se guardan.
+  - Exploración de la descarga (Ivania, a mano y con `scripts/explorar_documento.py`): sin bloqueo; la página pide
+    `downloadWithPAR` y luego el archivo al almacén de Oracle con una **clave temporal en la ruta** (secreto: no se
+    anota; el script la oculta y se quitó del primer informe). Se descarga porque llega como «datos binarios».
+  - `enrich --documentos` (`app/sources/sicop_documentos.py`, migración **0019** `tender_documents` y
+    `tender_document_text`), `DOCUMENTS_DIR`, `DOCUMENT_MAX_MB`, `DOCUMENTS_MAX_MB_PER_TENDER`; `backup` agrega
+    `_documentos.zip`. Dependencia nueva **pdfplumber 0.11.10** (lock: + pdfminer.six, pillow, pypdfium2; ruedas
+    para Linux y Python 3.12 comprobadas).
+  - **592 passed** (30 nuevas en `tests/test_documentos.py`; documentos SIMULADOS en
+    `tests/fixtures/documentos_simulados/`).
+  - Corregido en el camino: las pruebas de la lección 2 no apartaban `DOCUMENTS_DIR`, y las primeras corridas de
+    las pruebas nuevas escribieron 21 archivos SIMULADOS en `data/documentos` (creada en ese momento: no había
+    documentos reales). Se borró la carpeta y ahora todas las carpetas de las pruebas van en `tmp_path`.
+  - **Primera prueba real (Ivania, 10:39, GPS):** la ficha sin cambios; los 5 documentos «no llegó en 60 s», sin
+    bloqueo. El video mostró que la celda del nombre no descarga: se descarga con el **botón de la última
+    columna**. Corregido (la app pulsa ese botón; la página simulada ahora solo descarga con el botón y la prueba
+    falla con el código anterior). Los 5 intentos quedan como historial («fallo»); se vuelven a pedir.
+  - **Segunda prueba real (Ivania, GPS): 5 de 5 guardados**, sin bloqueo. 3 PDF con texto (18, 5 y 44 páginas; 67
+    páginas con texto en total) y 2 Excel guardados sin texto. El documento 4 pesa 230 996 bytes, igual que en la
+    exploración. El pliego técnico (doc. 5) menciona «GPS» 10 veces y «monitoreo» 9. `git status`: `data/` sigue
+    ignorada.
+  - Ivania abrió los PDF del GPS con su lector: se ven bien.
+  - **Tercera prueba real (Ivania, Santa Ana + abarrotes):** sin bloqueo, pero solo 2 de 7 y 1 de 49 guardados;
+    los demás «no se encontró su fila». Causa: la columna «No.» de la tabla es el número de fila, no
+    `docFileSeqno` (Santa Ana: 1, 2, 4…; abarrotes sin el 2). Corregido: la fila se busca por el nombre del
+    archivo y del documento (espacios seguidos = uno); la tabla simulada ahora numera las filas como SICOP y las
+    pruebas fallan con el código anterior. Los intentos fallidos quedan como historial y se vuelven a pedir.
+  - **Cuarta prueba real (Ivania, Santa Ana + abarrotes): todo guardado**, sin bloqueo. GPS 5/5 (2,0 MB), Santa
+    Ana 7/7 (3,4 MB), abarrotes 49/49 (44,3 MB; 5 páginas de la tabla: **paginación confirmada en el SICOP
+    real**). En la base: 603 páginas con texto, 147 PDF leídos dentro de 30 ZIP, ningún error de texto;
+    `data/documentos` = 50 MB (tope por cartel: 100 MB).
+  - **Pendiente · Ivania:** `backup` con `_documentos.zip` (61 archivos); autoevaluación de la lección 3.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

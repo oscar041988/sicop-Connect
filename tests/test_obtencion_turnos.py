@@ -93,7 +93,7 @@ def test_0017_conserva_las_solicitudes_de_antes(tmp_path):
                      " VALUES ('2026-10-22T08:04:38-06:00', 1, 'fallido', 'bloqueo', 'anterior')")
         conn.commit()
 
-    assert apply_migrations(db) == ["0017_obtencion_dos_turnos.sql", "0018_fichas.sql"]
+    assert apply_migrations(db) == ["0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql"]
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT solicitada_en, turno, estado, motivo, alerta_estado FROM solicitudes_sicop"
                             ).fetchall() == [("2026-10-22T08:04:38-06:00", "", "fallido", "bloqueo", "anterior")]
