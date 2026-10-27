@@ -275,11 +275,11 @@ Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
 |---|---|---|
 | ¿Se hace la exploración guiada con Playwright (lección 1, encargo 1)? | Sí, una sola consulta, con ventana visible, sin descargar nada | ☑ aprobado (27/10) |
 | Qué carteles se consultan | Solo encaje Alta o Media con plazo abierto (o que cierran en ≤ 3 días) | ☐ |
-| Máximo por día | 20 (`ENRICH_MAX_PER_DAY`) | ☐ |
+| Máximo por día | 20 (`ENRICH_MAX_PER_DAY`) | ☑ confirmado (27/10, por Ivania) |
 | Pausa entre consultas | 8 s (`ENRICH_DELAY_SECONDS`) | ☐ |
 | Condición de corte | CAPTCHA, bloqueo o «No fue posible acceder…»: se detiene todo, sin reintentar, y se avisa | ☐ |
 | Términos de uso de la consulta pública | Releer las Condiciones Generales (sección 8, regla 3): 5c no sobrecargar, 5d no compartir datos fuera de Hermatix | ☐ revisados |
-| Equipo de consulta y horario | La PC de Ivania mientras el proyecto sea local; tarea a las **10:00, lunes a viernes** (Ivania, 27/10), con ventana; encendida, sesión iniciada, sin bloqueo de pantalla | ☐ |
+| Equipo de consulta y horario | La PC de Ivania mientras el proyecto sea local; tarea a las **10:00, lunes a viernes** (Ivania, 27/10), con ventana; encendida, sesión iniciada, sin bloqueo de pantalla | ☑ horario 10:00 confirmado (27/10, por Ivania) |
 | Dónde se guarda | Directo en la base local; la dirección con token hacia el servidor se hace al desplegar (Ivania, 27/10, método solo local) | ☐ |
 | Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☐ |
 

@@ -343,7 +343,7 @@
   - **Tarea «SICOP CONNECT - enriquecimiento» creada por Ivania (27/10)** con
     `deploy/windows/crear-tarea-enriquecimiento.ps1` (evita pegar líneas largas); `Start-ScheduledTask` → corrida #2
     `sin_cola` (lo consultado hoy no se repite), código de salida 0, registro en `data\logs`.
-  - **Pendiente · Ivania:** revisar la corrida automática del 28/10 a las 10:00; autoevaluación de la lección 4. **Pendiente · Oscar:** confirmar máximo 20 y horario 10:00.
+  - **Pendiente · Ivania:** revisar la corrida automática del 28/10 a las 10:00; autoevaluación de la lección 4. **Oscar confirmó (27/10, por Ivania): máximo 20 por día, a las 10:00.**
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
