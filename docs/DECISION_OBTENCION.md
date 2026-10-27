@@ -282,6 +282,7 @@ Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
 | Equipo de consulta y horario | La PC de Ivania mientras el proyecto sea local; tarea a las **10:00, lunes a viernes** (Ivania, 27/10), con ventana; encendida, sesión iniciada, sin bloqueo de pantalla | ☑ horario 10:00 confirmado (27/10, por Ivania) |
 | Dónde se guarda | Directo en la base local; la dirección con token hacia el servidor se hace al desplegar (Ivania, 27/10, método solo local) | ☑ confirmado (27/10, por Ivania): base local por ahora; después, el servidor de la empresa |
 | Espacio y retención de documentos | Por definir con el administrador al desplegar (método solo local) | ☑ **decidido** (27/10, por Ivania): al llegar la fecha límite del cartel (la más reciente, por si se prorroga) se borran sus documentos y su información de SICOP, **menos los marcados «Interesa»** en la revisión — hecho (migración 0021) |
+| Peso del texto de los PDF en las reglas (entrega 4C) | La guía: «una señal solo en el PDF sube el encaje con su evidencia» | ☑ **decidido** (27/10, por Ivania): el PDF sube como máximo a **Media** (Alta solo con una señal alta en el título o en las líneas); si la familia no tiene ninguna señal en el título ni en las líneas, lo del PDF la deja como máximo en **Baja** (se ve en el detalle, no sale en los avisos); el contexto del PDF no cuenta. Motivo: en la base real, «trazabilidad» y «etiquetas» en el pliego de unos abarrotes los subían a Media — hecho, sin migración |
 
 - Fecha de la decisión: 2026-10-27 · Decidió: Oscar · Comentarios: ____
 

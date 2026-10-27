@@ -182,8 +182,10 @@ def test_desactivado_no_abre_el_navegador(tmp_path):
 
 
 @navegador
-def test_corrida_completa_con_bitacora_y_resumen(tmp_path):
+def test_corrida_completa_con_bitacora_y_resumen(tmp_path, monkeypatch):
     settings, archivos = _dos_abiertos(tmp_path)
+    reevaluados = []
+    monkeypatch.setattr(en, "reevaluar", lambda conn, nros, avisar: reevaluados.append(nros))
 
     corrida = _correr(settings, _Sicop(archivos=archivos))
 
@@ -197,6 +199,7 @@ def test_corrida_completa_con_bitacora_y_resumen(tmp_path):
     resumen = (settings.exports_dir / f"resumen-enriquecimiento-{corrida.run_id}.txt").read_text(encoding="utf-8")
     assert "Para: alertas@ejemplo.test" in resumen and "2 consultados, 0 FALLO" in resumen
     assert "cierre 30/10/2026 23:59" in resumen
+    assert reevaluados == [[GPS, SANTA_ANA]]  # entrega 4C: se reevalúan con el texto de sus PDF
     # Ya consultados hoy: una segunda corrida no tiene cola.
     assert _correr(settings, _Sicop(archivos=archivos)).estado == "sin_cola"
 
@@ -432,3 +435,43 @@ def test_la_corrida_borra_al_cierre_y_lo_dice_en_el_resumen(tmp_path, capsys, mo
     assert _sql(settings, "SELECT run_id FROM enrich_retiros") == [(corrida.run_id,)]
     resumen = (settings.exports_dir / f"resumen-enriquecimiento-{corrida.run_id}.txt").read_text(encoding="utf-8")
     assert "Borrado al cierre: 1 cartel(es)" in resumen and f"- {CERRADO} · cerró 01/10/2026 10:00" in resumen
+
+
+# --- Reevaluar con el texto de los PDF (entrega 4C) ---------------------------------------------------------
+
+def _evaluacion(settings, nro):
+    from app.matching.reglas import cargar_reglas
+    return _sql(settings, "SELECT encaje, evidencia FROM opportunity_assessments WHERE nro_sicop = ?"
+                          " AND familia = 'gps_flotas' AND rules_version = ?", (nro, cargar_reglas().version))
+
+
+def test_reevaluar_usa_el_pdf_y_al_borrarlo_lo_quita(tmp_path):
+    """Reglas reales; texto SIMULADO: «GPS» en el título (baja) y la señal alta solo en el PDF → media."""
+    settings = _base(tmp_path)
+    _sql(settings, "UPDATE tenders SET descripcion = 'Compra de GPS' WHERE nro_sicop = ?", (CERRADO,))
+    detalle = _con_ficha_y_documento(settings, CERRADO, "2026-10-01T10:00:00-06:00")
+    _documento(settings, CERRADO, detalle, nombre="anexo.pdf", paginas=0)
+    _sql(settings, "INSERT INTO tender_document_text (documento_id, pagina, texto) SELECT id, 2, 'Servicio de"
+                   " monitoreo GPS de vehículos' FROM tender_documents WHERE server_file = 'anexo.pdf'")
+    avisos = []
+
+    with closing(sqlite3.connect(settings.database_path)) as conn:
+        assert en.reevaluar(conn, [CERRADO, CERRADO], avisos.append) == 1
+    encaje, evidencia = _evaluacion(settings, CERRADO)[0]
+    assert encaje == "media" and "(anexo.pdf, pág. 2)" in evidencia
+    assert avisos == ["Reevaluados con el texto de los PDF: 1 cartel(es)."]
+
+    _retirar(settings)  # cerró: se borra el texto y la reevaluación ya no lo encuentra
+    with closing(sqlite3.connect(settings.database_path)) as conn:
+        en.reevaluar(conn, [CERRADO])
+    assert _evaluacion(settings, CERRADO) == [("baja", "«GPS» (título)")]
+
+
+def test_si_reevaluar_falla_lo_dice_y_no_se_cae(tmp_path, monkeypatch):
+    settings = _base(tmp_path)
+    monkeypatch.setattr(en, "cargar_reglas", lambda: (_ for _ in ()).throw(ValueError("YAML roto")))
+    avisos = []
+
+    with closing(sqlite3.connect(settings.database_path)) as conn:
+        assert en.reevaluar(conn, [GPS], avisos.append) == 0
+    assert "YAML roto" in avisos[0] and "evaluate" in avisos[0]

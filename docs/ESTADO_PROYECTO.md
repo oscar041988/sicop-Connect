@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-27 (enriquecimiento lección 4, entrega 4B: el panel muestra la ficha, los documentos y la bitácora de consultas; rama `desarrollo`, 626 passed, solo local; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-27 (enriquecimiento lección 4, entregas 4B (panel) y 4C (reglas sobre el texto de los PDF); rama `desarrollo`, 638 passed, solo local; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
 
 ## Último resultado
 
@@ -369,9 +369,22 @@
     `test_todas_las_rutas_post_exigen_el_token`).
   - Base local: respaldo `sicop_20261027-144635` (esquema 0021, en la carpeta temporal de la sesión de Claude) →
     `migrate` (0022), aplicado por Claude para abrir el panel.
-  - **Pendiente:** commit en `desarrollo`; decidir si `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx` entra al
-    repositorio; siguen los pendientes de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4);
-    después, entrega 4C (reglas sobre el texto de los PDF).
+  - Commit `33927ce`. La guía `.docx` queda fuera del repositorio (Ivania, 27/10).
+- **Enriquecimiento · lección 4, entrega 4C (2026-10-27, rama `desarrollo`, solo local):** las reglas también buscan
+  en el texto de los PDF guardados, con documento y página en la evidencia (`app/matching/evaluar.py`, sin migración).
+  - Cada página es una fuente más, como una línea (una exclusión en la página anula solo esa página); del PDF cuentan
+    las señales altas y medias, no el contexto; solo la primera página de cada término va a la evidencia.
+  - **Decisiones de Ivania (27/10):** el PDF sube como máximo a Media; sin señal en el título ni en las líneas, como
+    máximo Baja (`DECISION_OBTENCION.md` §9). La segunda salió de probar con la base real: abarrotes
+    (`20261001258`) subía a Media en rastreo_activos por «trazabilidad» y «etiquetas» del pliego.
+  - `enrich run` y `enrich --nro … --documentos` reevalúan al terminar los carteles consultados y los borrados al
+    cierre (si falla, lo dicen y el `run-cycle` evalúa todo al día siguiente).
+  - **638 passed** (11 nuevas en `tests/test_evaluar.py`, 2 en `tests/test_enriquecimiento.py`; golden set igual).
+  - Base local: respaldo `sicop_20261027-151816` (esquema 0022) → `evaluate`: de los 5 carteles con PDF, en 3 el PDF
+    confirma su familia con documento y página (body cams, GPS `20261002859`, RFID); abarrotes y el rastreo_activos
+    del GPS `20261002859` quedan en Baja; ninguno cambió de Alta o Media.
+  - **Pendiente:** siguen los de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4); con Oscar,
+    revisar las evidencias del PDF y ajustar el YAML si aparecen más falsos positivos.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

@@ -298,3 +298,106 @@ def test_comando_evaluate(db, capsys):
 
     assert main(["evaluate"], settings) == 0
     assert "nuevas 0 · actualizadas 0" in capsys.readouterr().out
+
+
+# --- Texto de los PDF (entrega 4C) -------------------------------------------------------
+# Decisión de Ivania (2026-10-27): una señal que está solo en el PDF sube el encaje como máximo a media.
+
+@pytest.fixture
+def mini(tmp_path):
+    archivo = tmp_path / "reglas.yaml"
+    archivo.write_text(REGLAS_MINI, encoding="utf-8")
+    return cargar_reglas(archivo)
+
+
+def _pdf(mini, titulo, *paginas):
+    textos = [Texto(f"Pliego, pág. {n}", t) for n, t in enumerate(paginas, start=1)]
+    return {e.familia: e for e in evaluar_textos(mini, titulo, [], textos)}
+
+
+def test_senal_media_en_el_pdf_sube_a_media_con_documento_y_pagina(mini):
+    sin_pdf = _por_familia(mini, "Compra de GPS")["gps_flotas"]
+    e = _pdf(mini, "Compra de GPS", "Condiciones generales", "Incluye control de\ncombustible por tanque")["gps_flotas"]
+
+    assert sin_pdf.encaje == "baja"
+    assert e.encaje == "media"
+    assert "«control de combustible» (Pliego, pág. 2)" in e.evidencia  # en una sola línea, con su página
+
+
+def test_senal_alta_en_el_pdf_sube_como_maximo_a_media(mini):
+    e = _pdf(mini, "Compra de GPS", "Servicio de monitoreo GPS de la flotilla")["gps_flotas"]
+
+    assert e.encaje == "media"
+    assert "senales_alta: monitoreo gps" in e.regla and "(Pliego, pág. 1)" in e.evidencia
+
+
+def test_sin_senal_en_titulo_ni_lineas_el_pdf_deja_como_maximo_baja(mini):
+    """Como los abarrotes de la base real: dos señales genéricas en el pliego no lo vuelven candidato."""
+    e = _pdf(mini, "Servicios varios", "Servicio de monitoreo GPS", "control de combustible")["gps_flotas"]
+
+    assert e.encaje == "baja"
+    assert "(Pliego, pág. 1)" in e.evidencia  # se ve en el detalle, con su evidencia
+
+
+def test_senal_alta_en_el_titulo_sigue_alta(mini):
+    assert _pdf(mini, "Monitoreo GPS de vehículos", "Requisitos del oferente")["gps_flotas"].encaje == "alta"
+
+
+def test_el_contexto_del_pdf_no_cuenta(mini):
+    assert _pdf(mini, "Compra de GPS", "Uso de la flotilla institucional")["gps_flotas"].encaje == "baja"
+
+
+def test_exclusion_en_una_pagina_anula_solo_esa_pagina(mini):
+    e = _pdf(mini, "Compra de GPS", "Equipo topográfico con control de combustible",
+             "Monitoreo GPS en tiempo real")["gps_flotas"]
+
+    assert e.encaje == "media"
+    assert "pág. 1" not in e.evidencia and "(Pliego, pág. 2)" in e.evidencia
+
+
+def test_exclusion_en_el_titulo_anula_tambien_el_pdf(mini):
+    assert _pdf(mini, "GPS topográfico", "Monitoreo GPS")["gps_flotas"].encaje == "sin_coincidencia"
+
+
+def test_solo_la_primera_pagina_de_cada_termino(mini):
+    e = _pdf(mini, "Compra de GPS", "control de combustible", "control de combustible")["gps_flotas"]
+
+    assert "pág. 1" in e.evidencia and "pág. 2" not in e.evidencia
+
+
+def test_fuente_pagina_sin_parentesis_ni_comillas():
+    from app.matching.evaluar import fuente_pagina
+    from app.panel import frases_de_evidencia
+
+    fuente = fuente_pagina("Pliego «final» (v2).pdf", 3)
+    assert fuente == "Pliego final v2.pdf, pág. 3"
+    assert frases_de_evidencia(f"«GPS» ({fuente})") == {fuente: ["GPS"]}
+
+
+def _documento(conn, nro, nombre, estado, paginas):
+    detalle = conn.execute("INSERT INTO tender_details (nro_sicop, consultado_en, content_hash, copia_fiel,"
+                           " campos_quitados) VALUES (?, '2026-10-05T10:00:00-06:00', ?, '{}', '[]')",
+                           (nro, f"h-{nro}-{nombre}")).lastrowid
+    guardado = estado == "guardado"
+    doc = conn.execute(
+        "INSERT INTO tender_documents (nro_sicop, detalle_id, nombre_documento, server_file, sha256, ruta_local,"
+        " registrado_en, estado, motivo, texto_estado, paginas) VALUES (?, ?, ?, ?, ?, ?,"
+        " '2026-10-05T10:01:00-06:00', ?, ?, ?, ?)",
+        (nro, detalle, nombre, nombre, "sha" if guardado else None, f"{nro}/{nombre}" if guardado else None, estado,
+         None if guardado else "SIMULADO", "extraido" if guardado else None, len(paginas))).lastrowid
+    conn.executemany("INSERT INTO tender_document_text (documento_id, pagina, texto) VALUES (?, ?, ?)",
+                     [(doc, n, t) for n, t in enumerate(paginas, start=1)])
+
+
+def test_evaluar_base_usa_el_texto_de_los_documentos_guardados(db, mini):
+    with closing(connect(db)) as conn:
+        conn.execute("UPDATE tenders SET descripcion = 'Compra de GPS' WHERE nro_sicop = '00000000003'")
+        _documento(conn, "00000000003", "PLIEGO (v1)", "guardado", ["Portada", "Con control de combustible"])
+        _documento(conn, "00000000003", "ANEXO", "fallo", ["Monitoreo GPS"])  # no guardado: no cuenta
+        primera = evaluar_base(conn, mini, AHORA)
+        fila = conn.execute("SELECT encaje, evidencia FROM opportunity_assessments"
+                            " WHERE nro_sicop = '00000000003' AND familia = 'gps_flotas'").fetchone()
+        segunda = evaluar_base(conn, mini, AHORA + timedelta(minutes=5))
+
+    assert fila == ("media", "«GPS» (título) · «control de combustible» (PLIEGO v1, pág. 2)")
+    assert (segunda.nuevas, segunda.actualizadas, segunda.sin_cambios) == (0, 0, primera.nuevas)

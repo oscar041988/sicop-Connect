@@ -6,6 +6,13 @@ Cómo se decide el encaje de una familia en un cartel:
    Una exclusión en una línea solo anula las señales de esa línea.
 3. Con lo que queda: una señal alta → alta; una señal media junto a otra señal media distinta o a un
    término de contexto → media; una señal media sola → baja. Sin señales no se guarda nada.
+4. Texto de los PDF de la ficha (entrega 4C): cada página de un documento guardado es una fuente más, como una
+   línea (una exclusión en la página anula solo esa página). Del PDF cuentan las señales altas y medias, no el
+   contexto (los pliegos repiten palabras genéricas), y solo la primera página de cada término va a la evidencia.
+   Decisiones de Ivania (2026-10-27): para alta hace falta una señal alta en el título o en las líneas (el PDF
+   sube como máximo a media); y si la familia no tiene ninguna señal en el título ni en las líneas, lo del PDF la
+   deja como máximo en baja (se ve en el detalle, no sale en los avisos). En la base real, «trazabilidad» y
+   «etiquetas» en el pliego de unos abarrotes la subían a media.
 
 Las dimensiones van separadas: «alta» habla del encaje, no del plazo ni de si Hermatix puede ganar.
 Reevaluar es idempotente: una fila por (cartel, familia, versión de reglas); si nada cambió, no se toca.
@@ -15,7 +22,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 
 from app.matching.reglas import Coincidencia, Familia, Reglas, buscar
@@ -47,7 +54,15 @@ def _describir(pares: list[tuple[str, Coincidencia]]) -> tuple[str, str]:
     return regla, evidencia
 
 
-def evaluar_familia(familia: Familia, titulo: Texto, lineas: list[Texto]) -> Evaluacion | None:
+def fuente_pagina(documento: str, pagina: int) -> str:
+    """«Pliego (v2).pdf», 3 → «Pliego v2.pdf, pág. 3». Sin paréntesis ni comillas: la fuente va entre paréntesis en
+    la evidencia y panel.frases_de_evidencia la separa por ellos."""
+    nombre = " ".join(documento.translate(str.maketrans("", "", "()«»")).split()) or "documento"
+    return f"{nombre}, pág. {pagina}"
+
+
+def evaluar_familia(familia: Familia, titulo: Texto, lineas: list[Texto],
+                    paginas: list[Texto] | tuple[Texto, ...] = ()) -> Evaluacion | None:
     en_titulo = buscar(familia, titulo.texto)
     exclusiones = [(titulo.fuente, c) for c in en_titulo if c.tipo == "exclusiones"]
     senales = [(titulo.fuente, c) for c in en_titulo if c.tipo != "exclusiones"]
@@ -55,6 +70,18 @@ def evaluar_familia(familia: Familia, titulo: Texto, lineas: list[Texto]) -> Eva
         en_linea = buscar(familia, linea.texto)
         if not any(c.tipo == "exclusiones" for c in en_linea):
             senales.extend((linea.fuente, c) for c in en_linea)
+    alta_sin_pdf = any(c.tipo == "senales_alta" for _, c in senales)
+    senal_sin_pdf = alta_sin_pdf or any(c.tipo == "senales_media" for _, c in senales)
+
+    vistos: set[str] = set()  # del PDF, solo la primera página de cada término
+    for pagina in paginas:
+        en_pagina = buscar(familia, pagina.texto)
+        if any(c.tipo == "exclusiones" for c in en_pagina):
+            continue
+        for c in en_pagina:
+            if c.tipo in ("senales_alta", "senales_media") and c.termino not in vistos:
+                vistos.add(c.termino)
+                senales.append((pagina.fuente, replace(c, frase=" ".join(c.frase.split()))))
 
     alta = [p for p in senales if p[1].tipo == "senales_alta"]
     media = [p for p in senales if p[1].tipo == "senales_media"]
@@ -65,19 +92,23 @@ def evaluar_familia(familia: Familia, titulo: Texto, lineas: list[Texto]) -> Eva
     if exclusiones:
         encaje, decisivos = "sin_coincidencia", exclusiones + alta + media
     elif alta:
-        encaje, decisivos = "alta", alta + media + contexto
+        # Una señal alta que está solo en el PDF da como máximo media (regla 4).
+        encaje, decisivos = ("alta" if alta_sin_pdf else "media"), alta + media + contexto
     elif len({c.termino for _, c in media}) >= 2 or contexto:
         encaje, decisivos = "media", media + contexto
     else:
         encaje, decisivos = "baja", media
+    if encaje in ("alta", "media") and not senal_sin_pdf:
+        encaje = "baja"  # solo el PDF, sin señal en el título ni en las líneas: se ve, pero no es candidato
     regla, evidencia = _describir(decisivos)
     return Evaluacion(familia.nombre, familia.producto, encaje, regla, evidencia)
 
 
-def evaluar_textos(reglas: Reglas, titulo: str, lineas: list[Texto] | None = None) -> list[Evaluacion]:
+def evaluar_textos(reglas: Reglas, titulo: str, lineas: list[Texto] | None = None,
+                   paginas: list[Texto] | None = None) -> list[Evaluacion]:
     """Evaluación de un cartel con todas las familias; solo devuelve las que tuvieron señales."""
     t = Texto("título", titulo or "")
-    resultado = (evaluar_familia(f, t, lineas or []) for f in reglas.familias)
+    resultado = (evaluar_familia(f, t, lineas or [], paginas or ()) for f in reglas.familias)
     return [e for e in resultado if e is not None]
 
 
@@ -137,6 +168,16 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
         elif nombre:
             lineas[nro].append(Texto(f"línea {numero}", nombre))
 
+    # Texto de los PDF guardados de la ficha (regla 4). Solo existe para los carteles enriquecidos.
+    paginas: dict[str, list[Texto]] = defaultdict(list)
+    for nro, documento, pagina, texto in conn.execute(
+        "SELECT d.nro_sicop, coalesce(nullif(x.archivo_interno, ''), d.nombre_documento, d.nombre_original, d.server_file),"
+        "       x.pagina, x.texto FROM tender_document_text x JOIN tender_documents d ON d.id = x.documento_id"
+        f" WHERE d.estado = 'guardado' {'AND d.nro_sicop = ?' if nro_sicop else ''}"
+        " ORDER BY d.nro_sicop, d.id, x.archivo_interno, x.pagina", params
+    ):
+        paginas[nro].append(Texto(fuente_pagina(documento, pagina), texto))
+
     previas: dict[tuple[str, str], tuple] = {}
     # Familias evaluadas antes, por cartel: así cada cartel revisa solo las suyas (antes recorría todas las
     # previas de la base por cada cartel, y con miles de carteles eso se volvía lento).
@@ -160,7 +201,7 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
             total, sin_cat = conteo.get(nro, (0, 0))
             calidad = calidad_datos(total, sin_cat)
             vigentes = set()
-            for e in evaluar_textos(reglas, descripcion, lineas.get(nro)):
+            for e in evaluar_textos(reglas, descripcion, lineas.get(nro), paginas.get(nro)):
                 vigentes.add(e.familia)
                 r.por_encaje.setdefault(e.familia, {}).setdefault(e.encaje, 0)
                 r.por_encaje[e.familia][e.encaje] += 1

@@ -440,6 +440,10 @@ def enrich(settings: Settings, nros: list[str], documentos: bool = False) -> int
                     print(f"  La ficha sí quedó guardada (#{c.guardado.detalle_id}).")
                 if c.documentos:
                     _resumen_documentos(c.documentos)
+        if documentos:
+            from app.sources.enriquecimiento import reevaluar
+            print()
+            reevaluar(conn, [c.nro_sicop for c in consultas if c.resultado in ("nueva", "sin_cambios")], print)
     if any(c.resultado == "control" for c in consultas):
         print("\nSICOP mostró un CAPTCHA o un bloqueo: se detuvo todo, no se reintenta. Avisar a Oscar.",
               file=sys.stderr)

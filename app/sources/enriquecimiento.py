@@ -35,6 +35,8 @@ from app.bloqueo import bloqueo
 from app.config import Settings
 from app.database import connect, transaccion
 from app.importers.comun import HORA_CR
+from app.matching.evaluar import evaluar_base
+from app.matching.reglas import cargar_reglas
 from app.panel import version_vigente
 from app.sources.sicop_tender_detail import Consulta, consultar_uno, registrar_consulta, revisar_base
 
@@ -364,6 +366,24 @@ def _avisar(settings: Settings, asunto: str, cuerpo: str, nombre: str, proveedor
 
 # --- La corrida -------------------------------------------------------------------------------------------------
 
+def reevaluar(conn: sqlite3.Connection, nros: list[str], avisar: Callable[[str], None] = lambda _: None) -> int:
+    """Vuelve a evaluar con las reglas los carteles consultados o borrados al cierre (entrega 4C): así el panel
+    muestra enseguida las señales del PDF, o deja de mostrarlas si el texto se borró. Si falla, la corrida no se
+    pierde: lo deja dicho y el run-cycle del día siguiente evalúa todo. Devuelve cuántos reevaluó."""
+    nros = list(dict.fromkeys(nros))
+    if not nros:
+        return 0
+    try:
+        reglas = cargar_reglas()
+        for nro in nros:
+            evaluar_base(conn, reglas, nro_sicop=nro)
+    except Exception as exc:  # noqa: BLE001 — la corrida ya quedó registrada; evaluate se puede repetir
+        avisar(f"No se pudieron reevaluar los carteles consultados ({exc}). Ejecuta python -m app.cli evaluate.")
+        return 0
+    avisar(f"Reevaluados con el texto de los PDF: {len(nros)} cartel(es).")
+    return len(nros)
+
+
 def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[], datetime] = _ahora,
            dormir: Callable[[float], None] = time.sleep, avisar: Callable[[str], None] = lambda _: None,
            proveedor: Callable | None = None, **opciones) -> Corrida:
@@ -426,6 +446,8 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
                          (fin.isoformat(timespec="seconds"), corrida.estado, corrida.en_cola, len(corrida.consultas),
                           fallos, next((c.motivo for c in corrida.consultas if c.resultado == "control"), None),
                           corrida.grabaciones_borradas, run_id))
+        reevaluar(conn, [c.nro_sicop for c in corrida.consultas if c.resultado in ("nueva", "sin_cambios")] + borrados,
+                  avisar)
 
         def marcar_resumen(estado):
             with transaccion(conn):
