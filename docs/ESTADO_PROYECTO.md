@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-27 (enriquecimiento lección 4, entregas 4B (panel) y 4C (reglas sobre el texto de los PDF); rama `desarrollo`, 638 passed, solo local; **PR #3 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `162afe8` (`main` de GitHub, 348 passed)
+Última actualización: 2026-10-27 (enriquecimiento lección 4, entregas 4B (panel) y 4C (reglas sobre el texto de los PDF); rama `desarrollo`, 638 passed, subida a GitHub; **PR #4 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `70cb283` (`desarrollo`, 638 passed) · `main` de GitHub: `2dc0e52` (PR #3 unido)
 
 ## Último resultado
 
@@ -696,6 +696,12 @@
   `info@sicop.go.cr`). Corregido en `app/sources/gmail_reader.py`: un remitente con defectos de formato se
   rechaza siempre; prueba nueva de que los remitentes de SICOP bien escritos siguen entrando. **486 passed con
   3.12 y con 3.14.** Descripción del PR (`docs/PR_DESARROLLO.md`) al día.
+- **PR #4 `main` ← `desarrollo` abierto (2026-10-27, Ivania, en la web):** 15 commits sobre `main` = `2dc0e52`
+  (enriquecimiento lecciones 1 a 4, obtención en dos turnos, bajas de usuarios; migraciones 0016 a 0022). Texto
+  redactado por Claude (no se guardó en `docs/PR_DESARROLLO.md`, que sigue con el del #3). Ivania mencionó a Oscar
+  en un comentario (la sección «Reviewers» no le aparece). **Pendiente · Oscar:** revisar y unir el #4; decidir lo
+  de «Para decidir». Si pide cambios, se hacen en `desarrollo` y el #4 se actualiza solo.
+- **PR #3: unido por Oscar** (visto el 2026-10-27): `main` de GitHub llegó hasta `2dc0e52` (26/10).
 - **PR #3 `main` ← `desarrollo` abierto (2026-10-23, Ivania, en la web):** título y descripción de
   `docs/PR_DESARROLLO.md`; apunta a `a828c90` (58 commits sobre `main` = `162afe8`). Espera la revisión de Oscar.
   **Pendiente · Oscar:** revisar y unir el #3; cerrar sin unir los PR de las ramas que ya están dentro de
