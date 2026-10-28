@@ -405,7 +405,8 @@
     `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00.
 - **Reporte de cartel con IA · lección 1, el expediente (2026-10-28, rama `desarrollo`, solo local):** guía
   `docs/Guia_Reporte_Cartel_IA_SICOP.docx` (traída por Luis); **Oscar aprobó la IA** (comunicado por Ivania).
-  Falta dejarlo por escrito (`DECISION_IA.md`) y cambiar «Sin API de IA» en `CLAUDE.md`. Plan aprobado por Ivania.
+  Borrador de `DECISION_IA.md` hecho (`d47b73f`); falta que Oscar lo acepte y luego cambiar «Sin API de IA» en
+  `CLAUDE.md`. Plan aprobado por Ivania.
   - `app/ai/expediente.py` + `python -m app.cli ia expediente --nro N [--ver]`: CARTEL, LÍNEAS (total por moneda),
     FICHA SICOP y DOCUMENTOS con marca `[DOC n · archivo · pág. p]` (ZIP: `archivo.zip › interno.pdf`), entre
     marcadores `<<<INICIO/FIN DOCUMENTO DOC n>>>` (un PDF no puede cerrarlos: `<<<` → `‹‹‹`). Pliego principal
@@ -416,12 +417,23 @@
     teléfonos de funcionarios (13 de 15 carteles); lo vio Ivania en `20261002824`. **Decisión de Ivania
     (28/10): se envían tal cual**, porque son documentos públicos de SICOP; Oscar lo confirma
     (`DECISION_IA.md` §5).
-  - 9 pruebas nuevas en `tests/test_expediente.py` (SINTÉTICO/SIMULADO).
+  - 10 pruebas en `tests/test_expediente.py` (SINTÉTICO/SIMULADO).
   - Expedientes reales (base local): `20261002824` corto, 20 459 tokens, 2/2 documentos completos ·
     `20261001885` con anexos, 24 581 tokens, 7 PDF completos, 6 Word/Excel sin texto · `20261002726` con
     escaneado, 20 959 tokens, «CIMIENTOS KIOSCO.pdf» marcado escaneado y 3 .jpg sin texto. Nada omitido por tamaño.
-  - **Pendiente · Ivania:** leer completos los 3 expedientes (`data\exports\expediente_*.txt`), ajustar orden o
-    límite; revisar con Oscar qué se envía; autoevaluación. Idea aparte: Excel y Word hoy no aportan texto.
+  - **Lectura de Ivania (28/10): leyó completos los 3 expedientes** (`data\exports\expediente_*.txt`; del
+    escaneado: «está bien»). Hallazgos, todos resueltos y subidos:
+    - datos de funcionarios en el texto de los PDF → se envían tal cual (decisión de Ivania; Oscar confirma) ·
+      `a7d3d10`;
+    - el «Impacto» repetía el texto del «Criterio» → ya no se repite (INS: 24 599 → 24 377 tokens) · `925bd8a`;
+    - garantía «5 RAT» → `RAT` = porcentaje y vigencia en meses, comprobado por Ivania en la pantalla de SICOP;
+      corregido también en el panel · `c6f613d`.
+  - Sin cambios en el orden de los documentos ni en el límite: los 3 caben completos.
+  - Comprobación de la lección 1: ☑ expedientes legibles con marcas de origen · ☑ límite y omitidos (probado en
+    pytest; en los reales no hizo falta recortar) · ☑ sin datos internos de Hermatix · ☑ `RESUMEN_IA.md`.
+  - **Pendiente · Ivania:** autoevaluación de la lección 1. **Pendiente · Oscar:** aceptar `DECISION_IA.md`
+    (cuenta y clave de OpenAI, modelo, presupuesto) para empezar la lección 2. Idea aparte: Excel, Word e imágenes
+    no aportan texto (lista de insumos del INS, especificaciones del kiosco de la CCSS).
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
