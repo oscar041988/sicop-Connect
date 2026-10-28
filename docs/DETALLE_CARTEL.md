@@ -184,7 +184,7 @@ documento 4 del GPS, 0.22 MB), sin bloqueo:**
 | `tipo_recepcion` | `biddocTypeNm` · `onlineYnNm` |
 | `inicio_recepcion` · `cierre_recepcion` · `apertura` · `limite_aclaraciones` | `biddocStartDt` · `biddocEndDt` · `openbidDt` · `explainRcvEndDt`, con zona de Costa Rica |
 | `monto_estimado` + `moneda_monto` · `monto_estimado_usd` | `cartelBudget` (Decimal, CRC) · `cartelBudgetUsd` |
-| `garantias` | garantías de participación, cumplimiento y colateral, pago adelantado, multa (`fine`, `fineArticle`), reajuste y vigencia/prórroga del contrato, con sus nombres de SICOP |
+| `garantias` | garantías de participación, cumplimiento y colateral, pago adelantado, multa (`fine`, `fineArticle`), reajuste y vigencia/prórroga del contrato, con sus nombres de SICOP. `…GuarnAmtType` es la moneda (`CRC`) o **`RAT` = porcentaje**, y `…GuarnDur` es la vigencia **en meses** (sin unidad en el JSON): comprobado por Ivania en la pantalla de SICOP el 2026-10-28 (`20261002726`: 5 · RAT · 12 → «5 %» · «12 meses»; `20261001885`: 1 · CRC · 14 → «1 CRC» · «14 meses») |
 | `criterios` | `criterioCont` e `impactDesc` |
 | `lineas_total` | `totalElements` de las líneas |
 | `documentos` | `docFileSeqno`, `fileTypeNm`, `docNm`, `clientFileNm`, `fileSizeMb`, `serverFileNm`, `fileServerPath` (para la lección 3) |

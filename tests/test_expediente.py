@@ -19,7 +19,10 @@ from app.database import apply_migrations, connect
 NRO = "00000000001"
 T = "2026-10-01T00:00:00+00:00"
 GARANTIAS = {"fulfillmentGuarnRcvYnNm": "Sí", "fulfillmentGuarnAmt": "1000000", "fulfillmentGuarnAmtType": "CRC",
-             "fulfillmentGuarnDur": "12", "contractDur": "1", "contractDurUnitNm": "Años"}
+             "fulfillmentGuarnDur": "12", "contractDur": "1", "contractDurUnitNm": "Años",
+             # Como 20261002726 (CCSS): SICOP manda 5 y «RAT», y la pantalla dice «5 %».
+             "participationGuarnRcvYnNm": "Sí", "participationGuarnAmt": 2, "participationGuarnAmtType": "RAT",
+             "participationGuarnDur": "3"}
 COMENTARIO_INTERNO = "COMENTARIO INTERNO: no ofertar por el precio"
 
 
@@ -119,7 +122,8 @@ def test_expediente_completo_con_sus_secciones_y_marcas(enriquecido):
     assert "código sin catálogo (4311150199999999)" in texto
     assert "Estimado total en CRC (cantidad × precio de las líneas; no es el presupuesto): 1205.00 CRC" in texto
     assert "Estimado total en USD (cantidad × precio de las líneas; no es el presupuesto): 60 USD" in texto
-    assert "Garantía de cumplimiento: se pide: Sí · monto 1000000 CRC · plazo 12" in texto
+    assert "Garantía de cumplimiento: se pide: Sí · monto 1000000 CRC · plazo 12 meses" in texto
+    assert "Garantía de participación: se pide: Sí · 2 % · plazo 3 meses" in texto   # tipo RAT = porcentaje
     # El pliego principal y las especificaciones van antes que el anexo; cada página con su marca de origen.
     assert "[DOC 1 · pliego.pdf · pág. 2]\nPlazo de entrega: 30 días hábiles." in texto
     assert "[DOC 2 · especificaciones.zip › tecnico.pdf · pág. 1]" in texto

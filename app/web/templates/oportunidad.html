@@ -64,7 +64,7 @@
   <div class="tabla-scroll"><table class="lista auto">
     <tbody>
       {% for g in sicop.garantias %}
-      <tr><th>{{ g.nombre }}</th><td>{{ g.se_pide }}{% if g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% if g.tipo %} ({{ g.tipo }}){% endif %}{% endif %}{% if g.plazo %} · plazo {{ g.plazo }}{% endif %}</td></tr>
+      <tr><th>{{ g.nombre }}</th><td>{{ g.se_pide }}{% if g.porcentaje is not none %} · {{ g.porcentaje }} %{% elif g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% if g.tipo %} ({{ g.tipo }}){% endif %}{% endif %}{% if g.plazo %} · plazo {{ g.plazo }}{% endif %}</td></tr>
       {% endfor %}
       {% for dato, valor in sicop.contrato %}
       <tr><th>{{ dato }}</th><td>{{ valor | legible }}</td></tr>

@@ -23,7 +23,9 @@ OTRO = "00000000002"
 CIERRE_SICOP = "2026-12-01T23:59:00-06:00"
 GARANTIAS = {"fulfillmentGuarnRcvYnNm": "Sí", "fulfillmentGuarnAmt": "1000000", "fulfillmentGuarnAmtType": "CRC",
              "fulfillmentGuarnDur": "12", "participationGuarnRcvYnNm": "No", "amtReadjustYnNm": "Sí",
-             "contractDur": "1", "contractDurUnitNm": "Años", "fine": "0,50% diario <script>alert(1)</script>"}
+             "contractDur": "1", "contractDurUnitNm": "Años", "fine": "0,50% diario <script>alert(1)</script>",
+             # Tipo «RAT» = porcentaje (20261002726: SICOP manda 5 y RAT, la pantalla dice «5 %»).
+             "collateralGuarnRcvYnNm": "Sí", "collateralGuarnAmt": 4, "collateralGuarnAmtType": "RAT"}
 CRITERIOS = {"criterios": ["Precio 80%", "Experiencia 20%"], "impactos": ["Ambiental SIMULADO"]}
 
 
@@ -82,7 +84,8 @@ def test_el_detalle_muestra_la_ficha_de_sicop(entorno):
     html = _cliente("encargado@ejemplo.test").get(f"/oportunidades/{NRO}").text
     assert "Información de SICOP" in html and "En recepción de ofertas" in html
     assert "01/12/2026 23:59" in html and "Vale la fecha de SICOP" in html  # el cierre de SICOP no es el de los datos
-    assert "652 190.00 CRC" in html and "1 000 000.00 CRC" in html and "plazo 12" in html
+    assert "652 190.00 CRC" in html and "1 000 000.00 CRC" in html and "plazo 12 meses" in html
+    assert "Sí · 4 %" in html and "RAT" not in html                         # porcentaje, no una moneda «RAT»
     assert "Garantía de cumplimiento" in html and "Duración del contrato" in html and "1 Años" in html
     assert "Precio 80%" in html and "Ambiental SIMULADO" in html
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html  # textos de SICOP escapados

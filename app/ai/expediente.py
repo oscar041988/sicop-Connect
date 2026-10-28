@@ -159,7 +159,9 @@ def _ficha(info) -> list[str]:
                       " que es más reciente.")
     for g in info.garantias:
         detalle = [f"se pide: {g.se_pide}"]
-        if g.monto is not None:
+        if g.porcentaje is not None:
+            detalle.append(f"{texto_decimal(g.porcentaje)} %")
+        elif g.monto is not None:
             detalle.append(f"monto {texto_decimal(g.monto)} {g.moneda or g.tipo or ''}".rstrip())
         elif g.tipo:
             detalle.append(f"tipo {g.tipo}")

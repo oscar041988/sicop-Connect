@@ -25,6 +25,9 @@ ARCHIVO_GRABACION = re.compile(r"^\d{6}-[A-Za-z0-9_-]+\.(webm|png)$")
 # Garantías de la ficha (DETALLE_CARTEL.md §3): nombre, y las claves de «se pide», monto, tipo de monto y plazo.
 GARANTIAS = (("Garantía de participación", "participationGuarn"), ("Garantía de cumplimiento", "fulfillmentGuarn"),
              ("Garantía colateral", "collateralGuarn"))
+# Tipo de monto «RAT»: es un porcentaje. Comprobado por Ivania en la pantalla de SICOP (2026-10-28): 20261002726
+# trae monto 5 y tipo RAT, y la pantalla dice «5 %». Va antes que MONEDA, porque «RAT» también tiene 3 letras.
+PORCENTAJE = "RAT"
 TEXTO = {"extraido": "con texto", "sin_texto": "escaneado, sin texto", "no_aplica": "solo guardado (no es PDF)",
          "error": "no se pudo leer el texto"}
 ESTADOS = {"guardado": "Guardado", "duplicado": "Igual a otro ya guardado", "rechazado": "Rechazado",
@@ -46,6 +49,7 @@ class Garantia:
     moneda: str | None = None      # código de 3 letras; si SICOP trae otro tipo, va en tipo
     tipo: str | None = None
     plazo: str | None = None
+    porcentaje: Decimal | None = None   # tipo RAT: «5 %» (entonces monto y moneda quedan vacíos)
 
 
 @dataclass
@@ -123,10 +127,15 @@ def _garantias(datos: dict) -> tuple[list[Garantia], list[tuple[str, str]]]:
         if se_pide is None:
             continue
         tipo = _limpio(datos.get(f"{clave}AmtType"))
-        moneda = tipo if tipo and MONEDA.match(tipo) else None
+        monto = _decimal(datos.get(f"{clave}Amt"))
         plazo = _limpio(datos.get(f"{clave}Dur"))
-        garantias.append(Garantia(nombre, se_pide, _decimal(datos.get(f"{clave}Amt")), moneda,
-                                  None if moneda else tipo, plazo))
+        if plazo and plazo.isdigit():
+            plazo = f"{plazo} meses"   # el JSON trae solo el número; la pantalla de SICOP dice «14 meses», «12 meses»
+        if tipo == PORCENTAJE:
+            garantias.append(Garantia(nombre, se_pide, plazo=plazo, porcentaje=monto))
+            continue
+        moneda = tipo if tipo and MONEDA.match(tipo) else None
+        garantias.append(Garantia(nombre, se_pide, monto, moneda, None if moneda else tipo, plazo))
     contrato = []
     duracion = " ".join(x for x in (_limpio(datos.get("contractDur")), _limpio(datos.get("contractDurUnitNm"))) if x)
     prorroga = " ".join(x for x in (_limpio(datos.get("contractExtendDur")),
