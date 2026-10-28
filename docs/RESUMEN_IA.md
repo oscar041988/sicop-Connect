@@ -58,8 +58,26 @@ Solo se envía información pública de SICOP (y, desde la lección 3, el portaf
 - revisiones, decisiones ni comentarios de los encargados (`reviews`), seguimientos ni asignaciones;
 - usuarios, correos, contraseñas ni sesiones (`users`), destinatarios ni avisos;
 - historial (`audit_log`), bitácoras ni grabaciones;
-- datos de funcionarios de SICOP (Oscar, 27/10: no se guardan; `tender_details` ya los quita);
+- los campos de funcionarios de la **ficha** de SICOP (Oscar, 27/10: no se guardan; `tender_details` ya los quita);
 - la clave de OpenAI ni ninguna otra variable de `.env`.
+
+**Corrección (2026-10-28): el texto de los PDF sí trae datos de personas.** Lo de arriba sobre funcionarios vale
+solo para la ficha. Los pliegos, cronogramas y anexos que publica la institución traen impresos nombres y cargos
+(«Analista de Contratación: …»), firmas, correos y teléfonos, y el expediente los copia tal cual. Lo encontró
+Ivania al leer el expediente de `20261002824` (el cronograma termina con el nombre de la analista).
+
+Medido en la base local (solo conteo, sin mostrar los datos; los teléfonos son aproximados porque el patrón
+puede confundir otros números): de 2 600 páginas con texto, 147 tienen algún correo, 442 algo con forma de
+teléfono y 13 un cargo o una firma; aparecen en **13 de los 15 carteles** con PDF.
+
+**Decisión (Ivania, 2026-10-28; Oscar la confirma al aceptar `DECISION_IA.md`): se envían tal cual**, porque son
+documentos públicos que la institución publica en SICOP. El expediente no los quita.
+
+Sigue sin enviarse ningún dato de personas que **no** venga de SICOP: usuarios, encargados, revisiones y
+comentarios internos de Hermatix (lista de arriba). Los campos de funcionarios de la ficha siguen sin guardarse.
+
+Descartado por ahora: filtrar del texto los correos y teléfonos (los nombres no se pueden quitar de forma
+confiable sin una herramienta aparte). Se puede retomar si Oscar lo pide.
 
 El expediente solo consulta `tenders`, `institutions`, `imports`, `v_tender_lines` (con `catalog_items`),
 `tender_details`, `tender_documents` y `tender_document_text`. Una prueba

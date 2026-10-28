@@ -411,7 +411,11 @@
     marcadores `<<<INICIO/FIN DOCUMENTO DOC n>>>` (un PDF no puede cerrarlos: `<<<` → `‹‹‹`). Pliego principal
     primero; tope `IA_MAX_INPUT_TOKENS` (50 000, ≈ 4 caracteres por token); omitidos, escaneados y Word/Excel
     listados. Huella SHA-256 del texto. Archivo en `EXPORTS_DIR`. **Sin llamar a OpenAI, sin dependencias nuevas.**
-  - Nunca entran revisiones, comentarios, usuarios, seguimientos ni funcionarios. `docs/RESUMEN_IA.md` creado.
+  - Nunca entran revisiones, comentarios, usuarios ni seguimientos, ni los funcionarios de la ficha.
+    `docs/RESUMEN_IA.md` creado. **Corrección (28/10):** el texto de los PDF sí trae nombres, cargos, correos y
+    teléfonos de funcionarios (13 de 15 carteles); lo vio Ivania en `20261002824`. **Decisión de Ivania
+    (28/10): se envían tal cual**, porque son documentos públicos de SICOP; Oscar lo confirma
+    (`DECISION_IA.md` §5).
   - 9 pruebas nuevas en `tests/test_expediente.py` (SINTÉTICO/SIMULADO).
   - Expedientes reales (base local): `20261002824` corto, 20 459 tokens, 2/2 documentos completos ·
     `20261001885` con anexos, 24 581 tokens, 7 PDF completos, 6 Word/Excel sin texto · `20261002726` con

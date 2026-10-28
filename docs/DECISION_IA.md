@@ -56,6 +56,7 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
 | Quién genera y guarda la clave; entrega en persona | **[por decidir · Oscar]** | 2 |
 | Modelo (`OPENAI_MODEL`), según calidad y precio de la documentación oficial de OpenAI | **[por decidir · Oscar + Ivania]** | 2 |
 | Qué datos se envían y cuáles nunca: confirmar la lista de `docs/RESUMEN_IA.md` §2 | **[por decidir · Oscar]** | 1 |
+| Datos de personas **dentro del texto de los PDF** (nombres, cargos, firmas, correos y teléfonos de funcionarios que publica la institución; aparecen en 13 de 15 carteles, `RESUMEN_IA.md` §2): ¿se envían porque son públicos, o se filtran los correos y teléfonos antes de enviar? | **Se envían** tal cual: son documentos públicos que la institución publica en SICOP. Decidió Ivania, 2026-10-28; **[por confirmar · Oscar]** | 1–2 |
 | Tamaño máximo del expediente (`IA_MAX_INPUT_TOKENS`; hoy 50 000 tokens) | **[por decidir · Oscar + Ivania]** | 1 |
 | Qué carteles reciben reporte (¿solo Alta y Media? ¿también Baja?) | **[por decidir · Oscar]** | 5 |
 | Criterio de Hermatix para el prompt: productos de interés, montos mínimos, requisitos que descartan una oferta | **[por decidir · Oscar]** | 3 |
