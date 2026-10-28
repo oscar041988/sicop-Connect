@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime, time
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Mapping
 
@@ -61,10 +62,17 @@ DEFAULTS: dict[str, str] = {
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
     "IA_MAX_INPUT_TOKENS": "50000",
+    "OPENAI_API_KEY": "",
+    "OPENAI_MODEL": "",
+    "IA_TIMEOUT_SECONDS": "120",
+    "IA_MAX_OUTPUT_TOKENS": "4000",
+    "IA_PRECIO_ENTRADA_USD": "",
+    "IA_PRECIO_SALIDA_USD": "",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY"})
+AI_MODES = ("none", "openai")
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -303,6 +311,54 @@ class Settings:
     def ia_max_input_tokens(self) -> int:
         """Tamaño máximo del expediente de un cartel, en tokens (IA_MAX_INPUT_TOKENS; 50000 ≈ 200 000 caracteres)."""
         return self._entero("IA_MAX_INPUT_TOKENS", 2000, 400000, "tokens")
+
+    @property
+    def ai_mode(self) -> str:
+        """none (por defecto: la app no llama a ninguna IA) u openai (Reporte con IA, lección 2)."""
+        modo = self.get("AI_MODE").strip().lower() or "none"
+        if modo not in AI_MODES:
+            raise ValueError(f"AI_MODE debe ser {' u '.join(AI_MODES)}")
+        return modo
+
+    @property
+    def openai_api_key(self) -> str:
+        """Clave del proyecto de OpenAI. Nunca se muestra ni se guarda en la base ni en los registros."""
+        return self.get("OPENAI_API_KEY").strip()
+
+    @property
+    def openai_model(self) -> str:
+        """Nombre del modelo (OPENAI_MODEL): lo eligen Oscar e Ivania; nunca va en el código."""
+        return self.get("OPENAI_MODEL").strip()
+
+    @property
+    def ia_timeout_seconds(self) -> int:
+        return self._entero("IA_TIMEOUT_SECONDS", 10, 600, "segundos")
+
+    @property
+    def ia_max_output_tokens(self) -> int:
+        return self._entero("IA_MAX_OUTPUT_TOKENS", 100, 32000, "tokens")
+
+    def _precio(self, key: str) -> Decimal | None:
+        texto = self.get(key).strip()
+        if not texto:
+            return None
+        try:
+            precio = Decimal(texto)
+        except InvalidOperation:
+            raise ValueError(f"{key} debe ser un número con punto decimal (USD por millón de tokens)") from None
+        if not precio.is_finite() or precio < 0:
+            raise ValueError(f"{key} debe ser un número mayor o igual a 0")
+        return precio
+
+    @property
+    def ia_precio_entrada_usd(self) -> Decimal | None:
+        """USD por millón de tokens de entrada (de la página oficial de precios de OpenAI). Vacío: sin costo."""
+        return self._precio("IA_PRECIO_ENTRADA_USD")
+
+    @property
+    def ia_precio_salida_usd(self) -> Decimal | None:
+        """USD por millón de tokens de salida. Vacío: el costo estimado queda sin calcular («sin precio»)."""
+        return self._precio("IA_PRECIO_SALIDA_USD")
 
     @property
     def recordings_keep_days(self) -> int:

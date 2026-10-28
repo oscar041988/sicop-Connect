@@ -16,6 +16,7 @@ from app import __version__
 from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
 from app.database import MigrationError, apply_migrations, check_database, connect
 from app.compras import Compra, detalle_compra
+from app.ai import cliente as ia_cliente
 from app.ai import expediente as ia_expediente
 from app.importers.carteles import import_carteles
 from app.importers import adjudicaciones, zip_pliegos
@@ -179,6 +180,46 @@ def compra(settings: Settings, nro_sicop: str) -> int:
         print(f"No hay un cartel con Número SICOP {nro_sicop}.", file=sys.stderr)
         return 1
     _imprimir_compra(resultado)
+    return 0
+
+
+IA_PRUEBA_INSTRUCCIONES = "Eres una prueba de conexión de SICOP CONNECT. Responde exactamente con la palabra OK."
+IA_PRUEBA_TEXTO = "Responde solo: OK"
+
+
+def ia_probar_cmd(settings: Settings) -> int:
+    """Lección 2 IA: una llamada corta de prueba. Muestra modelo, tokens, duración y costo; nunca la clave."""
+    try:
+        modo = settings.ai_mode
+    except ValueError as exc:
+        print(f"Error: {exc}.", file=sys.stderr)
+        return 1
+    if modo != "openai":
+        print("La IA está apagada (AI_MODE=none): no se llamó a OpenAI. Para la primera prueba real, con Oscar:"
+              " AI_MODE=openai, OPENAI_API_KEY y OPENAI_MODEL en .env.")
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            r = ia_cliente.pedir(conn, settings, IA_PRUEBA_INSTRUCCIONES, IA_PRUEBA_TEXTO, "prueba")
+        except (ia_cliente.IaConfiguracion, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        except ia_cliente.IaFallo as exc:
+            print(f"FALLO: {exc.motivo} · intentos {exc.intentos} · anotado en ia_usage (#{exc.uso_id}).",
+                  file=sys.stderr)
+            return 1
+    costo = (f"{ia_cliente.texto_decimal(r.costo)} USD (estimado)" if r.costo is not None
+             else "sin precio (faltan IA_PRECIO_ENTRADA_USD e IA_PRECIO_SALIDA_USD)")
+    print(f"Prueba de OpenAI: {r.resultado}{f' ({r.motivo})' if r.motivo else ''} · modelo {r.modelo}")
+    print(f"Tokens: entrada {r.tokens_entrada} · salida {r.tokens_salida} · duración {r.duracion_s} s"
+          f" · intentos {r.intentos}")
+    print(f"Costo: {costo}")
+    print(f"Respuesta: {r.texto[:200]}")
+    print(f"Anotado en ia_usage (#{r.uso_id}). Compáralo con el uso que muestra el panel de OpenAI.")
     return 0
 
 
@@ -1054,11 +1095,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
-    ia = sub.add_parser("ia", help="Reporte de cartel con IA (lección 1: armar el expediente, sin llamar a OpenAI)")
+    ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1) y prueba de la conexión (lección 2)")
     ia_sub = ia.add_subparsers(dest="ia_command", required=True)
     ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
     ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
+    ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1129,6 +1171,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return enrich(settings, [n.strip() for n in args.nros], args.documentos)
     if args.command == "ia" and args.ia_command == "expediente":
         return ia_expediente_cmd(settings, args.nro.strip(), args.ver)
+    if args.command == "ia" and args.ia_command == "probar":
+        return ia_probar_cmd(settings)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

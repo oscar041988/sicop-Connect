@@ -83,7 +83,43 @@ El expediente solo consulta `tenders`, `institutions`, `imports`, `v_tender_line
 `tender_details`, `tender_documents` y `tender_document_text`. Una prueba
 (`tests/test_expediente.py`) comprueba que un comentario interno, el nombre y el correo de una encargada no aparecen.
 
-## 3. Pendiente de la lección 1
+## 3. Conexión con OpenAI (lección 2)
+
+`app/ai/cliente.py` es la **única** parte de la app que habla con OpenAI (SDK oficial `openai` 3.40.0).
+Construido y probado el 2026-10-28 **sin clave y sin llamar a OpenAI**: las pruebas usan un OpenAI SIMULADO.
+
+### Variables (`.env.example`)
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `AI_MODE` | `none` | `none`: la app no llama a ninguna IA ni carga el SDK. `openai`: se activa con Oscar |
+| `OPENAI_API_KEY` | vacía | Clave del proyecto de OpenAI de Hermatix. La escribe Oscar en `.env`, en persona. `doctor` solo dice «configurado (oculto)» |
+| `OPENAI_MODEL` | vacía | El modelo que elijan Oscar e Ivania. Nunca va en el código |
+| `IA_TIMEOUT_SECONDS` | 120 | Tiempo máximo de espera de una llamada (10–600) |
+| `IA_MAX_OUTPUT_TOKENS` | 4000 | Tope de la respuesta del modelo (100–32 000) |
+| `IA_PRECIO_ENTRADA_USD` / `IA_PRECIO_SALIDA_USD` | vacías | USD por millón de tokens, copiados de la página oficial de precios de OpenAI para el modelo elegido. Vacías: costo «sin precio» (no se inventan) |
+
+### Reintentos
+
+Como máximo **2 reintentos** (3 intentos en total), con pausas de 2 s y 6 s, y solo ante errores **temporales**:
+límite de uso (429), error del servidor (5xx), tiempo agotado y conexión. **Nunca** ante clave inválida (401),
+permiso (403), petición mala (400), modelo no encontrado (404) ni falta de saldo (429 `insufficient_quota`).
+El SDK no reintenta por su cuenta (`max_retries=0`).
+
+### Qué guarda `ia_usage` (migración 0023)
+
+Una fila por llamada, salga bien o mal: fecha, propósito (`prueba` · `resumen`), cartel, modelo, tokens de entrada
+y salida, costo estimado en USD, duración, intentos y resultado (`ok` · `incompleta` · `fallo`). **No guarda el
+texto enviado, la respuesta ni la clave** (no hay columnas para eso). El motivo de un fallo es solo el tipo de error
+y su código («AuthenticationError 401 · invalid_api_key»), porque el texto del error de OpenAI puede traer parte de
+la clave. No se modifica ni se borra. Además se pide a OpenAI no guardar la respuesta (`store=False`).
+
+### Prueba de la conexión
+
+`python -m app.cli ia probar`: una llamada corta («Responde solo: OK»). Muestra modelo, tokens, duración, costo
+estimado y la respuesta, y la anota en `ia_usage`. Con `AI_MODE=none` dice «IA apagada» y no llama.
+
+## 4. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

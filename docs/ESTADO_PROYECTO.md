@@ -434,6 +434,26 @@
   - **Pendiente · Ivania:** autoevaluación de la lección 1. **Pendiente · Oscar:** aceptar `DECISION_IA.md`
     (cuenta y clave de OpenAI, modelo, presupuesto) para empezar la lección 2. Idea aparte: Excel, Word e imágenes
     no aportan texto (lista de insumos del INS, especificaciones del kiosco de la CCSS).
+- **Reporte de cartel con IA · lección 2, Encargo 2: cliente de OpenAI (2026-10-28, rama `desarrollo`, solo
+  local):** plan aprobado por Ivania. **Construido sin clave y sin llamar a OpenAI** (Oscar no ha entregado
+  cuenta, clave ni modelo; `DECISION_IA.md` sigue en borrador).
+  - Dependencia nueva **openai 3.40.0** (SDK oficial; lo pide la guía). Lock: + jiter 0.18.0, sniffio 1.3.1 y
+    httpx2 / httpcore2 2.13.1 y truststore 0.10.4 (fijadas como en `requirements-dev.txt`; el entorno limpio
+    tomaba httpx2 2.16, con la que falla una prueba). Las seis con ruedas para Linux y Python 3.12. Firmas del SDK
+    leídas del paquete instalado antes de usarlas.
+  - `app/ai/cliente.py` (`pedir`): con `AI_MODE=none` no llama ni carga el SDK; máximo 2 reintentos solo ante
+    errores temporales (429, 5xx, tiempo, conexión), nunca ante 401/403/400/404 ni falta de saldo; `store=False`.
+    Variables `OPENAI_API_KEY` (oculta en `doctor`), `OPENAI_MODEL`, `IA_TIMEOUT_SECONDS` (120),
+    `IA_MAX_OUTPUT_TOKENS` (4000) e `IA_PRECIO_ENTRADA_USD` / `IA_PRECIO_SALIDA_USD` (vacías: costo «sin precio»).
+  - Migración **0023** `ia_usage`: una fila por llamada (tokens, costo en USD, duración, intentos, resultado)
+    **sin** el texto, la respuesta ni la clave; el motivo de un fallo es solo «tipo + código HTTP». No se modifica
+    ni se borra. Comando `python -m app.cli ia probar`.
+  - 19 pruebas nuevas en `tests/test_ia_cliente.py` (OpenAI SIMULADO; clave SIMULADA).
+  - Base local: respaldo `sicop_20261028-151332` (esquema 0022, en la carpeta temporal de la sesión de Claude) →
+    `migrate` (0023), aplicado por Claude. `doctor`: `AI_MODE none`, clave y modelo PENDIENTE; `ia probar` → «IA
+    apagada», sin llamar.
+  - **Pendiente · Oscar (con Ivania):** proyecto de OpenAI con límite de gasto, clave en `.env` escrita por él,
+    modelo y precios; después, la primera llamada real (`ia probar`) y comparar con el panel de OpenAI.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
