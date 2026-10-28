@@ -60,6 +60,7 @@ DEFAULTS: dict[str, str] = {
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
+    "IA_MAX_INPUT_TOKENS": "50000",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -297,6 +298,11 @@ class Settings:
     def enrich_max_per_day(self) -> int:
         """Máximo de carteles consultados por día con enrich run (ENRICH_MAX_PER_DAY; 20)."""
         return self._entero("ENRICH_MAX_PER_DAY", 1, 200, "carteles")
+
+    @property
+    def ia_max_input_tokens(self) -> int:
+        """Tamaño máximo del expediente de un cartel, en tokens (IA_MAX_INPUT_TOKENS; 50000 ≈ 200 000 caracteres)."""
+        return self._entero("IA_MAX_INPUT_TOKENS", 2000, 400000, "tokens")
 
     @property
     def recordings_keep_days(self) -> int:

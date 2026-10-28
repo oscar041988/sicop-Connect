@@ -16,6 +16,7 @@ from app import __version__
 from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
 from app.database import MigrationError, apply_migrations, check_database, connect
 from app.compras import Compra, detalle_compra
+from app.ai import expediente as ia_expediente
 from app.importers.carteles import import_carteles
 from app.importers import adjudicaciones, zip_pliegos
 from app.importers.catalogo import import_catalogo
@@ -178,6 +179,42 @@ def compra(settings: Settings, nro_sicop: str) -> int:
         print(f"No hay un cartel con Número SICOP {nro_sicop}.", file=sys.stderr)
         return 1
     _imprimir_compra(resultado)
+    return 0
+
+
+def ia_expediente_cmd(settings: Settings, nro_sicop: str, ver: bool) -> int:
+    """Lección 1 IA: arma el expediente (solo lee la base) y lo guarda en EXPORTS_DIR; no llama a ningún servicio."""
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        exp = ia_expediente.armar_expediente(conn, nro_sicop, settings.ia_max_input_tokens)
+    if exp is None:
+        print(f"No hay un cartel con Número SICOP {nro_sicop}.", file=sys.stderr)
+        return 1
+    settings.exports_dir.mkdir(parents=True, exist_ok=True)
+    archivo = settings.exports_dir / f"expediente_{nro_sicop}_{datetime.now(HORA_CR):%Y%m%d-%H%M%S}.txt"
+    archivo.write_text(exp.texto, encoding="utf-8")
+    if ver:
+        sys.stdout.reconfigure(errors="replace")   # un PDF puede traer caracteres que la consola no sabe mostrar
+        print(exp.texto)
+    excede = " · EXCEDE el límite (CARTEL, LÍNEAS y FICHA no se recortan)" if exp.tokens_estimados > exp.max_tokens else ""
+    print(f"Expediente del cartel {nro_sicop} · origen de los datos: {exp.origen_datos}")
+    print(f"Tamaño: {len(exp.texto)} caracteres, aprox. {exp.tokens_estimados} tokens (límite {exp.max_tokens}){excede}")
+    if not exp.con_ficha:
+        print("Sin ficha de SICOP: el expediente solo tiene CARTEL y LÍNEAS (falta enrich --nro).")
+    print(f"Documentos con texto incluidos: {len(exp.incluidos)}")
+    for doc in exp.incluidos:
+        print(f"  {doc}")
+    print(f"Omitidos: {len(exp.omitidos)}")
+    for o in exp.omitidos:
+        print(f"  {o.documento}: {o.motivo}")
+    print(f"Huella: {exp.huella[:12]}")
+    print(f"Guardado en: {archivo}")
     return 0
 
 
@@ -1017,6 +1054,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
+    ia = sub.add_parser("ia", help="Reporte de cartel con IA (lección 1: armar el expediente, sin llamar a OpenAI)")
+    ia_sub = ia.add_subparsers(dest="ia_command", required=True)
+    ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
+    ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
+    ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1085,6 +1127,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
             print("Error: indica --nro NUMERO_SICOP (o run, cola, status).", file=sys.stderr)
             return 1
         return enrich(settings, [n.strip() for n in args.nros], args.documentos)
+    if args.command == "ia" and args.ia_command == "expediente":
+        return ia_expediente_cmd(settings, args.nro.strip(), args.ver)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

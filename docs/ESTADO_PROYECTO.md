@@ -403,6 +403,21 @@
     de hoy no se había descargado); 0 avisos.
   - **Pendiente · Ivania:** subir el reporte del 28/10 en «Cargar archivo»; el 29/10 comprobar en
     `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00.
+- **Reporte de cartel con IA · lección 1, el expediente (2026-10-28, rama `desarrollo`, solo local):** guía
+  `docs/Guia_Reporte_Cartel_IA_SICOP.docx` (traída por Luis); **Oscar aprobó la IA** (comunicado por Ivania).
+  Falta dejarlo por escrito (`DECISION_IA.md`) y cambiar «Sin API de IA» en `CLAUDE.md`. Plan aprobado por Ivania.
+  - `app/ai/expediente.py` + `python -m app.cli ia expediente --nro N [--ver]`: CARTEL, LÍNEAS (total por moneda),
+    FICHA SICOP y DOCUMENTOS con marca `[DOC n · archivo · pág. p]` (ZIP: `archivo.zip › interno.pdf`), entre
+    marcadores `<<<INICIO/FIN DOCUMENTO DOC n>>>` (un PDF no puede cerrarlos: `<<<` → `‹‹‹`). Pliego principal
+    primero; tope `IA_MAX_INPUT_TOKENS` (50 000, ≈ 4 caracteres por token); omitidos, escaneados y Word/Excel
+    listados. Huella SHA-256 del texto. Archivo en `EXPORTS_DIR`. **Sin llamar a OpenAI, sin dependencias nuevas.**
+  - Nunca entran revisiones, comentarios, usuarios, seguimientos ni funcionarios. `docs/RESUMEN_IA.md` creado.
+  - 9 pruebas nuevas en `tests/test_expediente.py` (SINTÉTICO/SIMULADO).
+  - Expedientes reales (base local): `20261002824` corto, 20 459 tokens, 2/2 documentos completos ·
+    `20261001885` con anexos, 24 581 tokens, 7 PDF completos, 6 Word/Excel sin texto · `20261002726` con
+    escaneado, 20 959 tokens, «CIMIENTOS KIOSCO.pdf» marcado escaneado y 3 .jpg sin texto. Nada omitido por tamaño.
+  - **Pendiente · Ivania:** leer completos los 3 expedientes (`data\exports\expediente_*.txt`), ajustar orden o
+    límite; revisar con Oscar qué se envía; autoevaluación. Idea aparte: Excel y Word hoy no aportan texto.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
