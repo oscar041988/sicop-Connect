@@ -174,6 +174,21 @@ def test_nunca_contiene_revisiones_comentarios_ni_usuarios(enriquecido):
         assert interno not in texto
 
 
+def test_el_impacto_repetido_dentro_de_un_criterio_no_se_repite(enriquecido):
+    # Como en 20261001885 (INS): el criterio trae el texto del impacto con una frase delante.
+    criterios = {"criterios": ["Según el lineamiento del Grupo SINTÉTICO. Criterio Ambiental (10 puntos):  Se asignarán"
+                               " diez puntos a quien recicle."],
+                 "impactos": ["Se asignarán diez puntos\na quien recicle.", "Impacto social SIMULADO distinto."]}
+    with closing(connect(enriquecido)) as conn, conn:   # las fichas no se modifican: va una versión nueva
+        _sql(conn, "INSERT INTO tender_details (nro_sicop, consultado_en, content_hash, copia_fiel, campos_quitados,"
+                   " criterios) VALUES (?, '2026-10-28T10:00:00-06:00', 'f2', '{}', '[]', ?)",
+             (NRO, json.dumps(criterios)))
+    texto = _expediente(enriquecido).texto
+    assert texto.count("a quien recicle.") == 1
+    assert "Criterio: Según el lineamiento" in texto
+    assert "Impacto: Impacto social SIMULADO distinto." in texto
+
+
 def test_sin_ficha_solo_cartel_y_lineas(db):
     exp = _expediente(db)
     assert not exp.con_ficha and exp.incluidos == [] and exp.omitidos == []

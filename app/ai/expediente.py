@@ -168,8 +168,21 @@ def _ficha(info) -> list[str]:
         partes.append(f"{g.nombre}: " + " · ".join(neutralizar(d) for d in detalle))
     partes += [f"{dato}: {neutralizar(valor)}" for dato, valor in info.contrato]
     partes += [f"Criterio: {neutralizar(c)}" for c in info.criterios]
-    partes += [f"Impacto: {neutralizar(c)}" for c in info.impactos]
+    partes += [f"Impacto: {neutralizar(c)}" for c in _impactos_nuevos(info.criterios, info.impactos)]
     return partes
+
+
+def _impactos_nuevos(criterios: list[str], impactos: list[str]) -> list[str]:
+    """Los impactos que no repiten un criterio ni otro impacto. SICOP suele copiar el texto del impacto dentro del
+    criterio (INS, 20261001885): repetirlo no aporta y se paga en cada llamada al modelo."""
+    vistos = [" ".join(c.split()) for c in criterios]
+    nuevos = []
+    for impacto in impactos:
+        limpio = " ".join(impacto.split())
+        if limpio and not any(limpio in texto for texto in vistos):
+            nuevos.append(impacto)
+            vistos.append(limpio)
+    return nuevos
 
 
 def _estado(doc: Documento) -> str:
