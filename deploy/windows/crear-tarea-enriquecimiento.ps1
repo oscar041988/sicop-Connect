@@ -11,7 +11,7 @@ $accion = New-ScheduledTaskAction -Execute 'powershell.exe' `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$script`"" -WorkingDirectory $proyecto
 $horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 10:00
 $ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
 $usuario = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive
 Register-ScheduledTask -TaskName 'SICOP CONNECT - enriquecimiento' -Action $accion -Trigger $horario `
     -Settings $ajustes -Principal $usuario `

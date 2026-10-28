@@ -27,7 +27,7 @@ $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
     -WorkingDirectory $proyecto
 $horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 8:00
 $ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
 Register-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario" -Action $accion -Trigger $horario -Settings $ajustes `
     -Description "run-cycle --origen real --dry-run, lunes a viernes 8:00. Registro en data\logs."
 ```
@@ -36,6 +36,11 @@ Register-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario" -Action $accion 
   sesión iniciada a las 8:00.
 - Si a las 8:00 estaba apagada, ese día no corre y no se ejecuta tarde (igual que `Persistent=false` en el
   servidor: `-StartWhenAvailable` no se usa a propósito).
+- `-WakeToRun` (2026-10-28): si a las 8:00 está **suspendida**, Windows la despierta para correr la tarea. Solo
+  funciona con los temporizadores de reactivación activados en el plan de energía; en esta computadora, **solo
+  con cargador** (`powercfg /setacvalueindex SCHEME_CURRENT SUB_SLEEP RTCWAKE 1` y
+  `powercfg /setactive SCHEME_CURRENT`). Con batería o apagada, ese día no corre. Se agregó porque el 28/10 estaba
+  suspendida a las 8:00 (despertó a las 8:02) y el ciclo no corrió.
 - `-MultipleInstances IgnoreNew`: si un ciclo sigue corriendo, no arranca otro (el ciclo además tiene su propio
   bloqueo y saldría con código `2`).
 
@@ -157,7 +162,7 @@ $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
     -WorkingDirectory $proyecto
 $horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 10:00
 $ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
 $usuario = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive
 Register-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento" -Action $accion -Trigger $horario `
     -Settings $ajustes -Principal $usuario `
@@ -167,7 +172,8 @@ Register-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento" -Action $acci
 - `-LogonType Interactive` es «Ejecutar solo cuando el usuario haya iniciado sesión»: así se ve la ventana.
 - 3 horas de límite: 20 carteles con sus documentos y las pausas de 8 s pueden tardar más de una hora.
 - Si a las 10:00 la computadora estaba apagada, ese día no corre: la cola espera en la base y el resumen del día
-  siguiente avisa cuántos días hábiles no hubo corrida.
+  siguiente avisa cuántos días hábiles no hubo corrida. Si estaba **suspendida y con cargador**, `-WakeToRun` la
+  despierta (ver «Crearla» de la tarea del ciclo).
 
 ### Probarla y revisarla
 

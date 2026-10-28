@@ -351,8 +351,9 @@
     anotado en `enrich_retiros` (los triggers solo dejan borrar lo que cubre un retiro). `enrich cola` muestra el
     encaje y lo que se borrará. **616 passed** (9 nuevas). En una copia de la base real: mañana 28/10 la cola tiene
     13 (Santa Ana alta + 12 baja) y se borrarían GPS 20261002692 y 20261002859.
-  - **Pendiente · Ivania:** respaldo y `migrate` (0021) **antes de las 10:00 del 28/10**; revisar esa corrida
-    automática; autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
+  - ~~Respaldo y `migrate` (0021) antes de las 10:00 del 28/10; revisar esa corrida automática~~ Hecho: la base
+    ya estaba en 0022 y la corrida salió bien (ver «Primera corrida automática», abajo). **Pendiente · Ivania:**
+    autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
 - **Enriquecimiento · lección 4, entrega 4B (2026-10-27, rama `desarrollo`, solo local):**
   - `app/fichas_panel.py` (solo lee; lo único que escribe es `marcar_revisada`). Detalle del cartel: bloque
     «Información de SICOP» (estado, recepción, apertura, monto, garantías y contrato, criterios; aviso si el cierre de
@@ -385,6 +386,23 @@
     del GPS `20261002859` quedan en Baja; ninguno cambió de Alta o Media.
   - **Pendiente:** siguen los de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4); con Oscar,
     revisar las evidencias del PDF y ajustar el YAML si aparecen más falsos positivos.
+- **Primera corrida automática del enriquecimiento (2026-10-28, tarea de las 10:00, revisada por Claude):**
+  corrida #3 `ok`, 10:00 → 10:40, **13 de 13 consultados**, 0 FALLO, sin CAPTCHA ni bloqueo (12 fichas nuevas,
+  Santa Ana sin cambios; 106 documentos guardados, 0 con fallo). Borrado al cierre: GPS `20261002692` y
+  `20261002859` (12 documentos, ≈ 2,4 MB, en `enrich_retiros`). Reevaluados con los PDF: 15 carteles. Resumen en
+  vista previa (`data\exports\resumen-enriquecimiento-3.txt`). El más lento: `20260802815`, 14 min (29 documentos).
+  - Para vigilar: `data\grabaciones` = **728 MB** tras un solo día de corrida (con `RECORDINGS_KEEP_DAYS=30`
+    podría llegar a ≈ 15 GB; revisar con Oscar); `data\documentos` = 212 MB. El registro trae dos avisos
+    «FontBBox» de pdfminer (no detuvieron nada; no se revisó si ese PDF perdió texto).
+- **Ciclo de las 08:00 del 28/10 no corrió (revisado por Claude):** la computadora estaba suspendida (despertó a
+  las 08:02:04, evento Power-Troubleshooter) y la tarea no corre tarde (`StartWhenAvailable` apagado a propósito).
+  - Arreglo (aprobado por Ivania): `-WakeToRun` en las tareas «ciclo diario» y «enriquecimiento» (en las tareas
+    ya creadas, en `deploy/windows/README.md` y en `crear-tarea-enriquecimiento.ps1`) y temporizadores de
+    reactivación **solo con cargador** (`powercfg … SUB_SLEEP RTCWAKE 1`; con batería siguen apagados).
+  - Ciclo #38 corrido a mano a las 11:03 (dry-run): **FALLO, sin archivo nuevo en `data\incoming`** (el reporte
+    de hoy no se había descargado); 0 avisos.
+  - **Pendiente · Ivania:** subir el reporte del 28/10 en «Cargar archivo»; el 29/10 comprobar en
+    `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
