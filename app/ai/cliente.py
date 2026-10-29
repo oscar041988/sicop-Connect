@@ -5,7 +5,8 @@
 * Tiempo de espera IA_TIMEOUT_SECONDS. El SDK no reintenta solo (max_retries=0): esta capa reintenta como máximo 2
   veces y solo ante errores temporales (límite de uso 429, error del servidor 5xx, tiempo agotado, conexión).
   Nunca ante clave inválida (401), permiso (403), petición mala (400), modelo no encontrado (404) ni falta de
-  saldo (429 con código insufficient_quota): repetir no lo arregla y solo gastaría o demoraría.
+  saldo (429 con código insufficient_quota o credit_balance_exhausted): repetir no lo arregla y solo gastaría o
+  demoraría.
 * Cada llamada deja una fila en ia_usage (migración 0023), salga bien o mal, SIN el texto enviado, la respuesta ni
   la clave. El motivo de un fallo es el tipo de error y su código HTTP: el texto del error puede traer parte de la
   clave, por eso no se guarda ni se muestra.
@@ -81,10 +82,15 @@ def costo_estimado(settings: Settings, entrada: int | None, salida: int | None) 
     return ((Decimal(entrada) * p_entrada + Decimal(salida) * p_salida) / MILLON).quantize(Decimal("0.000001"))
 
 
+# Un 429 con uno de estos códigos es falta de saldo, no un límite de uso pasajero. credit_balance_exhausted es el
+# que devolvió OpenAI en la primera llamada real (29/10, cuenta sin saldo).
+SIN_SALDO = ("insufficient_quota", "credit_balance_exhausted")
+
+
 def _es_temporal(exc: Exception) -> bool:
     import openai
     if isinstance(exc, openai.RateLimitError):
-        return getattr(exc, "code", None) != "insufficient_quota"
+        return getattr(exc, "code", None) not in SIN_SALDO
     return isinstance(exc, (openai.InternalServerError, openai.APIConnectionError))   # incluye APITimeoutError
 
 

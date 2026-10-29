@@ -484,6 +484,15 @@
     invalid_api_key** (`ia_usage` #1, sin costo). En la computadora está bien: sin variable de Windows, una sola
     línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. **Pendiente · Oscar:** revisar en API keys
     si esa clave existe y está activa, o generar una nueva y entregarla en persona.
+  - **Clave nueva (29/10):** Oscar creó otra (termina en `y7sA`, proyecto SICOP, activa) e Ivania la puso en
+    `.env`. `ia probar` → **FALLO 429 credit_balance_exhausted** (`ia_usage` #3, sin costo): OpenAI **acepta** la
+    clave; la cuenta de la API no tiene saldo. La licencia de 20 USD de Oscar es de ChatGPT y no da saldo a la API
+    (tampoco la suscripción de Claude). Recomendado: cargar **10 USD con la recarga automática apagada** (sirve de
+    límite de gasto, regla 4); uso normal estimado 10–30 USD al mes (techo ~42 USD con los topes actuales).
+    **Pendiente · Oscar:** recargar (dijo que lo hará). **Después · Ivania:** `ia probar` y comparar con «Usage».
+  - **Corregido (29/10, Claude):** la app reintentaba ese 429 (intentos 3) porque solo conocía el código
+    `insufficient_quota`; ahora `credit_balance_exhausted` también cuenta como falta de saldo y no se reintenta
+    (`app/ai/cliente.py`, `SIN_SALDO`; prueba nueva en `tests/test_ia_cliente.py`, 20 passed).
 - **Botón «Ver» en los documentos del cartel (pedido de Oscar, 2026-10-29, rama `desarrollo`, solo local):** leer
   sin descargar. Plan aprobado por Ivania: parte 1 + Excel. `app/visor.py` (solo lee; sin migración ni dependencias
   nuevas: `openpyxl` ya estaba).
