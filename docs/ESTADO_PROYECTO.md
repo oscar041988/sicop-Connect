@@ -479,7 +479,7 @@
   - Probado en la base local (solo lectura) con los 167 documentos guardados: 88 PDF, 3 imágenes, 16 Excel (1 con
     más de 500 filas) y 46 de 50 ZIP (242 PDF y 9 Excel adentro) se ven. Los otros 4 ZIP (`20260802815`, partes III,
     IV y VI) tampoco se pudieron leer al guardarlos (`BadZipFile`): muestran «no se puede abrir» y «Descargar».
-  - **Pendiente · Ivania:** probarlo en el panel local; mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
+  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** **Pendiente · Ivania:** mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
     Oscar la quiere.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
