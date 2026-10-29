@@ -561,8 +561,10 @@
     Un correo por encargado; solo lo vigente (reasignado o desactivado: no sale); un cartel cerrado sí sale; no se
     prepara si el administrador se asigna a sí mismo; no entra en el correo diario; se reintenta en «Avisos». El
     expediente dice «Le llegará un correo con el ciclo diario de las 8:00». 11 pruebas nuevas en
-    `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). **Pendiente · Ivania:** respaldo y `migrate` (0024)
-    en la base local; probar asignando un cartel y mirar la vista previa del ciclo de mañana. **Siguiente:** paso 2
+    `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). ~~Respaldo y `migrate` (0024) en la base local~~
+    **hecho por Ivania (29/10):** respaldo `sicop_20261029-115027` (ZIP subido al Drive) → esquema 0024, integridad
+    ok, outbox con sus 48 filas, 5 revisiones y 4 usuarios (comprobado por Claude en solo lectura). 687 passed.
+    **Pendiente · Ivania:** probar asignando un cartel y mirar la vista previa del ciclo de mañana. **Siguiente:** paso 2
     (archivos) o paso 5 (etapas, aprobadas el 26/10: preparando · enviada · ganada · perdida).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
