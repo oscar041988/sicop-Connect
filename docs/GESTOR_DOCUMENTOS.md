@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: paso 1A hecho (2026-10-26, solo local, sin unir a `main`).** Se construye
+> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26) y 1B (2026-10-29) hechos, solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -50,7 +50,7 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 | Paso | Qué agrega | Necesita |
 |---|---|---|
 | 1A | Botón «Dar seguimiento», marca «En seguimiento · <nombre>», página «Seguimiento», expediente con encargado e historial de quién lo tuvo; solo el administrador asigna | **Hecho** (2026-10-26) |
-| 1B | Correo al nuevo encargado, con el ciclo diario | Paso 1A |
+| 1B | Correo al nuevo encargado, con el ciclo diario | **Hecho** (2026-10-29) |
 | 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | Paso 1 |
 | 3 | Notas con autor y fecha | Paso 1 |
 | 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
@@ -71,6 +71,23 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
 - **Pruebas:** `tests/test_seguimiento.py` (10, datos SINTÉTICOS). La de acceso se comprobó con la regla rota a
   propósito: falla.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0015).
+
+### Paso 1B, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Al asignar o cambiar el encargado** queda un aviso «preparado» en la outbox (motivo `asignacion`, migración
+  `0024_aviso_encargado.sql`), en la misma transacción que la asignación. Va al correo del usuario encargado: no
+  tiene que estar en «Destinatarios». Clave de deduplicación: encargado | N.º SICOP | id de la asignación |
+  `asignacion`. Si el administrador se asigna a sí mismo, no se prepara.
+- **Sale con el ciclo diario** (`app/aviso_encargado.py`, paso nuevo de `run-cycle`), en dry-run o real según el
+  ciclo, aunque la fuente haya fallado (no depende de los datos del día). Un correo por encargado con todas sus
+  asignaciones: título, institución, cierre, quién lo asignó, quién lo tenía antes y el enlace al expediente.
+- **Solo lo vigente:** si el cartel cambió de encargado antes del envío o el usuario se desactivó, ese aviso no
+  sale (queda «preparado», no se borra). Un cartel ya cerrado sí sale: el expediente sigue sirviendo.
+- **No entra en el correo diario** de oportunidades. Si falla, aparece en «Avisos» como «Correo al nuevo
+  encargado» y se reintenta mientras la asignación siga vigente.
+- **Pruebas:** `tests/test_aviso_encargado.py` (11, datos SINTÉTICOS y envío SIMULADO), más la 0024 en las listas
+  de migraciones.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0024).
 
 ## Reglas que aplican (de `CLAUDE.md` y del resto del proyecto)
 

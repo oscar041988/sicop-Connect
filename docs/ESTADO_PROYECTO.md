@@ -554,8 +554,16 @@
     integridad ok, huella igual al manifiesto, ZIP creado) → `migrate` (0015); base local con integridad ok.
     Probado por Ivania en el panel local (2026-10-26): funciona.
     ZIP `sicop_20261026-093951.zip` subido por Ivania al Drive de Hermatix (confirmado el 2026-10-26).
-  - **Siguiente:** paso 1B, el correo al nuevo encargado. Etapas del paso 5 **aprobadas** (26/10): preparando ·
-    enviada · ganada · perdida.
+  - ~~Siguiente: paso 1B~~ **Paso 1B hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local;
+    plan aprobado por Ivania):** correo al nuevo encargado (`app/aviso_encargado.py`, detalle en
+    `GESTOR_DOCUMENTOS.md`). Al asignar queda «preparado» en la outbox (migración **0024**: motivo `asignacion`; la
+    tabla se reconstruye con todas sus filas, como en la 0013) y sale con el ciclo diario, aunque la fuente falle.
+    Un correo por encargado; solo lo vigente (reasignado o desactivado: no sale); un cartel cerrado sí sale; no se
+    prepara si el administrador se asigna a sí mismo; no entra en el correo diario; se reintenta en «Avisos». El
+    expediente dice «Le llegará un correo con el ciclo diario de las 8:00». 11 pruebas nuevas en
+    `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). **Pendiente · Ivania:** respaldo y `migrate` (0024)
+    en la base local; probar asignando un cartel y mirar la vista previa del ciclo de mañana. **Siguiente:** paso 2
+    (archivos) o paso 5 (etapas, aprobadas el 26/10: preparando · enviada · ganada · perdida).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

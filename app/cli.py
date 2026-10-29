@@ -26,7 +26,7 @@ from app.importers.instituciones import import_instituciones
 from app.importers.lineas import import_lineas
 from app.matching.evaluar import ENCAJES, ResultadoEvaluacion, evaluar_base
 from app.matching.reglas import REGLAS_PATH, ReglasError, cargar_reglas
-from app import avisos, calidad, ciclo, respaldo, resumen, usuarios
+from app import aviso_encargado, avisos, calidad, ciclo, respaldo, resumen, usuarios
 from app.usuarios import UsuarioInvalido, crear_usuario, validar_contrasena
 
 MAX_RECHAZOS_VISIBLES = 20
@@ -890,6 +890,18 @@ def _imprimir_resumen(r: resumen.Resultado, dry_run: bool) -> int:
     return 0 if {e.estado for e in r.envios.values()} == {"aceptado"} else 1
 
 
+def _imprimir_encargados(r: aviso_encargado.Resultado, dry_run: bool) -> None:
+    carteles = sum(len(v) for v in r.preparados.values())
+    print(f"Correo a encargados (seguimiento): {len(r.preparados)} encargado(s) · {carteles} cartel(es) asignado(s)")
+    for para, asignados in sorted(r.preparados.items()):
+        print(f"  {para}: " + ", ".join(a.nro_sicop for a in asignados))
+    if dry_run:
+        print(f"Vista previa: {r.vista_previa[0].parent}")
+        return
+    for para, envio in sorted(r.envios.items()):
+        print(f"  {para}: {envio.estado.upper()} · {envio.detalle}")
+
+
 ETIQUETAS_ARCHIVO = {"importado": "IMPORTADO", "ya_importado": "YA IMPORTADO", "error": "ERROR",
                      "en_espera": "EN ESPERA", "ignorado": "IGNORADO"}
 
@@ -947,6 +959,8 @@ def run_cycle(settings: Settings, origen: str, dry_run: bool) -> int:
         _imprimir_avisos(c.avisos, dry_run)
     if c.resumen:
         _imprimir_resumen(c.resumen, dry_run)
+    if c.encargados and c.encargados.preparados:
+        _imprimir_encargados(c.encargados, dry_run)
     if c.estado == "ok":
         print(f"Ciclo #{c.id}: OK.")
         return 0

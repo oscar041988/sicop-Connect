@@ -6,6 +6,7 @@
   «En seguimiento · <nombre>», pero no entran.
 * El encargado vigente es la última asignación: cambiarlo agrega una fila y nunca borra la anterior, así queda
   el historial de traspasos. Cada cambio va también a audit_log.
+* Paso 1B: cada asignación deja preparado el correo al nuevo encargado (app/aviso_encargado.py).
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
-from app import historial, usuarios
+from app import aviso_encargado, historial, usuarios
 from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
@@ -116,12 +117,14 @@ def asignar(conn: sqlite3.Connection, nro_sicop: str, encargado_id: int, quien: 
         raise SeguimientoInvalido(f"{encargado.nombre} está desactivado: no se le puede asignar un cartel.")
     if actual.encargado_id == encargado.id:
         return False
-    with transaccion(conn):  # la asignación y su línea del historial, juntas
-        conn.execute(
+    with transaccion(conn):  # la asignación, su aviso por correo (paso 1B) y su línea del historial, juntos
+        cursor = conn.execute(
             "INSERT INTO seguimiento_asignaciones (seguimiento_id, encargado_id, encargado_nombre, asignado_por,"
             " asignado_por_nombre, created_at)"
             " SELECT id, ?, ?, ?, ?, ? FROM seguimientos WHERE nro_sicop = ?",
             (encargado.id, encargado.nombre, quien.user_id, nombre_quien, _momento(ahora), nro_sicop))
+        aviso_encargado.preparar(conn, nro_sicop, cursor.lastrowid, encargado.id, encargado.email, quien.user_id,
+                                 ahora)
         antes = actual.encargado or "sin encargado"
         historial.registrar(conn, quien, "asignar_encargado", f"{nro_sicop}: {antes} → {encargado.nombre}")
     return True

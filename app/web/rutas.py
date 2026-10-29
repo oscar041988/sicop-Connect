@@ -29,8 +29,8 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (avisos, calidad, competencia, destinatarios, exportar, fichas_panel, historial, panel, reintentos,
-                 resumen, seguimiento, usuarios, visor)
+from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, exportar, fichas_panel, historial,
+                 panel, reintentos, resumen, seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -477,7 +477,12 @@ def asignar_encargado(request: Request, nro_sicop: str, encargado: str = Form(""
             cambio = seguimiento.asignar(conn, nro_sicop, int(encargado), _quien(request), _ahora())
         except seguimiento.SeguimientoInvalido as exc:
             return _render_expediente(request, conn, nro_sicop, 400, error=str(exc))
-    request.session["hecho"] = "Encargado asignado." if cambio else "No se cambió nada: ya era el encargado."
+    if not cambio:
+        request.session["hecho"] = "No se cambió nada: ya era el encargado."
+    elif int(encargado) == _quien(request).user_id:
+        request.session["hecho"] = "Encargado asignado."
+    else:
+        request.session["hecho"] = "Encargado asignado. Le llegará un correo con el ciclo diario de las 8:00."
     return RedirectResponse(f"/seguimiento/{nro_sicop}", status_code=303)
 
 
@@ -658,7 +663,8 @@ def cambiar_estado_destinatario(request: Request, destinatario_id: int, activo: 
 def _render_avisos(request: Request, conn, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "avisos.html", {
         "seccion": "avisos", "avisos": reintentos.por_revisar(conn, _ahora()),
-        "motivos_aviso": {**avisos.MOTIVOS, resumen.MOTIVO: "Resumen semanal"},
+        "motivos_aviso": {**avisos.MOTIVOS, resumen.MOTIVO: "Resumen semanal",
+                          aviso_encargado.MOTIVO: "Correo al nuevo encargado"},
         "historial": historial.ultimos(conn, historial.DE_AVISOS), "acciones": historial.ACCIONES,
         "hecho": request.session.pop("hecho", None), **contexto,
     }, status_code=status_code)

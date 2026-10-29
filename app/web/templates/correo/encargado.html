@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ asunto }}</title>
+</head>
+<!-- Correo: estilos en línea (muchos programas de correo ignoran <style>) y sin imágenes ni scripts. -->
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:Arial,Helvetica,sans-serif;color:#1C1C1C;">
+<div style="max-width:640px;margin:0 auto;padding:20px 16px;">
+  <p style="margin:0 0 4px;font-size:13px;color:#5A6B7B;">Hermatix · Seguimiento de carteles</p>
+  <h1 style="margin:0 0 12px;font-size:20px;color:#103050;">{{ asunto }}</h1>
+  <p style="margin:0 0 16px;font-size:14px;">Hola. Un administrador te asignó
+    {{ "este cartel" if asignados | length == 1 else "estos carteles" }} en seguimiento: ahora eres la persona
+    encargada de su expediente en el panel.</p>
+
+  {% for a in asignados %}
+  <div style="background:#FFFFFF;border:1px solid #e0e8f0;border-radius:10px;padding:14px 16px;margin:0 0 12px;">
+    <p style="margin:0 0 6px;font-size:15px;font-weight:bold;">{{ a.titulo | titulo | legible }}</p>
+    <p style="margin:0 0 6px;font-size:14px;">{{ a.institucion | legible }}</p>
+    <p style="margin:0 0 6px;font-size:14px;">Cierre: <strong>{{ a.cierre | fecha }}</strong> ({{ a.regresiva }})
+      · Número SICOP {{ a.nro_sicop }}</p>
+    <p style="margin:0 0 8px;font-size:13px;color:#5A6B7B;">Asignado por {{ a.asignado_por }} el
+      {{ a.asignado_en | fecha }}{% if a.antes %} · antes lo tenía {{ a.antes }}{% else %} · estaba sin encargado{% endif %}</p>
+    <p style="margin:0;"><a href="{{ a.enlace }}" style="color:#0780EE;font-weight:bold;">Abrir el expediente</a></p>
+  </div>
+  {% endfor %}
+
+  <p style="margin:16px 0 0;font-size:12px;color:#5A6B7B;">Recibes este correo porque te asignaron un cartel en
+    seguimiento en el panel de SICOP CONNECT ({{ panel }}/seguimiento). Generado {{ ahora | fecha }}.</p>
+</div>
+</body>
+</html>

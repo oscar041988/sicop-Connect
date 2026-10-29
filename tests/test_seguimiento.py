@@ -185,6 +185,7 @@ def test_solo_un_administrador_asigna(clientes, db):
     assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}"
     pagina = clientes["oscar"].get(f"/seguimiento/{NRO}").text
     assert "Encargado asignado." in pagina and "Ivania · asignado por Oscar" in pagina
+    assert "Le llegará un correo con el ciclo diario de las 8:00." in pagina   # paso 1B
     assert 'name="encargado"' in pagina  # el administrador ve el formulario
 
 

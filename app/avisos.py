@@ -224,9 +224,10 @@ def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str,
     avisos preparados (cambió otra vez antes de enviarse), va una sola vez, con el motivo del más reciente."""
     activos = {d.email.strip().lower() for d in destinatarios.activos(conn)}
     filas: dict[tuple[str, str], tuple[str, str, list[int]]] = {}
+    # El resumen semanal (sin cartel) y el correo al encargado (app/aviso_encargado.py) van aparte.
     for id_, para, nro, motivo, version_reglas in conn.execute(
             "SELECT id, recipient, nro_sicop, motivo, rules_version FROM notification_outbox"
-            " WHERE status = 'preparado' AND nro_sicop IS NOT NULL ORDER BY id").fetchall():  # el resumen va aparte
+            " WHERE status = 'preparado' AND nro_sicop IS NOT NULL AND motivo != 'asignacion' ORDER BY id").fetchall():
         if para in activos and (motivos is None or motivo in motivos):
             ids = filas.get((para, nro), ("", "", []))[2]
             filas[(para, nro)] = (motivo, version_reglas, [*ids, id_])  # el más reciente manda

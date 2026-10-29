@@ -300,7 +300,7 @@ def test_migracion_0010_convierte_los_estados_viejos(tmp_path):
 
     assert apply_migrations(db) == ["0010_solicitudes_estados.sql", "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                     "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                    "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql"]
+                                    "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql", "0024_aviso_encargado.sql"]
     assert apply_migrations(db) == []  # repetible: la segunda vez no cambia nada
     with closing(sqlite3.connect(db)) as conn:
         filas = conn.execute("SELECT estado, esperando_enlace_en, terminada_en, alerta_estado FROM solicitudes_sicop"
