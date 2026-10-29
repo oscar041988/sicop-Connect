@@ -249,6 +249,16 @@
 
 ## Pendientes
 
+- **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
+  - **Despliegue visto por Claude (29/10):** Oscar unió el PR #4 (`main` = `b51b532`) y el servidor responde
+    `/health` con esquema **0023**. No se sabe si activó los temporizadores (9.9) ni si los avisos siguen en
+    dry-run: preguntar a Oscar. Los commits de hoy (`DECISION_IA.md`, «Ver») van en un PR nuevo.
+  - **Pendiente:** mandar fichas, documentos y bitácora del enriquecimiento al servidor (la dirección con token de
+    la decisión del 27/10). Hoy están solo en la base de Windows: el panel del servidor no los muestra.
+  - Idea de mejora: aviso «cartel modificado: revise su decisión» cuando llega una ficha nueva con cambios.
+  - Idea de mejora: comando que revise los documentos guardados contra su hash (como `backup` con la base).
+  - Idea: las citas del reporte con IA pueden abrir el PDF en su página con «Ver» + `#page=N`.
+
 - **Enriquecimiento de carteles · lección 1, explorar la consulta (2026-10-27, rama `desarrollo`, solo local):**
   idea y aprobación de Oscar (`DECISION_OBTENCION.md` §9). Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
   - Exploración manual de Ivania: la búsqueda avanzada encuentra el cartel por Número SICOP; la ficha no tiene URL
@@ -263,7 +273,8 @@
   - Decisiones de Oscar (2026-10-27, por Ivania): campos útiles marcados en `DETALLE_CARTEL.md` §3 (todos menos
     clasificación del objeto y funcionarios); no se guardan datos de funcionarios; se guardan todos los tipos de
     documento. Commit `fa8fc4b`.
-  - **Pendiente:** autoevaluación de la lección 1; tope de documentos por cartel (lección 3).
+  - ~~Autoevaluación de la lección 1~~ **hecha (29/10): 4/4**, ajuste en el CAPTCHA (un reintento a los 15 min, no
+    «modo manual»). ~~Tope de documentos por cartel~~ 100 MB (lección 3).
 - **Enriquecimiento · lección 2, buscar el cartel y guardar su ficha (2026-10-27, rama `desarrollo`, solo local):**
   plan aprobado por Ivania.
   - `python -m app.cli enrich --nro N [--nro N…]` (1 a 3): navegador con ventana (`BROWSER_HEADLESS=false`),
@@ -288,7 +299,7 @@
     que no está en la base.
   - Repetido por Ivania con los 3 números completos: **los 3 «sin cambios»** (fichas #1–#3, sin filas nuevas).
     Comprobación de la lección 2 cumplida (commit `02b289e`).
-  - **Pendiente · Ivania:** autoevaluación de la lección 2.
+  - ~~Autoevaluación de la lección 2~~ **hecha (29/10): 4/4**, ajuste: una ficha nueva es otra fila; nada se actualiza.
 - **Enriquecimiento · lección 3, documentos (2026-10-27, rama `desarrollo`, solo local):**
   - Decisiones (comunicadas por Ivania): tope 100 MB por cartel; de los ZIP se lee el texto de sus PDF; Word y
     Excel solo se guardan.
@@ -322,7 +333,8 @@
     Ana 7/7 (3,4 MB), abarrotes 49/49 (44,3 MB; 5 páginas de la tabla: **paginación confirmada en el SICOP
     real**). En la base: 603 páginas con texto, 147 PDF leídos dentro de 30 ZIP, ningún error de texto;
     `data/documentos` = 50 MB (tope por cartel: 100 MB).
-  - `backup` con `_documentos.zip` hecho por Ivania (27/10). **Pendiente · Ivania:** autoevaluación de la lección 3.
+  - `backup` con `_documentos.zip` hecho por Ivania (27/10). ~~Autoevaluación de la lección 3~~
+    **hecha (29/10): 4/4**, ajuste: un archivo vacío se rechaza; el dañado (texto «error») es un tercer caso.
 - **Enriquecimiento · lección 4, entrega 4A (2026-10-27, rama `desarrollo`, solo local):**
   - Decisiones de Ivania: guardar en la base local (la dirección con token, al desplegar); lección en entregas 4A
     (cola y corrida), 4B (panel), 4C (reglas sobre el texto de los PDF); tarea a las 10:00, lunes a viernes.
@@ -352,8 +364,9 @@
     encaje y lo que se borrará. **616 passed** (9 nuevas). En una copia de la base real: mañana 28/10 la cola tiene
     13 (Santa Ana alta + 12 baja) y se borrarían GPS 20261002692 y 20261002859.
   - ~~Respaldo y `migrate` (0021) antes de las 10:00 del 28/10; revisar esa corrida automática~~ Hecho: la base
-    ya estaba en 0022 y la corrida salió bien (ver «Primera corrida automática», abajo). **Pendiente · Ivania:**
-    autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
+    ya estaba en 0022 y la corrida salió bien (ver «Primera corrida automática», abajo). ~~Autoevaluación de la lección 4~~
+    **hecha (29/10): 2/4 bien y 2 con el principio bien pero distinto a lo construido** (base propia y cola: hoy
+    todo está en la base local por decisión del 27/10; la cola se calcula en cada corrida). Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
 - **Enriquecimiento · lección 4, entrega 4B (2026-10-27, rama `desarrollo`, solo local):**
   - `app/fichas_panel.py` (solo lee; lo único que escribe es `marcar_revisada`). Detalle del cartel: bloque
     «Información de SICOP» (estado, recepción, apertura, monto, garantías y contrato, criterios; aviso si el cierre de
@@ -384,7 +397,7 @@
   - Base local: respaldo `sicop_20261027-151816` (esquema 0022) → `evaluate`: de los 5 carteles con PDF, en 3 el PDF
     confirma su familia con documento y página (body cams, GPS `20261002859`, RFID); abarrotes y el rastreo_activos
     del GPS `20261002859` quedan en Baja; ninguno cambió de Alta o Media.
-  - **Pendiente:** siguen los de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4); con Oscar,
+  - **Pendiente:** ~~siguen los de la 4A~~ (corrida del 28/10 y autoevaluación: hechas); con Oscar,
     revisar las evidencias del PDF y ajustar el YAML si aparecen más falsos positivos.
 - **Primera corrida automática del enriquecimiento (2026-10-28, tarea de las 10:00, revisada por Claude):**
   corrida #3 `ok`, 10:00 → 10:40, **13 de 13 consultados**, 0 FALLO, sin CAPTCHA ni bloqueo (12 fichas nuevas,
@@ -431,8 +444,9 @@
   - Sin cambios en el orden de los documentos ni en el límite: los 3 caben completos.
   - Comprobación de la lección 1: ☑ expedientes legibles con marcas de origen · ☑ límite y omitidos (probado en
     pytest; en los reales no hizo falta recortar) · ☑ sin datos internos de Hermatix · ☑ `RESUMEN_IA.md`.
-  - **Pendiente · Ivania:** autoevaluación de la lección 1. **Pendiente · Oscar:** aceptar `DECISION_IA.md`
-    (cuenta y clave de OpenAI, modelo, presupuesto) para empezar la lección 2. Idea aparte: Excel, Word e imágenes
+  - ~~Autoevaluación de la lección 1~~ **hecha (29/10): 2/2** (la guía no trae preguntas; dos de Claude: por qué los
+    indicadores los calcula la app y para qué sirve la marca de origen). ~~Pendiente · Oscar: aceptar
+    `DECISION_IA.md`~~ aceptado el 29/10. Idea aparte: Excel, Word e imágenes
     no aportan texto (lista de insumos del INS, especificaciones del kiosco de la CCSS).
 - **Reporte de cartel con IA · lección 2, Encargo 2: cliente de OpenAI (2026-10-28, rama `desarrollo`, solo
   local):** plan aprobado por Ivania. **Construido sin clave y sin llamar a OpenAI** (Oscar no ha entregado
