@@ -489,7 +489,10 @@
     clave; la cuenta de la API no tiene saldo. La licencia de 20 USD de Oscar es de ChatGPT y no da saldo a la API
     (tampoco la suscripción de Claude). Recomendado: cargar **10 USD con la recarga automática apagada** (sirve de
     límite de gasto, regla 4); uso normal estimado 10–30 USD al mes (techo ~42 USD con los topes actuales).
-    **Pendiente · Oscar:** recargar (dijo que lo hará). **Después · Ivania:** `ia probar` y comparar con «Usage».
+    ~~Recargar~~ **Oscar recargó (29/10).** **Primera llamada real OK (29/10, Ivania):** `gpt-6.1-terra`, entrada 34
+    · salida 5 tokens, 2,76 s, intentos 1, costo estimado 0,000059 USD (cuadra con 1.00 / 5.00 USD por millón),
+    `ia_usage` #4. PR #5 abierto por Ivania (1B, paso 5 y esta corrección), espera a Oscar. **Pendiente · Oscar:**
+    confirmar en «Usage» la llamada (puede tardar en aparecer) y el saldo cargado. **Siguiente:** lección 3 de la guía.
   - **Corregido (29/10, Claude):** la app reintentaba ese 429 (intentos 3) porque solo conocía el código
     `insufficient_quota`; ahora `credit_balance_exhausted` también cuenta como falta de saldo y no se reintenta
     (`app/ai/cliente.py`, `SIN_SALDO`; prueba nueva en `tests/test_ia_cliente.py`, 20 passed).
