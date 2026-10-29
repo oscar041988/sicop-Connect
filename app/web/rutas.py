@@ -15,8 +15,8 @@ import tempfile
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
-from urllib.parse import urlencode
+from pathlib import Path, PurePosixPath
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
@@ -30,7 +30,7 @@ from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (avisos, calidad, competencia, destinatarios, exportar, fichas_panel, historial, panel, reintentos,
-                 resumen, seguimiento, usuarios)
+                 resumen, seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -710,12 +710,21 @@ def _no_encontrado(request: Request, mensaje: str) -> Response:
     return PLANTILLAS.TemplateResponse(request, "error.html", {"mensaje": mensaje}, status_code=404)
 
 
-def _archivo(ruta: Path, nombre: str | None = None, tipo: str = "application/octet-stream") -> FileResponse:
-    """Un archivo del disco. Con nombre: como adjunto (se descarga; el navegador no lo abre dentro del panel)."""
+def _archivo(ruta: Path, nombre: str | None = None, tipo: str = "application/octet-stream",
+             en_linea: bool = False) -> FileResponse:
+    """Un archivo del disco. Con nombre: como adjunto (se descarga; el navegador no lo abre dentro del panel), salvo
+    en_linea=True («Ver»: el navegador lo muestra y, si se guarda, conserva el nombre)."""
     respuesta = FileResponse(ruta, media_type=tipo, filename=nombre,
-                             content_disposition_type="attachment" if nombre else "inline")
+                             content_disposition_type="attachment" if nombre and not en_linea else "inline")
     respuesta.headers["X-Content-Type-Options"] = "nosniff"
     return respuesta
+
+
+def _en_linea(datos: bytes, nombre: str, tipo: str) -> Response:
+    """Un archivo de dentro de un ZIP, para verlo en el navegador (nunca se escribe a disco)."""
+    return Response(datos, media_type=tipo, headers={
+        "Content-Disposition": f"inline; filename*=utf-8''{quote(PurePosixPath(nombre).name)}",
+        "X-Content-Type-Options": "nosniff"})
 
 
 @router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}")
@@ -730,6 +739,84 @@ def descargar_documento(request: Request, nro_sicop: str, doc_id: int) -> Respon
     log.info("Descarga de documento %s del cartel %s · usuario %s", doc_id, nro_sicop,
              (seguridad.usuario_actual(request) or {}).get("id"))
     return _archivo(*hallado)
+
+
+def _documento_para_ver(request: Request, nro_sicop: str, doc_id: int):
+    """(ruta, nombre, settings) del documento guardado, o la página de error."""
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        hallado = fichas_panel.documento_guardado(conn, settings.documents_dir, nro_sicop, doc_id)
+    if hallado is None:
+        return _no_encontrado(request, "Ese documento no está guardado (o se borró al cierre del cartel).")
+    log.info("Ver documento %s del cartel %s · usuario %s", doc_id, nro_sicop,
+             (seguridad.usuario_actual(request) or {}).get("id"))
+    return (*hallado, settings)
+
+
+def _no_se_puede_ver(request: Request, nro_sicop: str, doc_id: int, motivo: str) -> Response:
+    return PLANTILLAS.TemplateResponse(request, "error.html", {
+        "mensaje": f"No se puede ver: {motivo}.",
+        "volver": (f"/oportunidades/{nro_sicop}/documentos/{doc_id}", "Descargar el documento")}, status_code=422)
+
+
+def _ver_excel(request: Request, nro_sicop: str, doc_id: int, nombre: str, datos: bytes) -> Response:
+    try:
+        hojas = visor.hojas_excel(datos)
+    except visor.NoSePuedeLeer as exc:
+        return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
+    return PLANTILLAS.TemplateResponse(request, "visor_excel.html", {
+        "nro": nro_sicop, "doc_id": doc_id, "nombre": nombre, "hojas": hojas, "MAX_FILAS": visor.MAX_FILAS,
+        "MAX_COLUMNAS": visor.MAX_COLUMNAS})
+
+
+@router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}/ver")
+def ver_documento(request: Request, nro_sicop: str, doc_id: int) -> Response:
+    """«Ver» (pedido de Oscar, 29/10): PDF e imágenes en línea, ZIP como lista y Excel como tabla."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_para_ver(request, nro_sicop, doc_id)
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, nombre, settings = hallado
+    clase = visor.vista(nombre) or visor.vista(ruta.name)
+    if clase in ("pdf", "imagen"):
+        return _archivo(ruta, nombre, visor.tipo(nombre) or visor.tipo(ruta.name), en_linea=True)
+    if clase == "excel":
+        return _ver_excel(request, nro_sicop, doc_id, nombre, ruta.read_bytes())
+    if clase == "zip":
+        try:
+            entradas = visor.entradas_zip(ruta)
+        except visor.NoSePuedeLeer as exc:
+            return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
+        return PLANTILLAS.TemplateResponse(request, "visor_zip.html", {
+            "nro": nro_sicop, "doc_id": doc_id, "nombre": nombre, "entradas": entradas})
+    return _no_se_puede_ver(request, nro_sicop, doc_id, "este tipo de archivo solo se puede descargar")
+
+
+@router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}/ver/{indice}")
+def ver_dentro_del_zip(request: Request, nro_sicop: str, doc_id: int, indice: int) -> Response:
+    """Un PDF, imagen o Excel de dentro de un ZIP guardado."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_para_ver(request, nro_sicop, doc_id)
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, nombre, settings = hallado
+    if (visor.vista(nombre) or visor.vista(ruta.name)) != "zip":
+        return _no_encontrado(request, "Ese documento no es un ZIP.")
+    try:
+        leido = visor.leer_entrada(ruta, indice, settings.document_max_mb * 1024 * 1024)
+    except visor.NoSePuedeLeer as exc:
+        return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
+    if leido is None:
+        return _no_encontrado(request, "Ese archivo no está dentro del ZIP.")
+    interno, datos = leido
+    clase = visor.vista(interno)
+    if clase in ("pdf", "imagen"):
+        return _en_linea(datos, interno, visor.tipo(interno))
+    if clase == "excel":
+        return _ver_excel(request, nro_sicop, doc_id, f"{nombre} › {interno}", datos)
+    return _no_se_puede_ver(request, nro_sicop, doc_id, "este tipo de archivo solo se puede descargar (con el ZIP)")
 
 
 @router.get("/bitacora", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])

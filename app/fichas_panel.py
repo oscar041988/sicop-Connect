@@ -16,6 +16,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from app import visor
 from app.database import transaccion
 from app.historial import Quien
 
@@ -89,6 +90,7 @@ class Documento:
     texto: str | None
     paginas: int | None
     motivo: str | None
+    vista: str | None = None   # «Ver» en el panel: 'pdf', 'imagen', 'zip', 'excel' o None (app/visor.py)
 
 
 def _json(texto: str | None, vacio):
@@ -193,7 +195,7 @@ def documentos(conn: sqlite3.Connection, nro_sicop: str) -> list[Documento]:
     for *datos, server in filas:
         if server not in vistos:
             vistos.add(server)
-            lista.append(Documento(*datos))
+            lista.append(Documento(*datos, vista=visor.vista(datos[3] or server)))
     return sorted(lista, key=lambda d: d.id)
 
 

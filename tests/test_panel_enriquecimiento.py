@@ -4,8 +4,10 @@ Base y carpetas en tmp_path: fichas SIMULADAS (formato de tender_details) sobre 
 test_panel.py; documentos y grabaciones SIMULADOS. Nunca toca data/.
 """
 
+import io
 import json
 import sqlite3
+import zipfile
 from contextlib import closing
 from datetime import date
 
@@ -134,6 +136,141 @@ def test_la_descarga_solo_sirve_lo_guardado_de_ese_cartel_dentro_de_su_carpeta(e
         assert r.status_code == 404 and "fuera de DOCUMENTS_DIR" not in r.text
     (tmp / "documentos" / NRO / "pliego.pdf").unlink()  # p. ej. borrado al cierre
     assert cliente.get(f"/oportunidades/{NRO}/documentos/{doc}").status_code == 404
+
+
+# --- «Ver» sin descargar (pedido de Oscar, 2026-10-29) ------------------------------------------------------
+
+def _excel(filas, hoja="Insumos"):
+    """Un .xlsx SIMULADO en memoria."""
+    from openpyxl import Workbook
+    libro = Workbook()
+    libro.active.title = hoja
+    for fila in filas:
+        libro.active.append(fila)
+    salida = io.BytesIO()
+    libro.save(salida)
+    return salida.getvalue()
+
+
+def _zip(entradas):
+    salida = io.BytesIO()
+    with zipfile.ZipFile(salida, "w", zipfile.ZIP_DEFLATED) as zf:
+        for nombre, datos in entradas:
+            zf.writestr(nombre, datos)
+    return salida.getvalue()
+
+
+def test_ver_un_pdf_lo_abre_en_el_navegador_y_descargar_sigue_igual(entorno):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    pdf = _documento(db, tmp / "documentos", detalle)
+    _documento(db, tmp / "documentos", detalle, nombre="carta.docx", original="Carta.docx", contenido=b"PK SIMULADO")
+    cliente = _cliente("encargado@ejemplo.test")
+
+    html = cliente.get(f"/oportunidades/{NRO}").text
+    assert html.count('">Ver</a>') == 1   # el PDF sí; el Word solo «Descargar»
+    assert f'href="/oportunidades/{NRO}/documentos/{pdf}/ver" target="_blank" rel="noopener">Ver</a>' in html
+    assert html.count(">Descargar</a>") == 2
+
+    r = cliente.get(f"/oportunidades/{NRO}/documentos/{pdf}/ver")
+    assert r.status_code == 200 and r.content == b"%PDF SIMULADO"
+    assert r.headers["content-type"] == "application/pdf"
+    assert r.headers["content-disposition"].startswith("inline;")
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert cliente.get(f"/oportunidades/{NRO}/documentos/{pdf}").headers["content-disposition"].startswith("attachment;")
+
+
+def test_ver_una_imagen_y_un_word(entorno):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    foto = _documento(db, tmp / "documentos", detalle, nombre="foto.jpg", original="Kiosco.JPG", contenido=b"\xff\xd8JPG")
+    word = _documento(db, tmp / "documentos", detalle, nombre="carta.docx", original="Carta.docx", contenido=b"PK")
+    cliente = _cliente("encargado@ejemplo.test")
+
+    r = cliente.get(f"/oportunidades/{NRO}/documentos/{foto}/ver")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    assert r.headers["content-disposition"].startswith("inline;")
+    r = cliente.get(f"/oportunidades/{NRO}/documentos/{word}/ver")
+    assert r.status_code == 422 and "solo se puede descargar" in r.text
+    assert f'href="/oportunidades/{NRO}/documentos/{word}"' in r.text   # el botón para descargarlo
+
+
+def test_ver_un_excel_muestra_sus_hojas_como_texto(entorno, monkeypatch):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    datos = _excel([["Código", "Descripción", "Fecha"], ["000123", "Guantes <script>alert(1)</script>", date(2026, 10, 30)],
+                    ["000124", "Mascarillas", None], [None, None, None]])
+    doc = _documento(db, tmp / "documentos", detalle, nombre="insumos.xlsx", original="Lista de insumos.xlsx",
+                     contenido=datos)
+    cliente = _cliente("encargado@ejemplo.test")
+
+    html = cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver").text
+    assert "Lista de insumos.xlsx" in html and "Hoja «Insumos»" in html
+    assert "<td>000123</td>" in html and "<td>30/10/2026</td>" in html   # el código con sus ceros, la fecha legible
+    assert "&lt;script&gt;" in html and "<script>alert" not in html
+    assert html.count("<tr>") == 3 and "más de" not in html   # sin la fila vacía del final
+
+    monkeypatch.setattr("app.visor.MAX_FILAS", 2)
+    assert "La hoja tiene más de 2 filas" in cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver").text
+
+
+def test_un_excel_danado_no_rompe_la_pagina(entorno):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    doc = _documento(db, tmp / "documentos", detalle, nombre="malo.xlsx", original="Malo.xlsx", contenido=b"no es Excel")
+    r = _cliente("encargado@ejemplo.test").get(f"/oportunidades/{NRO}/documentos/{doc}/ver")
+    assert r.status_code == 422 and "No se puede ver" in r.text and "Descargar el documento" in r.text
+
+
+def test_ver_un_zip_lista_sus_archivos_y_abre_los_de_adentro(entorno):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    datos = _zip([("pliego/condiciones.pdf", b"%PDF INTERNO"), ("carta.docx", b"PK"),
+                  ("precios.xlsx", _excel([["Línea", "Precio"], ["1", "1000"]], hoja="Precios")),
+                  ("otro.zip", b"PK"), ("<b>raro</b>.pdf", b"%PDF")])
+    doc = _documento(db, tmp / "documentos", detalle, nombre="anexos.zip", original="Anexos.zip", contenido=datos)
+    cliente = _cliente("encargado@ejemplo.test")
+
+    html = cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver").text
+    assert "ZIP con 5 archivos" in html and "pliego/condiciones.pdf" in html and "&lt;b&gt;raro&lt;/b&gt;.pdf" in html
+    for i in (0, 2, 4):
+        assert f'/documentos/{doc}/ver/{i}"' in html
+    assert f'/documentos/{doc}/ver/1"' not in html and f'/documentos/{doc}/ver/3"' not in html   # Word y ZIP: no
+
+    r = cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver/0")
+    assert r.status_code == 200 and r.content == b"%PDF INTERNO" and r.headers["content-type"] == "application/pdf"
+    assert r.headers["content-disposition"] == "inline; filename*=utf-8''condiciones.pdf"
+    html = cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver/2").text
+    assert "Anexos.zip › precios.xlsx" in html and "Hoja «Precios»" in html and "<td>1000</td>" in html
+    assert cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver/1").status_code == 422
+    assert cliente.get(f"/oportunidades/{NRO}/documentos/{doc}/ver/99").status_code == 404
+    assert not any(p.name == "condiciones.pdf" for p in tmp.rglob("*"))   # nada se descomprime a disco
+
+
+def test_un_archivo_del_zip_mas_grande_que_el_maximo_no_se_lee(entorno, monkeypatch):
+    db, tmp = entorno
+    monkeypatch.setenv("DOCUMENT_MAX_MB", "1")
+    detalle = _ficha(db)
+    datos = _zip([("enorme.pdf", b"0" * (2 * 1024 * 1024))])   # 2 MB descomprimido, pocos KB comprimido
+    doc = _documento(db, tmp / "documentos", detalle, nombre="bomba.zip", original="Bomba.zip", contenido=datos)
+    r = _cliente("encargado@ejemplo.test").get(f"/oportunidades/{NRO}/documentos/{doc}/ver/0")
+    assert r.status_code == 422 and "descargue el ZIP" in r.text
+
+
+def test_ver_solo_sirve_lo_guardado_de_ese_cartel_dentro_de_su_carpeta(entorno):
+    db, tmp = entorno
+    detalle = _ficha(db)
+    pdf = _documento(db, tmp / "documentos", detalle)
+    fallo = _documento(db, tmp / "documentos", detalle, nombre="anexo.pdf", estado="fallo")
+    (tmp / "secreto.txt").write_text("fuera de DOCUMENTS_DIR")
+    afuera = _documento(db, tmp / "documentos", detalle, nombre="otro.pdf", ruta="../secreto.txt")
+    cliente = _cliente("encargado@ejemplo.test")
+
+    for url in (f"/oportunidades/{OTRO}/documentos/{pdf}/ver", f"/oportunidades/{NRO}/documentos/{fallo}/ver",
+                f"/oportunidades/{NRO}/documentos/{afuera}/ver", f"/oportunidades/{NRO}/documentos/9999/ver",
+                f"/oportunidades/{NRO}/documentos/{pdf}/ver/0"):   # un PDF no tiene archivos adentro
+        r = cliente.get(url)
+        assert r.status_code == 404 and "fuera de DOCUMENTS_DIR" not in r.text
 
 
 # --- Bitácora de consultas y grabaciones (solo administradores) --------------------------------------------

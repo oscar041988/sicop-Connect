@@ -249,6 +249,16 @@
 
 ## Pendientes
 
+- **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
+  - **Despliegue visto por Claude (29/10):** Oscar unió el PR #4 (`main` = `b51b532`) y el servidor responde
+    `/health` con esquema **0023**. No se sabe si activó los temporizadores (9.9) ni si los avisos siguen en
+    dry-run: preguntar a Oscar. Los commits de hoy (`DECISION_IA.md`, «Ver») van en un PR nuevo.
+  - **Pendiente:** mandar fichas, documentos y bitácora del enriquecimiento al servidor (la dirección con token de
+    la decisión del 27/10). Hoy están solo en la base de Windows: el panel del servidor no los muestra.
+  - Idea de mejora: aviso «cartel modificado: revise su decisión» cuando llega una ficha nueva con cambios.
+  - Idea de mejora: comando que revise los documentos guardados contra su hash (como `backup` con la base).
+  - Idea: las citas del reporte con IA pueden abrir el PDF en su página con «Ver» + `#page=N`.
+
 - **Enriquecimiento de carteles · lección 1, explorar la consulta (2026-10-27, rama `desarrollo`, solo local):**
   idea y aprobación de Oscar (`DECISION_OBTENCION.md` §9). Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
   - Exploración manual de Ivania: la búsqueda avanzada encuentra el cartel por Número SICOP; la ficha no tiene URL
@@ -263,7 +273,8 @@
   - Decisiones de Oscar (2026-10-27, por Ivania): campos útiles marcados en `DETALLE_CARTEL.md` §3 (todos menos
     clasificación del objeto y funcionarios); no se guardan datos de funcionarios; se guardan todos los tipos de
     documento. Commit `fa8fc4b`.
-  - **Pendiente:** autoevaluación de la lección 1; tope de documentos por cartel (lección 3).
+  - ~~Autoevaluación de la lección 1~~ **hecha (29/10): 4/4**, ajuste en el CAPTCHA (un reintento a los 15 min, no
+    «modo manual»). ~~Tope de documentos por cartel~~ 100 MB (lección 3).
 - **Enriquecimiento · lección 2, buscar el cartel y guardar su ficha (2026-10-27, rama `desarrollo`, solo local):**
   plan aprobado por Ivania.
   - `python -m app.cli enrich --nro N [--nro N…]` (1 a 3): navegador con ventana (`BROWSER_HEADLESS=false`),
@@ -288,7 +299,7 @@
     que no está en la base.
   - Repetido por Ivania con los 3 números completos: **los 3 «sin cambios»** (fichas #1–#3, sin filas nuevas).
     Comprobación de la lección 2 cumplida (commit `02b289e`).
-  - **Pendiente · Ivania:** autoevaluación de la lección 2.
+  - ~~Autoevaluación de la lección 2~~ **hecha (29/10): 4/4**, ajuste: una ficha nueva es otra fila; nada se actualiza.
 - **Enriquecimiento · lección 3, documentos (2026-10-27, rama `desarrollo`, solo local):**
   - Decisiones (comunicadas por Ivania): tope 100 MB por cartel; de los ZIP se lee el texto de sus PDF; Word y
     Excel solo se guardan.
@@ -322,7 +333,8 @@
     Ana 7/7 (3,4 MB), abarrotes 49/49 (44,3 MB; 5 páginas de la tabla: **paginación confirmada en el SICOP
     real**). En la base: 603 páginas con texto, 147 PDF leídos dentro de 30 ZIP, ningún error de texto;
     `data/documentos` = 50 MB (tope por cartel: 100 MB).
-  - `backup` con `_documentos.zip` hecho por Ivania (27/10). **Pendiente · Ivania:** autoevaluación de la lección 3.
+  - `backup` con `_documentos.zip` hecho por Ivania (27/10). ~~Autoevaluación de la lección 3~~
+    **hecha (29/10): 4/4**, ajuste: un archivo vacío se rechaza; el dañado (texto «error») es un tercer caso.
 - **Enriquecimiento · lección 4, entrega 4A (2026-10-27, rama `desarrollo`, solo local):**
   - Decisiones de Ivania: guardar en la base local (la dirección con token, al desplegar); lección en entregas 4A
     (cola y corrida), 4B (panel), 4C (reglas sobre el texto de los PDF); tarea a las 10:00, lunes a viernes.
@@ -352,8 +364,9 @@
     encaje y lo que se borrará. **616 passed** (9 nuevas). En una copia de la base real: mañana 28/10 la cola tiene
     13 (Santa Ana alta + 12 baja) y se borrarían GPS 20261002692 y 20261002859.
   - ~~Respaldo y `migrate` (0021) antes de las 10:00 del 28/10; revisar esa corrida automática~~ Hecho: la base
-    ya estaba en 0022 y la corrida salió bien (ver «Primera corrida automática», abajo). **Pendiente · Ivania:**
-    autoevaluación de la lección 4. Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
+    ya estaba en 0022 y la corrida salió bien (ver «Primera corrida automática», abajo). ~~Autoevaluación de la lección 4~~
+    **hecha (29/10): 2/4 bien y 2 con el principio bien pero distinto a lo construido** (base propia y cola: hoy
+    todo está en la base local por decisión del 27/10; la cola se calcula en cada corrida). Falta que una persona relea las Condiciones de SICOP (§9, punto 6).
 - **Enriquecimiento · lección 4, entrega 4B (2026-10-27, rama `desarrollo`, solo local):**
   - `app/fichas_panel.py` (solo lee; lo único que escribe es `marcar_revisada`). Detalle del cartel: bloque
     «Información de SICOP» (estado, recepción, apertura, monto, garantías y contrato, criterios; aviso si el cierre de
@@ -384,7 +397,7 @@
   - Base local: respaldo `sicop_20261027-151816` (esquema 0022) → `evaluate`: de los 5 carteles con PDF, en 3 el PDF
     confirma su familia con documento y página (body cams, GPS `20261002859`, RFID); abarrotes y el rastreo_activos
     del GPS `20261002859` quedan en Baja; ninguno cambió de Alta o Media.
-  - **Pendiente:** siguen los de la 4A (corrida de las 10:00 del 28/10, autoevaluación de la lección 4); con Oscar,
+  - **Pendiente:** ~~siguen los de la 4A~~ (corrida del 28/10 y autoevaluación: hechas); con Oscar,
     revisar las evidencias del PDF y ajustar el YAML si aparecen más falsos positivos.
 - **Primera corrida automática del enriquecimiento (2026-10-28, tarea de las 10:00, revisada por Claude):**
   corrida #3 `ok`, 10:00 → 10:40, **13 de 13 consultados**, 0 FALLO, sin CAPTCHA ni bloqueo (12 fichas nuevas,
@@ -431,8 +444,9 @@
   - Sin cambios en el orden de los documentos ni en el límite: los 3 caben completos.
   - Comprobación de la lección 1: ☑ expedientes legibles con marcas de origen · ☑ límite y omitidos (probado en
     pytest; en los reales no hizo falta recortar) · ☑ sin datos internos de Hermatix · ☑ `RESUMEN_IA.md`.
-  - **Pendiente · Ivania:** autoevaluación de la lección 1. **Pendiente · Oscar:** aceptar `DECISION_IA.md`
-    (cuenta y clave de OpenAI, modelo, presupuesto) para empezar la lección 2. Idea aparte: Excel, Word e imágenes
+  - ~~Autoevaluación de la lección 1~~ **hecha (29/10): 2/2** (la guía no trae preguntas; dos de Claude: por qué los
+    indicadores los calcula la app y para qué sirve la marca de origen). ~~Pendiente · Oscar: aceptar
+    `DECISION_IA.md`~~ aceptado el 29/10. Idea aparte: Excel, Word e imágenes
     no aportan texto (lista de insumos del INS, especificaciones del kiosco de la CCSS).
 - **Reporte de cartel con IA · lección 2, Encargo 2: cliente de OpenAI (2026-10-28, rama `desarrollo`, solo
   local):** plan aprobado por Ivania. **Construido sin clave y sin llamar a OpenAI** (Oscar no ha entregado
@@ -454,6 +468,33 @@
     apagada», sin llamar.
   - **Pendiente · Oscar (con Ivania):** proyecto de OpenAI con límite de gasto, clave en `.env` escrita por él,
     modelo y precios; después, la primera llamada real (`ia probar`) y comparar con el panel de OpenAI.
+  - **2026-10-29 (Oscar, por Ivania):** acepta `DECISION_IA.md`, revisó la privacidad de la cuenta y creó el
+    proyecto; la clave se la pasó a Ivania. **Sin límite de gasto y clave con todos los permisos**, a propósito (choca con la regla 4;
+    riesgo anotado). Oscar no fijó modelo: lo elige Ivania.
+    Pedido de Oscar: reporte de máximo 2 páginas y entendible para alguien nuevo (regla 9). `CLAUDE.md` con la
+    excepción. Precios leídos de la página oficial de OpenAI (29/10). **Falta:** el modelo; Ivania escribe `.env`,
+    `doctor` e `ia probar`.
+  - **Primera llamada real (29/10, Ivania):** `.env` con `AI_MODE=openai`, `gpt-6.1-terra` (elegido para la prueba;
+    el definitivo en la lección 3) y precios 1.00 / 5.00 USD por millón; `doctor` bien. `ia probar` → **FALLO 401
+    invalid_api_key** (`ia_usage` #1, sin costo). En la computadora está bien: sin variable de Windows, una sola
+    línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. **Pendiente · Oscar:** revisar en API keys
+    si esa clave existe y está activa, o generar una nueva y entregarla en persona.
+- **Botón «Ver» en los documentos del cartel (pedido de Oscar, 2026-10-29, rama `desarrollo`, solo local):** leer
+  sin descargar. Plan aprobado por Ivania: parte 1 + Excel. `app/visor.py` (solo lee; sin migración ni dependencias
+  nuevas: `openpyxl` ya estaba).
+  - PDF e imágenes (JPG, PNG) se abren en una pestaña nueva, «en línea» y con su tipo fijo (SVG fuera: puede traer
+    código). ZIP: página con sus archivos; cada PDF, imagen o Excel de adentro con su «Ver», leído en memoria (nunca
+    a disco; no se lee más que `DOCUMENT_MAX_MB` aunque el ZIP diga otra cosa). Excel (.xlsx, .xlsm): cada hoja como
+    tabla de solo lectura, valores como texto (los códigos conservan sus ceros), hasta 500 filas y 50 columnas;
+    macros nunca se ejecutan. Word y lo demás: solo «Descargar», que sigue igual.
+  - Rutas `/oportunidades/{nro}/documentos/{id}/ver` y `…/ver/{n}` (con sesión, como «Descargar»).
+  - **676 passed** (7 nuevas en `tests/test_panel_enriquecimiento.py`, documentos SIMULADOS; las 2 rutas nuevas en
+    `test_anonimo_es_redirigido_al_login`).
+  - Probado en la base local (solo lectura) con los 167 documentos guardados: 88 PDF, 3 imágenes, 16 Excel (1 con
+    más de 500 filas) y 46 de 50 ZIP (242 PDF y 9 Excel adentro) se ven. Los otros 4 ZIP (`20260802815`, partes III,
+    IV y VI) tampoco se pudieron leer al guardarlos (`BadZipFile`): muestran «no se puede abrir» y «Descargar».
+  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** **Pendiente · Ivania:** mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
+    Oscar la quiere.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
@@ -489,7 +530,7 @@
     (2026-10-26); base local con integridad ok (4 usuarios, 5 revisiones, 3 solicitudes intactos).
     Evaluación al subir comprobada por Ivania (2026-10-26): importación 14:04:52 → evaluación 14:05:03, 12 820
     carteles (69 nuevos).
-    **Pendiente · Ivania:** subir el ZIP del respaldo `sicop_20261026-135112` al Drive.
+    ~~Pendiente · Ivania: subir el ZIP del respaldo `sicop_20261026-135112` al Drive~~ **Hecho (Ivania, 29/10).**
     **Pendiente · Oscar:** desplegar y
     activar (9.9); primera prueba real de punta a punta.
 
@@ -723,6 +764,8 @@
     **Queda · Ivania:** la parte del servidor de la sección 6, después de la lección 15 y los simulacros allí.
     **2026-10-26 (Ivania):** la parte del servidor de la sección 6 quedó escrita **como plan**. **Queda · Ivania:**
     completarla con los resultados reales de la lección 15 y de los 5 simulacros en el servidor (`OPERACION.md` §7).
+    **2026-10-29:** esquema de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (lo nuevo desde el 26/10, marcado
+    «(nuevo)»). **Queda · Ivania:** pasarlo al Google Doc con sus palabras.
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No

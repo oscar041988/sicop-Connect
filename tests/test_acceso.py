@@ -42,7 +42,9 @@ def _rutas_post():
 # --- Sin sesión -----------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("ruta", ["/", "/oportunidades", "/oportunidades?familia=gps_flotas",
-                                  "/oportunidades/00000000001", "/cargar"])
+                                  "/oportunidades/00000000001", "/cargar",
+                                  "/oportunidades/00000000001/documentos/1/ver",
+                                  "/oportunidades/00000000001/documentos/1/ver/0"])
 def test_anonimo_es_redirigido_al_login(anonimo, ruta):
     respuesta = anonimo.get(ruta, follow_redirects=False)
 

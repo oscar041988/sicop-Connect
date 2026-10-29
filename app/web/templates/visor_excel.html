@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}{{ nombre }}{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="/oportunidades/{{ nro }}#documentos">← Cartel {{ nro }}</a></p>
+<section>
+  <h1>{{ nombre }}</h1>
+  <p class="sub">Vista de solo lectura: los valores como los guardó Excel (sin fórmulas ni formato), hasta
+    {{ MAX_FILAS }} filas y {{ MAX_COLUMNAS }} columnas por hoja. Para trabajar con el archivo, descárguelo.</p>
+  <p><a class="btn o" href="/oportunidades/{{ nro }}/documentos/{{ doc_id }}">Descargar</a></p>
+  {% for h in hojas %}
+  <h2>Hoja «{{ h.nombre }}»</h2>
+  {% if h.filas %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <tbody>
+      {% for fila in h.filas %}
+      <tr>{% for v in fila %}<td>{{ v }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if h.recortada %}<p class="falta">La hoja tiene más de {{ MAX_FILAS }} filas: descargue el archivo para verla completa.</p>{% endif %}
+  {% else %}
+  <p class="vacio">Hoja vacía.</p>
+  {% endif %}
+  {% endfor %}
+</section>
+{% endblock %}
