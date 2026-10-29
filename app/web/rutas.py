@@ -29,8 +29,8 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, exportar, fichas_panel, historial,
-                 panel, reintentos, resumen, seguimiento, usuarios, visor)
+from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos, exportar,
+                 fichas_panel, historial, panel, reintentos, resumen, seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -451,9 +451,12 @@ def _render_expediente(request: Request, conn, nro_sicop: str, status_code: int 
     return PLANTILLAS.TemplateResponse(request, "expediente.html", {
         "seccion": "seguimiento", "seg": actual, "d": datos, "asignaciones": seguimiento.historial_de(conn, nro_sicop),
         "etapas": seguimiento.etapas_de(conn, nro_sicop), "ETAPAS": seguimiento.ETAPAS,
+        "archivos": expediente_archivos.listar(conn, nro_sicop), "TIPOS_ARCHIVO": expediente_archivos.TIPOS,
+        "limite_archivo_mb": load_settings().expediente_max_mb,
         "asignables": seguimiento.asignables(conn) if seguridad.es_admin(request) else [],
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "hecho": request.session.pop("hecho", None), "hecho_etapa": request.session.pop("hecho_etapa", None),
+        "hecho_archivo": request.session.pop("hecho_archivo", None),
         **contexto,
     }, status_code=status_code)
 
@@ -504,6 +507,93 @@ def cambiar_etapa(request: Request, nro_sicop: str, etapa: str = Form("")) -> Re
     request.session["hecho_etapa"] = (f"Etapa: {seguimiento.ETAPAS[etapa]}." if cambio
                                       else "No se cambió nada: ya estaba en esa etapa.")
     return RedirectResponse(f"/seguimiento/{nro_sicop}#etapa", status_code=303)
+
+
+# --- Archivos del expediente: gestor de documentos, paso 2 ---------------------------------------------------
+# Suben, bajan y ven los archivos quienes entran al expediente (seguimiento.puede_entrar), en cada petición.
+
+def _expediente_permitido(request: Request, conn, nro_sicop: str) -> Response | None:
+    """None si la persona puede entrar al expediente; si no, el mismo 404 o 403 que al abrirlo."""
+    actual = seguimiento.estado(conn, nro_sicop) if SOLO_DIGITOS.match(nro_sicop) else None
+    if actual is None or not seguimiento.puede_entrar(seguridad.usuario_actual(request), actual):
+        return _render_expediente(request, conn, nro_sicop)
+    return None
+
+
+@router.post("/seguimiento/{nro_sicop}/archivos", response_class=HTMLResponse, dependencies=[Depends(verificar_csrf)])
+def subir_archivo(request: Request, nro_sicop: str, archivo: UploadFile | None = File(None)) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        if archivo is None or not archivo.filename:
+            return _render_expediente(request, conn, nro_sicop, 400, error_archivo="Elige un archivo.")
+        try:
+            guardado = expediente_archivos.guardar(conn, settings.expedientes_dir, nro_sicop, archivo.file,
+                                                   archivo.filename, settings.expediente_max_mb * 1024 * 1024,
+                                                   _quien(request), _ahora())
+        except expediente_archivos.ArchivoInvalido as exc:
+            status = 413 if isinstance(exc, expediente_archivos.ArchivoMuyGrande) else                 409 if isinstance(exc, expediente_archivos.YaEsta) else 400
+            return _render_expediente(request, conn, nro_sicop, status, error_archivo=str(exc))
+    request.session["hecho_archivo"] = f"Archivo subido: {guardado.nombre}."
+    return RedirectResponse(f"/seguimiento/{nro_sicop}#archivos", status_code=303)
+
+
+def _archivo_del_expediente(request: Request, nro_sicop: str, archivo_id: int):
+    """(ruta, Archivo, settings) si la persona puede entrar y el archivo es de ese expediente; si no, la página."""
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        hallado = expediente_archivos.obtener(conn, settings.expedientes_dir, nro_sicop, archivo_id)
+    if hallado is None:
+        return _no_encontrado(request, "Ese archivo no está en el expediente.")
+    log.info("Archivo %s del expediente %s · usuario %s", archivo_id, nro_sicop,
+             (seguridad.usuario_actual(request) or {}).get("id"))
+    return (*hallado, settings)
+
+
+def _volver_expediente(nro_sicop: str) -> tuple[str, str]:
+    return f"/seguimiento/{nro_sicop}#archivos", f"Expediente {nro_sicop}"
+
+
+@router.get("/seguimiento/{nro_sicop}/archivos/{archivo_id}")
+def descargar_archivo(request: Request, nro_sicop: str, archivo_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _archivo_del_expediente(request, nro_sicop, archivo_id)
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, archivo, _ = hallado
+    return _archivo(ruta, archivo.nombre, expediente_archivos.MIME[archivo.extension])
+
+
+@router.get("/seguimiento/{nro_sicop}/archivos/{archivo_id}/ver")
+def ver_archivo(request: Request, nro_sicop: str, archivo_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _archivo_del_expediente(request, nro_sicop, archivo_id)
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, archivo, _ = hallado
+    return _ver(request, ruta, archivo.nombre, archivo.vista, f"/seguimiento/{nro_sicop}/archivos/{archivo_id}",
+                _volver_expediente(nro_sicop))
+
+
+@router.get("/seguimiento/{nro_sicop}/archivos/{archivo_id}/ver/{indice}")
+def ver_dentro_del_archivo(request: Request, nro_sicop: str, archivo_id: int, indice: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _archivo_del_expediente(request, nro_sicop, archivo_id)
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, archivo, settings = hallado
+    if archivo.vista != "zip":
+        return _no_encontrado(request, "Ese archivo no es un ZIP.")
+    return _ver_dentro(request, ruta, archivo.nombre, indice, settings.document_max_mb * 1024 * 1024,
+                       f"/seguimiento/{nro_sicop}/archivos/{archivo_id}", _volver_expediente(nro_sicop))
 
 
 # --- Calidad de las reglas (solo administradores) -------------------------------------------------------------
@@ -767,6 +857,10 @@ def descargar_documento(request: Request, nro_sicop: str, doc_id: int) -> Respon
     return _archivo(*hallado)
 
 
+def _volver_cartel(nro_sicop: str) -> tuple[str, str]:
+    return f"/oportunidades/{nro_sicop}#documentos", f"Cartel {nro_sicop}"
+
+
 def _documento_para_ver(request: Request, nro_sicop: str, doc_id: int):
     """(ruta, nombre, settings) del documento guardado, o la página de error."""
     settings = load_settings()
@@ -779,20 +873,55 @@ def _documento_para_ver(request: Request, nro_sicop: str, doc_id: int):
     return (*hallado, settings)
 
 
-def _no_se_puede_ver(request: Request, nro_sicop: str, doc_id: int, motivo: str) -> Response:
+def _no_se_puede_ver(request: Request, descargar: str, motivo: str) -> Response:
     return PLANTILLAS.TemplateResponse(request, "error.html", {
-        "mensaje": f"No se puede ver: {motivo}.",
-        "volver": (f"/oportunidades/{nro_sicop}/documentos/{doc_id}", "Descargar el documento")}, status_code=422)
+        "mensaje": f"No se puede ver: {motivo}.", "volver": (descargar, "Descargar el documento")}, status_code=422)
 
 
-def _ver_excel(request: Request, nro_sicop: str, doc_id: int, nombre: str, datos: bytes) -> Response:
+def _ver_excel(request: Request, descargar: str, volver: tuple[str, str], nombre: str, datos: bytes) -> Response:
     try:
         hojas = visor.hojas_excel(datos)
     except visor.NoSePuedeLeer as exc:
-        return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
+        return _no_se_puede_ver(request, descargar, str(exc))
     return PLANTILLAS.TemplateResponse(request, "visor_excel.html", {
-        "nro": nro_sicop, "doc_id": doc_id, "nombre": nombre, "hojas": hojas, "MAX_FILAS": visor.MAX_FILAS,
+        "nombre": nombre, "hojas": hojas, "descargar": descargar, "volver": volver, "MAX_FILAS": visor.MAX_FILAS,
         "MAX_COLUMNAS": visor.MAX_COLUMNAS})
+
+
+def _ver(request: Request, ruta: Path, nombre: str, clase: str | None, descargar: str,
+         volver: tuple[str, str]) -> Response:
+    """«Ver» un archivo del disco: PDF e imágenes en línea, Excel como tabla y ZIP como lista (app/visor.py)."""
+    if clase in ("pdf", "imagen"):
+        return _archivo(ruta, nombre, visor.tipo(nombre) or visor.tipo(ruta.name), en_linea=True)
+    if clase == "excel":
+        return _ver_excel(request, descargar, volver, nombre, ruta.read_bytes())
+    if clase == "zip":
+        try:
+            entradas = visor.entradas_zip(ruta)
+        except visor.NoSePuedeLeer as exc:
+            return _no_se_puede_ver(request, descargar, str(exc))
+        return PLANTILLAS.TemplateResponse(request, "visor_zip.html", {
+            "nombre": nombre, "entradas": entradas, "descargar": descargar, "ver_base": f"{descargar}/ver",
+            "volver": volver})
+    return _no_se_puede_ver(request, descargar, "este tipo de archivo solo se puede descargar")
+
+
+def _ver_dentro(request: Request, ruta: Path, nombre: str, indice: int, max_bytes: int, descargar: str,
+                volver: tuple[str, str]) -> Response:
+    """Un PDF, imagen o Excel de dentro de un ZIP del disco (leído en memoria, nunca a disco)."""
+    try:
+        leido = visor.leer_entrada(ruta, indice, max_bytes)
+    except visor.NoSePuedeLeer as exc:
+        return _no_se_puede_ver(request, descargar, str(exc))
+    if leido is None:
+        return _no_encontrado(request, "Ese archivo no está dentro del ZIP.")
+    interno, datos = leido
+    clase = visor.vista(interno)
+    if clase in ("pdf", "imagen"):
+        return _en_linea(datos, interno, visor.tipo(interno))
+    if clase == "excel":
+        return _ver_excel(request, descargar, volver, f"{nombre} › {interno}", datos)
+    return _no_se_puede_ver(request, descargar, "este tipo de archivo solo se puede descargar (con el ZIP)")
 
 
 @router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}/ver")
@@ -804,19 +933,8 @@ def ver_documento(request: Request, nro_sicop: str, doc_id: int) -> Response:
     if isinstance(hallado, Response):
         return hallado
     ruta, nombre, settings = hallado
-    clase = visor.vista(nombre) or visor.vista(ruta.name)
-    if clase in ("pdf", "imagen"):
-        return _archivo(ruta, nombre, visor.tipo(nombre) or visor.tipo(ruta.name), en_linea=True)
-    if clase == "excel":
-        return _ver_excel(request, nro_sicop, doc_id, nombre, ruta.read_bytes())
-    if clase == "zip":
-        try:
-            entradas = visor.entradas_zip(ruta)
-        except visor.NoSePuedeLeer as exc:
-            return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
-        return PLANTILLAS.TemplateResponse(request, "visor_zip.html", {
-            "nro": nro_sicop, "doc_id": doc_id, "nombre": nombre, "entradas": entradas})
-    return _no_se_puede_ver(request, nro_sicop, doc_id, "este tipo de archivo solo se puede descargar")
+    return _ver(request, ruta, nombre, visor.vista(nombre) or visor.vista(ruta.name),
+                f"/oportunidades/{nro_sicop}/documentos/{doc_id}", _volver_cartel(nro_sicop))
 
 
 @router.get("/oportunidades/{nro_sicop}/documentos/{doc_id}/ver/{indice}")
@@ -830,19 +948,8 @@ def ver_dentro_del_zip(request: Request, nro_sicop: str, doc_id: int, indice: in
     ruta, nombre, settings = hallado
     if (visor.vista(nombre) or visor.vista(ruta.name)) != "zip":
         return _no_encontrado(request, "Ese documento no es un ZIP.")
-    try:
-        leido = visor.leer_entrada(ruta, indice, settings.document_max_mb * 1024 * 1024)
-    except visor.NoSePuedeLeer as exc:
-        return _no_se_puede_ver(request, nro_sicop, doc_id, str(exc))
-    if leido is None:
-        return _no_encontrado(request, "Ese archivo no está dentro del ZIP.")
-    interno, datos = leido
-    clase = visor.vista(interno)
-    if clase in ("pdf", "imagen"):
-        return _en_linea(datos, interno, visor.tipo(interno))
-    if clase == "excel":
-        return _ver_excel(request, nro_sicop, doc_id, f"{nombre} › {interno}", datos)
-    return _no_se_puede_ver(request, nro_sicop, doc_id, "este tipo de archivo solo se puede descargar (con el ZIP)")
+    return _ver_dentro(request, ruta, nombre, indice, settings.document_max_mb * 1024 * 1024,
+                       f"/oportunidades/{nro_sicop}/documentos/{doc_id}", _volver_cartel(nro_sicop))
 
 
 @router.get("/bitacora", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])

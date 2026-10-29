@@ -1064,7 +1064,8 @@ def score_rules(settings: Settings, mostrar: int, reglas_path: Path = REGLAS_PAT
 
 def backup(settings: Settings, output: Path) -> int:
     try:
-        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir)
+        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir,
+                               settings.expedientes_dir)
     except respaldo.RespaldoError as exc:
         print(f"Error: {exc}. No se hizo el respaldo.", file=sys.stderr)
         return 1
@@ -1078,6 +1079,10 @@ def backup(settings: Settings, output: Path) -> int:
         doc = d["documentos"]
         print(f"Documentos: {output / doc['archivo']} · {doc['archivos']} archivos · {doc['bytes']} bytes"
               f" · SHA-256 {doc['sha256'][:16]}…")
+    if "expedientes" in d:
+        exp = d["expedientes"]
+        print(f"Expedientes: {output / exp['archivo']} · {exp['archivos']} archivos · {exp['bytes']} bytes"
+              f" · SHA-256 {exp['sha256'][:16]}…")
     return 0
 
 

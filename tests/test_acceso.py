@@ -44,7 +44,9 @@ def _rutas_post():
 @pytest.mark.parametrize("ruta", ["/", "/oportunidades", "/oportunidades?familia=gps_flotas",
                                   "/oportunidades/00000000001", "/cargar",
                                   "/oportunidades/00000000001/documentos/1/ver",
-                                  "/oportunidades/00000000001/documentos/1/ver/0"])
+                                  "/oportunidades/00000000001/documentos/1/ver/0",
+                                  "/seguimiento/00000000001/archivos/1", "/seguimiento/00000000001/archivos/1/ver",
+                                  "/seguimiento/00000000001/archivos/1/ver/0"])
 def test_anonimo_es_redirigido_al_login(anonimo, ruta):
     respuesta = anonimo.get(ruta, follow_redirects=False)
 
@@ -249,8 +251,8 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
-                             "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/encargado",
-                             "/seguimiento/{nro_sicop}/etapa",
+                             "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/archivos",
+                             "/seguimiento/{nro_sicop}/encargado", "/seguimiento/{nro_sicop}/etapa",
                              "/usuarios", "/usuarios/{user_id}/contrasena", "/usuarios/{user_id}/eliminar",
                              "/usuarios/{user_id}/estado",
                              "/usuarios/{user_id}/nivel"]

@@ -80,9 +80,45 @@
   </ol>
 </section>
 
+<section id="archivos">
+  <h2>Archivos</h2>
+  {% if hecho_archivo %}<p class="hecho">{{ hecho_archivo }}</p>{% endif %}
+  {% if error_archivo %}<p class="error">{{ error_archivo }}</p>{% endif %}
+  <form method="post" action="/seguimiento/{{ c.nro_sicop }}/archivos" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Subir un archivo
+      <input type="file" name="archivo" accept=".pdf,.docx,.doc,.xlsx,.xls,.zip" required>
+    </label>
+    <button type="submit">Subir</button>
+  </form>
+  <p class="sub">PDF, Word, Excel o ZIP, hasta {{ limite_archivo_mb }} MB. El pliego se sube a mano (SICOP no deja
+    bajarlo con un programa). Lo ven y lo bajan el encargado y los administradores; nada se borra.</p>
+
+  {% if archivos %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Archivo</th><th>Tipo</th><th>Tamaño</th><th>Subido por</th><th></th></tr></thead>
+    <tbody>
+      {% for a in archivos %}
+      <tr>
+        <td>{{ a.nombre }}</td>
+        <td>{{ a.tipo }}</td>
+        <td><small>{{ "%.1f" | format(a.tamano / 1000000) }} MB</small></td>
+        <td><small>{{ a.subido_por }} · {{ a.fecha | fecha }}</small></td>
+        <td class="botones">
+          {% if a.vista %}<a class="btn p" href="/seguimiento/{{ c.nro_sicop }}/archivos/{{ a.id }}/ver" target="_blank" rel="noopener">Ver</a>{% endif %}
+          <a class="btn o" href="/seguimiento/{{ c.nro_sicop }}/archivos/{{ a.id }}">Descargar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">Todavía no hay archivos en el expediente.</p>
+  {% endif %}
+</section>
+
 <section>
-  <h2>Documentos y notas</h2>
-  <p class="vacio">Próximamente: subir el pliego y los borradores (paso 2), notas (paso 3) y descargar todo el
-    expediente (paso 4).</p>
+  <h2>Notas</h2>
+  <p class="vacio">Próximamente: notas (paso 3) y descargar todo el expediente (paso 4).</p>
 </section>
 {% endblock %}

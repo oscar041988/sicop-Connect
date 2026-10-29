@@ -87,10 +87,12 @@ def _respaldar_documentos(documentos: Path, destino: Path) -> dict:
             "sha256": sha256(destino)}
 
 
-def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None) -> Respaldo:
+def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None,
+              expedientes: Path | None = None) -> Respaldo:
     """Copia consistente de `origen` en `carpeta`, con su manifiesto. No sobrescribe nada.
 
-    Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip."""
+    Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip; si `expedientes`
+    (EXPEDIENTES_DIR, gestor de documentos paso 2) tiene archivos, también sicop_AAAAMMDD-HHMMSS_expedientes.zip."""
     if not origen.is_file():
         raise RespaldoError(f"no existe la base {origen}")
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -132,6 +134,8 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | N
     }
     if documentos is not None and documentos.is_dir() and any(p.is_file() for p in documentos.rglob("*")):
         datos["documentos"] = _respaldar_documentos(documentos, carpeta / f"{nombre}_documentos.zip")
+    if expedientes is not None and expedientes.is_dir() and any(p.is_file() for p in expedientes.rglob("*")):
+        datos["expedientes"] = _respaldar_documentos(expedientes, carpeta / f"{nombre}_expedientes.zip")
     with open(manifiesto, "x", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=2)
         f.write("\n")

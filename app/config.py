@@ -58,6 +58,8 @@ DEFAULTS: dict[str, str] = {
     "DOCUMENTS_DIR": "data/documentos",
     "DOCUMENT_MAX_MB": "50",
     "DOCUMENTS_MAX_MB_PER_TENDER": "100",
+    "EXPEDIENTES_DIR": "data/expedientes",
+    "EXPEDIENTE_MAX_MB": "10",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
@@ -293,6 +295,17 @@ class Settings:
     def document_max_mb(self) -> int:
         """Tamaño máximo de UN documento de la ficha (DOCUMENT_MAX_MB; 50)."""
         return self._entero("DOCUMENT_MAX_MB", 1, 500, "MB")
+
+    @property
+    def expedientes_dir(self) -> Path:
+        """Archivos subidos a los expedientes (EXPEDIENTES_DIR; data/expedientes). Fuera de Git; entran en el respaldo."""
+        path = Path(self.get("EXPEDIENTES_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def expediente_max_mb(self) -> int:
+        """Tamaño máximo de UN archivo subido a un expediente (EXPEDIENTE_MAX_MB; 10 por ahora, decisión de Oscar)."""
+        return self._entero("EXPEDIENTE_MAX_MB", 1, 500, "MB")
 
     @property
     def documents_max_mb_per_tender(self) -> int:

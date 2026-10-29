@@ -112,11 +112,19 @@ def guardar_subida(origen: BinaryIO, nombre_original: str, reporte: str, carpeta
     return destino
 
 
+# Gestor de documentos, paso 2: la subida de un archivo al expediente, con su propio límite (EXPEDIENTE_MAX_MB).
+RUTA_EXPEDIENTE = re.compile(r"^/seguimiento/\d+/archivos$")
+
+
 async def limitar_tamano(request: Request, call_next) -> Response:
     """Middleware: rechaza una subida demasiado grande antes de recibirla, si la petición declara su tamaño."""
-    if request.method == "POST" and request.url.path == RUTA:
+    if request.method == "POST":
+        limite = None
+        if request.url.path == RUTA:
+            limite = limite_bytes()
+        elif RUTA_EXPEDIENTE.match(request.url.path):
+            limite = load_settings().expediente_max_mb * 1024 * 1024
         declarado = request.headers.get("content-length", "")
-        limite = limite_bytes()
-        if declarado.isdigit() and int(declarado) > limite + MARGEN_FORMULARIO:
+        if limite is not None and declarado.isdigit() and int(declarado) > limite + MARGEN_FORMULARIO:
             return Response(mensaje_limite(limite), status_code=413, media_type="text/plain; charset=utf-8")
     return await call_next(request)

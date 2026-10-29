@@ -612,6 +612,13 @@
     `migrate` aplicó la 0025; `doctor`: esquema 0025. Probado por Ivania en el panel (29/10): funciona. **Pendiente · Ivania:** subir el ZIP
     del respaldo al Drive. **Siguiente:**
     paso 2 (archivos). Ideas sin pedir: aviso al cambiar la etapa; ligar «ganada/perdida» con las adjudicaciones.
+  - **Paso 2 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
+    Ivania):** archivos del expediente (detalle en `GESTOR_DOCUMENTOS.md`; 733 passed). Migración **0027**
+    `seguimiento_archivos`; `app/expediente_archivos.py`; PDF, Word, Excel y ZIP con su contenido comprobado;
+    `EXPEDIENTE_MAX_MB=10` y `EXPEDIENTES_DIR=data/expedientes` (variables nuevas); guardados con su huella; «Ver»
+    (PDF, Excel, ZIP) y «Descargar»; solo el encargado vigente y los administradores; el respaldo incluye la
+    carpeta. 21 pruebas nuevas. Respaldo, `migrate` (0027) y prueba en el panel hechos por Ivania (29/10): funciona.
+    **Siguiente:** paso 3 (notas) y paso 4 (descargar el expediente completo).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

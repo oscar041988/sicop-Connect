@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B y 5 (2026-10-29) hechos, solo local.** Se construye
+> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B, 2 y 5 (2026-10-29) hechos, solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -51,7 +51,7 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 |---|---|---|
 | 1A | Botón «Dar seguimiento», marca «En seguimiento · <nombre>», página «Seguimiento», expediente con encargado e historial de quién lo tuvo; solo el administrador asigna | **Hecho** (2026-10-26) |
 | 1B | Correo al nuevo encargado, con el ciclo diario | **Hecho** (2026-10-29) |
-| 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | Paso 1 |
+| 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | **Hecho** (2026-10-29) |
 | 3 | Notas con autor y fecha | Paso 1 |
 | 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
 | 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | **Hecho** (2026-10-29) |
@@ -88,6 +88,26 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
 - **Pruebas:** `tests/test_aviso_encargado.py` (11, datos SINTÉTICOS y envío SIMULADO), más la 0024 en las listas
   de migraciones.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0024).
+
+### Paso 2, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Tabla** (migración `0027_expediente_archivos.sql`): `seguimiento_archivos`, una fila por archivo subido. No se
+  borra ni se modifica (triggers); el mismo archivo (misma huella) no entra dos veces en el mismo expediente.
+- **Lógica:** `app/expediente_archivos.py`. Tipos PDF, Word (`.docx`, `.doc`), Excel (`.xlsx`, `.xls`) y ZIP; se
+  comprueba el **contenido** (firma de los primeros bytes; un `.docx` / `.xlsx` tiene que traer sus piezas de Word /
+  Excel), no solo la extensión. Tamaño máximo `EXPEDIENTE_MAX_MB` (10), cortado al copiar y, si la petición lo
+  declara, antes de recibirla.
+- **En disco:** `EXPEDIENTES_DIR/<N.º SICOP>/<sha256>.<extensión>` (por defecto `data/expedientes`, fuera de Git).
+  El nombre que manda el navegador solo se muestra (sin carpetas ni caracteres de control); nunca es una ruta.
+- **Panel:** sección «Archivos» del expediente: subir, lista (nombre, tipo, tamaño, quién y cuándo), «Descargar» y
+  «Ver» para PDF, Excel y ZIP (el mismo visor de los documentos de SICOP; Word y `.xls` solo se descargan).
+  Suben, bajan y ven el encargado vigente y los administradores: en un traspaso, el encargado nuevo baja todo y el
+  anterior ya no. Cada subida va a `audit_log`.
+- **Respaldo:** `backup` guarda también `sicop_<fecha>_expedientes.zip` con la carpeta.
+- **Pruebas:** `tests/test_expediente_archivos.py` (21, archivos SINTÉTICOS). La de acceso se comprobó con la regla
+  rota a propósito: falla.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0027).
+- **Fuera de este paso:** quitar o archivar un archivo subido por error (hoy nada se borra).
 
 ### Paso 5, cómo quedó (2026-10-29, plan aprobado por Ivania)
 
