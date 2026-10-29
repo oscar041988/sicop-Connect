@@ -13,6 +13,7 @@
       {% else %}<span class="tag w">Sin encargado</span>{% endif %}
       <a href="/oportunidades/{{ f.estado.nro_sicop }}">{{ f.estado.nro_sicop }}</a>
       · {{ f.titulo | titulo | legible or "(sin título)" }}
+      <span class="tag etapa-{{ f.estado.etapa }}">{{ f.estado.etapa_texto }}</span>
     </p>
     <p class="sub">{{ f.institucion | legible or "Sin datos de la institución" }}
       · {% if f.cierre %}{{ regresiva(f.cierre) }} (cierre {{ f.cierre | fecha }}){% else %}cierre sin fecha{% endif %}

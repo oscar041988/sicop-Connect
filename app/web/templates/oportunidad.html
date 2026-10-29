@@ -12,7 +12,7 @@
     {% endfor %}
     {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>
     {% else %}<span class="sin-revisar">Sin revisar</span>{% endif %}
-    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }}</span>{% endif %}
+    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }} · {{ seg.etapa_texto | lower }}</span>{% endif %}
   </div>
   <h1 class="titulo-cartel">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
   <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>

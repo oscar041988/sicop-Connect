@@ -1,4 +1,4 @@
-"""Gestor de documentos, paso 1A: seguimiento de un cartel y su encargado (docs/GESTOR_DOCUMENTOS.md).
+"""Gestor de documentos, pasos 1A y 5: seguimiento de un cartel, su encargado y su etapa (docs/GESTOR_DOCUMENTOS.md).
 
 Datos SINTÉTICOS en una base temporal; nunca toca data/.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app import historial, seguimiento, usuarios
+from app import historial, panel, seguimiento, usuarios
 from app.database import apply_migrations, connect
 from app.historial import Quien
 from app.importers.carteles import import_carteles
@@ -238,3 +238,97 @@ def test_errores_claros(clientes):
     _dar_seguimiento(clientes["ana"])
     elegir_nada = _asignar(clientes["oscar"], "")
     assert elegir_nada.status_code == 400 and "Elige un encargado de la lista." in elegir_nada.text
+
+
+# --- Paso 5: etapas del seguimiento -------------------------------------------------------------------------------
+
+def _etapa(cliente, etapa, nro=NRO):
+    token = token_csrf(cliente.get("/oportunidades").text)
+    return cliente.post(f"/seguimiento/{nro}/etapa", data={"csrf_token": token, "etapa": etapa},
+                        follow_redirects=False)
+
+
+def _etapa_de(db, nro=NRO):
+    with closing(connect(db)) as conn:
+        return seguimiento.estado(conn, nro).etapa
+
+
+def test_empieza_preparando_y_cada_cambio_queda_en_el_historial(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        assert seguimiento.estado(conn, NRO).etapa == "preparando" and seguimiento.etapas_de(conn, NRO) == []
+        assert seguimiento.cambiar_etapa(conn, NRO, "preparando", ivania, AHORA) is False  # ya lo estaba
+        assert seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA) is True
+        assert seguimiento.cambiar_etapa(conn, NRO, "ganada", ivania, AHORA + timedelta(days=1)) is True
+        assert seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA + timedelta(days=2)) is True  # corrige
+        estado = seguimiento.estado(conn, NRO)
+        cambios = seguimiento.etapas_de(conn, NRO)
+        eventos = [e.detalle for e in historial.ultimos(conn, ("cambiar_etapa",))]
+
+    assert (estado.etapa, estado.etapa_texto) == ("enviada", "Enviada")
+    assert [(c.etapa, c.puesta_por) for c in cambios] == [("enviada", "Ivania"), ("ganada", "Ivania"),
+                                                           ("enviada", "Ivania")]
+    assert eventos == [f"{NRO}: Ganada → Enviada", f"{NRO}: Enviada → Ganada", f"{NRO}: Preparando → Enviada"]
+
+
+def test_etapa_invalida_o_sin_seguimiento_y_no_se_borra_ni_se_cambia(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="no está en seguimiento"):
+            seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="Elige una etapa"):
+            seguimiento.cambiar_etapa(conn, NRO, "adjudicada", ivania, AHORA)
+        with pytest.raises(sqlite3.IntegrityError):  # la base tampoco acepta otra etapa
+            conn.execute("INSERT INTO seguimiento_etapas (seguimiento_id, etapa, puesta_por, puesta_por_nombre,"
+                         " created_at) VALUES (1, 'adjudicada', 1, 'x', 't')")
+        seguimiento.cambiar_etapa(conn, NRO, "perdida", ivania, AHORA)
+        for sql in ("DELETE FROM seguimiento_etapas", "UPDATE seguimiento_etapas SET etapa = 'ganada'"):
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(sql)
+        assert seguimiento.estado(conn, NRO).etapa == "perdida"
+
+
+def test_la_etapa_no_cambia_la_decision_y_reevaluar_no_la_toca(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        panel.guardar_revision(conn, NRO, "interesa", "", "", ivania.user_id, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        seguimiento.cambiar_etapa(conn, NRO, "ganada", ivania, AHORA)
+        evaluar_base(conn, cargar_reglas(), AHORA + timedelta(hours=1))
+        decisiones = [d for (d,) in conn.execute("SELECT decision FROM reviews WHERE nro_sicop = ?", (NRO,))]
+        assert seguimiento.estado(conn, NRO).etapa == "ganada"
+    assert decisiones == ["interesa"]
+
+
+def test_la_etapa_la_cambian_el_encargado_y_los_administradores(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    assert _etapa(clientes["ana"], "perdida").status_code == 403  # dio seguimiento, pero no es la encargada
+    assert _etapa_de(db) == "preparando"
+    respuesta = _etapa(clientes["ivania"], "enviada")
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}#etapa"
+    expediente = clientes["ivania"].get(f"/seguimiento/{NRO}").text
+    assert "Etapa: Enviada." in expediente and "¿Marcar también el cartel como «Ofertada»?" in expediente
+    assert _etapa(clientes["oscar"], "ganada").status_code == 303
+    assert _etapa_de(db) == "ganada"
+    # Todos ven la etapa, aunque no entren al expediente.
+    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get(f"/oportunidades/{NRO}").text
+    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get("/oportunidades").text
+    assert "etapa-ganada" in clientes["ana"].get("/seguimiento").text
+
+
+def test_ya_ofertada_no_sugiere_y_errores_de_etapa(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    with closing(connect(db)) as conn:
+        panel.guardar_revision(conn, NRO, "ofertada", "", "", _id(db, "oscar@ejemplo.test"), AHORA)
+    _etapa(clientes["oscar"], "enviada")
+    assert "¿Marcar también" not in clientes["oscar"].get(f"/seguimiento/{NRO}").text
+
+    invalida = _etapa(clientes["oscar"], "adjudicada")
+    assert invalida.status_code == 400 and "Elige una etapa" in invalida.text
+    assert _etapa(clientes["oscar"], "ganada", nro=OTRO).status_code == 404  # no está en seguimiento
+    sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/etapa", data={"etapa": "ganada"}, follow_redirects=False)
+    assert sin_token.status_code == 403 and _etapa_de(db) == "enviada"

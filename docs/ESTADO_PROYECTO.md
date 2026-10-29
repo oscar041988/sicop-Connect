@@ -564,8 +564,19 @@
     `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). ~~Respaldo y `migrate` (0024) en la base local~~
     **hecho por Ivania (29/10):** respaldo `sicop_20261029-115027` (ZIP subido al Drive) → esquema 0024, integridad
     ok, outbox con sus 48 filas, 5 revisiones y 4 usuarios (comprobado por Claude en solo lectura). 687 passed.
-    **Pendiente · Ivania:** probar asignando un cartel y mirar la vista previa del ciclo de mañana. **Siguiente:** paso 2
-    (archivos) o paso 5 (etapas, aprobadas el 26/10: preparando · enviada · ganada · perdida).
+    **Pendiente · Ivania:** probar asignando un cartel y mirar la vista previa del ciclo de mañana.
+  - **Paso 5 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
+    Ivania):** etapas del seguimiento, preparando · enviada · ganada · perdida (migración **0025**,
+    `seguimiento_etapas`, sin borrado). Empieza «preparando»; la cambian el encargado vigente y los administradores
+    (botones en el expediente, CSRF, `audit_log`); cualquier cambio vale, también volver atrás; historial en el
+    expediente; se ve en la marca del cartel, del panel y en «Seguimiento». No cambia «Ofertada» ni «No se oferta»:
+    en «enviada» solo sugiere marcar «Ofertada». 5 pruebas nuevas en `tests/test_seguimiento.py` (SINTÉTICO; la de
+    acceso se comprobó con la regla rota a propósito: falla). 692 passed.
+    ~~Respaldo y `migrate` (0025) en la base local~~ **hecho por Ivania (29/10):** respaldo `sicop_20261029-132603`
+    (esquema 0024, integridad ok; 13271 carteles, 5 revisiones, 48 avisos, 4 usuarios; documentos 228 archivos) →
+    `migrate` aplicó la 0025; `doctor`: esquema 0025. Probado por Ivania en el panel (29/10): funciona. **Pendiente · Ivania:** subir el ZIP
+    del respaldo al Drive. **Siguiente:**
+    paso 2 (archivos). Ideas sin pedir: aviso al cambiar la etapa; ligar «ganada/perdida» con las adjudicaciones.
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

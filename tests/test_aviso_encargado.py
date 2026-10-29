@@ -174,7 +174,7 @@ def test_0024_conserva_la_outbox_de_antes(tmp_path):
                      " 'resumen_semanal', NULL, 'r', 'aceptado', '2026-10-26T08:00:00-06:00')")
         conn.commit()
 
-    assert apply_migrations(db) == ["0024_aviso_encargado.sql"]
+    assert apply_migrations(db)[0] == "0024_aviso_encargado.sql"
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT id, motivo, status FROM notification_outbox").fetchall() == [
             (7, "resumen_semanal", "aceptado")]

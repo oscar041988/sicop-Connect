@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26) y 1B (2026-10-29) hechos, solo local.** Se construye
+> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B y 5 (2026-10-29) hechos, solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -54,7 +54,7 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 | 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | Paso 1 |
 | 3 | Notas con autor y fecha | Paso 1 |
 | 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
-| 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | Paso 1A |
+| 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | **Hecho** (2026-10-29) |
 
 El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las notas no tienen dónde colgarse.
 
@@ -88,6 +88,22 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
 - **Pruebas:** `tests/test_aviso_encargado.py` (11, datos SINTÉTICOS y envío SIMULADO), más la 0024 en las listas
   de migraciones.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0024).
+
+### Paso 5, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Tabla** (migración `0025_seguimiento_etapas.sql`): `seguimiento_etapas`. La etapa vigente es la última fila;
+  sin filas, el cartel está «preparando» (así empieza al darle seguimiento). No se borra ni se modifica (triggers);
+  la base solo acepta las cuatro etapas.
+- **Quién la cambia:** el encargado vigente y los administradores (la misma regla `puede_entrar`). Cualquier cambio
+  vale, también volver atrás, para corregir. Cada cambio va a `audit_log` («Cambió la etapa…: Preparando → Enviada»).
+- **Panel:** botones en la sección «Etapa» del expediente, con su historial; la etapa se ve en la marca del cartel y
+  del panel («En seguimiento · Ivania · enviada») y en la página «Seguimiento».
+- **Se suma a las decisiones:** no cambia «Ofertada» ni «No se oferta». En «enviada», si el cartel no está marcado
+  «Ofertada», el expediente lo sugiere con un enlace a la revisión; no se hace solo.
+- **Pruebas:** 5 nuevas en `tests/test_seguimiento.py` (SINTÉTICO).
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0025).
+- **Fuera de este paso (ideas):** aviso por correo al cambiar la etapa; ligar «ganada/perdida» con las
+  adjudicaciones de SICOP.
 
 ## Reglas que aplican (de `CLAUDE.md` y del resto del proyecto)
 

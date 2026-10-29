@@ -127,6 +127,12 @@ h3 { margin: 0; }
 .tag.g { background: var(--no-bg); color: var(--no); }     /* vencido / no interesa */
 .tag.r { background: var(--azul-bg); color: var(--azul); } /* revisar requisitos */
 .tag.seg, .en-seguimiento { background: var(--azul-bg); color: var(--azul); border: 1px solid var(--azul); } /* gestor de documentos */
+/* Gestor de documentos, paso 5: etapas del seguimiento */
+.etapas { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.etapas .vigente { background: var(--g5); color: #fff; }
+.tag.etapa-enviada { background: var(--azul-bg); color: var(--azul); }
+.tag.etapa-perdida { background: var(--no-bg); color: var(--no); }
+.aviso-etapa { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 10px; }
 .en-seguimiento { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .seguimiento-acciones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0 0 16px; }
 .score { text-align: center; min-width: 78px; }

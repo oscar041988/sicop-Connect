@@ -24,11 +24,12 @@ ACCIONES = {
     "confirmar_aviso": "Confirmó que un aviso sí salió",
     "abrir_seguimiento": "Dio seguimiento a un cartel",
     "asignar_encargado": "Asignó el encargado de un cartel",
+    "cambiar_etapa": "Cambió la etapa de un cartel en seguimiento",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
 DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")
-DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado")
+DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado", "cambiar_etapa")
 
 
 @dataclass(frozen=True)

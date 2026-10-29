@@ -450,9 +450,11 @@ def _render_expediente(request: Request, conn, nro_sicop: str, status_code: int 
     datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), ahora)
     return PLANTILLAS.TemplateResponse(request, "expediente.html", {
         "seccion": "seguimiento", "seg": actual, "d": datos, "asignaciones": seguimiento.historial_de(conn, nro_sicop),
+        "etapas": seguimiento.etapas_de(conn, nro_sicop), "ETAPAS": seguimiento.ETAPAS,
         "asignables": seguimiento.asignables(conn) if seguridad.es_admin(request) else [],
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
-        "hecho": request.session.pop("hecho", None), **contexto,
+        "hecho": request.session.pop("hecho", None), "hecho_etapa": request.session.pop("hecho_etapa", None),
+        **contexto,
     }, status_code=status_code)
 
 
@@ -484,6 +486,24 @@ def asignar_encargado(request: Request, nro_sicop: str, encargado: str = Form(""
     else:
         request.session["hecho"] = "Encargado asignado. Le llegará un correo con el ciclo diario de las 8:00."
     return RedirectResponse(f"/seguimiento/{nro_sicop}", status_code=303)
+
+
+@router.post("/seguimiento/{nro_sicop}/etapa", response_class=HTMLResponse, dependencies=[Depends(verificar_csrf)])
+def cambiar_etapa(request: Request, nro_sicop: str, etapa: str = Form("")) -> Response:
+    """Paso 5: la etapa la cambian quienes entran al expediente (su encargado y los administradores)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        actual = seguimiento.estado(conn, nro_sicop) if SOLO_DIGITOS.match(nro_sicop) else None
+        if actual is None or not seguimiento.puede_entrar(seguridad.usuario_actual(request), actual):
+            return _render_expediente(request, conn, nro_sicop)  # el mismo 404 o 403 que al abrirlo
+        try:
+            cambio = seguimiento.cambiar_etapa(conn, nro_sicop, etapa, _quien(request), _ahora())
+        except seguimiento.SeguimientoInvalido as exc:
+            return _render_expediente(request, conn, nro_sicop, 400, error_etapa=str(exc))
+    request.session["hecho_etapa"] = (f"Etapa: {seguimiento.ETAPAS[etapa]}." if cambio
+                                      else "No se cambió nada: ya estaba en esa etapa.")
+    return RedirectResponse(f"/seguimiento/{nro_sicop}#etapa", status_code=303)
 
 
 # --- Calidad de las reglas (solo administradores) -------------------------------------------------------------

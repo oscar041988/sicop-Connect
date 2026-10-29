@@ -6,7 +6,7 @@
 
 <section class="ficha">
   <div class="op-etiquetas">
-    <span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }}</span>
+    <span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }} · {{ seg.etapa_texto | lower }}</span>
     {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>{% endif %}
   </div>
   <h1 class="titulo-cartel">{{ c.descripcion | titulo | legible or "(sin título)" }}</h1>
@@ -50,6 +50,34 @@
   {% else %}
   <p class="vacio">Sin asignaciones todavía.</p>
   {% endif %}
+</section>
+
+<section id="etapa">
+  <h2>Etapa</h2>
+  {% if hecho_etapa %}<p class="hecho">{{ hecho_etapa }}</p>{% endif %}
+  {% if error_etapa %}<p class="error">{{ error_etapa }}</p>{% endif %}
+  <form method="post" action="/seguimiento/{{ c.nro_sicop }}/etapa" class="etapas">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% for valor, texto in ETAPAS.items() %}
+    <button type="submit" name="etapa" value="{{ valor }}"
+      class="{% if valor == seg.etapa %}vigente{% else %}btn o{% endif %}"{% if valor == seg.etapa %} aria-pressed="true"{% endif %}>{{ texto }}</button>
+    {% endfor %}
+  </form>
+  {% set ultima = d.revisiones[0].decision if d.revisiones else None %}
+  {% if seg.etapa == "enviada" and ultima != "ofertada" %}
+  <p class="aviso-etapa">¿Marcar también el cartel como «Ofertada»? Hazlo en
+    <a href="/oportunidades/{{ c.nro_sicop }}#revisiones">la revisión del cartel</a>: la etapa no cambia la decisión.</p>
+  {% endif %}
+  <p class="sub">La etapa es del trabajo en el expediente y se suma a las decisiones «Ofertada» y «No se oferta».
+    Cambiarla no borra nada: queda en el historial.</p>
+
+  <h3>Historial de etapas</h3>
+  <ol class="historial">
+    {% for e in etapas %}
+    <li>{{ e.texto }} · la puso {{ e.puesta_por }} · {{ e.fecha | fecha }}{% if loop.first %} <small>(vigente)</small>{% endif %}</li>
+    {% endfor %}
+    <li>Preparando · desde que se le dio seguimiento, el {{ seg.abierto_en | fecha }}{% if not etapas %} <small>(vigente)</small>{% endif %}</li>
+  </ol>
 </section>
 
 <section>
