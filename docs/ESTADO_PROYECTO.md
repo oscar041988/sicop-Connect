@@ -250,9 +250,14 @@
 ## Pendientes
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
-  - **Despliegue visto por Claude (29/10):** Oscar unió el PR #4 (`main` = `b51b532`) y el servidor responde
-    `/health` con esquema **0023**. No se sabe si activó los temporizadores (9.9) ni si los avisos siguen en
-    dry-run: preguntar a Oscar. Los commits de hoy (`DECISION_IA.md`, «Ver») van en un PR nuevo.
+  - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que
+    siguió abierto) y el servidor responde `/health` con esquema **0023**. No se sabe si activó los temporizadores
+    (9.9) ni si los avisos siguen en dry-run: preguntar a Oscar.
+  - **PR #4 unido por error (29/10, 11:24, cuenta de Ivania):** al actualizar su título y descripción con los 4
+    commits de hoy (`DECISION_IA.md`, «Ver», estado) se pulsó «Merge». `main` = `7f5c558` (unión). Sin migraciones ni
+    dependencias nuevas, 676 passed; **el servidor no cambió** (sigue en `b51b532`). No se revirtió: lo decide
+    Oscar (revertir también sería escribir en `main`). **Pendiente · Ivania:** avisar a Oscar. `desarrollo` quedó
+    igual a `main` (avance rápido). Acuerdo: solo Oscar une los PR; abajo solo se pulsa «Comment».
   - **Pendiente:** mandar fichas, documentos y bitácora del enriquecimiento al servidor (la dirección con token de
     la decisión del 27/10). Hoy están solo en la base de Windows: el panel del servidor no los muestra.
   - Idea de mejora: aviso «cartel modificado: revise su decisión» cuando llega una ficha nueva con cambios.
@@ -811,8 +816,9 @@
 - **PR #4 `main` ← `desarrollo` abierto (2026-10-27, Ivania, en la web):** 15 commits sobre `main` = `2dc0e52`
   (enriquecimiento lecciones 1 a 4, obtención en dos turnos, bajas de usuarios; migraciones 0016 a 0022). Texto
   redactado por Claude (no se guardó en `docs/PR_DESARROLLO.md`, que sigue con el del #3). Ivania mencionó a Oscar
-  en un comentario (la sección «Reviewers» no le aparece). **Pendiente · Oscar:** revisar y unir el #4; decidir lo
-  de «Para decidir». Si pide cambios, se hacen en `desarrollo` y el #4 se actualiza solo.
+  en un comentario (la sección «Reviewers» no le aparece). ~~Pendiente · Oscar: revisar y unir el #4~~ **Unido el
+  29/10** (ver «PR #4 unido por error», en Pendientes): Oscar subió `main` a `b51b532` directamente y el #4 se unió
+  después con los 4 commits de ese día.
 - **PR #3: unido por Oscar** (visto el 2026-10-27): `main` de GitHub llegó hasta `2dc0e52` (26/10).
 - **PR #3 `main` ← `desarrollo` abierto (2026-10-23, Ivania, en la web):** título y descripción de
   `docs/PR_DESARROLLO.md`; apunta a `a828c90` (58 commits sobre `main` = `162afe8`). Espera la revisión de Oscar.
