@@ -97,7 +97,7 @@
         <td><small>{{ doc.archivo | legible or "—" }}</small></td>
         <td><small>{% if doc.tamano %}{{ "%.1f" | format(doc.tamano / 1000000) }} MB{% else %}—{% endif %}</small></td>
         <td><small>{% if doc.estado == "guardado" %}{{ TEXTO_DOC.get(doc.texto, doc.texto or "—") }}{% if doc.texto == "extraido" and doc.paginas %}, {{ doc.paginas }} páginas{% endif %}{% else %}<span class="falta">{{ ESTADO_DOC.get(doc.estado, doc.estado) }}</span>{% if doc.motivo %}: {{ doc.motivo }}{% endif %}{% endif %}</small></td>
-        <td>{% if doc.estado == "guardado" %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Descargar</a>{% endif %}</td>
+        <td class="botones">{% if doc.estado == "guardado" %}{% if doc.vista %}<a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}/ver" target="_blank" rel="noopener">Ver</a> {% endif %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Descargar</a>{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

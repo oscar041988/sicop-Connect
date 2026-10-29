@@ -99,6 +99,7 @@ h3 { margin: 0; }
 .filtros select { width: 18rem; }
 .filtros label { max-width: 100%; }
 .acciones { display: flex; gap: 12px; align-items: center; }
+.botones { white-space: nowrap; }
 
 /* 6b. Campo de contraseña con botón mostrar/ocultar */
 .campo-contrasena { display: flex; align-items: stretch; position: relative; }

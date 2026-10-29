@@ -465,6 +465,22 @@
     invalid_api_key** (`ia_usage` #1, sin costo). En la computadora está bien: sin variable de Windows, una sola
     línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. **Pendiente · Oscar:** revisar en API keys
     si esa clave existe y está activa, o generar una nueva y entregarla en persona.
+- **Botón «Ver» en los documentos del cartel (pedido de Oscar, 2026-10-29, rama `desarrollo`, solo local):** leer
+  sin descargar. Plan aprobado por Ivania: parte 1 + Excel. `app/visor.py` (solo lee; sin migración ni dependencias
+  nuevas: `openpyxl` ya estaba).
+  - PDF e imágenes (JPG, PNG) se abren en una pestaña nueva, «en línea» y con su tipo fijo (SVG fuera: puede traer
+    código). ZIP: página con sus archivos; cada PDF, imagen o Excel de adentro con su «Ver», leído en memoria (nunca
+    a disco; no se lee más que `DOCUMENT_MAX_MB` aunque el ZIP diga otra cosa). Excel (.xlsx, .xlsm): cada hoja como
+    tabla de solo lectura, valores como texto (los códigos conservan sus ceros), hasta 500 filas y 50 columnas;
+    macros nunca se ejecutan. Word y lo demás: solo «Descargar», que sigue igual.
+  - Rutas `/oportunidades/{nro}/documentos/{id}/ver` y `…/ver/{n}` (con sesión, como «Descargar»).
+  - **676 passed** (7 nuevas en `tests/test_panel_enriquecimiento.py`, documentos SIMULADOS; las 2 rutas nuevas en
+    `test_anonimo_es_redirigido_al_login`).
+  - Probado en la base local (solo lectura) con los 167 documentos guardados: 88 PDF, 3 imágenes, 16 Excel (1 con
+    más de 500 filas) y 46 de 50 ZIP (242 PDF y 9 Excel adentro) se ven. Los otros 4 ZIP (`20260802815`, partes III,
+    IV y VI) tampoco se pudieron leer al guardarlos (`BadZipFile`): muestran «no se puede abrir» y «Descargar».
+  - **Pendiente · Ivania:** probarlo en el panel local; mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
+    Oscar la quiere.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo

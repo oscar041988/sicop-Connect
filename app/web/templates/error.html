@@ -4,6 +4,7 @@
 <section class="tarjeta">
   <h1>No se puede mostrar esta página</h1>
   <p>{{ mensaje }}</p>
+  {% if volver %}<p><a class="btn o" href="{{ volver[0] }}">{{ volver[1] }}</a></p>{% endif %}
   <p><a href="/oportunidades">Volver a las oportunidades</a></p>
 </section>
 {% endblock %}
