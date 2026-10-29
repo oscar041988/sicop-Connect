@@ -9,6 +9,7 @@ Orden de prioridad (de mayor a menor):
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -66,6 +67,7 @@ DEFAULTS: dict[str, str] = {
     "OPENAI_MODEL": "",
     "IA_TIMEOUT_SECONDS": "120",
     "IA_MAX_OUTPUT_TOKENS": "4000",
+    "IA_PROMPT_VERSION": "v1",
     "IA_PRECIO_ENTRADA_USD": "",
     "IA_PRECIO_SALIDA_USD": "",
 }
@@ -337,6 +339,14 @@ class Settings:
     @property
     def ia_max_output_tokens(self) -> int:
         return self._entero("IA_MAX_OUTPUT_TOKENS", 100, 32000, "tokens")
+
+    @property
+    def ia_prompt_version(self) -> str:
+        """Versión del prompt del resumen (IA_PROMPT_VERSION; v1): config/prompts/resumen_cartel_<versión>.md."""
+        version = self.get("IA_PROMPT_VERSION").strip().lower() or "v1"
+        if not re.fullmatch(r"v[0-9]{1,3}", version):
+            raise ValueError("IA_PROMPT_VERSION debe ser v1, v2, v3…")
+        return version
 
     def _precio(self, key: str) -> Decimal | None:
         texto = self.get(key).strip()

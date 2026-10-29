@@ -489,13 +489,36 @@
     clave; la cuenta de la API no tiene saldo. La licencia de 20 USD de Oscar es de ChatGPT y no da saldo a la API
     (tampoco la suscripción de Claude). Recomendado: cargar **10 USD con la recarga automática apagada** (sirve de
     límite de gasto, regla 4); uso normal estimado 10–30 USD al mes (techo ~42 USD con los topes actuales).
-    ~~Recargar~~ **Oscar recargó (29/10).** **Primera llamada real OK (29/10, Ivania):** `gpt-6.1-terra`, entrada 34
+    ~~Recargar~~ **Oscar recargó (29/10): 10 USD, con un máximo de 15 USD** (por Ivania; con eso hay un tope de
+    gasto, regla 4). **Primera llamada real OK (29/10, Ivania):** `gpt-6.1-terra`, entrada 34
     · salida 5 tokens, 2,76 s, intentos 1, costo estimado 0,000059 USD (cuadra con 1.00 / 5.00 USD por millón),
     `ia_usage` #4. PR #5 abierto por Ivania (1B, paso 5 y esta corrección), espera a Oscar. **Pendiente · Oscar:**
-    confirmar en «Usage» la llamada (puede tardar en aparecer) y el saldo cargado. **Siguiente:** lección 3 de la guía.
+    confirmar en «Usage» la llamada (puede tardar en aparecer) y el saldo cargado. Lección 3: abajo.
   - **Corregido (29/10, Claude):** la app reintentaba ese 429 (intentos 3) porque solo conocía el código
     `insufficient_quota`; ahora `credit_balance_exhausted` también cuenta como falta de saldo y no se reintenta
     (`app/ai/cliente.py`, `SIN_SALDO`; prueba nueva en `tests/test_ia_cliente.py`, 20 passed).
+- **Reporte de cartel con IA · lección 3, Encargo 3: resumen ejecutivo (2026-10-29, rama `desarrollo`, solo local;
+  plan aprobado por Ivania):** detalle en `docs/RESUMEN_IA.md` §4.
+  - Prompt `config/prompts/resumen_cartel_v1.md` (el de la guía + portafolio de las 9 familias + formato de fechas
+    y montos); `IA_PROMPT_VERSION` (v1). Criterio de Hermatix (montos mínimos, requisitos que descartan) **por
+    decidir · Oscar**: el prompt dice «sin criterio definido todavía».
+  - `app/ai/resumen.py`: salida estructurada estricta (JSON Schema), «no encontrado» para lo que falte,
+    comparación con SICOP (cierre, apertura, monto de la ficha, cantidad por línea → «revisar»), rechazo /
+    incompleta / JSON inválido / error → «fallido» sin resumen. `cliente.pedir` acepta el esquema y detecta el
+    rechazo del modelo.
+  - Migración **0026** `ia_summaries` (sin borrado ni cambios). Misma huella + misma versión del prompt = no se
+    vuelve a llamar. Comando `python -m app.cli ia resumir --nro N` (copia legible en `data/exports/`).
+  - 16 pruebas nuevas en `tests/test_ia_resumen.py` (OpenAI SIMULADO). **709 passed.**
+  - **Primer resumen real (29/10, Ivania):** `20261002824` (UNA, cámaras) → OK, entrada 28 755 · salida 3 390
+    tokens, **0,045705 USD**; recomendación preliminar «Descartar» (sin encaje). Revisado por Claude: 18 líneas con
+    cantidad y cita, 11 requisitos, plazos y monto coinciden con SICOP; el modelo además señaló que el cronograma
+    dice 28/10 y SICOP 4/11. La salida quedó cerca del tope (3 390 de 4 000).
+  - ~~Respaldo y `migrate` (0026)~~ **hecho por Ivania (29/10):** respaldo `sicop_20261029-151241` (esquema 0025,
+    integridad ok) → `migrate` aplicó la 0026; `doctor`: esquema 0026, `IA_PROMPT_VERSION v1`. Falta subir el ZIP
+    al Drive.
+  - **Pendiente · Ivania:** con Oscar, el criterio de Hermatix y 10 carteles que él
+    conozca; generar sus resúmenes (anotar el costo), revisarlos con él y guardar los ajustes como `v2`. Si un
+    resumen sale «incompleta · max_output_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 8000).
 - **Botón «Ver» en los documentos del cartel (pedido de Oscar, 2026-10-29, rama `desarrollo`, solo local):** leer
   sin descargar. Plan aprobado por Ivania: parte 1 + Excel. `app/visor.py` (solo lee; sin migración ni dependencias
   nuevas: `openpyxl` ya estaba).

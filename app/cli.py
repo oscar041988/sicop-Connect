@@ -18,6 +18,7 @@ from app.database import MigrationError, apply_migrations, check_database, conne
 from app.compras import Compra, detalle_compra
 from app.ai import cliente as ia_cliente
 from app.ai import expediente as ia_expediente
+from app.ai import resumen as ia_resumen
 from app.importers.carteles import import_carteles
 from app.importers import adjudicaciones, zip_pliegos
 from app.importers.catalogo import import_catalogo
@@ -257,6 +258,44 @@ def ia_expediente_cmd(settings: Settings, nro_sicop: str, ver: bool) -> int:
     print(f"Huella: {exp.huella[:12]}")
     print(f"Guardado en: {archivo}")
     return 0
+
+
+def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
+    """Lección 3 IA: el resumen ejecutivo de un cartel (salida estructurada). No repite un expediente sin cambios.
+    cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            res = ia_resumen.resumir(conn, settings, nro_sicop, cliente=cliente)
+        except (ia_resumen.ResumenError, ia_cliente.IaApagada, ia_cliente.IaConfiguracion, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+    settings.exports_dir.mkdir(parents=True, exist_ok=True)
+    archivo = settings.exports_dir / f"resumen_{nro_sicop}_{datetime.now(HORA_CR):%Y%m%d-%H%M%S}.txt"
+    archivo.write_text(ia_resumen.legible(res), encoding="utf-8")
+    if res.reutilizado:
+        print(f"Ya había un resumen de este expediente con el prompt {res.prompt_version} (#{res.id}, {res.creado_en}):"
+              " no se llamó a OpenAI.")
+    costo = f"{ia_cliente.texto_decimal(res.costo)} USD (estimado)" if res.costo is not None else "sin precio"
+    print(f"Resumen del cartel {nro_sicop}: {ia_resumen.ESTADOS[res.estado].upper()} · prompt {res.prompt_version}"
+          f" · modelo {res.modelo} · resumen #{res.id}")
+    if not res.reutilizado:
+        print(f"Tokens: entrada {res.tokens_entrada} · salida {res.tokens_salida} · costo {costo}")
+    if res.motivo:
+        print(f"Motivo: {res.motivo} (sin resumen; no se inventa uno)")
+    for d in res.diferencias:
+        print(f"  No coincide con SICOP · {d['dato']}: resumen «{d['resumen']}» · SICOP «{d['sicop']}»")
+    if res.datos:
+        print(f"Recomendación preliminar: {ia_resumen.RECOMENDACIONES.get(res.datos['recomendacion'], ia_resumen.NO)}"
+              " (la decisión es del encargado)")
+    print(f"Guardado en: {archivo}")
+    return 0 if res.estado != "fallido" else 1
 
 
 def _imprimir_evaluacion(r: ResultadoEvaluacion) -> None:
@@ -1109,12 +1148,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
-    ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1) y prueba de la conexión (lección 2)")
+    ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1), prueba de la conexión (lección 2) y resumen (lección 3)")
     ia_sub = ia.add_subparsers(dest="ia_command", required=True)
     ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
     ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
     ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
+    ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
+    ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1187,6 +1228,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_expediente_cmd(settings, args.nro.strip(), args.ver)
     if args.command == "ia" and args.ia_command == "probar":
         return ia_probar_cmd(settings)
+    if args.command == "ia" and args.ia_command == "resumir":
+        return ia_resumir_cmd(settings, args.nro.strip())
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":
