@@ -454,6 +454,17 @@
     apagada», sin llamar.
   - **Pendiente · Oscar (con Ivania):** proyecto de OpenAI con límite de gasto, clave en `.env` escrita por él,
     modelo y precios; después, la primera llamada real (`ia probar`) y comparar con el panel de OpenAI.
+  - **2026-10-29 (Oscar, por Ivania):** acepta `DECISION_IA.md`, revisó la privacidad de la cuenta y creó el
+    proyecto; la clave se la pasó a Ivania. **Sin límite de gasto y clave con todos los permisos**, a propósito (choca con la regla 4;
+    riesgo anotado). Oscar no fijó modelo: lo elige Ivania.
+    Pedido de Oscar: reporte de máximo 2 páginas y entendible para alguien nuevo (regla 9). `CLAUDE.md` con la
+    excepción. Precios leídos de la página oficial de OpenAI (29/10). **Falta:** el modelo; Ivania escribe `.env`,
+    `doctor` e `ia probar`.
+  - **Primera llamada real (29/10, Ivania):** `.env` con `AI_MODE=openai`, `gpt-6.1-terra` (elegido para la prueba;
+    el definitivo en la lección 3) y precios 1.00 / 5.00 USD por millón; `doctor` bien. `ia probar` → **FALLO 401
+    invalid_api_key** (`ia_usage` #1, sin costo). En la computadora está bien: sin variable de Windows, una sola
+    línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. **Pendiente · Oscar:** revisar en API keys
+    si esa clave existe y está activa, o generar una nueva y entregarla en persona.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
   - **1. Ayuda en «Cargar archivo» (hecho, 2026-10-26, rama `desarrollo`, solo local):** botones «Abrir el correo
@@ -489,7 +500,7 @@
     (2026-10-26); base local con integridad ok (4 usuarios, 5 revisiones, 3 solicitudes intactos).
     Evaluación al subir comprobada por Ivania (2026-10-26): importación 14:04:52 → evaluación 14:05:03, 12 820
     carteles (69 nuevos).
-    **Pendiente · Ivania:** subir el ZIP del respaldo `sicop_20261026-135112` al Drive.
+    ~~Pendiente · Ivania: subir el ZIP del respaldo `sicop_20261026-135112` al Drive~~ **Hecho (Ivania, 29/10).**
     **Pendiente · Oscar:** desplegar y
     activar (9.9); primera prueba real de punta a punta.
 
@@ -723,6 +734,8 @@
     **Queda · Ivania:** la parte del servidor de la sección 6, después de la lección 15 y los simulacros allí.
     **2026-10-26 (Ivania):** la parte del servidor de la sección 6 quedó escrita **como plan**. **Queda · Ivania:**
     completarla con los resultados reales de la lección 15 y de los 5 simulacros en el servidor (`OPERACION.md` §7).
+    **2026-10-29:** esquema de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (lo nuevo desde el 26/10, marcado
+    «(nuevo)»). **Queda · Ivania:** pasarlo al Google Doc con sus palabras.
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
