@@ -9,6 +9,7 @@ Orden de prioridad (de mayor a menor):
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -57,6 +58,8 @@ DEFAULTS: dict[str, str] = {
     "DOCUMENTS_DIR": "data/documentos",
     "DOCUMENT_MAX_MB": "50",
     "DOCUMENTS_MAX_MB_PER_TENDER": "100",
+    "EXPEDIENTES_DIR": "data/expedientes",
+    "EXPEDIENTE_MAX_MB": "10",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
@@ -66,8 +69,11 @@ DEFAULTS: dict[str, str] = {
     "OPENAI_MODEL": "",
     "IA_TIMEOUT_SECONDS": "120",
     "IA_MAX_OUTPUT_TOKENS": "4000",
+    "IA_PROMPT_VERSION": "v1",
     "IA_PRECIO_ENTRADA_USD": "",
     "IA_PRECIO_SALIDA_USD": "",
+    "IA_MAX_SUMMARIES_PER_DAY": "10",
+    "IA_MAX_DAILY_COST": "1.00",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -293,6 +299,17 @@ class Settings:
         return self._entero("DOCUMENT_MAX_MB", 1, 500, "MB")
 
     @property
+    def expedientes_dir(self) -> Path:
+        """Archivos subidos a los expedientes (EXPEDIENTES_DIR; data/expedientes). Fuera de Git; entran en el respaldo."""
+        path = Path(self.get("EXPEDIENTES_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def expediente_max_mb(self) -> int:
+        """Tamaño máximo de UN archivo subido a un expediente (EXPEDIENTE_MAX_MB; 10 por ahora, decisión de Oscar)."""
+        return self._entero("EXPEDIENTE_MAX_MB", 1, 500, "MB")
+
+    @property
     def documents_max_mb_per_tender(self) -> int:
         """Tope de documentos guardados por cartel (DOCUMENTS_MAX_MB_PER_TENDER; 100; decisión del 2026-10-27)."""
         return self._entero("DOCUMENTS_MAX_MB_PER_TENDER", 1, 5000, "MB")
@@ -338,6 +355,14 @@ class Settings:
     def ia_max_output_tokens(self) -> int:
         return self._entero("IA_MAX_OUTPUT_TOKENS", 100, 32000, "tokens")
 
+    @property
+    def ia_prompt_version(self) -> str:
+        """Versión del prompt del resumen (IA_PROMPT_VERSION; v1): config/prompts/resumen_cartel_<versión>.md."""
+        version = self.get("IA_PROMPT_VERSION").strip().lower() or "v1"
+        if not re.fullmatch(r"v[0-9]{1,3}", version):
+            raise ValueError("IA_PROMPT_VERSION debe ser v1, v2, v3…")
+        return version
+
     def _precio(self, key: str) -> Decimal | None:
         texto = self.get(key).strip()
         if not texto:
@@ -359,6 +384,23 @@ class Settings:
     def ia_precio_salida_usd(self) -> Decimal | None:
         """USD por millón de tokens de salida. Vacío: el costo estimado queda sin calcular («sin precio»)."""
         return self._precio("IA_PRECIO_SALIDA_USD")
+
+    @property
+    def ia_max_summaries_per_day(self) -> int:
+        """Resúmenes nuevos por día de la cola automática (IA_MAX_SUMMARIES_PER_DAY; 10, Ivania 2026-10-30)."""
+        return self._entero("IA_MAX_SUMMARIES_PER_DAY", 0, 200, "resúmenes")
+
+    @property
+    def ia_max_daily_cost(self) -> Decimal:
+        """Tope de costo estimado de la IA por día, en USD (IA_MAX_DAILY_COST; 1.00, Ivania 2026-10-30)."""
+        texto = self.get("IA_MAX_DAILY_COST").strip() or "1.00"
+        try:
+            tope = Decimal(texto)
+        except InvalidOperation:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número con punto decimal (USD por día)") from None
+        if not tope.is_finite() or tope < 0:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número mayor o igual a 0")
+        return tope
 
     @property
     def recordings_keep_days(self) -> int:

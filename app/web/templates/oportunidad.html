@@ -12,7 +12,7 @@
     {% endfor %}
     {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>
     {% else %}<span class="sin-revisar">Sin revisar</span>{% endif %}
-    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }}</span>{% endif %}
+    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }} · {{ seg.etapa_texto | lower }}</span>{% endif %}
   </div>
   <h1 class="titulo-cartel">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
   <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
@@ -43,6 +43,10 @@
   <div><dt>Comprador</dt><dd>{{ c.institucion or "Sin datos (la cédula no está en instituciones)" }}<br><small>Cédula {{ c.institution_cedula or "—" }}</small></dd></div>
   <div><dt>Estimado</dt><dd>{% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}<br><small>Publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
 </dl>
+
+{% if ia_visible and (resumenes or d.evaluaciones | selectattr("encaje", "in", ["alta", "media", "baja"]) | list) %}
+{% include "_resumen_ia.html" %}
+{% endif %}
 
 <section id="sicop">
   <h2>Información de SICOP</h2>

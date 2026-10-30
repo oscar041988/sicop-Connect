@@ -1,4 +1,4 @@
-"""Gestor de documentos, paso 1A: seguimiento de un cartel y su encargado (docs/GESTOR_DOCUMENTOS.md).
+"""Gestor de documentos, pasos 1A, 3 y 5: seguimiento, encargado, notas y etapa de un cartel (docs/GESTOR_DOCUMENTOS.md).
 
 Datos SINTÉTICOS en una base temporal; nunca toca data/.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app import historial, seguimiento, usuarios
+from app import historial, panel, seguimiento, usuarios
 from app.database import apply_migrations, connect
 from app.historial import Quien
 from app.importers.carteles import import_carteles
@@ -171,7 +171,7 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
     detalle = ana.get(f"/oportunidades/{NRO}").text
     assert "En seguimiento · sin encargado" in detalle and "Dar seguimiento</button>" not in detalle
     lista = ana.get("/seguimiento").text
-    assert NRO in lista and "Sin encargado" in lista and "lo abrió Ana" in lista
+    assert NRO in lista and "Sin encargado" in lista and "Lo abrió Ana" in lista
     assert f'href="/seguimiento/{NRO}"' not in lista  # sin encargado, solo entran los administradores
     assert _dar_seguimiento(ana).status_code == 303  # dos veces: no falla ni duplica
 
@@ -185,6 +185,7 @@ def test_solo_un_administrador_asigna(clientes, db):
     assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}"
     pagina = clientes["oscar"].get(f"/seguimiento/{NRO}").text
     assert "Encargado asignado." in pagina and "Ivania · asignado por Oscar" in pagina
+    assert "Le llegará un correo con el ciclo diario de las 8:00." in pagina   # paso 1B
     assert 'name="encargado"' in pagina  # el administrador ve el formulario
 
 
@@ -237,3 +238,177 @@ def test_errores_claros(clientes):
     _dar_seguimiento(clientes["ana"])
     elegir_nada = _asignar(clientes["oscar"], "")
     assert elegir_nada.status_code == 400 and "Elige un encargado de la lista." in elegir_nada.text
+
+
+# --- Paso 5: etapas del seguimiento -------------------------------------------------------------------------------
+
+def _etapa(cliente, etapa, nro=NRO):
+    token = token_csrf(cliente.get("/oportunidades").text)
+    return cliente.post(f"/seguimiento/{nro}/etapa", data={"csrf_token": token, "etapa": etapa},
+                        follow_redirects=False)
+
+
+def _etapa_de(db, nro=NRO):
+    with closing(connect(db)) as conn:
+        return seguimiento.estado(conn, nro).etapa
+
+
+def test_empieza_preparando_y_cada_cambio_queda_en_el_historial(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        assert seguimiento.estado(conn, NRO).etapa == "preparando" and seguimiento.etapas_de(conn, NRO) == []
+        assert seguimiento.cambiar_etapa(conn, NRO, "preparando", ivania, AHORA) is False  # ya lo estaba
+        assert seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA) is True
+        assert seguimiento.cambiar_etapa(conn, NRO, "ganada", ivania, AHORA + timedelta(days=1)) is True
+        assert seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA + timedelta(days=2)) is True  # corrige
+        estado = seguimiento.estado(conn, NRO)
+        cambios = seguimiento.etapas_de(conn, NRO)
+        eventos = [e.detalle for e in historial.ultimos(conn, ("cambiar_etapa",))]
+
+    assert (estado.etapa, estado.etapa_texto) == ("enviada", "Enviada")
+    assert [(c.etapa, c.puesta_por) for c in cambios] == [("enviada", "Ivania"), ("ganada", "Ivania"),
+                                                           ("enviada", "Ivania")]
+    assert eventos == [f"{NRO}: Ganada → Enviada", f"{NRO}: Enviada → Ganada", f"{NRO}: Preparando → Enviada"]
+
+
+def test_etapa_invalida_o_sin_seguimiento_y_no_se_borra_ni_se_cambia(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="no está en seguimiento"):
+            seguimiento.cambiar_etapa(conn, NRO, "enviada", ivania, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="Elige una etapa"):
+            seguimiento.cambiar_etapa(conn, NRO, "adjudicada", ivania, AHORA)
+        with pytest.raises(sqlite3.IntegrityError):  # la base tampoco acepta otra etapa
+            conn.execute("INSERT INTO seguimiento_etapas (seguimiento_id, etapa, puesta_por, puesta_por_nombre,"
+                         " created_at) VALUES (1, 'adjudicada', 1, 'x', 't')")
+        seguimiento.cambiar_etapa(conn, NRO, "perdida", ivania, AHORA)
+        for sql in ("DELETE FROM seguimiento_etapas", "UPDATE seguimiento_etapas SET etapa = 'ganada'"):
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(sql)
+        assert seguimiento.estado(conn, NRO).etapa == "perdida"
+
+
+def test_la_etapa_no_cambia_la_decision_y_reevaluar_no_la_toca(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        panel.guardar_revision(conn, NRO, "interesa", "", "", ivania.user_id, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        seguimiento.cambiar_etapa(conn, NRO, "ganada", ivania, AHORA)
+        evaluar_base(conn, cargar_reglas(), AHORA + timedelta(hours=1))
+        decisiones = [d for (d,) in conn.execute("SELECT decision FROM reviews WHERE nro_sicop = ?", (NRO,))]
+        assert seguimiento.estado(conn, NRO).etapa == "ganada"
+    assert decisiones == ["interesa"]
+
+
+def test_la_etapa_la_cambian_el_encargado_y_los_administradores(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    assert _etapa(clientes["ana"], "perdida").status_code == 403  # dio seguimiento, pero no es la encargada
+    assert _etapa_de(db) == "preparando"
+    respuesta = _etapa(clientes["ivania"], "enviada")
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}#etapa"
+    expediente = clientes["ivania"].get(f"/seguimiento/{NRO}").text
+    assert "Etapa: Enviada." in expediente and "¿Marcar también el cartel como «Ofertada»?" in expediente
+    assert _etapa(clientes["oscar"], "ganada").status_code == 303
+    assert _etapa_de(db) == "ganada"
+    # Todos ven la etapa, aunque no entren al expediente.
+    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get(f"/oportunidades/{NRO}").text
+    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get("/oportunidades").text
+    assert "etapa-ganada" in clientes["ana"].get("/seguimiento").text
+
+
+def test_ya_ofertada_no_sugiere_y_errores_de_etapa(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    with closing(connect(db)) as conn:
+        panel.guardar_revision(conn, NRO, "ofertada", "", "", _id(db, "oscar@ejemplo.test"), AHORA)
+    _etapa(clientes["oscar"], "enviada")
+    assert "¿Marcar también" not in clientes["oscar"].get(f"/seguimiento/{NRO}").text
+
+    invalida = _etapa(clientes["oscar"], "adjudicada")
+    assert invalida.status_code == 400 and "Elige una etapa" in invalida.text
+    assert _etapa(clientes["oscar"], "ganada", nro=OTRO).status_code == 404  # no está en seguimiento
+    sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/etapa", data={"etapa": "ganada"}, follow_redirects=False)
+    assert sin_token.status_code == 403 and _etapa_de(db) == "enviada"
+
+
+# --- Paso 3: notas del expediente ---------------------------------------------------------------------------------
+
+def _nota(cliente, texto, nro=NRO):
+    token = token_csrf(cliente.get("/oportunidades").text)
+    return cliente.post(f"/seguimiento/{nro}/notas", data={"csrf_token": token, "texto": texto},
+                        follow_redirects=False)
+
+
+def _notas_de(db, nro=NRO):
+    with closing(connect(db)) as conn:
+        return seguimiento.notas_de(conn, nro)
+
+
+def test_notas_con_autor_y_fecha_de_la_mas_reciente_a_la_mas_vieja(db):
+    ivania, oscar = _quien(db, "ivania@ejemplo.test"), _quien(db, "oscar@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "  Pedir el pliego a la proveeduría.\r\nLlamar el lunes.  ", ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "Revisé la garantía: 5 %.", oscar, AHORA + timedelta(hours=1))
+        notas = seguimiento.notas_de(conn, NRO)
+        eventos = [e.detalle for e in historial.ultimos(conn, ("escribir_nota",))]
+
+    assert [(n.texto, n.escrita_por) for n in notas] == [
+        ("Revisé la garantía: 5 %.", "Oscar"),
+        ("Pedir el pliego a la proveeduría.\nLlamar el lunes.", "Ivania")]  # sin espacios sobrantes ni CRLF
+    assert notas[1].fecha.endswith("-06:00")  # hora de Costa Rica
+    assert eventos == [f"{NRO}: nota #2", f"{NRO}: nota #1"]  # el historial no copia el texto
+
+
+def test_nota_vacia_larga_o_sin_seguimiento_y_no_se_borra_ni_se_cambia(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="no está en seguimiento"):
+            seguimiento.escribir_nota(conn, NRO, "Hola", ivania, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="Escribe la nota"):
+            seguimiento.escribir_nota(conn, NRO, " \r\n ", ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="2001 caracteres; el máximo es 2000"):
+            seguimiento.escribir_nota(conn, NRO, "x" * 2001, ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "x" * 2000, ivania, AHORA)  # justo en el tope
+        with pytest.raises(sqlite3.IntegrityError):  # la base tampoco acepta una más larga
+            conn.execute("INSERT INTO seguimiento_notas (seguimiento_id, texto, escrita_por, escrita_por_nombre,"
+                         " created_at) VALUES (1, ?, 1, 'x', 't')", ("x" * 2001,))
+        for sql in ("DELETE FROM seguimiento_notas", "UPDATE seguimiento_notas SET texto = 'otra cosa'"):
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(sql)
+        evaluar_base(conn, cargar_reglas(), AHORA + timedelta(hours=1))  # reevaluar no las toca
+        assert [len(n.texto) for n in seguimiento.notas_de(conn, NRO)] == [2000]
+
+
+def test_las_notas_las_escriben_y_las_leen_el_encargado_y_los_administradores(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    assert _nota(clientes["ana"], "Yo también quiero").status_code == 403  # dio seguimiento, pero no es la encargada
+    respuesta = _nota(clientes["ivania"], "Pedir aclaración <b>sobre</b> el plazo.\nAntes del viernes.")
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}#notas"
+    assert _nota(clientes["oscar"], "Visto.").status_code == 303
+    expediente = clientes["ivania"].get(f"/seguimiento/{NRO}").text
+    assert "Nota guardada." in expediente and "Visto." in expediente
+    assert "Pedir aclaración &lt;b&gt;sobre&lt;/b&gt; el plazo.\nAntes del viernes." in expediente  # texto, no HTML
+    assert "Pedir aclaración" not in clientes["ana"].get(f"/seguimiento/{NRO}").text  # 403: no la lee
+    # Al cambiar de encargado, la nueva lee todo lo anterior y la anterior ya no entra.
+    _asignar(clientes["oscar"], _id(db, "ana@ejemplo.test"))
+    assert "Pedir aclaración" in clientes["ana"].get(f"/seguimiento/{NRO}").text
+    assert _nota(clientes["ivania"], "Una más").status_code == 403
+    assert [n.escrita_por for n in _notas_de(db)] == ["Oscar", "Ivania"]
+
+
+def test_errores_de_nota_conservan_el_texto(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    vacia = _nota(clientes["oscar"], "   ")
+    assert vacia.status_code == 400 and "Escribe la nota." in vacia.text
+    larga = _nota(clientes["oscar"], "Borrador largo " + "y" * 2000)
+    assert larga.status_code == 400 and "el máximo es 2000" in larga.text and "Borrador largo yyy" in larga.text
+    assert _nota(clientes["oscar"], "Hola", nro=OTRO).status_code == 404  # no está en seguimiento
+    sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/notas", data={"texto": "Hola"}, follow_redirects=False)
+    assert sin_token.status_code == 403 and _notas_de(db) == []

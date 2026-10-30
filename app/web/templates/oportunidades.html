@@ -90,7 +90,7 @@
           {% elif f.decision == "ofertada" %}<span class="tag">Ofertada</span>
           {% elif f.decision == "no_se_oferta" %}<span class="tag g">No se oferta</span>{% endif %}
           {% set s = seguimientos.get(f.nro_sicop) %}
-          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }}</span>{% endif %}
+          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }} · {{ s.etapa_texto | lower }}</span>{% endif %}
         </div>
         <h3><a href="/oportunidades/{{ f.nro_sicop }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
         <div class="inst">{{ f.institucion | legible or "Sin datos de la institución" }}</div>

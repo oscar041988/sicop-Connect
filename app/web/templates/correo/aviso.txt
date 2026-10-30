@@ -12,6 +12,15 @@ La prioridad indica encaje, no que se pueda participar: confirma los requisitos 
    Evidencia: {% for f in o.frases %}«{{ f | legible }}»{{ ", " if not loop.last }}{% endfor %}
 
 {% endif %}
+{% if o.extracto %}
+   Resumen con IA (preliminar, verificar con el pliego):
+   Recomendación: {{ o.extracto.recomendacion }}. {{ o.extracto.justificacion }}
+   De qué trata: {{ o.extracto.de_que_trata }}
+   Leer el resumen: {{ o.extracto.enlace }}
+{% elif o.ia %}
+   Resumen con IA: todavía no está. Se prepara después de descargar los documentos de SICOP
+   (normalmente hoy después de las 10:00) y se ve en el panel.
+{% endif %}
    Ver en el panel: {{ o.enlace }}
 {% endfor %}
 

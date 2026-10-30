@@ -103,7 +103,8 @@ Construido y probado el 2026-10-28 **sin clave y sin llamar a OpenAI**: las prue
 
 Como máximo **2 reintentos** (3 intentos en total), con pausas de 2 s y 6 s, y solo ante errores **temporales**:
 límite de uso (429), error del servidor (5xx), tiempo agotado y conexión. **Nunca** ante clave inválida (401),
-permiso (403), petición mala (400), modelo no encontrado (404) ni falta de saldo (429 `insufficient_quota`).
+permiso (403), petición mala (400), modelo no encontrado (404) ni falta de saldo (429 `insufficient_quota` o
+`credit_balance_exhausted`).
 El SDK no reintenta por su cuenta (`max_retries=0`).
 
 ### Qué guarda `ia_usage` (migración 0023)
@@ -119,7 +120,77 @@ la clave. No se modifica ni se borra. Además se pide a OpenAI no guardar la res
 `python -m app.cli ia probar`: una llamada corta («Responde solo: OK»). Muestra modelo, tokens, duración, costo
 estimado y la respuesta, y la anota en `ia_usage`. Con `AI_MODE=none` dice «IA apagada» y no llama.
 
-## 4. Pendiente de la lección 1
+## 4. Resumen ejecutivo (lección 3)
+
+`python -m app.cli ia resumir --nro 20261002824` pide al modelo el resumen del cartel (`app/ai/resumen.py`), lo
+guarda en `ia_summaries` (migración 0026) y deja una copia para leer en `EXPORTS_DIR/resumen_<nro>_<fecha-hora>.txt`.
+Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes reales los genera Ivania.
+
+### Prompt versionado
+
+- `config/prompts/resumen_cartel_v1.md`: el prompt del sistema de la guía, con el portafolio de las 9 familias de
+  `config/hermatix_rules.yaml` y un apartado de formato (fechas AAAA-MM-DD HH:MM, montos sin separador de miles)
+  para poder compararlos con SICOP.
+- `IA_PROMPT_VERSION` (por defecto `v1`) dice cuál se usa. Un cambio se guarda como `v2`, `v3`…; **nunca** se edita
+  una versión ya usada, porque los resúmenes guardados dicen con qué versión se hicieron.
+- **`v2` (2026-10-30), con el criterio de Hermatix dado por Ivania:** lo que decide es **qué piden**; todo cartel
+  alineado con los servicios vale la pena, sin importar monto, cantidad, garantías ni plazo de entrega (se negocian).
+  Hermatix tiene 14 años en funcionamiento (experiencia de la empresa de hasta 14 años: se cumple; lo que no se pueda
+  confirmar, como cantidad de contratos, es duda y no descarte). Marcas propias: Wialon y Howen; otra marca exigida →
+  riesgo y «revisar requisitos». Descartar solo si lo que piden no se alinea. La `v1` queda igual (sin criterio).
+  Se activa con `IA_PROMPT_VERSION=v2` en `.env`; entonces todos los carteles vuelven a la cola.
+
+### Salida estructurada
+
+Se le da al modelo un esquema (JSON Schema, modo estricto) y OpenAI obliga a que la respuesta lo cumpla. Campos:
+de qué trata · qué piden (línea, bien o servicio, cantidad, especificaciones, cita) · requerimientos (tipo técnico
+/ legal / financiero / experiencia, excluyente, cita) · indicadores del pliego (plazo de entrega, vigencia,
+garantías de participación y cumplimiento, peso del precio, nivel de riesgo) · plazos (cierre, apertura, otros) ·
+monto estimado · criterios de evaluación · encaje con Hermatix · riesgos y dudas · recomendación preliminar
+(dar seguimiento · revisar requisitos · descartar) y su justificación. Cada dato lleva su cita `[DOC n · pág. p]`
+o «SICOP»; lo que falte dice «no encontrado».
+
+### Comparación con SICOP
+
+Cierre y apertura (día, y la hora si el resumen la da), monto estimado de la ficha y cantidad de cada línea. Si
+alguno no coincide, el resumen queda **«revisar»** y la diferencia se guarda y se muestra. El monto y las fechas
+del resumen solo sirven para esa comparación: en el reporte (lección 4) los indicadores de SICOP los pone la app.
+
+### Estados y no repetir
+
+- `ok` · `revisar` · `fallido` (rechazo del modelo, respuesta incompleta, JSON inválido o error de OpenAI: sin
+  resumen, con su motivo; nunca se inventa uno).
+- Misma huella del expediente y misma versión del prompt con un resumen `ok` o `revisar` = **no se vuelve a
+  llamar** a OpenAI. Un `fallido` sí se vuelve a pedir. Nada se sobrescribe ni se borra.
+- La recomendación no toca revisiones, decisiones ni seguimientos.
+
+## 5. Cola automática y panel (lección 5, primera parte)
+
+Pedido de Ivania (2026-10-30): que los resúmenes no dependan de correr `ia resumir` a mano. Decisiones de Ivania,
+provisionales hasta que Oscar decida (`DECISION_IA.md` §5): **carteles Alta, Media y Baja enriquecidos** (Baja agregado el mismo día), presupuesto
+de **10 resúmenes y 1.00 USD al día**.
+
+- `python -m app.cli ia cola` (`app/ai/cola.py`) la corre la tarea de las 10:00, después del enriquecimiento. Cola,
+  presupuesto, fallos y cómo apagarla: `docs/OPERACION.md` §3.3. `ia cola --ver` la muestra sin llamar a OpenAI.
+- **Panel:** en la página de un cartel del panel, el bloque «Resumen ejecutivo · Generado por IA · verificar con
+  el pliego»: fecha, modelo, versión del prompt y estado; las diferencias con SICOP si quedó «revisar»; la
+  recomendación preliminar («la decisión es del encargado»); qué trata y el encaje; el resto (qué piden,
+  requerimientos con su cita, indicadores, plazos, criterios, riesgos) al abrir «Ver el resumen completo»; y el
+  historial de resúmenes. Todo el texto del modelo va escapado. Con `AI_MODE=none` no aparece.
+- **Falta de la lección 5:** ~~citas como enlaces~~ (hecho, 30/10); la casilla «coincido / no coincido» junto a la
+  decisión (**pospuesta por Ivania, 30/10**: Oscar quiere el resumen para leer rápido; los desacuerdos se reportan a
+  mano hasta que sean frecuentes); el reporte de 2 páginas (lección 4) en la misma cola; ~~la línea del resumen en el correo diario~~ (hecho, 30/10: ver abajo); la
+  vista de uso del día y del mes; el despliegue en el servidor.
+
+### Extracto en el correo diario (2026-10-30)
+
+Con `AI_MODE=openai`, cada cartel del correo de las 8:00 que ya tiene resumen trae un recuadro «Resumen con IA ·
+preliminar, verificar con el pliego»: la recomendación con su justificación, de qué trata (hasta 300 caracteres) y
+el enlace «Leer el resumen completo» (`/oportunidades/{nro}/resumen`). Decisión de Ivania: el correo sigue a las
+8:00 (Oscar); como los resúmenes se hacen después de las 10:00, un cartel nuevo casi siempre llega sin resumen y el
+correo dice «todavía no está… se ve en el panel». Con `AI_MODE=none` el correo no menciona el resumen.
+
+## 6. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

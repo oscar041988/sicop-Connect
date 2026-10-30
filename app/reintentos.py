@@ -10,6 +10,10 @@ con el estado y el detalle de antes, porque un envío posterior reemplaza el det
 
 El resumen semanal (app/resumen.py) también aparece aquí: no tiene cartel (nro_sicop vacío). Reintentarlo solo
 sirve en su misma semana; sale con el siguiente envío del resumen (notify --resumen-semanal --send).
+
+El correo al nuevo encargado (app/aviso_encargado.py) también: su destinatario es un usuario, no tiene que estar en
+«Destinatarios». Se puede reintentar mientras esa asignación siga vigente y el usuario activo, aunque el cartel
+haya cerrado; sale con el siguiente ciclo.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from app import destinatarios, historial, resumen
+from app import aviso_encargado, destinatarios, historial, resumen
 from app.database import transaccion
 from app.historial import TERMINAL, Quien
 from app.matching.evaluar import plazo_estado
@@ -43,7 +47,7 @@ class AvisoPorRevisar:
     actualizado: str | None
     cierre: str | None
     vencido: bool            # el cartel ya cerró (o el resumen es de otra semana): aunque se prepare, no se enviaría
-    destinatario_activo: bool
+    destinatario_activo: bool  # correo al encargado: la asignación sigue vigente y el usuario, activo
     superado: bool           # a ese destinatario ya le llegó una versión más nueva del cartel
     semana: str | None = None  # solo el resumen semanal: «2026-W43»
 
@@ -52,9 +56,16 @@ class AvisoPorRevisar:
         return self.nro_sicop is None
 
     @property
+    def es_asignacion(self) -> bool:
+        return self.motivo == aviso_encargado.MOTIVO
+
+    @property
     def que(self) -> str:
-        """«cartel 20261000001» o «resumen semanal 2026-W43», para los mensajes y el historial."""
-        return f"resumen semanal {self.semana}" if self.es_resumen else f"cartel {self.nro_sicop}"
+        """«cartel 20261000001», «resumen semanal 2026-W43» o «asignación del cartel …», para los mensajes y el
+        historial."""
+        if self.es_resumen:
+            return f"resumen semanal {self.semana}"
+        return f"asignación del cartel {self.nro_sicop}" if self.es_asignacion else f"cartel {self.nro_sicop}"
 
 
 def _filas(conn: sqlite3.Connection, condicion: str, parametros: tuple) -> list[tuple]:
@@ -62,13 +73,22 @@ def _filas(conn: sqlite3.Connection, condicion: str, parametros: tuple) -> list[
         "SELECT o.id, o.recipient, o.nro_sicop, t.descripcion, o.motivo, o.status, o.detalle, o.created_at,"
         "       o.updated_at, o.cierre, o.version,"
         "       EXISTS (SELECT 1 FROM notification_outbox n WHERE n.recipient = o.recipient"
-        "               AND n.nro_sicop = o.nro_sicop AND n.id > o.id AND n.status = 'aceptado')"
+        "               AND n.nro_sicop = o.nro_sicop AND n.id > o.id AND n.status = 'aceptado'"
+        "               AND n.motivo != 'asignacion'),"
+        # Correo al encargado: ¿la asignación sigue siendo la última de su cartel y el usuario sigue activo?
+        "       EXISTS (SELECT 1 FROM seguimiento_asignaciones a JOIN users u ON u.id = a.encargado_id"
+        "               WHERE o.motivo = 'asignacion' AND a.id = CAST(o.version AS INTEGER) AND u.active = 1"
+        "               AND lower(u.email) = o.recipient AND a.id = (SELECT max(b.id) FROM seguimiento_asignaciones b"
+        "                                                            WHERE b.seguimiento_id = a.seguimiento_id))"
         " FROM notification_outbox o LEFT JOIN tenders t ON t.nro_sicop = o.nro_sicop"  # el resumen no tiene cartel
         f" WHERE {condicion} ORDER BY o.id DESC", parametros).fetchall()
 
 
 def _aviso(fila: tuple, activos: set[str], ahora: datetime) -> AvisoPorRevisar:
-    id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre, version, superado = fila
+    id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre, version, superado, vigente = fila
+    if motivo == aviso_encargado.MOTIVO:  # sale aunque el cartel haya cerrado; vale mientras siga vigente
+        return AvisoPorRevisar(id_, para, nro, titulo, motivo, estado, detalle, creado, actualizado, cierre,
+                               False, bool(vigente), False)
     if nro is None:  # resumen semanal: solo vale en su semana (app/resumen.py solo envía el de la semana actual)
         return AvisoPorRevisar(id_, para, None, f"Resumen semanal {version}", motivo, estado, detalle, creado,
                                actualizado, None, version != resumen.semana(ahora)[0], para in activos, False,
@@ -124,6 +144,9 @@ def reintentar(conn: sqlite3.Connection, outbox_id: int, ahora: datetime, quien:
         raise AvisoInvalido(f"El resumen semanal {aviso.semana} es de otra semana: ya no se envía.")
     if aviso.vencido:
         raise AvisoInvalido(f"El cartel {aviso.nro_sicop} ya cerró: aunque se prepare, no se enviaría.")
+    if not aviso.destinatario_activo and aviso.es_asignacion:
+        raise AvisoInvalido(f"{aviso.para} ya no es el encargado del cartel {aviso.nro_sicop} (o su usuario se"
+                            " desactivó): no hace falta reenviarlo.")
     if not aviso.destinatario_activo:
         raise AvisoInvalido(f"{aviso.para} ya no recibe avisos: vuelve a agregarlo en «Destinatarios» antes de"
                             " reintentar.")

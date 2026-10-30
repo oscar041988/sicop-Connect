@@ -6,6 +6,12 @@
   «En seguimiento · <nombre>», pero no entran.
 * El encargado vigente es la última asignación: cambiarlo agrega una fila y nunca borra la anterior, así queda
   el historial de traspasos. Cada cambio va también a audit_log.
+* Paso 1B: cada asignación deja preparado el correo al nuevo encargado (app/aviso_encargado.py).
+* Paso 5: la etapa del seguimiento (preparando · enviada · ganada · perdida). La cambian quienes entran al
+  expediente; igual que el encargado, la vigente es la última fila y cada cambio agrega una. No toca las
+  decisiones «Ofertada» y «No se oferta» de las revisiones.
+* Paso 3: notas con autor y fecha. Las escriben y las leen quienes entran al expediente; no se editan ni se
+  borran (para corregir, otra nota).
 """
 
 from __future__ import annotations
@@ -14,10 +20,16 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
-from app import historial, usuarios
+from app import aviso_encargado, historial, usuarios
 from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
+
+
+# Paso 5 (aprobadas por Oscar el 2026-10-26). El orden es el de los botones del expediente.
+ETAPAS = {"preparando": "Preparando", "enviada": "Enviada", "ganada": "Ganada", "perdida": "Perdida"}
+INICIAL = "preparando"  # sin cambios anotados, el cartel está preparando
+NOTA_MAX = 2000  # caracteres, como el comentario de una revisión (la base pone el mismo tope)
 
 
 class SeguimientoInvalido(ValueError):
@@ -26,18 +38,42 @@ class SeguimientoInvalido(ValueError):
 
 @dataclass(frozen=True)
 class Estado:
-    """El seguimiento de un cartel: quién lo abrió y quién es el encargado vigente (None = sin encargado)."""
+    """El seguimiento de un cartel: quién lo abrió, quién es el encargado vigente (None = sin encargado) y en qué
+    etapa va."""
     nro_sicop: str
     abierto_por: str
     abierto_en: str
     encargado_id: int | None
     encargado: str | None
+    etapa: str = INICIAL
+
+    @property
+    def etapa_texto(self) -> str:
+        return ETAPAS[self.etapa]
 
 
 @dataclass(frozen=True)
 class Asignacion:
     encargado: str
     asignado_por: str
+    fecha: str
+
+
+@dataclass(frozen=True)
+class CambioEtapa:
+    etapa: str
+    puesta_por: str
+    fecha: str
+
+    @property
+    def texto(self) -> str:
+        return ETAPAS[self.etapa]
+
+
+@dataclass(frozen=True)
+class Nota:
+    texto: str
+    escrita_por: str
     fecha: str
 
 
@@ -53,8 +89,10 @@ class Fila:
 # Encargado vigente de cada seguimiento: su última asignación.
 _ULTIMA = ("(SELECT a.{campo} FROM seguimiento_asignaciones a WHERE a.seguimiento_id = s.id"
            " ORDER BY a.id DESC LIMIT 1)")
+_ETAPA = ("coalesce((SELECT e.etapa FROM seguimiento_etapas e WHERE e.seguimiento_id = s.id"
+          f" ORDER BY e.id DESC LIMIT 1), '{INICIAL}')")
 _COLUMNAS_ESTADO = (f"s.nro_sicop, s.abierto_por_nombre, s.abierto_en, {_ULTIMA.format(campo='encargado_id')},"
-                    f" {_ULTIMA.format(campo='encargado_nombre')}")
+                    f" {_ULTIMA.format(campo='encargado_nombre')}, {_ETAPA}")
 
 
 def _momento(ahora: datetime) -> str:
@@ -116,15 +154,74 @@ def asignar(conn: sqlite3.Connection, nro_sicop: str, encargado_id: int, quien: 
         raise SeguimientoInvalido(f"{encargado.nombre} está desactivado: no se le puede asignar un cartel.")
     if actual.encargado_id == encargado.id:
         return False
-    with transaccion(conn):  # la asignación y su línea del historial, juntas
-        conn.execute(
+    with transaccion(conn):  # la asignación, su aviso por correo (paso 1B) y su línea del historial, juntos
+        cursor = conn.execute(
             "INSERT INTO seguimiento_asignaciones (seguimiento_id, encargado_id, encargado_nombre, asignado_por,"
             " asignado_por_nombre, created_at)"
             " SELECT id, ?, ?, ?, ?, ? FROM seguimientos WHERE nro_sicop = ?",
             (encargado.id, encargado.nombre, quien.user_id, nombre_quien, _momento(ahora), nro_sicop))
+        aviso_encargado.preparar(conn, nro_sicop, cursor.lastrowid, encargado.id, encargado.email, quien.user_id,
+                                 ahora)
         antes = actual.encargado or "sin encargado"
         historial.registrar(conn, quien, "asignar_encargado", f"{nro_sicop}: {antes} → {encargado.nombre}")
     return True
+
+
+def cambiar_etapa(conn: sqlite3.Connection, nro_sicop: str, etapa: str, quien: Quien, ahora: datetime) -> bool:
+    """Pone la etapa del seguimiento. Devuelve False si ya estaba en esa etapa (no se anota nada).
+    Que quien la cambia pueda entrar al expediente lo revisa la ruta (puede_entrar)."""
+    if etapa not in ETAPAS:
+        raise SeguimientoInvalido("Elige una etapa: preparando, enviada, ganada o perdida.")
+    nombre = _nombre_activo(conn, quien.user_id)
+    actual = estado(conn, nro_sicop)
+    if actual is None:
+        raise SeguimientoInvalido(f"El cartel {nro_sicop} no está en seguimiento: primero «Dar seguimiento».")
+    if actual.etapa == etapa:
+        return False
+    with transaccion(conn):  # el cambio y su línea del historial, juntos
+        conn.execute(
+            "INSERT INTO seguimiento_etapas (seguimiento_id, etapa, puesta_por, puesta_por_nombre, created_at)"
+            " SELECT id, ?, ?, ?, ? FROM seguimientos WHERE nro_sicop = ?",
+            (etapa, quien.user_id, nombre, _momento(ahora), nro_sicop))
+        historial.registrar(conn, quien, "cambiar_etapa",
+                            f"{nro_sicop}: {actual.etapa_texto} → {ETAPAS[etapa]}")
+    return True
+
+
+def etapas_de(conn: sqlite3.Connection, nro_sicop: str) -> list[CambioEtapa]:
+    """Los cambios de etapa del cartel, del más reciente al más viejo (vacío: sigue «preparando»)."""
+    return [CambioEtapa(*fila) for fila in conn.execute(
+        "SELECT e.etapa, e.puesta_por_nombre, e.created_at FROM seguimiento_etapas e"
+        " JOIN seguimientos s ON s.id = e.seguimiento_id WHERE s.nro_sicop = ? ORDER BY e.id DESC",
+        (nro_sicop,))]
+
+
+def escribir_nota(conn: sqlite3.Connection, nro_sicop: str, texto: str, quien: Quien, ahora: datetime) -> None:
+    """Agrega una nota al expediente. Que quien la escribe pueda entrar al expediente lo revisa la ruta
+    (puede_entrar)."""
+    texto = texto.replace("\r\n", "\n").strip()  # el navegador manda los saltos de línea como CRLF
+    if not texto:
+        raise SeguimientoInvalido("Escribe la nota.")
+    if len(texto) > NOTA_MAX:
+        raise SeguimientoInvalido(f"La nota tiene {len(texto)} caracteres; el máximo es {NOTA_MAX}.")
+    nombre = _nombre_activo(conn, quien.user_id)
+    if estado(conn, nro_sicop) is None:
+        raise SeguimientoInvalido(f"El cartel {nro_sicop} no está en seguimiento: primero «Dar seguimiento».")
+    with transaccion(conn):  # la nota y su línea del historial, juntas
+        cursor = conn.execute(
+            "INSERT INTO seguimiento_notas (seguimiento_id, texto, escrita_por, escrita_por_nombre, created_at)"
+            " SELECT id, ?, ?, ?, ? FROM seguimientos WHERE nro_sicop = ?",
+            (texto, quien.user_id, nombre, _momento(ahora), nro_sicop))
+        # El texto no va al historial: solo vive en el expediente, que tiene su regla de acceso (puede_entrar).
+        historial.registrar(conn, quien, "escribir_nota", f"{nro_sicop}: nota #{cursor.lastrowid}")
+
+
+def notas_de(conn: sqlite3.Connection, nro_sicop: str) -> list[Nota]:
+    """Las notas del expediente, de la más reciente a la más vieja."""
+    return [Nota(*fila) for fila in conn.execute(
+        "SELECT n.texto, n.escrita_por_nombre, n.created_at FROM seguimiento_notas n"
+        " JOIN seguimientos s ON s.id = n.seguimiento_id WHERE s.nro_sicop = ? ORDER BY n.id DESC",
+        (nro_sicop,))]
 
 
 def historial_de(conn: sqlite3.Connection, nro_sicop: str) -> list[Asignacion]:
@@ -141,7 +238,7 @@ def listar(conn: sqlite3.Connection) -> list[Fila]:
         f"SELECT {_COLUMNAS_ESTADO}, t.descripcion, i.nombre, t.fecha_cierre_recepcion FROM seguimientos s"
         " JOIN tenders t ON t.nro_sicop = s.nro_sicop LEFT JOIN institutions i ON i.cedula = t.institution_cedula"
         " ORDER BY t.fecha_cierre_recepcion IS NULL, t.fecha_cierre_recepcion, s.nro_sicop").fetchall()
-    lista = [Fila(Estado(*f[:5]), *f[5:]) for f in filas]
+    lista = [Fila(Estado(*f[:6]), *f[6:]) for f in filas]
     return sorted(lista, key=lambda f: f.estado.encargado_id is not None)  # sorted es estable: conserva el orden
 
 

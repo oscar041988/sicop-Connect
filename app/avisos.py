@@ -23,6 +23,11 @@ Envío (encargo B): un resumen por destinatario con todo lo «preparado» que no
 proveedor, sus avisos pasan a «incierto»; con la respuesta quedan «aceptado» o «fallido». Si el programa se cae a
 mitad del envío, quedan «incierto» y no se reenvían solos. Solo se envía lo «preparado»: lo fallido o incierto
 se revisa a mano.
+
+Extracto del resumen con IA (Reporte con IA, lección 5; decisión de Ivania, 2026-10-30): con AI_MODE=openai, cada
+cartel que ya tiene resumen lleva su recomendación preliminar, de qué trata y el enlace al resumen en el panel. El
+correo sigue a las 8:00 y los resúmenes se hacen después de las 10:00: un cartel nuevo casi siempre llega sin
+resumen todavía, y el correo lo dice.
 """
 
 from __future__ import annotations
@@ -47,6 +52,7 @@ MOTIVOS = {"nueva": "Nueva", "cambio_plazo": "Cambió el plazo", "nueva_version"
 MOTIVOS_DE_VERSION = ("nueva", "nueva_version", "cambio_plazo")  # los que siguen las versiones del cartel
 ESTADOS = ("preparado", "aceptado", "fallido", "incierto")
 MAX_FRASES = 6  # evidencia: frases que coincidieron, las primeras
+MAX_EXTRACTO = 300  # caracteres de «de qué trata» en el correo; el resto, en el panel
 
 _PLANTILLAS = Environment(
     loader=FileSystemLoader(Path(__file__).parent / "web" / "templates" / "correo"),
@@ -70,6 +76,16 @@ class Proveedor(Protocol):
     def enviar(self, para: str, asunto: str, html: str, texto: str) -> str: ...
 
 
+@dataclass(frozen=True)
+class Extracto:
+    """Lo que el correo dice del resumen con IA de un cartel (no es un dato oficial de SICOP)."""
+    recomendacion: str
+    justificacion: str
+    de_que_trata: str
+    fecha: str
+    enlace: str
+
+
 @dataclass
 class Oportunidad:
     """Lo que el correo dice de un cartel."""
@@ -86,6 +102,8 @@ class Oportunidad:
     enlace: str
     # Filas de la outbox que cubre (más de una si el cartel cambió otra vez antes de enviarse).
     outbox_ids: list[int] = field(default_factory=list)
+    ia: bool = False                  # AI_MODE=openai: el correo habla del resumen (lo tenga o no todavía)
+    extracto: Extracto | None = None
 
 
 @dataclass
@@ -195,8 +213,24 @@ def preparar(conn: sqlite3.Connection, version_reglas: str, ahora: datetime, dia
     return resultado
 
 
+def _recortar(texto: str, largo: int) -> str:
+    texto = " ".join(texto.split())
+    return texto if len(texto) <= largo else texto[:largo].rsplit(" ", 1)[0] + "…"
+
+
+def _extracto(conn: sqlite3.Connection, nro_sicop: str, base_url: str) -> Extracto | None:
+    from app.ai import resumen as ia_resumen   # aquí y no arriba: sin IA, el correo no carga el cliente de OpenAI
+    r = ia_resumen.ultimo(conn, nro_sicop)
+    if r is None:
+        return None
+    return Extracto(recomendacion=ia_resumen.RECOMENDACIONES.get(r.datos["recomendacion"], ia_resumen.NO),
+                    justificacion=_recortar(r.datos["justificacion"], MAX_EXTRACTO),
+                    de_que_trata=_recortar(r.datos["de_que_trata"], MAX_EXTRACTO), fecha=r.creado_en,
+                    enlace=f"{base_url}/oportunidades/{nro_sicop}/resumen")
+
+
 def _oportunidad(conn: sqlite3.Connection, nro_sicop: str, motivo: str, version_reglas: str, ahora: datetime,
-                 base_url: str) -> Oportunidad:
+                 base_url: str, con_resumen: bool = False) -> Oportunidad:
     d = panel.detalle(conn, nro_sicop, version_reglas, ahora)
     candidatas = [e for e in d.evaluaciones if e.encaje in ("alta", "media")]  # ya vienen Alta primero
     # Un cierre próximo puede ser de un cartel Baja que una persona marcó: se muestra su prioridad real.
@@ -213,26 +247,28 @@ def _oportunidad(conn: sqlite3.Connection, nro_sicop: str, motivo: str, version_
         familias=[panel.NOMBRES_FAMILIA.get(e.familia, e.familia) for e in con_senal],
         cierre=c.fecha_cierre_recepcion, plazo=d.plazo, regresiva=panel.cuenta_regresiva(c.fecha_cierre_recepcion, ahora),
         frases=frases[:MAX_FRASES], enlace=f"{base_url}/oportunidades/{nro_sicop}",
+        ia=con_resumen, extracto=_extracto(conn, nro_sicop, base_url) if con_resumen else None,
     )
 
 
 def pendientes(conn: sqlite3.Connection, ahora: datetime, base_url: str,
-               motivos: tuple[str, ...] | None = None) -> dict[str, list[Oportunidad]]:
+               motivos: tuple[str, ...] | None = None, con_resumen: bool = False) -> dict[str, list[Oportunidad]]:
     """Avisos en estado «preparado», por destinatario (solo los que siguen activos): lo que enviaría --send.
 
     Se saltan los carteles cuyo cierre ya venció (quedan «preparado», sin enviarse). Si un cartel tiene varios
     avisos preparados (cambió otra vez antes de enviarse), va una sola vez, con el motivo del más reciente."""
     activos = {d.email.strip().lower() for d in destinatarios.activos(conn)}
     filas: dict[tuple[str, str], tuple[str, str, list[int]]] = {}
+    # El resumen semanal (sin cartel) y el correo al encargado (app/aviso_encargado.py) van aparte.
     for id_, para, nro, motivo, version_reglas in conn.execute(
             "SELECT id, recipient, nro_sicop, motivo, rules_version FROM notification_outbox"
-            " WHERE status = 'preparado' AND nro_sicop IS NOT NULL ORDER BY id").fetchall():  # el resumen va aparte
+            " WHERE status = 'preparado' AND nro_sicop IS NOT NULL AND motivo != 'asignacion' ORDER BY id").fetchall():
         if para in activos and (motivos is None or motivo in motivos):
             ids = filas.get((para, nro), ("", "", []))[2]
             filas[(para, nro)] = (motivo, version_reglas, [*ids, id_])  # el más reciente manda
     por_destinatario: dict[str, list[Oportunidad]] = {}
     for (para, nro), (motivo, version_reglas, ids) in filas.items():
-        o = _oportunidad(conn, nro, motivo, version_reglas, ahora, base_url)
+        o = _oportunidad(conn, nro, motivo, version_reglas, ahora, base_url, con_resumen)
         if plazo_estado(o.cierre, ahora) == "vencido":
             continue
         o.outbox_ids = ids
@@ -306,6 +342,13 @@ def enviar(conn: sqlite3.Connection, por_destinatario: dict[str, list[Oportunida
     return envios
 
 
+def _ia_encendida(settings: Settings) -> bool:
+    try:
+        return settings.ai_mode == "openai"
+    except ValueError:   # AI_MODE mal escrito: el correo sale igual, sin el resumen
+        return False
+
+
 def notify(conn: sqlite3.Connection, settings: Settings, ahora: datetime, dry_run: bool = True,
            proveedor: Proveedor | None = None, solo: str | None = None, solo_cierre: bool = False) -> Resultado:
     """Prepara los avisos; con dry_run escribe la vista previa, sin dry_run los envía con el proveedor.
@@ -322,12 +365,13 @@ def notify(conn: sqlite3.Connection, settings: Settings, ahora: datetime, dry_ru
         solo = solo.strip().lower()
         if solo not in {d.email.strip().lower() for d in destinatarios.activos(conn)}:
             raise AvisoError(f"{solo} no es un destinatario activo: agrégalo en el panel («Destinatarios»).")
+    con_resumen = _ia_encendida(settings)
     if solo_cierre:
         resultado = preparar(conn, version, ahora, 0, settings.notify_closing_days)
-        resultado.preparados = pendientes(conn, ahora, settings.app_base_url, ("cierre_proximo",))
+        resultado.preparados = pendientes(conn, ahora, settings.app_base_url, ("cierre_proximo",), con_resumen)
     else:
         resultado = preparar(conn, version, ahora, settings.notify_lookback_days, settings.notify_closing_days)
-        resultado.preparados = pendientes(conn, ahora, settings.app_base_url)
+        resultado.preparados = pendientes(conn, ahora, settings.app_base_url, con_resumen=con_resumen)
     if solo is not None:
         resultado.preparados = {k: v for k, v in resultado.preparados.items() if k == solo}
     if dry_run:

@@ -127,6 +127,12 @@ h3 { margin: 0; }
 .tag.g { background: var(--no-bg); color: var(--no); }     /* vencido / no interesa */
 .tag.r { background: var(--azul-bg); color: var(--azul); } /* revisar requisitos */
 .tag.seg, .en-seguimiento { background: var(--azul-bg); color: var(--azul); border: 1px solid var(--azul); } /* gestor de documentos */
+/* Gestor de documentos, paso 5: etapas del seguimiento */
+.etapas { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.etapas .vigente { background: var(--g5); color: #fff; }
+.tag.etapa-enviada { background: var(--azul-bg); color: var(--azul); }
+.tag.etapa-perdida { background: var(--no-bg); color: var(--no); }
+.aviso-etapa { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 10px; }
 .en-seguimiento { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .seguimiento-acciones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0 0 16px; }
 .score { text-align: center; min-width: 78px; }
@@ -168,6 +174,19 @@ mark { background: #C8F0D6; color: var(--g9); padding: 0 .15em; border-radius: 4
 .datos div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
 .tarjeta { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 10px; }
 .tarjeta p { margin: 4px 0; }
+/* Seguimiento: 3 tarjetas por línea; en tableta 2 y en celular 1. El botón queda abajo en todas. */
+.rejilla-seguimiento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.rejilla-seguimiento .tarjeta { margin-top: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.rejilla-seguimiento .titulo-tarjeta { font-weight: 600; }
+.rejilla-seguimiento .pie-tarjeta { margin-top: auto; padding-top: 8px; }
+.rejilla-seguimiento .vacio { grid-column: 1 / -1; }
+/* Expediente (notas y archivos): el título arriba del recuadro y el botón separado debajo, a la izquierda. */
+.form-nota { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 8px 0; }
+.form-nota label { display: flex; flex-direction: column; gap: 6px; width: 100%; font-weight: 600; }
+.form-nota textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; }
+.form-nota input[type="file"] { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; max-width: 100%; }
+@media (max-width: 1000px) { .rejilla-seguimiento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rejilla-seguimiento { grid-template-columns: minmax(0, 1fr); } }
 
 table.lista { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 10px; }
 table.lista th, table.lista td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -294,4 +313,65 @@ table.lista.auto th, table.lista.auto td { overflow-wrap: break-word; }
 table.lista.auto .btn { white-space: nowrap; }
 @media (max-width: 760px) {
   table.lista.auto th:nth-child(2), table.lista.auto td:nth-child(2) { display: table-cell; }
+}
+/* Reporte con IA, lección 5: el resumen en la página del cartel (una fila como los documentos, con «Ver» y
+   «Descargar») y en su propia página como documento (resumen.html). Nunca parece un dato oficial de SICOP. */
+.resumen-ia { border-left: 4px solid var(--azul); }
+.resumen-ia details { margin-top: 12px; }
+.resumen-ia summary { cursor: pointer; color: var(--azul); font-weight: 600; }
+.etiqueta-ia { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: .78rem;
+  font-weight: 700; background: var(--azul-bg); color: var(--azul); vertical-align: middle; }
+.recomendacion-etiqueta { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700;
+  background: var(--azul-bg); color: var(--azul); white-space: nowrap; }
+.rec-dar_seguimiento.recomendacion-etiqueta { background: var(--g1); color: var(--g7); }
+.rec-descartar.recomendacion-etiqueta { background: var(--no-bg); color: var(--no); }
+
+.doc-acciones { max-width: 860px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.doc-resumen { max-width: 860px; width: 100%; margin: 0 auto; box-sizing: border-box; background: #fff;
+  border: 1px solid var(--line); border-radius: 14px; padding: 40px 48px; box-shadow: 0 2px 10px rgba(16, 48, 80, .06); }
+.doc-cabecera { text-align: center; border-bottom: 3px solid var(--hx-verde); padding-bottom: 18px; margin-bottom: 20px; }
+.doc-marca { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
+.doc-cabecera h1 { font-size: 1.45rem; line-height: 1.3; }
+.doc-institucion { margin: 6px 0 10px; color: var(--mut); font-weight: 600; }
+.doc-cabecera .etiqueta-ia { margin: 0; }
+.doc-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 0; }
+.doc-datos div { background: var(--g0); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.doc-datos dt { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
+.doc-datos dd { margin: 2px 0 0; font-weight: 700; color: var(--g9); }
+.doc-indicadores dd { font-weight: 600; }
+.doc-nota { margin: 8px 0 0; font-size: .8rem; color: var(--mut); text-align: center; }
+.doc-alerta { margin-top: 16px; background: var(--warn-bg); color: var(--warn); padding: 10px 14px; border-radius: 10px; }
+.doc-alerta ul { margin: 6px 0 0; padding-left: 20px; }
+.doc-recomendacion { margin: 22px 0 6px; padding: 16px 20px; border-radius: 12px; background: var(--azul-bg);
+  border-left: 5px solid var(--azul); }
+.doc-recomendacion.rec-dar_seguimiento { background: var(--g1); border-left-color: var(--g5); }
+.doc-recomendacion.rec-descartar { background: var(--no-bg); border-left-color: var(--no); }
+.doc-recomendacion span { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.doc-recomendacion strong { display: block; font-size: 1.25rem; color: var(--g9); margin: 2px 0 6px; }
+.doc-recomendacion p { margin: 0 0 4px; }
+.doc-resumen h2 { font-size: 1.05rem; color: var(--g9); margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.doc-resumen p { margin: 0 0 8px; }
+.doc-tabla { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.doc-tabla th, .doc-tabla td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.doc-tabla thead th { background: var(--g0); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
+.doc-tabla tbody th { width: 34%; font-weight: 600; color: var(--g9); }
+.doc-tabla ul, .doc-lista { margin: 0; padding-left: 18px; }
+.doc-lista li { margin-bottom: 6px; }
+.excluyente { color: var(--rojo); }
+.cita { color: var(--mut); font-size: .82rem; white-space: nowrap; }
+.doc-pie { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--mut); text-align: center; }
+@media (max-width: 760px) {
+  .doc-resumen { padding: 22px 16px; }
+}
+/* Imprimir o «Guardar como PDF»: solo el documento, sin el menú del panel. */
+@media print {
+  @page { margin: 16mm; }
+  body { background: #fff; }
+  header, footer, .no-imprimir { display: none !important; }
+  main { padding: 0; max-width: none; }
+  .doc-resumen { max-width: none; border: 0; box-shadow: none; padding: 0; }
+  .doc-resumen h2, .doc-tabla tr, .doc-recomendacion, .doc-datos div { break-inside: avoid; }
+  .doc-resumen h2 { break-after: avoid; }
+  .doc-datos div, .doc-tabla thead th, .doc-recomendacion { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .doc-resumen a { color: inherit; text-decoration: none; }
 }

@@ -54,15 +54,15 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
 | Tema | Decisión | Lección |
 |---|---|---|
 | Presupuesto mensual de OpenAI (límite de gasto del proyecto) | **Sin límite**: Oscar lo dejó así a propósito (2026-10-29, por Ivania). **Choca con la regla 4**; el único freno será el presupuesto diario de la app (lección 5). Riesgo anotado | 2 |
-| Presupuesto diario en la app: resúmenes por día (`IA_MAX_SUMMARIES_PER_DAY`) y costo máximo (`IA_MAX_DAILY_COST`) | **[por decidir · Oscar]** | 5 |
+| Presupuesto diario en la app: resúmenes por día (`IA_MAX_SUMMARIES_PER_DAY`) y costo máximo (`IA_MAX_DAILY_COST`) | **Provisional (Ivania, 2026-10-30): 10 resúmenes y 1.00 USD al día**, hasta que Oscar decida. **[por decidir · Oscar]** | 5 |
 | Cuenta de la API a nombre de Hermatix y proyecto «SICOP CONNECT» | Proyecto creado por Oscar (2026-10-29, por Ivania) | 2 |
 | Quién genera y guarda la clave; entrega en persona | La generó Oscar y se la pasó a Ivania (2026-10-29); Ivania la escribe en su `.env`. Clave **con todos los permisos** y todos los modelos (Oscar) | 2 |
 | Modelo (`OPENAI_MODEL`), según calidad y precio de la documentación oficial de OpenAI | Oscar no fijó uno (2026-10-29): **lo elige Ivania** con la tabla de precios. **[por decidir · Ivania]** | 2 |
 | Qué datos se envían y cuáles nunca: confirmar la lista de `docs/RESUMEN_IA.md` §2 | **[por decidir · Oscar]** | 1 |
 | Datos de personas **dentro del texto de los PDF** (nombres, cargos, firmas, correos y teléfonos de funcionarios que publica la institución; aparecen en 13 de 15 carteles, `RESUMEN_IA.md` §2): ¿se envían porque son públicos, o se filtran los correos y teléfonos antes de enviar? | **Se envían** tal cual: son documentos públicos que la institución publica en SICOP. Decidió Ivania, 2026-10-28; Oscar aceptó el documento el 2026-10-29 | 1–2 |
 | Tamaño máximo del expediente (`IA_MAX_INPUT_TOKENS`; hoy 50 000 tokens) | **[por decidir · Oscar + Ivania]** | 1 |
-| Qué carteles reciben reporte (¿solo Alta y Media? ¿también Baja?) | **[por decidir · Oscar]** | 5 |
-| Criterio de Hermatix para el prompt: productos de interés, montos mínimos, requisitos que descartan una oferta | **[por decidir · Oscar]** | 3 |
+| Qué carteles reciben reporte (¿solo Alta y Media? ¿también Baja?) | **Ivania (2026-10-30): Alta, Media y Baja (todos los del panel) ya enriquecidos**, con plazo abierto, hasta que Oscar decida. **[por decidir · Oscar]** | 5 |
+| Criterio de Hermatix para el prompt: productos de interés, montos mínimos, requisitos que descartan una oferta | **Dado por Ivania (2026-10-30), prompt `v2`:** decide qué piden; monto, cantidad, garantías y plazo de entrega no importan (se negocian); 14 años de funcionamiento; marcas Wialon y Howen. Detalle en `RESUMEN_IA.md` §4 | 3 |
 | Diseño de las 2 páginas y logo oficial | Máximo 2 páginas, fácil para alguien nuevo (regla 9, Oscar). Diseño y logo: **[por decidir · Oscar]** | 4 |
 
 ### Privacidad (dato de la guía, a confirmar en la documentación vigente de OpenAI)

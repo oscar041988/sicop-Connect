@@ -454,3 +454,44 @@ def test_la_encargada_no_cambia_destinatarios(admin_y_encargada, base):
     assert _post(encargada, "/destinatarios/1/estado", activo="0").status_code == 403
     with closing(connect(base)) as conn:
         assert {d.email for d in destinatarios.activos(conn)} == {"Oscar@Ejemplo.test", "anabelle@ejemplo.test"}
+
+
+# --- Extracto del resumen con IA (lección 5) -------------------------------------------------------------------
+
+def _con_resumen(db, nro, **cambios):
+    import json
+    from tests.test_ia_resumen import _resumen_valido
+    datos = _resumen_valido(**cambios)
+    with closing(connect(db)) as conn, conn:
+        conn.execute("INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, resumen_json, estado,"
+                     " creado_en) VALUES (?, 'v2', 'modelo-simulado-1', ?, ?, 'ok', ?)",
+                     (nro, "h" * 64, json.dumps(datos, ensure_ascii=False), _hace(0)))
+
+
+def _correo_de_oscar(db, tmp_path, **extra):
+    sim = ProveedorSimulado()
+    with closing(connect(db)) as conn:
+        avisos.notify(conn, _settings(db, tmp_path, **extra), AHORA.astimezone(CR), dry_run=False, proveedor=sim,
+                      solo="oscar@ejemplo.test")
+    _, _, html, texto = sim.llamadas[0]
+    return html, texto
+
+
+def test_el_correo_trae_el_extracto_del_resumen_si_ya_existe(base, tmp_path):
+    _con_resumen(base, "00000000001", justificacion="<script>alert(1)</script> Encaja con FleetMatix.",
+                 de_que_trata="La municipalidad SINTÉTICA contrata el monitoreo GPS de sus vehículos. " * 10)
+    html, texto = _correo_de_oscar(base, tmp_path, AI_MODE="openai")
+
+    assert "Resumen con IA (preliminar, verificar con el pliego):" in texto
+    assert "Recomendación: Dar seguimiento." in texto and "Encaja con FleetMatix." in texto
+    assert f"Leer el resumen: {BASE_URL}/oportunidades/00000000001/resumen" in texto
+    assert texto.count("Resumen con IA: todavía no está.") == 2   # los otros dos candidatos, sin resumen aún
+    assert "…" in texto   # «de qué trata» recortado (MAX_EXTRACTO): el resto, en el panel
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html and "<script>" not in html
+    assert f'href="{BASE_URL}/oportunidades/00000000001/resumen"' in html
+
+
+def test_con_la_ia_apagada_el_correo_no_habla_del_resumen(base, tmp_path):
+    _con_resumen(base, "00000000001")
+    html, texto = _correo_de_oscar(base, tmp_path, AI_MODE="none")
+    assert "Resumen con IA" not in texto and "Resumen con IA" not in html

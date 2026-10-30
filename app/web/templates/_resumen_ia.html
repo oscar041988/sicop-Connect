@@ -1,0 +1,45 @@
+{# Reporte con IA, lección 5: el resumen del cartel, como una fila de documento con «Ver» y «Descargar» (la página
+   del resumen: resumen.html). Todo el texto viene del modelo: siempre escapado. #}
+{% set vigente = resumenes | selectattr("datos") | first %}
+<section id="resumen-ia" class="resumen-ia">
+  <h2>Resumen ejecutivo <small class="etiqueta-ia">Generado por IA · verificar con el pliego</small></h2>
+  {% if vigente %}
+  {% if vigente.diferencias %}
+  <p class="aviso-etapa"><strong>Revisar:</strong> el resumen no coincide con SICOP en
+    {{ vigente.diferencias | map(attribute="dato") | join(", ") | lower }}. Los datos oficiales son los de SICOP.</p>
+  {% endif %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Resumen</th><th>Recomendación preliminar</th><th>Generado</th><th></th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Resumen ejecutivo del cartel<br><small>{{ vigente.datos.de_que_trata | truncate(160) }}</small></td>
+        <td><span class="recomendacion-etiqueta rec-{{ vigente.datos.recomendacion }}">{{ IA.recomendaciones.get(vigente.datos.recomendacion, IA.NO) }}</span>
+          <br><small>La decisión es del encargado.</small></td>
+        <td><small>{{ vigente.creado_en | fecha }}<br>{{ IA.estados[vigente.estado] }} · prompt {{ vigente.prompt_version }}</small></td>
+        <td class="botones"><a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/resumen" target="_blank" rel="noopener">Ver</a>
+          <a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/resumen?imprimir=1" target="_blank" rel="noopener">Descargar</a></td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="sub">«Descargar» abre el resumen listo para imprimir: elige «Guardar como PDF».</p>
+  {% elif resumenes %}
+  <p class="vacio">El último intento no dio resumen ({{ resumenes[0].motivo or "sin motivo" }}, {{ resumenes[0].creado_en | fecha }}).
+    La cola automática lo vuelve a pedir otro día.</p>
+  {% else %}
+  <p class="vacio">Todavía no tiene resumen. La cola automática de las 10:00 resume los carteles del panel (Alta, Media y
+    Baja) que ya tienen sus documentos de SICOP.</p>
+  {% endif %}
+
+  {% if resumenes | length > 1 or (resumenes and not vigente) %}
+  <details>
+    <summary>Historial de resúmenes ({{ resumenes | length }})</summary>
+    <ol class="historial">
+      {% for x in resumenes %}
+      <li>{{ x.creado_en | fecha }} · {{ IA.estados[x.estado] }}{% if x.motivo %} ({{ x.motivo }}){% endif %} · prompt
+        {{ x.prompt_version }} · {{ x.modelo }}{% if x.costo is not none %} · {{ x.costo }} USD{% endif %}
+        {% if x is sameas vigente %}<small>(el que se muestra)</small>{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+</section>
