@@ -315,8 +315,8 @@ table.lista.auto .btn { white-space: nowrap; }
   table.lista.auto th:nth-child(2), table.lista.auto td:nth-child(2) { display: table-cell; }
 }
 /* Reporte con IA, lección 5: el resumen en la página del cartel (una fila como los documentos, con «Ver» y
-   «Descargar») y en su propia página como documento (resumen.html). Nunca parece un dato oficial de SICOP. */
-.resumen-ia { border-left: 4px solid var(--azul); }
+   «Descargar») y en su propia página como documento (resumen.html). Nunca parece un dato oficial de SICOP: lo marca
+   la etiqueta «Generado por IA» (la línea azul de la izquierda se quitó; no gustó en la prueba con usuario, 30/10). */
 .resumen-ia details { margin-top: 12px; }
 .resumen-ia summary { cursor: pointer; color: var(--azul); font-weight: 600; }
 .etiqueta-ia { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: .78rem;
