@@ -180,6 +180,11 @@ mark { background: #C8F0D6; color: var(--g9); padding: 0 .15em; border-radius: 4
 .rejilla-seguimiento .titulo-tarjeta { font-weight: 600; }
 .rejilla-seguimiento .pie-tarjeta { margin-top: auto; padding-top: 8px; }
 .rejilla-seguimiento .vacio { grid-column: 1 / -1; }
+/* Expediente (notas y archivos): el título arriba del recuadro y el botón separado debajo, a la izquierda. */
+.form-nota { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 8px 0; }
+.form-nota label { display: flex; flex-direction: column; gap: 6px; width: 100%; font-weight: 600; }
+.form-nota textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; }
+.form-nota input[type="file"] { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; max-width: 100%; }
 @media (max-width: 1000px) { .rejilla-seguimiento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .rejilla-seguimiento { grid-template-columns: minmax(0, 1fr); } }
 
