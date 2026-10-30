@@ -451,12 +451,14 @@ def _render_expediente(request: Request, conn, nro_sicop: str, status_code: int 
     return PLANTILLAS.TemplateResponse(request, "expediente.html", {
         "seccion": "seguimiento", "seg": actual, "d": datos, "asignaciones": seguimiento.historial_de(conn, nro_sicop),
         "etapas": seguimiento.etapas_de(conn, nro_sicop), "ETAPAS": seguimiento.ETAPAS,
+        "notas": seguimiento.notas_de(conn, nro_sicop), "NOTA_MAX": seguimiento.NOTA_MAX,
         "archivos": expediente_archivos.listar(conn, nro_sicop), "TIPOS_ARCHIVO": expediente_archivos.TIPOS,
         "limite_archivo_mb": load_settings().expediente_max_mb,
         "asignables": seguimiento.asignables(conn) if seguridad.es_admin(request) else [],
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "hecho": request.session.pop("hecho", None), "hecho_etapa": request.session.pop("hecho_etapa", None),
         "hecho_archivo": request.session.pop("hecho_archivo", None),
+        "hecho_nota": request.session.pop("hecho_nota", None),
         **contexto,
     }, status_code=status_code)
 
@@ -507,6 +509,24 @@ def cambiar_etapa(request: Request, nro_sicop: str, etapa: str = Form("")) -> Re
     request.session["hecho_etapa"] = (f"Etapa: {seguimiento.ETAPAS[etapa]}." if cambio
                                       else "No se cambió nada: ya estaba en esa etapa.")
     return RedirectResponse(f"/seguimiento/{nro_sicop}#etapa", status_code=303)
+
+
+@router.post("/seguimiento/{nro_sicop}/notas", response_class=HTMLResponse, dependencies=[Depends(verificar_csrf)])
+def escribir_nota(request: Request, nro_sicop: str, texto: str = Form("")) -> Response:
+    """Paso 3: las notas las escriben quienes entran al expediente (su encargado y los administradores)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        actual = seguimiento.estado(conn, nro_sicop) if SOLO_DIGITOS.match(nro_sicop) else None
+        if actual is None or not seguimiento.puede_entrar(seguridad.usuario_actual(request), actual):
+            return _render_expediente(request, conn, nro_sicop)  # el mismo 404 o 403 que al abrirlo
+        try:
+            seguimiento.escribir_nota(conn, nro_sicop, texto, _quien(request), _ahora())
+        except seguimiento.SeguimientoInvalido as exc:
+            # El texto vuelve al formulario para no perderlo.
+            return _render_expediente(request, conn, nro_sicop, 400, error_nota=str(exc), texto_nota=texto)
+    request.session["hecho_nota"] = "Nota guardada."
+    return RedirectResponse(f"/seguimiento/{nro_sicop}#notas", status_code=303)
 
 
 # --- Archivos del expediente: gestor de documentos, paso 2 ---------------------------------------------------

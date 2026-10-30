@@ -1,4 +1,4 @@
-"""Gestor de documentos, pasos 1A y 5: seguimiento de un cartel, su encargado y su etapa (docs/GESTOR_DOCUMENTOS.md).
+"""Gestor de documentos, pasos 1A, 3 y 5: seguimiento, encargado, notas y etapa de un cartel (docs/GESTOR_DOCUMENTOS.md).
 
 Datos SINTÉTICOS en una base temporal; nunca toca data/.
 """
@@ -332,3 +332,83 @@ def test_ya_ofertada_no_sugiere_y_errores_de_etapa(clientes, db):
     assert _etapa(clientes["oscar"], "ganada", nro=OTRO).status_code == 404  # no está en seguimiento
     sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/etapa", data={"etapa": "ganada"}, follow_redirects=False)
     assert sin_token.status_code == 403 and _etapa_de(db) == "enviada"
+
+
+# --- Paso 3: notas del expediente ---------------------------------------------------------------------------------
+
+def _nota(cliente, texto, nro=NRO):
+    token = token_csrf(cliente.get("/oportunidades").text)
+    return cliente.post(f"/seguimiento/{nro}/notas", data={"csrf_token": token, "texto": texto},
+                        follow_redirects=False)
+
+
+def _notas_de(db, nro=NRO):
+    with closing(connect(db)) as conn:
+        return seguimiento.notas_de(conn, nro)
+
+
+def test_notas_con_autor_y_fecha_de_la_mas_reciente_a_la_mas_vieja(db):
+    ivania, oscar = _quien(db, "ivania@ejemplo.test"), _quien(db, "oscar@ejemplo.test")
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "  Pedir el pliego a la proveeduría.\r\nLlamar el lunes.  ", ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "Revisé la garantía: 5 %.", oscar, AHORA + timedelta(hours=1))
+        notas = seguimiento.notas_de(conn, NRO)
+        eventos = [e.detalle for e in historial.ultimos(conn, ("escribir_nota",))]
+
+    assert [(n.texto, n.escrita_por) for n in notas] == [
+        ("Revisé la garantía: 5 %.", "Oscar"),
+        ("Pedir el pliego a la proveeduría.\nLlamar el lunes.", "Ivania")]  # sin espacios sobrantes ni CRLF
+    assert notas[1].fecha.endswith("-06:00")  # hora de Costa Rica
+    assert eventos == [f"{NRO}: nota #2", f"{NRO}: nota #1"]  # el historial no copia el texto
+
+
+def test_nota_vacia_larga_o_sin_seguimiento_y_no_se_borra_ni_se_cambia(db):
+    ivania = _quien(db, "ivania@ejemplo.test")
+    with closing(connect(db)) as conn:
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="no está en seguimiento"):
+            seguimiento.escribir_nota(conn, NRO, "Hola", ivania, AHORA)
+        seguimiento.abrir(conn, NRO, ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="Escribe la nota"):
+            seguimiento.escribir_nota(conn, NRO, " \r\n ", ivania, AHORA)
+        with pytest.raises(seguimiento.SeguimientoInvalido, match="2001 caracteres; el máximo es 2000"):
+            seguimiento.escribir_nota(conn, NRO, "x" * 2001, ivania, AHORA)
+        seguimiento.escribir_nota(conn, NRO, "x" * 2000, ivania, AHORA)  # justo en el tope
+        with pytest.raises(sqlite3.IntegrityError):  # la base tampoco acepta una más larga
+            conn.execute("INSERT INTO seguimiento_notas (seguimiento_id, texto, escrita_por, escrita_por_nombre,"
+                         " created_at) VALUES (1, ?, 1, 'x', 't')", ("x" * 2001,))
+        for sql in ("DELETE FROM seguimiento_notas", "UPDATE seguimiento_notas SET texto = 'otra cosa'"):
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(sql)
+        evaluar_base(conn, cargar_reglas(), AHORA + timedelta(hours=1))  # reevaluar no las toca
+        assert [len(n.texto) for n in seguimiento.notas_de(conn, NRO)] == [2000]
+
+
+def test_las_notas_las_escriben_y_las_leen_el_encargado_y_los_administradores(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    _asignar(clientes["oscar"], _id(db, "ivania@ejemplo.test"))
+
+    assert _nota(clientes["ana"], "Yo también quiero").status_code == 403  # dio seguimiento, pero no es la encargada
+    respuesta = _nota(clientes["ivania"], "Pedir aclaración <b>sobre</b> el plazo.\nAntes del viernes.")
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/seguimiento/{NRO}#notas"
+    assert _nota(clientes["oscar"], "Visto.").status_code == 303
+    expediente = clientes["ivania"].get(f"/seguimiento/{NRO}").text
+    assert "Nota guardada." in expediente and "Visto." in expediente
+    assert "Pedir aclaración &lt;b&gt;sobre&lt;/b&gt; el plazo.\nAntes del viernes." in expediente  # texto, no HTML
+    assert "Pedir aclaración" not in clientes["ana"].get(f"/seguimiento/{NRO}").text  # 403: no la lee
+    # Al cambiar de encargado, la nueva lee todo lo anterior y la anterior ya no entra.
+    _asignar(clientes["oscar"], _id(db, "ana@ejemplo.test"))
+    assert "Pedir aclaración" in clientes["ana"].get(f"/seguimiento/{NRO}").text
+    assert _nota(clientes["ivania"], "Una más").status_code == 403
+    assert [n.escrita_por for n in _notas_de(db)] == ["Oscar", "Ivania"]
+
+
+def test_errores_de_nota_conservan_el_texto(clientes, db):
+    _dar_seguimiento(clientes["ana"])
+    vacia = _nota(clientes["oscar"], "   ")
+    assert vacia.status_code == 400 and "Escribe la nota." in vacia.text
+    larga = _nota(clientes["oscar"], "Borrador largo " + "y" * 2000)
+    assert larga.status_code == 400 and "el máximo es 2000" in larga.text and "Borrador largo yyy" in larga.text
+    assert _nota(clientes["oscar"], "Hola", nro=OTRO).status_code == 404  # no está en seguimiento
+    sin_token = clientes["oscar"].post(f"/seguimiento/{NRO}/notas", data={"texto": "Hola"}, follow_redirects=False)
+    assert sin_token.status_code == 403 and _notas_de(db) == []

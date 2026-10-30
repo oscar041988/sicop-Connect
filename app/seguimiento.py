@@ -10,6 +10,8 @@
 * Paso 5: la etapa del seguimiento (preparando · enviada · ganada · perdida). La cambian quienes entran al
   expediente; igual que el encargado, la vigente es la última fila y cada cambio agrega una. No toca las
   decisiones «Ofertada» y «No se oferta» de las revisiones.
+* Paso 3: notas con autor y fecha. Las escriben y las leen quienes entran al expediente; no se editan ni se
+  borran (para corregir, otra nota).
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from app.importers.comun import HORA_CR
 # Paso 5 (aprobadas por Oscar el 2026-10-26). El orden es el de los botones del expediente.
 ETAPAS = {"preparando": "Preparando", "enviada": "Enviada", "ganada": "Ganada", "perdida": "Perdida"}
 INICIAL = "preparando"  # sin cambios anotados, el cartel está preparando
+NOTA_MAX = 2000  # caracteres, como el comentario de una revisión (la base pone el mismo tope)
 
 
 class SeguimientoInvalido(ValueError):
@@ -65,6 +68,13 @@ class CambioEtapa:
     @property
     def texto(self) -> str:
         return ETAPAS[self.etapa]
+
+
+@dataclass(frozen=True)
+class Nota:
+    texto: str
+    escrita_por: str
+    fecha: str
 
 
 @dataclass(frozen=True)
@@ -183,6 +193,34 @@ def etapas_de(conn: sqlite3.Connection, nro_sicop: str) -> list[CambioEtapa]:
     return [CambioEtapa(*fila) for fila in conn.execute(
         "SELECT e.etapa, e.puesta_por_nombre, e.created_at FROM seguimiento_etapas e"
         " JOIN seguimientos s ON s.id = e.seguimiento_id WHERE s.nro_sicop = ? ORDER BY e.id DESC",
+        (nro_sicop,))]
+
+
+def escribir_nota(conn: sqlite3.Connection, nro_sicop: str, texto: str, quien: Quien, ahora: datetime) -> None:
+    """Agrega una nota al expediente. Que quien la escribe pueda entrar al expediente lo revisa la ruta
+    (puede_entrar)."""
+    texto = texto.replace("\r\n", "\n").strip()  # el navegador manda los saltos de línea como CRLF
+    if not texto:
+        raise SeguimientoInvalido("Escribe la nota.")
+    if len(texto) > NOTA_MAX:
+        raise SeguimientoInvalido(f"La nota tiene {len(texto)} caracteres; el máximo es {NOTA_MAX}.")
+    nombre = _nombre_activo(conn, quien.user_id)
+    if estado(conn, nro_sicop) is None:
+        raise SeguimientoInvalido(f"El cartel {nro_sicop} no está en seguimiento: primero «Dar seguimiento».")
+    with transaccion(conn):  # la nota y su línea del historial, juntas
+        cursor = conn.execute(
+            "INSERT INTO seguimiento_notas (seguimiento_id, texto, escrita_por, escrita_por_nombre, created_at)"
+            " SELECT id, ?, ?, ?, ? FROM seguimientos WHERE nro_sicop = ?",
+            (texto, quien.user_id, nombre, _momento(ahora), nro_sicop))
+        # El texto no va al historial: solo vive en el expediente, que tiene su regla de acceso (puede_entrar).
+        historial.registrar(conn, quien, "escribir_nota", f"{nro_sicop}: nota #{cursor.lastrowid}")
+
+
+def notas_de(conn: sqlite3.Connection, nro_sicop: str) -> list[Nota]:
+    """Las notas del expediente, de la más reciente a la más vieja."""
+    return [Nota(*fila) for fila in conn.execute(
+        "SELECT n.texto, n.escrita_por_nombre, n.created_at FROM seguimiento_notas n"
+        " JOIN seguimientos s ON s.id = n.seguimiento_id WHERE s.nro_sicop = ? ORDER BY n.id DESC",
         (nro_sicop,))]
 
 

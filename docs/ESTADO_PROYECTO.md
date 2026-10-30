@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-27 (enriquecimiento lección 4, entregas 4B (panel) y 4C (reglas sobre el texto de los PDF); rama `desarrollo`, 638 passed, subida a GitHub; **PR #4 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `70cb283` (`desarrollo`, 638 passed) · `main` de GitHub: `2dc0e52` (PR #3 unido)
+Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos paso 3, notas, migración 0028; rama `desarrollo`) · Siguiente: gestor de documentos paso 4 (descargar el expediente completo) · `desarrollo` en GitHub: `ba8b7cb` · `main` de GitHub: `7f5c558`
 
 ## Último resultado
 
@@ -248,6 +248,24 @@
   Código en GitHub (privado, de Oscar) desde 2026-10-16; app instalada en el VPS y funcionando con HTTPS (Ivania, 2026-10-16).
 
 ## Pendientes
+
+- **2026-10-30 (Ivania con Claude):**
+  - **Ciclo diario de Windows con envío real** (`0359db8`): la tarea «SICOP CONNECT - ciclo diario» (lunes a
+    viernes 8:00, desde el 21/10) corría `run-cycle --dry-run` fijo en `deploy/windows/sicop-ciclo.ps1`, así que
+    nunca enviaba aunque `.env` tuviera `NOTIFICATIONS_DRY_RUN=false`. Ahora `--send` (decisión de Ivania: Windows
+    por ahora, el servidor después). `doctor`: avisos habilitados, dry-run no, Gmail con token. El ciclo del 30/10
+    ya había corrido en dry-run; **primer envío automático: lunes 2/11, 8:00**.
+    **Pendiente · Ivania:** avisar a Oscar (va en el PR de `desarrollo`); **cuando Oscar active el ciclo del
+    servidor, deshabilitar la tarea de Windows** (si no, correos dobles: cada base deduplica solo lo suyo).
+    `APP_BASE_URL` local = `127.0.0.1`: los enlaces del correo solo abren en la laptop. La tarea corre solo con la
+    laptop encendida y la sesión abierta.
+  - **Regla:** exclusión «elaboracion de planos» en las 9 familias (`ba8b7cb`); `20261003260` (paradas de autobús,
+    San José; «APC» + «paradas» daban Media en conteo_pasajeros) al golden set como falso positivo. Antes se
+    revisaron los 37 carteles Alta/Media: solo afecta a ese. `evaluate`: reglas `aa5379adc1be`, el cartel quedó
+    «sin coincidencia». `score-rules`: sin errores nuevos. 733 passed.
+  - GitHub rechazó la llave SSH aunque estaba registrada; se arregló borrándola y volviéndola a agregar. Push de
+    `desarrollo` (`bd672af..ba8b7cb`).
+  - **Gestor de documentos, paso 3 (notas):** ver «Gestor de documentos» abajo.
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
   - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que
@@ -533,7 +551,7 @@
   - Probado en la base local (solo lectura) con los 167 documentos guardados: 88 PDF, 3 imágenes, 16 Excel (1 con
     más de 500 filas) y 46 de 50 ZIP (242 PDF y 9 Excel adentro) se ven. Los otros 4 ZIP (`20260802815`, partes III,
     IV y VI) tampoco se pudieron leer al guardarlos (`BadZipFile`): muestran «no se puede abrir» y «Descargar».
-  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** **Pendiente · Ivania:** mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
+  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** ~~Pendiente · Ivania: mostrárselo a Oscar~~ **hecho (30/10)**. Parte 2 (Word, con `python-docx`) si
     Oscar la quiere.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
@@ -609,8 +627,8 @@
     acceso se comprobó con la regla rota a propósito: falla). 692 passed.
     ~~Respaldo y `migrate` (0025) en la base local~~ **hecho por Ivania (29/10):** respaldo `sicop_20261029-132603`
     (esquema 0024, integridad ok; 13271 carteles, 5 revisiones, 48 avisos, 4 usuarios; documentos 228 archivos) →
-    `migrate` aplicó la 0025; `doctor`: esquema 0025. Probado por Ivania en el panel (29/10): funciona. **Pendiente · Ivania:** subir el ZIP
-    del respaldo al Drive. **Siguiente:**
+    `migrate` aplicó la 0025; `doctor`: esquema 0025. Probado por Ivania en el panel (29/10): funciona. ~~Pendiente · Ivania: subir el ZIP
+    del respaldo al Drive~~ **hecho (30/10)**. **Siguiente:**
     paso 2 (archivos). Ideas sin pedir: aviso al cambiar la etapa; ligar «ganada/perdida» con las adjudicaciones.
   - **Paso 2 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
     Ivania):** archivos del expediente (detalle en `GESTOR_DOCUMENTOS.md`; 733 passed). Migración **0027**
@@ -618,7 +636,14 @@
     `EXPEDIENTE_MAX_MB=10` y `EXPEDIENTES_DIR=data/expedientes` (variables nuevas); guardados con su huella; «Ver»
     (PDF, Excel, ZIP) y «Descargar»; solo el encargado vigente y los administradores; el respaldo incluye la
     carpeta. 21 pruebas nuevas. Respaldo, `migrate` (0027) y prueba en el panel hechos por Ivania (29/10): funciona.
-    **Siguiente:** paso 3 (notas) y paso 4 (descargar el expediente completo).
+    ~~Siguiente: paso 3 (notas)~~ y paso 4 (descargar el expediente completo).
+  - **Paso 3 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** notas con autor y
+    fecha (detalle en `GESTOR_DOCUMENTOS.md`). Migración **0028** `seguimiento_notas` (sin borrado ni cambios; hasta
+    2000 caracteres); `seguimiento.escribir_nota` / `notas_de`; ruta `POST /seguimiento/{nro}/notas` (CSRF,
+    `puede_entrar`); sección «Notas» del expediente; `audit_log` «escribir_nota» sin el texto. 4 pruebas nuevas en
+    `tests/test_seguimiento.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
+    **Pendiente · Ivania:** respaldo y `migrate` (0028) en la base local; probar en el panel.
+    **Siguiente:** paso 4 (descargar el expediente completo).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

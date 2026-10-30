@@ -117,8 +117,29 @@
   {% endif %}
 </section>
 
-<section>
+<section id="notas">
   <h2>Notas</h2>
-  <p class="vacio">Próximamente: notas (paso 3) y descargar todo el expediente (paso 4).</p>
+  {% if hecho_nota %}<p class="hecho">{{ hecho_nota }}</p>{% endif %}
+  {% if error_nota %}<p class="error">{{ error_nota }}</p>{% endif %}
+  <form method="post" action="/seguimiento/{{ c.nro_sicop }}/notas">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Escribir una nota
+      <textarea name="texto" rows="4" maxlength="{{ NOTA_MAX }}" required>{{ texto_nota or "" }}</textarea>
+    </label>
+    <button type="submit">Guardar nota</button>
+  </form>
+  <p class="sub">Hasta {{ NOTA_MAX }} caracteres. Las leen el encargado y los administradores. Una nota no se edita ni
+    se borra: para corregirla, escribe otra.</p>
+
+  {% if notas %}
+  <ol class="historial">
+    {% for n in notas %}
+    <li><small>{{ n.escrita_por }} · {{ n.fecha | fecha }}</small>
+      <p>{{ n.texto }}</p></li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Todavía no hay notas.</p>
+  {% endif %}
 </section>
 {% endblock %}

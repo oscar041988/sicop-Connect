@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B, 2 y 5 (2026-10-29) hechos, solo local.** Se construye
+> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B, 2 y 5 (2026-10-29) y 3 (2026-10-30) hechos, solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -52,7 +52,7 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 | 1A | Botón «Dar seguimiento», marca «En seguimiento · <nombre>», página «Seguimiento», expediente con encargado e historial de quién lo tuvo; solo el administrador asigna | **Hecho** (2026-10-26) |
 | 1B | Correo al nuevo encargado, con el ciclo diario | **Hecho** (2026-10-29) |
 | 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | **Hecho** (2026-10-29) |
-| 3 | Notas con autor y fecha | Paso 1 |
+| 3 | Notas con autor y fecha | **Hecho** (2026-10-30) |
 | 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
 | 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | **Hecho** (2026-10-29) |
 
@@ -108,6 +108,23 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
   rota a propósito: falla.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0027).
 - **Fuera de este paso:** quitar o archivar un archivo subido por error (hoy nada se borra).
+
+### Paso 3, cómo quedó (2026-10-30, pedido por Ivania)
+
+- **Tabla** (migración `0028_expediente_notas.sql`): `seguimiento_notas`, una fila por nota, con autor (el nombre
+  se copia) y fecha en hora de Costa Rica. No se borra ni se modifica (triggers): para corregir, otra nota. Hasta
+  2000 caracteres (como el comentario de una revisión); la base pone el mismo tope.
+- **Lógica:** `seguimiento.escribir_nota` y `seguimiento.notas_de` (de la más reciente a la más vieja). Se quitan
+  los espacios de los extremos y los saltos de línea se guardan como LF.
+- **Panel:** sección «Notas» del expediente: formulario y lista con autor y fecha; los saltos de línea se
+  respetan y el texto se muestra como texto (nunca como HTML). Si hay un error, el texto vuelve al formulario.
+  Escriben y leen el encargado vigente y los administradores: en un traspaso, el encargado nuevo lee todo y el
+  anterior ya no.
+- **Historial (`audit_log`):** «Escribió una nota…» con el número de la nota, **sin el texto**: el texto solo vive
+  en el expediente, con su regla de acceso (el historial es otro registro de la base y no la tiene).
+- **Pruebas:** 4 nuevas en `tests/test_seguimiento.py` (SINTÉTICO). La de acceso se comprobó con la regla rota a
+  propósito: falla.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0028).
 
 ### Paso 5, cómo quedó (2026-10-29, plan aprobado por Ivania)
 
