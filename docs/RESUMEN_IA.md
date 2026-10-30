@@ -133,8 +133,12 @@ Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes r
   para poder compararlos con SICOP.
 - `IA_PROMPT_VERSION` (por defecto `v1`) dice cuál se usa. Un cambio se guarda como `v2`, `v3`…; **nunca** se edita
   una versión ya usada, porque los resúmenes guardados dicen con qué versión se hicieron.
-- **Por decidir · Oscar:** montos o cantidades mínimas que justifican ofertar y requisitos que suelen descartar
-  una oferta. Hasta entonces el prompt dice «sin criterio definido todavía; no supongas uno».
+- **`v2` (2026-10-30), con el criterio de Hermatix dado por Ivania:** lo que decide es **qué piden**; todo cartel
+  alineado con los servicios vale la pena, sin importar monto, cantidad, garantías ni plazo de entrega (se negocian).
+  Hermatix tiene 14 años en funcionamiento (experiencia de la empresa de hasta 14 años: se cumple; lo que no se pueda
+  confirmar, como cantidad de contratos, es duda y no descarte). Marcas propias: Wialon y Howen; otra marca exigida →
+  riesgo y «revisar requisitos». Descartar solo si lo que piden no se alinea. La `v1` queda igual (sin criterio).
+  Se activa con `IA_PROMPT_VERSION=v2` en `.env`; entonces todos los carteles vuelven a la cola.
 
 ### Salida estructurada
 
@@ -160,7 +164,24 @@ del resumen solo sirven para esa comparación: en el reporte (lección 4) los in
   llamar** a OpenAI. Un `fallido` sí se vuelve a pedir. Nada se sobrescribe ni se borra.
 - La recomendación no toca revisiones, decisiones ni seguimientos.
 
-## 5. Pendiente de la lección 1
+## 5. Cola automática y panel (lección 5, primera parte)
+
+Pedido de Ivania (2026-10-30): que los resúmenes no dependan de correr `ia resumir` a mano. Decisiones de Ivania,
+provisionales hasta que Oscar decida (`DECISION_IA.md` §5): **carteles Alta y Media enriquecidos**, presupuesto
+de **10 resúmenes y 1.00 USD al día**.
+
+- `python -m app.cli ia cola` (`app/ai/cola.py`) la corre la tarea de las 10:00, después del enriquecimiento. Cola,
+  presupuesto, fallos y cómo apagarla: `docs/OPERACION.md` §3.3. `ia cola --ver` la muestra sin llamar a OpenAI.
+- **Panel:** en la página de un cartel Alta o Media, el bloque «Resumen ejecutivo · Generado por IA · verificar con
+  el pliego»: fecha, modelo, versión del prompt y estado; las diferencias con SICOP si quedó «revisar»; la
+  recomendación preliminar («la decisión es del encargado»); qué trata y el encaje; el resto (qué piden,
+  requerimientos con su cita, indicadores, plazos, criterios, riesgos) al abrir «Ver el resumen completo»; y el
+  historial de resúmenes. Todo el texto del modelo va escapado. Con `AI_MODE=none` no aparece.
+- **Falta de la lección 5:** citas como enlaces al documento y su página; la casilla «coincido / no coincido» junto
+  a la decisión; el reporte de 2 páginas (lección 4) en la misma cola; la línea del resumen en el correo diario; la
+  vista de uso del día y del mes; el despliegue en el servidor.
+
+## 6. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

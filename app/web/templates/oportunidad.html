@@ -44,6 +44,10 @@
   <div><dt>Estimado</dt><dd>{% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}<br><small>Publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
 </dl>
 
+{% if ia_visible and (resumenes or d.evaluaciones | selectattr("encaje", "in", ["alta", "media"]) | list) %}
+{% include "_resumen_ia.html" %}
+{% endif %}
+
 <section id="sicop">
   <h2>Información de SICOP</h2>
   {% if sicop %}

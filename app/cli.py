@@ -298,6 +298,50 @@ def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
     return 0 if res.estado != "fallido" else 1
 
 
+def ia_cola_cmd(settings: Settings, ver: bool, cliente=None, **opciones) -> int:
+    """Lección 5 IA: la cola automática de resúmenes (la corre la tarea de las 10:00, después del enriquecimiento).
+    Con --ver solo muestra la cola y el presupuesto, sin llamar a OpenAI. cliente y opciones: solo en las pruebas."""
+    from app.ai import cola as ia_cola
+    from app.bloqueo import CicloOcupado
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    hora = f"{datetime.now(HORA_CR):%Y-%m-%d %H:%M}"
+    if ver:
+        ahora = datetime.now(HORA_CR)
+        with closing(connect(settings.database_path)) as conn:
+            lista = ia_cola.cola(conn, settings, ahora)
+            hechos, costo = len(ia_cola.intentados_hoy(conn, ahora.date())), ia_cola.costo_de_hoy(conn, ahora.date())
+        print(f"{hora} · Cola de resúmenes (solo se muestra; no se llamó a OpenAI): {len(lista)}")
+        print(f"Hoy: {hechos} de {settings.ia_max_summaries_per_day} resúmenes · costo de la IA"
+              f" {ia_cliente.texto_decimal(costo)} de {ia_cliente.texto_decimal(settings.ia_max_daily_cost)} USD")
+        for item in lista:
+            print(f"  {item.nro_sicop} · {ia_cola.ETIQUETAS[item.encaje]} · cierre {_fecha_corta(item.cierre)}"
+                  f" · aprox. {item.tokens_estimados} tokens · {legible_corto(item.descripcion)}")
+        return 0
+    try:
+        corrida = ia_cola.correr(settings, cliente=cliente, avisar=print, **opciones)
+    except CicloOcupado as exc:
+        print(f"Error: ya hay otra ia cola en curso ({exc or 'sin detalle'}). No se hizo nada.", file=sys.stderr)
+        return 1
+    except (ia_cliente.IaConfiguracion, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if corrida.estado == "apagada":
+        print(f"{hora} · La IA está apagada (AI_MODE=none): la cola de resúmenes no hizo nada.")
+        return 0
+    fallidos = sum(r.estado == "fallido" for r in corrida.resultados)
+    revisar = sum(r.estado == "revisar" for r in corrida.resultados)
+    print(f"{hora} · Resúmenes: {len(corrida.resultados)} nuevos ({revisar} para revisar, {fallidos} fallidos)"
+          f" · costo de la IA hoy {ia_cliente.texto_decimal(corrida.costo_hoy)} USD"
+          + (f" · quedan {corrida.pendientes} para otro día" if corrida.pendientes else "")
+          + (" · cola vacía" if corrida.estado == "sin_cola" else ""))
+    if corrida.motivo:
+        print(f"Motivo: {corrida.motivo}")
+    return 1 if fallidos or corrida.estado == "detenida" else 0
+
+
 def _imprimir_evaluacion(r: ResultadoEvaluacion) -> None:
     print(f"Carteles evaluados: {r.carteles}")
     print(f"Filas: nuevas {r.nuevas} · actualizadas {r.actualizadas} · sin cambios {r.sin_cambios}"
@@ -1161,6 +1205,9 @@ def build_parser() -> argparse.ArgumentParser:
     ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
+    ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta y Media enriquecidos, con el"
+                                        " presupuesto diario (tarea de las 10:00)")
+    ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1235,6 +1282,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_probar_cmd(settings)
     if args.command == "ia" and args.ia_command == "resumir":
         return ia_resumir_cmd(settings, args.nro.strip())
+    if args.command == "ia" and args.ia_command == "cola":
+        return ia_cola_cmd(settings, args.ver)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

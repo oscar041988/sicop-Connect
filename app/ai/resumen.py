@@ -293,6 +293,12 @@ def resumir(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, client
                    exp, r)
 
 
+def del_cartel(conn: sqlite3.Connection, nro_sicop: str) -> list[Resultado]:
+    """Todos los resúmenes del cartel, del más reciente al más viejo (para el panel, lección 5). Solo lee."""
+    return [_de_fila(fila, reutilizado=False) for fila in conn.execute(
+        f"SELECT {_COLUMNAS} FROM ia_summaries WHERE nro_sicop = ? ORDER BY id DESC", (nro_sicop,))]
+
+
 # --- Texto para leer (EXPORTS_DIR) --------------------------------------------------------------------------------
 
 def _con_cita(texto: str, cita: str) -> str:

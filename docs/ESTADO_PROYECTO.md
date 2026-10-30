@@ -266,6 +266,22 @@
   - GitHub rechazó la llave SSH aunque estaba registrada; se arregló borrándola y volviéndola a agregar. Push de
     `desarrollo` (`bd672af..ba8b7cb`).
   - **Gestor de documentos, pasos 3 (notas) y 4 (descargar el expediente):** ver «Gestor de documentos» abajo.
+  - **Reporte con IA · lección 5, primera parte: resúmenes automáticos (pedido de Ivania, rama `desarrollo`, solo
+    local).** Ivania no quiere correr `ia resumir` a mano. Decisiones de Ivania, provisionales hasta Oscar
+    (`DECISION_IA.md` §5): cola + panel; **Alta y Media enriquecidos**; **10 resúmenes y 1.00 USD al día**.
+    `app/ai/cola.py` + `ia cola [--ver]`; `IA_MAX_SUMMARIES_PER_DAY` / `IA_MAX_DAILY_COST` (config y `.env.example`);
+    `deploy/windows/sicop-enriquecimiento.ps1` corre `ia cola` después de `enrich run` (misma tarea de las 10:00);
+    bloque «Resumen ejecutivo · Generado por IA» en la página del cartel (`_resumen_ia.html`). Sin migración.
+    12 pruebas nuevas en `tests/test_ia_cola.py` (OpenAI SIMULADO; el tope de costo roto a propósito: fallan).
+    `ia cola --ver` con la base real: 7 en cola (≈ 0,30 USD). **El script de la tarea ya está activo: la primera
+    corrida real es la de las 10:00 del 30/10.** Detalle: `RESUMEN_IA.md` §5 y `OPERACION.md` §3.3.
+    **Pendiente · Ivania:** revisar el registro de las 10:00 y los resúmenes en el panel; contarle a Oscar las
+    decisiones provisionales. **Falta de la lección 5:** citas como enlaces, «coincido / no coincido», reporte de 2
+    páginas (lección 4), correo, vista de uso y servidor.
+  - **Prompt `v2` con el criterio de Hermatix (2026-10-30, dado por Ivania):** `config/prompts/resumen_cartel_v2.md`
+    (detalle en `RESUMEN_IA.md` §4); la `v1` no cambia. Prueba nueva en `tests/test_ia_resumen.py`. **Pendiente ·
+    Ivania:** `IA_PROMPT_VERSION=v2` en `.env` (antes de las 10:00, para que los 7 de hoy no se paguen dos veces) y
+    comprobar con `doctor`. Siguiente paso de la lección 3: revisar con Oscar las recomendaciones de unos 10 carteles.
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
   - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que

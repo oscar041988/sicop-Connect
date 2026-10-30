@@ -1,0 +1,72 @@
+{# Reporte con IA, lección 5: el resumen ejecutivo del cartel. Todo el texto viene del modelo: siempre escapado. #}
+{% macro cita(c) %}{% if c and c != IA.NO %} <small class="cita">{{ "[SICOP]" if c == "SICOP" else c }}</small>{% endif %}{% endmacro %}
+{% set vigente = resumenes | selectattr("datos") | first %}
+<section id="resumen-ia" class="resumen-ia">
+  <h2>Resumen ejecutivo <small class="etiqueta-ia">Generado por IA · verificar con el pliego</small></h2>
+  {% if vigente %}
+  {% set r = vigente.datos %}
+  <p class="sub">{{ vigente.creado_en | fecha }} · modelo {{ vigente.modelo }} · prompt {{ vigente.prompt_version }}
+    · estado <strong>{{ IA.estados[vigente.estado] }}</strong>. No es un dato oficial de SICOP: las citas
+    [DOC n · pág. p] dicen dónde comprobarlo en los documentos de abajo.</p>
+  {% if vigente.diferencias %}
+  <div class="aviso-etapa"><strong>Revisar: no coincide con SICOP</strong>
+    <ul>{% for x in vigente.diferencias %}<li>{{ x.dato }}: el resumen dice «{{ x.resumen }}», SICOP dice «{{ x.sicop }}»</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <p class="recomendacion"><strong>Recomendación preliminar: {{ IA.recomendaciones.get(r.recomendacion, IA.NO) }}.</strong>
+    {{ r.justificacion }} <small class="sub">La decisión es del encargado.</small></p>
+  <h3>De qué trata</h3>
+  <p>{{ r.de_que_trata }}</p>
+  <h3>Encaje con Hermatix</h3>
+  <p>{{ r.encaje_hermatix.familia }} · {{ r.encaje_hermatix.producto }}: {{ r.encaje_hermatix.por_que }}</p>
+
+  <details>
+    <summary>Ver el resumen completo</summary>
+    <h3>Qué piden</h3>
+    <ul>{% for i in r.que_piden %}<li>Línea {{ i.linea }} · {{ i.bien_o_servicio }} · cantidad {{ i.cantidad }}{% if i.especificaciones_clave %} · {{ i.especificaciones_clave | join("; ") }}{% endif %}{{ cita(i.cita) }}</li>{% else %}<li>{{ IA.NO }}</li>{% endfor %}</ul>
+    <h3>Requerimientos</h3>
+    <ul>{% for q in r.requerimientos %}<li>[{{ q.tipo }}{% if q.excluyente %} · <strong>EXCLUYENTE</strong>{% endif %}] {{ q.requisito }}{{ cita(q.cita) }}</li>{% else %}<li>{{ IA.NO }}</li>{% endfor %}</ul>
+    <h3>Indicadores del pliego</h3>
+    {% set k = r.kpi_pliego %}
+    <ul>
+      {% for clave, nombre in [("plazo_entrega", "Plazo de entrega"), ("vigencia_contrato", "Vigencia del contrato"),
+                               ("garantia_participacion_pct", "Garantía de participación"),
+                               ("garantia_cumplimiento_pct", "Garantía de cumplimiento"),
+                               ("peso_precio_pct", "Peso del precio"), ("nivel_riesgo", "Nivel de riesgo")] %}
+      <li>{{ nombre }}: {{ k[clave].valor }}{{ cita(k[clave].cita) }}</li>
+      {% endfor %}
+    </ul>
+    <h3>Plazos</h3>
+    <ul>
+      <li>Cierre de recepción: {{ r.plazos.cierre_recepcion.valor }}{{ cita(r.plazos.cierre_recepcion.cita) }}</li>
+      <li>Apertura de ofertas: {{ r.plazos.apertura_ofertas.valor }}{{ cita(r.plazos.apertura_ofertas.cita) }}</li>
+      {% for o in r.plazos.otros %}<li>{{ o.plazo }}: {{ o.valor }}{{ cita(o.cita) }}</li>{% endfor %}
+    </ul>
+    <h3>Criterios de evaluación</h3>
+    <ul>{% for c in r.criterios_de_evaluacion %}<li>{{ c.criterio }}: {{ c.peso }}{{ cita(c.cita) }}</li>{% else %}<li>{{ IA.NO }}</li>{% endfor %}</ul>
+    <h3>Riesgos y dudas</h3>
+    <ul>{% for x in r.riesgos_y_dudas %}<li>{{ x.riesgo }}{{ cita(x.cita) }}</li>{% else %}<li>{{ IA.NO }}</li>{% endfor %}</ul>
+    <p class="sub">El monto estimado y las fechas oficiales son los de SICOP (arriba), no los del resumen.</p>
+  </details>
+  {% elif resumenes %}
+  <p class="vacio">El último intento no dio resumen ({{ resumenes[0].motivo or "sin motivo" }}, {{ resumenes[0].creado_en | fecha }}).
+    La cola automática lo vuelve a pedir otro día.</p>
+  {% else %}
+  <p class="vacio">Todavía no tiene resumen. La cola automática de las 10:00 resume los carteles Alta y Media que ya
+    tienen sus documentos de SICOP.</p>
+  {% endif %}
+
+  {% if resumenes | length > 1 or (resumenes and not vigente) %}
+  <details>
+    <summary>Historial de resúmenes ({{ resumenes | length }})</summary>
+    <ol class="historial">
+      {% for x in resumenes %}
+      <li>{{ x.creado_en | fecha }} · {{ IA.estados[x.estado] }}{% if x.motivo %} ({{ x.motivo }}){% endif %} · prompt
+        {{ x.prompt_version }} · {{ x.modelo }}{% if x.costo is not none %} · {{ x.costo }} USD{% endif %}
+        {% if x is sameas vigente %}<small>(el que se muestra)</small>{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+</section>

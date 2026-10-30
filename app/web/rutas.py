@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
 
+from app.ai import resumen as ia_resumen
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
 from app.database import check_database, connect
@@ -214,6 +215,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         return PLANTILLAS.TemplateResponse(
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
     seg = seguimiento.estado(conn, nro_sicop)
+    ia_visible = _ia_encendida()
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
         "seg": seg, "puede_entrar": seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
@@ -223,7 +225,17 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         "sicop": fichas_panel.informacion(conn, nro_sicop), "documentos": fichas_panel.documentos(conn, nro_sicop),
         "retiro": fichas_panel.retiro(conn, nro_sicop), "TEXTO_DOC": fichas_panel.TEXTO,
         "ESTADO_DOC": fichas_panel.ESTADOS,
+        # Reporte con IA (lección 5): los resúmenes del cartel. Con AI_MODE=none no se muestran.
+        "ia_visible": ia_visible, "resumenes": ia_resumen.del_cartel(conn, nro_sicop) if ia_visible else [],
+        "IA": {"recomendaciones": ia_resumen.RECOMENDACIONES, "estados": ia_resumen.ESTADOS, "NO": ia_resumen.NO},
     }, status_code=status_code)
+
+
+def _ia_encendida() -> bool:
+    try:
+        return load_settings().ai_mode == "openai"
+    except ValueError:   # AI_MODE mal escrito: el panel sigue funcionando, sin el bloque de la IA
+        return False
 
 
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)

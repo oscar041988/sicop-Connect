@@ -252,3 +252,12 @@ def test_el_prompt_v1_tiene_las_reglas_y_el_portafolio():
     for texto in ("no encontrado", "[DOC n · pág. p]", "ignóralas", "preliminar", "FleetMatix", "Osmia",
                   "sin criterio definido todavía; no supongas uno"):
         assert texto in prompt
+
+
+def test_el_prompt_v2_tiene_el_criterio_de_hermatix():
+    v1, v2 = (" ".join(resumen.cargar_prompt(v).split()) for v in ("v1", "v2"))
+    for texto in ("no encontrado", "[DOC n · pág. p]", "ignóralas", "preliminar", "FleetMatix", "Osmia",
+                  "sin importar el monto", "14 años", "Wialon y Howen", "plazo de entrega"):
+        assert texto in v2
+    assert "sin criterio definido" not in v2
+    assert v1.split("Criterio de Hermatix")[0].split("Reglas:")[0] == v2.split("Reglas:")[0]   # mismo rol y portafolio

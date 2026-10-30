@@ -287,6 +287,39 @@ corrida. Se puede correr a mano: `enrich run`.
 **Resumen diario:** al terminar cada corrida, «N consultados, M FALLO» con lo nuevo de cada cartel (a
 `OBTAIN_ALERT_TO`; en dry-run, `data\exports\resumen-enriquecimiento-<n>.txt`).
 
+### 3.3 Resúmenes con IA (`ia cola`, Reporte con IA, lección 5)
+
+La misma tarea de las 10:00, **después** del enriquecimiento, corre `ia cola`: pide a OpenAI el resumen ejecutivo
+de los carteles que lo necesitan y lo deja en la página del cartel («Resumen ejecutivo · Generado por IA ·
+verificar con el pliego»). Decisiones de Ivania del 30/10, provisionales hasta que Oscar decida (`DECISION_IA.md`).
+
+| Comando | Qué hace |
+|---|---|
+| `ia cola --ver` | La cola de hoy y el presupuesto, **sin llamar a OpenAI** |
+| `ia cola` | La corrida automática (la tarea de las 10:00) |
+| `ia resumir --nro N` | Un cartel a mano (no cuenta en la cola, pero su costo sí cuenta en el del día) |
+
+**Qué entra en la cola:** carteles **Alta o Media**, ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
+resumen de su expediente actual con la versión vigente del prompt. Alta primero y, dentro de cada uno, el que
+cierra antes. Si llega una ficha o un documento nuevo, el expediente cambia y el cartel vuelve a la cola; el
+resumen anterior queda en el historial. Lo ya intentado hoy no se repite hoy (un fallido se reintenta otro día).
+
+**Presupuesto diario** (`.env`; OpenAI no tiene límite mensual, así que este es el único freno):
+`IA_MAX_SUMMARIES_PER_DAY` (10) resúmenes nuevos y `IA_MAX_DAILY_COST` (1.00) USD de costo estimado de toda la
+IA del día. Antes de cada llamada se suma lo gastado hoy y lo máximo que podría costar ese resumen; si no cabe, se
+detiene y el resto queda para mañana. Para subir o bajar el presupuesto, cambiar esos dos valores (sin reiniciar
+nada: la tarea los lee cada día). Necesita `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD`.
+
+**Apagar la IA:** `AI_MODE=none` en `.env`. La tarea sigue corriendo el enriquecimiento; `ia cola` no hace nada y el
+panel no muestra el bloque del resumen. Todo lo demás funciona igual.
+
+**Si un resumen falla** (respuesta incompleta, error de OpenAI): queda «fallido» con su motivo y la cola sigue con
+los demás. **Si OpenAI dice que no hay saldo o rechaza la clave** (401/403), la cola se **detiene**: avisar a Oscar
+para que revise el proyecto en OpenAI. El registro: `data\logs\enriquecimiento-AAAA-MM.log`, bloque «ia cola».
+
+**Cambiar de modelo o de versión del prompt:** `OPENAI_MODEL` (y sus precios) o `IA_PROMPT_VERSION` en `.env`. Con
+una versión nueva del prompt, todos los carteles vuelven a la cola (a 10 por día).
+
 ## 4. Enviar avisos
 
 ### 4.1 Qué se avisa

@@ -72,6 +72,8 @@ DEFAULTS: dict[str, str] = {
     "IA_PROMPT_VERSION": "v1",
     "IA_PRECIO_ENTRADA_USD": "",
     "IA_PRECIO_SALIDA_USD": "",
+    "IA_MAX_SUMMARIES_PER_DAY": "10",
+    "IA_MAX_DAILY_COST": "1.00",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
@@ -382,6 +384,23 @@ class Settings:
     def ia_precio_salida_usd(self) -> Decimal | None:
         """USD por millón de tokens de salida. Vacío: el costo estimado queda sin calcular («sin precio»)."""
         return self._precio("IA_PRECIO_SALIDA_USD")
+
+    @property
+    def ia_max_summaries_per_day(self) -> int:
+        """Resúmenes nuevos por día de la cola automática (IA_MAX_SUMMARIES_PER_DAY; 10, Ivania 2026-10-30)."""
+        return self._entero("IA_MAX_SUMMARIES_PER_DAY", 0, 200, "resúmenes")
+
+    @property
+    def ia_max_daily_cost(self) -> Decimal:
+        """Tope de costo estimado de la IA por día, en USD (IA_MAX_DAILY_COST; 1.00, Ivania 2026-10-30)."""
+        texto = self.get("IA_MAX_DAILY_COST").strip() or "1.00"
+        try:
+            tope = Decimal(texto)
+        except InvalidOperation:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número con punto decimal (USD por día)") from None
+        if not tope.is_finite() or tope < 0:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número mayor o igual a 0")
+        return tope
 
     @property
     def recordings_keep_days(self) -> int:

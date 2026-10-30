@@ -301,3 +301,11 @@ table.lista.auto .btn { white-space: nowrap; }
 @media (max-width: 760px) {
   table.lista.auto th:nth-child(2), table.lista.auto td:nth-child(2) { display: table-cell; }
 }
+/* Reporte con IA, lección 5: resumen ejecutivo en la página del cartel (nunca parece un dato oficial de SICOP) */
+.resumen-ia { border-left: 4px solid var(--azul); }
+.etiqueta-ia { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: .78rem;
+  font-weight: 700; background: var(--azul-bg); color: var(--azul); vertical-align: middle; }
+.resumen-ia .recomendacion { background: var(--azul-bg); padding: 8px 12px; border-radius: 10px; }
+.resumen-ia .cita { color: var(--mut); white-space: nowrap; }
+.resumen-ia details { margin-top: 12px; }
+.resumen-ia summary { cursor: pointer; color: var(--azul); font-weight: 600; }
