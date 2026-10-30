@@ -1,11 +1,13 @@
 # Ciclo diario en Windows (local)
 
 Equivalente local de `deploy/systemd/sicop-cycle.timer` + `sicop-cycle.service`: una tarea del Programador de
-tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **siempre en dry-run** (prepara los
-avisos y la vista previa, no envía nada). Se usa mientras todo se desarrolla en local (decisión de Oscar,
-2026-10-21). La tarea la crea la persona que usa la computadora; el script no la activa solo.
+tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **con envío real** desde el 2026-10-30
+(decisión de Ivania; antes, siempre en dry-run). Envía solo si `.env` tiene `NOTIFICATIONS_ENABLED=true` y
+`NOTIFICATIONS_DRY_RUN=false`. Se usa mientras todo se desarrolla en local (decisión de Oscar, 2026-10-21).
+**Cuando Oscar active el ciclo del servidor, deshabilitar esta tarea**, o los destinatarios recibirán dos correos.
+La tarea la crea la persona que usa la computadora; el script no la activa solo.
 
-- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --dry-run` y agrega la salida,
+- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --send` y agrega la salida,
   con fecha y código de salida, a `data\logs\ciclo-AAAA-MM.log`.
 - Códigos de salida: `0` = ok · `1` = fallo (queda en `source_runs`) · `2` = ya había otro ciclo en curso.
 
