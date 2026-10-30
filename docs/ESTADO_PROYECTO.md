@@ -301,6 +301,10 @@
     `?imprimir=1`: el navegador la guarda como PDF (decisión de Ivania: sin librerías nuevas; el reporte de 2
     páginas con logo sigue en la lección 4). Estilos de impresión en `estilo.css`. La página del cartel ya no arma
     el expediente (más rápida).
+  - **`OBTAIN_ALERT_TO` = licitaciones@hermatix.com (Ivania, 30/10), en el `.env` local.** `doctor`: «configurado»,
+    «Pendientes: ninguno». Con los avisos reales, desde el lunes llegan ahí el resumen diario del enriquecimiento
+    (después de las 10:00) y la alerta inmediata de CAPTCHA o bloqueo. Las de la obtención automática no salen
+    mientras `SOURCE_MODE=manual`.
   - **Casilla «coincido / no coincido»: pospuesta (Ivania, 30/10).** Oscar quiere el resumen para leer rápido; la
     revisión de citas no encontró errores. Las recomendaciones raras se reportan a Claude a mano; si se vuelven
     frecuentes, se construye.
