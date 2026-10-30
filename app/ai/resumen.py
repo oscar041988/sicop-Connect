@@ -293,6 +293,13 @@ def resumir(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, client
                    exp, r)
 
 
+def ultimo(conn: sqlite3.Connection, nro_sicop: str) -> Resultado | None:
+    """El resumen más reciente del cartel que tiene contenido (ok o revisar), o None. Para el correo diario."""
+    fila = conn.execute(f"SELECT {_COLUMNAS} FROM ia_summaries WHERE nro_sicop = ? AND resumen_json IS NOT NULL"
+                        " ORDER BY id DESC LIMIT 1", (nro_sicop,)).fetchone()
+    return _de_fila(fila, reutilizado=False) if fila else None
+
+
 def del_cartel(conn: sqlite3.Connection, nro_sicop: str) -> list[Resultado]:
     """Todos los resúmenes del cartel, del más reciente al más viejo (para el panel, lección 5). Solo lee."""
     return [_de_fila(fila, reutilizado=False) for fila in conn.execute(

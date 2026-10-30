@@ -305,6 +305,11 @@
     «Pendientes: ninguno». Con los avisos reales, desde el lunes llegan ahí el resumen diario del enriquecimiento
     (después de las 10:00) y la alerta inmediata de CAPTCHA o bloqueo. Las de la obtención automática no salen
     mientras `SOURCE_MODE=manual`.
+  - **Extracto del resumen en el correo diario (2026-10-30, pedido de Ivania):** opción elegida: el correo sigue a
+    las 8:00 y trae el extracto si el cartel ya tiene resumen (si no, «todavía no está»). `app/avisos.py`
+    (`Extracto`, `con_resumen` según `AI_MODE`), `correo/aviso.txt` y `aviso.html`, `resumen.ultimo`. 2 pruebas
+    nuevas en `tests/test_avisos.py` (la de IA apagada falla rota a propósito). Vista previa sobre una COPIA de la
+    base: el lunes saldría `20261001885` (basureros, falso positivo Media) con «Recomendación: Descartar».
   - **Casilla «coincido / no coincido»: pospuesta (Ivania, 30/10).** Oscar quiere el resumen para leer rápido; la
     revisión de citas no encontró errores. Las recomendaciones raras se reportan a Claude a mano; si se vuelven
     frecuentes, se construye.

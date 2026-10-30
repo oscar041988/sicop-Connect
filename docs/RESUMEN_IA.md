@@ -179,8 +179,16 @@ de **10 resúmenes y 1.00 USD al día**.
   historial de resúmenes. Todo el texto del modelo va escapado. Con `AI_MODE=none` no aparece.
 - **Falta de la lección 5:** ~~citas como enlaces~~ (hecho, 30/10); la casilla «coincido / no coincido» junto a la
   decisión (**pospuesta por Ivania, 30/10**: Oscar quiere el resumen para leer rápido; los desacuerdos se reportan a
-  mano hasta que sean frecuentes); el reporte de 2 páginas (lección 4) en la misma cola; la línea del resumen en el correo diario; la
+  mano hasta que sean frecuentes); el reporte de 2 páginas (lección 4) en la misma cola; ~~la línea del resumen en el correo diario~~ (hecho, 30/10: ver abajo); la
   vista de uso del día y del mes; el despliegue en el servidor.
+
+### Extracto en el correo diario (2026-10-30)
+
+Con `AI_MODE=openai`, cada cartel del correo de las 8:00 que ya tiene resumen trae un recuadro «Resumen con IA ·
+preliminar, verificar con el pliego»: la recomendación con su justificación, de qué trata (hasta 300 caracteres) y
+el enlace «Leer el resumen completo» (`/oportunidades/{nro}/resumen`). Decisión de Ivania: el correo sigue a las
+8:00 (Oscar); como los resúmenes se hacen después de las 10:00, un cartel nuevo casi siempre llega sin resumen y el
+correo dice «todavía no está… se ve en el panel». Con `AI_MODE=none` el correo no menciona el resumen.
 
 ## 6. Pendiente de la lección 1
 
