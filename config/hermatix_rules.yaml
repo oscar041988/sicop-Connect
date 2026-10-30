@@ -141,6 +141,9 @@ familias:
     exclusiones: [
       "etiquetas de inventario impresas", "etiquetas impresas", "codigo de barras", "etiquetas adhesivas",
       "contenedores de basura", "contenedores de desechos",
+      # Compra de basureros (recipientes): «contenedores» + «trazabilidad» daban Media (20261001885; Ivania,
+      # 2026-10-30). Solo en esta familia: «camiones basureros» con GPS sí interesa (gps_flotas).
+      "basureros",
       "trazabilidad de alimentos",              # (papelería)
       "toner", "impresora de etiquetas",
       "compra de contenedores", "adquisicion de contenedores",   # el contenedor es lo que se compra

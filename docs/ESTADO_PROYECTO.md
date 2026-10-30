@@ -310,6 +310,11 @@
     (`Extracto`, `con_resumen` según `AI_MODE`), `correo/aviso.txt` y `aviso.html`, `resumen.ultimo`. 2 pruebas
     nuevas en `tests/test_avisos.py` (la de IA apagada falla rota a propósito). Vista previa sobre una COPIA de la
     base: el lunes saldría `20261001885` (basureros, falso positivo Media) con «Recomendación: Descartar».
+  - **Falso positivo «basureros» (2026-10-30, Ivania):** `20261001885` (basureros hospitalarios, INS) iba a salir
+    como Media en el primer correo real del lunes («contenedores» + «trazabilidad», rastreo_activos). Exclusión
+    «basureros» **solo en rastreo_activos** (en gps_flotas, «camiones basureros» con GPS sí interesa); afecta a 3
+    carteles, todos compras de basureros. Golden set: 37 casos. `evaluate`: reglas `634dbc4ff81e`, el cartel queda
+    «sin coincidencia». Vista previa sobre una COPIA de la base: el lunes no saldría nada con los datos de hoy.
   - **Casilla «coincido / no coincido»: pospuesta (Ivania, 30/10).** Oscar quiere el resumen para leer rápido; la
     revisión de citas no encontró errores. Las recomendaciones raras se reportan a Claude a mano; si se vuelven
     frecuentes, se construye.
