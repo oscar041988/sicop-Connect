@@ -50,6 +50,7 @@ familias:
       "compra de combustible",      # no "combustible" solo: anularía "control de combustible"
       "tapizado",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   videotelematica:
@@ -74,6 +75,7 @@ familias:
       "camara de vacio", "camara de flujo laminar", "camara gastrica", "camara fotografica digital",
       "intraoral",                  # cámaras dentales (20261001749, CCSS; Ivania, 2026-10-20)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   seguridad_vial:
@@ -97,6 +99,7 @@ familias:
       "alcoholimetro",
       "aire acondicionado",                     # no "ac" solo: aparece dentro de "vacunas", "acceso"
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   transporte_corporativo:
@@ -116,6 +119,7 @@ familias:
       "transporte de carga", "transporte de valores", "transporte de residuos", "transporte de desechos",
       "transporte de muestras", "viaticos", "boletos aereos",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   rastreo_activos:
@@ -142,6 +146,7 @@ familias:
       "compra de contenedores", "adquisicion de contenedores",   # el contenedor es lo que se compra
       "impresora termica",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   iot_frio:
@@ -177,6 +182,7 @@ familias:
       "mantenimiento de cuarto frio",           # (sin monitoreo) (revisar)
       "de mano",                    # aparato de mano: no interesa nunca, aunque tenga pantalla (Ivania, 2026-10-09)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   camaras_corporales:
@@ -197,6 +203,7 @@ familias:
       "camara fotografica", "camara de casco deportiva", "camara de seguridad fija", "cctv", "camara web",
       "videoconferencia",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   conteo_pasajeros:
@@ -222,6 +229,7 @@ familias:
       # esas compras quedan cubiertas por los tipos de vehículo de abajo.
       "pick-up", "suv", "microbus",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]
 
   mantenimiento_flotas:
@@ -249,4 +257,5 @@ familias:
       "lubricantes", "aceite", "lavado de vehiculos",
       "asesoria rfid",                          # (sin rastreo)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
+      "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
     ]

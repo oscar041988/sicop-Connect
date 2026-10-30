@@ -138,7 +138,7 @@ def test_comando_score_rules_con_el_golden_set_real(db, capsys):
     settings = load_settings(env_file=None, environ={"DATABASE_PATH": str(db)})
     assert main(["score-rules"], settings) == 0
     salida = capsys.readouterr().out
-    assert "Casos: 35 del golden set" in salida and "TOTAL (por cartel)" in salida
+    assert "Casos: 36 del golden set" in salida and "TOTAL (por cartel)" in salida
     assert "Medición #1 guardada." in salida
 
     assert main(["score-rules"], settings) == 0
