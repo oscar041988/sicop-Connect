@@ -645,13 +645,15 @@
     ~~Pendiente · Ivania: respaldo y `migrate` (0028)~~ **hecho (Claude a pedido de Ivania, 30/10):** respaldo
     `sicop_20261030-084755` (esquema 0027, integridad ok; ZIP de documentos y de expedientes) → `migrate` aplicó la
     0028; `doctor`: esquema 0028; conteos iguales (13462 carteles, 5 revisiones, 4 usuarios, 66 avisos).
-    **Pendiente · Ivania:** probar las notas en el panel; subir el respaldo al Drive.
+    ~~Pendiente · Ivania: probar las notas en el panel~~ **probado por Ivania (30/10): funciona y se ve bien.**
+    **Pendiente · Ivania:** subir el respaldo al Drive.
   - **Paso 4 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** «Descargar todo el
     expediente (ZIP)»: `archivos/` + `expediente.txt` (cartel, encargado, historial, etapas, notas, archivos con
     huella). Detalle en `GESTOR_DOCUMENTOS.md`. `app/expediente_descarga.py`, ruta `GET /seguimiento/{nro}/descargar`
     (`puede_entrar`), `audit_log` «descargar_expediente». Sin migración. 6 pruebas nuevas en
     `tests/test_expediente_descarga.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
-    **Pendiente · Ivania:** probarlo en el panel con el expediente que ya tiene un archivo. **Con esto, los 5 pasos
+    ~~Pendiente · Ivania: probarlo en el panel~~ **probado por Ivania (30/10): el expediente se descarga y se ve
+    bien.** **Con esto, los 5 pasos
     del gestor de documentos están hechos** (falta mostrárselo a Oscar).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
