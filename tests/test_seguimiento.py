@@ -171,7 +171,7 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
     detalle = ana.get(f"/oportunidades/{NRO}").text
     assert "En seguimiento · sin encargado" in detalle and "Dar seguimiento</button>" not in detalle
     lista = ana.get("/seguimiento").text
-    assert NRO in lista and "Sin encargado" in lista and "lo abrió Ana" in lista
+    assert NRO in lista and "Sin encargado" in lista and "Lo abrió Ana" in lista
     assert f'href="/seguimiento/{NRO}"' not in lista  # sin encargado, solo entran los administradores
     assert _dar_seguimiento(ana).status_code == 303  # dos veces: no falla ni duplica
 

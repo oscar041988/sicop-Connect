@@ -6,24 +6,27 @@
   <p class="sub">Carteles que alguien está trabajando. Todos ven quién es el encargado; el expediente lo abren
     solo su encargado y los administradores. Para agregar uno, entra al cartel y usa «Dar seguimiento».</p>
 
+  {# Rejilla de 3 tarjetas por línea (2 en tableta, 1 en celular). #}
+  <div class="rejilla-seguimiento">
   {% for f in filas %}
   <div class="tarjeta">
     <p>
       {% if f.estado.encargado %}<span class="en-seguimiento">{{ f.estado.encargado }}</span>
       {% else %}<span class="tag w">Sin encargado</span>{% endif %}
-      <a href="/oportunidades/{{ f.estado.nro_sicop }}">{{ f.estado.nro_sicop }}</a>
-      · {{ f.titulo | titulo | legible or "(sin título)" }}
       <span class="tag etapa-{{ f.estado.etapa }}">{{ f.estado.etapa_texto }}</span>
     </p>
-    <p class="sub">{{ f.institucion | legible or "Sin datos de la institución" }}
-      · {% if f.cierre %}{{ regresiva(f.cierre) }} (cierre {{ f.cierre | fecha }}){% else %}cierre sin fecha{% endif %}
-      · lo abrió {{ f.estado.abierto_por }} el {{ f.estado.abierto_en | fecha }}</p>
+    <p><a href="/oportunidades/{{ f.estado.nro_sicop }}">{{ f.estado.nro_sicop }}</a></p>
+    <p class="titulo-tarjeta">{{ f.titulo | titulo | legible or "(sin título)" }}</p>
+    <p class="sub">{{ f.institucion | legible or "Sin datos de la institución" }}</p>
+    <p class="sub">{% if f.cierre %}{{ regresiva(f.cierre) }} (cierre {{ f.cierre | fecha }}){% else %}cierre sin fecha{% endif %}</p>
+    <p class="sub">Lo abrió {{ f.estado.abierto_por }} el {{ f.estado.abierto_en | fecha }}</p>
     {% if puede_entrar(f.estado) %}
-    <p><a class="btn o" href="/seguimiento/{{ f.estado.nro_sicop }}">Abrir expediente</a></p>
+    <p class="pie-tarjeta"><a class="btn o" href="/seguimiento/{{ f.estado.nro_sicop }}">Abrir expediente</a></p>
     {% endif %}
   </div>
   {% else %}
   <p class="vacio">Todavía no hay carteles en seguimiento.</p>
   {% endfor %}
+  </div>
 </section>
 {% endblock %}
