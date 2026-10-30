@@ -2,8 +2,8 @@
 # Lo ejecuta la tarea programada "SICOP CONNECT - enriquecimiento" a las 10:00, lunes a viernes, CON la ventana del
 # navegador visible: la tarea debe estar en "Ejecutar solo cuando el usuario haya iniciado sesion" (ver README.md).
 # Con ENRICH_ENABLED=false no hace nada. La alerta y el resumen siguen las reglas de los avisos (dry-run: vista previa).
-# Despues corre "ia cola" (Reporte con IA, leccion 5; decision de Ivania, 2026-10-30): resumenes de los carteles Alta
-# y Media ya enriquecidos, con el presupuesto diario. Corre aunque el enriquecimiento falle (resume lo ya guardado).
+# Despues corre "ia cola" (Reporte con IA, leccion 5; decision de Ivania, 2026-10-30): resumenes de los carteles Alta,
+# Media y Baja ya enriquecidos, con el presupuesto diario. Corre aunque el enriquecimiento falle (resume lo ya guardado).
 # Con AI_MODE=none no hace nada.
 # Cada corrida se agrega a data\logs\enriquecimiento-AAAA-MM.log con su fecha, la salida y el codigo de salida.
 # Codigo de salida: el de enrich run si no es 0 (1 = algun FALLO, 2 = CAPTCHA o bloqueo u otra corrida); si no, el

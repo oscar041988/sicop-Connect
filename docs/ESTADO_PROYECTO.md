@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos pasos 3, notas, migración 0028, y 4, descargar el expediente; rama `desarrollo`) · Gestor de documentos: los 5 pasos hechos; falta mostrárselo a Oscar · `desarrollo` en GitHub: `ba8b7cb` · `main` de GitHub: `7f5c558`
+Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos pasos 3, notas, migración 0028, y 4, descargar el expediente; rama `desarrollo`) · Gestor de documentos: los 5 pasos hechos y mostrados a Oscar · IA lección 5 (primera parte) · `desarrollo` en GitHub: `ee8f1b6` · `main` de GitHub: `7f5c558`
 
 ## Último resultado
 
@@ -255,7 +255,7 @@
     nunca enviaba aunque `.env` tuviera `NOTIFICATIONS_DRY_RUN=false`. Ahora `--send` (decisión de Ivania: Windows
     por ahora, el servidor después). `doctor`: avisos habilitados, dry-run no, Gmail con token. El ciclo del 30/10
     ya había corrido en dry-run; **primer envío automático: lunes 2/11, 8:00**.
-    **Pendiente · Ivania:** avisar a Oscar (va en el PR de `desarrollo`); **cuando Oscar active el ciclo del
+    ~~Pendiente · Ivania: avisar a Oscar~~ **avisado (30/10)**; **cuando Oscar active el ciclo del
     servidor, deshabilitar la tarea de Windows** (si no, correos dobles: cada base deduplica solo lo suyo).
     `APP_BASE_URL` local = `127.0.0.1`: los enlaces del correo solo abren en la laptop. La tarea corre solo con la
     laptop encendida y la sesión abierta.
@@ -275,13 +275,32 @@
     12 pruebas nuevas en `tests/test_ia_cola.py` (OpenAI SIMULADO; el tope de costo roto a propósito: fallan).
     `ia cola --ver` con la base real: 7 en cola (≈ 0,30 USD). **El script de la tarea ya está activo: la primera
     corrida real es la de las 10:00 del 30/10.** Detalle: `RESUMEN_IA.md` §5 y `OPERACION.md` §3.3.
-    **Pendiente · Ivania:** revisar el registro de las 10:00 y los resúmenes en el panel; contarle a Oscar las
-    decisiones provisionales. **Falta de la lección 5:** citas como enlaces, «coincido / no coincido», reporte de 2
+    **Pendiente · Ivania:** revisar el registro de las 10:00 y los resúmenes en el panel; ~~contarle a Oscar las
+    decisiones provisionales~~ **contadas (30/10)**. **Falta de la lección 5:** citas como enlaces, «coincido / no coincido», reporte de 2
     páginas (lección 4), correo, vista de uso y servidor.
   - **Prompt `v2` con el criterio de Hermatix (2026-10-30, dado por Ivania):** `config/prompts/resumen_cartel_v2.md`
     (detalle en `RESUMEN_IA.md` §4); la `v1` no cambia. Prueba nueva en `tests/test_ia_resumen.py`. **Pendiente ·
     Ivania:** `IA_PROMPT_VERSION=v2` en `.env` (antes de las 10:00, para que los 7 de hoy no se paguen dos veces) y
     comprobar con `doctor`. Siguiente paso de la lección 3: revisar con Oscar las recomendaciones de unos 10 carteles.
+  - **Baja también en la cola (2026-10-30, Ivania):** Oscar quiere un resumen de cada cartel del panel para decidir
+    más rápido. La cola es Alta → Media → Baja (`app/ai/cola.py`, panel, docs y pruebas ajustados; 29 passed en las
+    pruebas de IA). `ia cola --ver` a las 09:59: 21 en cola (7 Alta/Media y 14 Baja); con el tope de 10 por día se
+    pone al día en unos 2–3 días hábiles. Muchos Baja son ruido (mantenimiento, abarrotes): ~0,05 USD cada uno.
+    La revisión de 10 carteles la hace Ivania (con Oscar si puede) para comprobar que los resúmenes no inventen.
+  - **Citas como enlaces (2026-10-30, pedido de Ivania):** en el panel, [DOC n · pág. p] abre ese documento en esa
+    página (`app/web/citas.py`; `expediente.numeracion` da el mismo DOC n que leyó el modelo). Solo si el expediente
+    no cambió desde el resumen (misma huella); si cambió, la cita queda como texto con un aviso. 3 pruebas nuevas
+    (la de la huella falla rota a propósito). 759 passed. Primera cola real (10:00): 10 resúmenes, todos con `v1`
+    (`IA_PROMPT_VERSION` seguía en v1); al pasar a `v2` vuelven a la cola.
+  - **Revisión de citas (2026-10-30, Ivania con Claude):** 10 carteles, 11 citas comprobadas contra el texto del
+    PDF: **0 errores** (y el de la impresora, 20261002863, señaló una contradicción real entre pliego y anexo).
+  - **Aspecto del resumen (2026-10-30, pedido de Ivania):** en la página del cartel, una fila como la de los
+    documentos (resumen, recomendación, fecha) con **«Ver»** y **«Descargar»**. «Ver» abre `/oportunidades/{nro}/resumen`
+    (`resumen.html`): documento centrado con encabezado, datos oficiales de SICOP, recomendación destacada y tablas
+    (qué piden, requerimientos, indicadores, plazos, criterios), citas como enlaces. «Descargar» = la misma página con
+    `?imprimir=1`: el navegador la guarda como PDF (decisión de Ivania: sin librerías nuevas; el reporte de 2
+    páginas con logo sigue en la lección 4). Estilos de impresión en `estilo.css`. La página del cartel ya no arma
+    el expediente (más rápida).
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
   - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que
@@ -290,7 +309,7 @@
   - **PR #4 unido por error (29/10, 11:24, cuenta de Ivania):** al actualizar su título y descripción con los 4
     commits de hoy (`DECISION_IA.md`, «Ver», estado) se pulsó «Merge». `main` = `7f5c558` (unión). Sin migraciones ni
     dependencias nuevas, 676 passed; **el servidor no cambió** (sigue en `b51b532`). No se revirtió: lo decide
-    Oscar (revertir también sería escribir en `main`). **Pendiente · Ivania:** avisar a Oscar. `desarrollo` quedó
+    Oscar (revertir también sería escribir en `main`). ~~Pendiente · Ivania: avisar a Oscar~~ **avisado (30/10)**. `desarrollo` quedó
     igual a `main` (avance rápido). Acuerdo: solo Oscar une los PR; abajo solo se pulsa «Comment».
   - **Pendiente:** mandar fichas, documentos y bitácora del enriquecimiento al servidor (la dirección con token de
     la decisión del 27/10). Hoy están solo en la base de Windows: el panel del servidor no los muestra.
@@ -662,7 +681,7 @@
     `sicop_20261030-084755` (esquema 0027, integridad ok; ZIP de documentos y de expedientes) → `migrate` aplicó la
     0028; `doctor`: esquema 0028; conteos iguales (13462 carteles, 5 revisiones, 4 usuarios, 66 avisos).
     ~~Pendiente · Ivania: probar las notas en el panel~~ **probado por Ivania (30/10): funciona y se ve bien.**
-    **Pendiente · Ivania:** subir el respaldo al Drive.
+    ~~Pendiente · Ivania: subir el respaldo al Drive~~ **hecho (30/10)**.
   - **Paso 4 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** «Descargar todo el
     expediente (ZIP)»: `archivos/` + `expediente.txt` (cartel, encargado, historial, etapas, notas, archivos con
     huella). Detalle en `GESTOR_DOCUMENTOS.md`. `app/expediente_descarga.py`, ruta `GET /seguimiento/{nro}/descargar`
@@ -670,7 +689,7 @@
     `tests/test_expediente_descarga.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
     ~~Pendiente · Ivania: probarlo en el panel~~ **probado por Ivania (30/10): el expediente se descarga y se ve
     bien.** **Con esto, los 5 pasos
-    del gestor de documentos están hechos** (falta mostrárselo a Oscar).
+    del gestor de documentos están hechos** y Ivania se los mostró a Oscar (30/10).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

@@ -142,7 +142,7 @@ en SICOP la cola del día (fichas y documentos), con la **ventana del navegador 
 u otra corrida en curso. Con `ENRICH_ENABLED=false` (por defecto) no consulta nada.
 
 **Después corre `ia cola`** (Reporte con IA, lección 5; decisión de Ivania, 2026-10-30): los resúmenes con IA de los
-carteles Alta y Media ya enriquecidos, con el presupuesto diario (`IA_MAX_SUMMARIES_PER_DAY`, `IA_MAX_DAILY_COST`).
+carteles Alta, Media y Baja ya enriquecidos, con el presupuesto diario (`IA_MAX_SUMMARIES_PER_DAY`, `IA_MAX_DAILY_COST`).
 Corre aunque el enriquecimiento falle, y con `AI_MODE=none` no hace nada. Su salida va al mismo registro, en su
 propio bloque. Si el enriquecimiento salió bien, el código de la tarea es el de `ia cola` (`1` = algún resumen
 fallido o la cola se detuvo por la clave o el saldo). Detalle: `docs/OPERACION.md` §3.3.

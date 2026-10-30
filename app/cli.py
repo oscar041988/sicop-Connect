@@ -1205,7 +1205,7 @@ def build_parser() -> argparse.ArgumentParser:
     ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
-    ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta y Media enriquecidos, con el"
+    ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
                                         " presupuesto diario (tarea de las 10:00)")
     ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")

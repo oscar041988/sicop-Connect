@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
 
+from app.ai import expediente as ia_expediente
 from app.ai import resumen as ia_resumen
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
@@ -34,7 +35,7 @@ from app.matching.reglas import ReglasError, cargar_reglas
 from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
                  expediente_descarga, exportar, fichas_panel, historial, panel, reintentos, resumen, seguimiento, usuarios, visor)
 from app.historial import Quien
-from app.web import carga, seguridad
+from app.web import carga, citas, seguridad
 from app.web.intentos import BLOQUEO
 from app.web.seguridad import verificar_csrf
 
@@ -216,6 +217,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
     seg = seguimiento.estado(conn, nro_sicop)
     ia_visible = _ia_encendida()
+    resumenes = ia_resumen.del_cartel(conn, nro_sicop) if ia_visible else []
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
         "seg": seg, "puede_entrar": seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
@@ -225,10 +227,12 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         "sicop": fichas_panel.informacion(conn, nro_sicop), "documentos": fichas_panel.documentos(conn, nro_sicop),
         "retiro": fichas_panel.retiro(conn, nro_sicop), "TEXTO_DOC": fichas_panel.TEXTO,
         "ESTADO_DOC": fichas_panel.ESTADOS,
-        # Reporte con IA (lección 5): los resúmenes del cartel. Con AI_MODE=none no se muestran.
-        "ia_visible": ia_visible, "resumenes": ia_resumen.del_cartel(conn, nro_sicop) if ia_visible else [],
-        "IA": {"recomendaciones": ia_resumen.RECOMENDACIONES, "estados": ia_resumen.ESTADOS, "NO": ia_resumen.NO},
+        # Reporte con IA (lección 5): la fila del resumen («Ver» y «Descargar»). Con AI_MODE=none no se muestra.
+        "ia_visible": ia_visible, "resumenes": resumenes, "IA": _TEXTOS_IA,
     }, status_code=status_code)
+
+
+_TEXTOS_IA = {"recomendaciones": ia_resumen.RECOMENDACIONES, "estados": ia_resumen.ESTADOS, "NO": ia_resumen.NO}
 
 
 def _ia_encendida() -> bool:
@@ -236,6 +240,30 @@ def _ia_encendida() -> bool:
         return load_settings().ai_mode == "openai"
     except ValueError:   # AI_MODE mal escrito: el panel sigue funcionando, sin el bloque de la IA
         return False
+
+
+@router.get("/oportunidades/{nro_sicop}/resumen", response_class=HTMLResponse)
+def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Response:
+    """El resumen con IA del cartel como documento («Ver»). Con ?imprimir=1 («Descargar») abre la ventana de imprimir
+    del navegador, que lo guarda como PDF (decisión de Ivania, 2026-10-30: sin librerías nuevas)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora()) \
+            if SOLO_DIGITOS.match(nro_sicop) else None
+        vigente = next((r for r in ia_resumen.del_cartel(conn, nro_sicop) if r.datos), None) \
+            if datos is not None and _ia_encendida() else None
+        if vigente is None:
+            return _no_encontrado(request, f"El cartel {nro_sicop} todavía no tiene resumen.")
+        # DOC n → documento, solo si el expediente sigue siendo el que leyó el modelo (si no, citas sin enlace).
+        actual = ia_expediente.armar_expediente(conn, nro_sicop, load_settings().ia_max_input_tokens)
+        numerados = ia_expediente.numeracion(conn, nro_sicop) \
+            if actual is not None and actual.huella == vigente.huella else None
+        sicop = fichas_panel.informacion(conn, nro_sicop)
+    return PLANTILLAS.TemplateResponse(request, "resumen.html", {
+        "d": datos, "res": vigente, "sicop": sicop, "IA": _TEXTOS_IA, "imprimir": imprimir,
+        "citas_enlazadas": numerados is not None, "citar": lambda texto: citas.enlazar(texto, nro_sicop, numerados),
+    })
 
 
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)

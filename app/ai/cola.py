@@ -3,10 +3,11 @@
 La tarea programada de Windows la corre después del enriquecimiento de las 10:00 (deploy/windows/sicop-enriquecimiento.ps1).
 Decisiones de Ivania (2026-10-30), provisionales hasta que Oscar decida (DECISION_IA.md §5):
 
-* Cola: carteles Alta o Media en la evaluación vigente, ya enriquecidos (tienen ficha de SICOP), con plazo abierto
-  y sin un resumen ok o revisar de su expediente actual (misma huella) con la versión vigente del prompt. Orden:
-  Alta → Media y, dentro de cada uno, el que cierra antes. Un cartel que cambió (ficha o documentos nuevos) tiene
-  otra huella y vuelve a la cola; su resumen anterior no se borra.
+* Cola: carteles Alta, Media o Baja (los del panel; Baja agregado por Ivania el mismo día) en la evaluación
+  vigente, ya enriquecidos (tienen ficha de SICOP), con plazo abierto y sin un resumen ok o revisar de su
+  expediente actual (misma huella) con la versión vigente del prompt. Orden: Alta → Media → Baja y, dentro de cada
+  uno, el que cierra antes. Un cartel que cambió (ficha o documentos nuevos) tiene otra huella y vuelve a la cola;
+  su resumen anterior no se borra.
 * Un cartel ya intentado hoy no se repite hoy (así un fallo no se paga dos veces el mismo día).
 * Presupuesto diario: IA_MAX_SUMMARIES_PER_DAY resúmenes nuevos (10) y IA_MAX_DAILY_COST USD (1.00) de costo
   estimado de toda la IA del día. Antes de cada llamada se suma lo gastado hoy y lo máximo que podría costar ese
@@ -34,8 +35,8 @@ from app.database import connect
 from app.importers.comun import HORA_CR
 from app.panel import version_vigente
 
-PRIORIDAD = {"alta": 0, "media": 1}
-ETIQUETAS = {"alta": "Alta", "media": "Media"}
+PRIORIDAD = {"alta": 0, "media": 1, "baja": 2}
+ETIQUETAS = {"alta": "Alta", "media": "Media", "baja": "Baja"}
 _DETIENEN = (*ia_cliente.SIN_SALDO, " 401", " 403")   # en el motivo de un fallido: «RateLimitError 429 · insufficient_quota»
 
 
@@ -85,7 +86,7 @@ def costo_de_hoy(conn: sqlite3.Connection, hoy: date) -> Decimal:
 
 
 def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[EnCola]:
-    """Los carteles que hoy tocaría resumir, Alta → Media y por cierre (sin aplicar el presupuesto)."""
+    """Los carteles que hoy tocaría resumir, Alta → Media → Baja y por cierre (sin aplicar el presupuesto)."""
     version = version_vigente(conn)
     if version is None:
         return []
@@ -94,8 +95,8 @@ def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[
     filas = conn.execute(
         "SELECT t.nro_sicop, t.descripcion, t.fecha_cierre_recepcion, d.cierre_recepcion, a.rango"
         " FROM tenders t"
-        " JOIN (SELECT nro_sicop, min(CASE encaje WHEN 'alta' THEN 0 ELSE 1 END) AS rango"
-        "       FROM opportunity_assessments WHERE rules_version = ? AND encaje IN ('alta', 'media')"
+        " JOIN (SELECT nro_sicop, min(CASE encaje WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END) AS rango"
+        "       FROM opportunity_assessments WHERE rules_version = ? AND encaje IN ('alta', 'media', 'baja')"
         "       GROUP BY nro_sicop) a ON a.nro_sicop = t.nro_sicop"
         " JOIN (SELECT nro_sicop, max(id) AS id FROM tender_details GROUP BY nro_sicop) u ON u.nro_sicop = t.nro_sicop"
         " JOIN tender_details d ON d.id = u.id", (version,)).fetchall()

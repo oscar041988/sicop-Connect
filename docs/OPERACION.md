@@ -299,9 +299,9 @@ verificar con el pliego»). Decisiones de Ivania del 30/10, provisionales hasta 
 | `ia cola` | La corrida automática (la tarea de las 10:00) |
 | `ia resumir --nro N` | Un cartel a mano (no cuenta en la cola, pero su costo sí cuenta en el del día) |
 
-**Qué entra en la cola:** carteles **Alta o Media**, ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
-resumen de su expediente actual con la versión vigente del prompt. Alta primero y, dentro de cada uno, el que
-cierra antes. Si llega una ficha o un documento nuevo, el expediente cambia y el cartel vuelve a la cola; el
+**Qué entra en la cola:** carteles **Alta, Media o Baja** (los del panel), ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
+resumen de su expediente actual con la versión vigente del prompt. Alta → Media → Baja y, dentro de cada uno, el
+que cierra antes (Baja agregado por Ivania el 30/10). Si llega una ficha o un documento nuevo, el expediente cambia y el cartel vuelve a la cola; el
 resumen anterior queda en el historial. Lo ya intentado hoy no se repite hoy (un fallido se reintenta otro día).
 
 **Presupuesto diario** (`.env`; OpenAI no tiene límite mensual, así que este es el único freno):

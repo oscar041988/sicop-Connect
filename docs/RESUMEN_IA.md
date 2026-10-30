@@ -167,12 +167,12 @@ del resumen solo sirven para esa comparación: en el reporte (lección 4) los in
 ## 5. Cola automática y panel (lección 5, primera parte)
 
 Pedido de Ivania (2026-10-30): que los resúmenes no dependan de correr `ia resumir` a mano. Decisiones de Ivania,
-provisionales hasta que Oscar decida (`DECISION_IA.md` §5): **carteles Alta y Media enriquecidos**, presupuesto
+provisionales hasta que Oscar decida (`DECISION_IA.md` §5): **carteles Alta, Media y Baja enriquecidos** (Baja agregado el mismo día), presupuesto
 de **10 resúmenes y 1.00 USD al día**.
 
 - `python -m app.cli ia cola` (`app/ai/cola.py`) la corre la tarea de las 10:00, después del enriquecimiento. Cola,
   presupuesto, fallos y cómo apagarla: `docs/OPERACION.md` §3.3. `ia cola --ver` la muestra sin llamar a OpenAI.
-- **Panel:** en la página de un cartel Alta o Media, el bloque «Resumen ejecutivo · Generado por IA · verificar con
+- **Panel:** en la página de un cartel del panel, el bloque «Resumen ejecutivo · Generado por IA · verificar con
   el pliego»: fecha, modelo, versión del prompt y estado; las diferencias con SICOP si quedó «revisar»; la
   recomendación preliminar («la decisión es del encargado»); qué trata y el encaje; el resto (qué piden,
   requerimientos con su cita, indicadores, plazos, criterios, riesgos) al abrir «Ver el resumen completo»; y el

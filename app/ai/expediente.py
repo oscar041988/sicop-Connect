@@ -88,6 +88,13 @@ def es_principal(doc: Documento) -> bool:
             or _sin_tildes(doc.tipo) == "especificaciones tecnicas")
 
 
+def numeracion(conn: sqlite3.Connection, nro_sicop: str) -> dict[int, Documento]:
+    """DOC n → documento, en el orden del expediente: el pliego principal y las especificaciones primero, después
+    en el orden de SICOP. La usan el expediente y los enlaces de las citas del panel: siempre la misma."""
+    docs = sorted(documentos(conn, nro_sicop), key=lambda d: (not es_principal(d), d.id))
+    return dict(enumerate(docs, 1))
+
+
 def _paginas(n: int) -> str:
     return f"{n} página" if n == 1 else f"{n} páginas"
 
@@ -211,7 +218,7 @@ def armar_expediente(conn: sqlite3.Connection, nro_sicop: str, max_tokens: int) 
     origen = _origen(conn, nro_sicop)
     exp = Expediente(nro_sicop, "", 0, max_tokens, origen, info is not None)
 
-    docs = sorted(documentos(conn, nro_sicop), key=lambda d: (not es_principal(d), d.id)) if info else []
+    docs = list(numeracion(conn, nro_sicop).values()) if info else []
     partes = [f"EXPEDIENTE DEL CARTEL {nro_sicop}",
               "Información pública de SICOP reunida por SICOP CONNECT (Hermatix).", "",
               *_cartel(compra, tipo_datos, info, origen), "", *_lineas(compra), "", *_ficha(info)]
