@@ -279,9 +279,9 @@
     decisiones provisionales~~ **contadas (30/10)**. **Falta de la lección 5:** citas como enlaces, «coincido / no coincido», reporte de 2
     páginas (lección 4), correo, vista de uso y servidor.
   - **Prompt `v2` con el criterio de Hermatix (2026-10-30, dado por Ivania):** `config/prompts/resumen_cartel_v2.md`
-    (detalle en `RESUMEN_IA.md` §4); la `v1` no cambia. Prueba nueva en `tests/test_ia_resumen.py`. **Pendiente ·
-    Ivania:** `IA_PROMPT_VERSION=v2` en `.env` (antes de las 10:00, para que los 7 de hoy no se paguen dos veces) y
-    comprobar con `doctor`. Siguiente paso de la lección 3: revisar con Oscar las recomendaciones de unos 10 carteles.
+    (detalle en `RESUMEN_IA.md` §4); la `v1` no cambia. Prueba nueva en `tests/test_ia_resumen.py`. ~~Pendiente ·
+    Ivania: `IA_PROMPT_VERSION=v2` en `.env`~~ **hecho (30/10, después de la cola de las 10:00): `doctor` dice v2**;
+    los 10 resúmenes `v1` de hoy vuelven a la cola desde el lunes. Siguiente paso de la lección 3: revisar con Oscar las recomendaciones de unos 10 carteles.
   - **Baja también en la cola (2026-10-30, Ivania):** Oscar quiere un resumen de cada cartel del panel para decidir
     más rápido. La cola es Alta → Media → Baja (`app/ai/cola.py`, panel, docs y pruebas ajustados; 29 passed en las
     pruebas de IA). `ia cola --ver` a las 09:59: 21 en cola (7 Alta/Media y 14 Baja); con el tope de 10 por día se
@@ -301,6 +301,9 @@
     `?imprimir=1`: el navegador la guarda como PDF (decisión de Ivania: sin librerías nuevas; el reporte de 2
     páginas con logo sigue en la lección 4). Estilos de impresión en `estilo.css`. La página del cartel ya no arma
     el expediente (más rápida).
+  - **Casilla «coincido / no coincido»: pospuesta (Ivania, 30/10).** Oscar quiere el resumen para leer rápido; la
+    revisión de citas no encontró errores. Las recomendaciones raras se reportan a Claude a mano; si se vuelven
+    frecuentes, se construye.
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
   - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que

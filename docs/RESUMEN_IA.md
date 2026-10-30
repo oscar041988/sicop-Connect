@@ -177,8 +177,9 @@ de **10 resúmenes y 1.00 USD al día**.
   recomendación preliminar («la decisión es del encargado»); qué trata y el encaje; el resto (qué piden,
   requerimientos con su cita, indicadores, plazos, criterios, riesgos) al abrir «Ver el resumen completo»; y el
   historial de resúmenes. Todo el texto del modelo va escapado. Con `AI_MODE=none` no aparece.
-- **Falta de la lección 5:** citas como enlaces al documento y su página; la casilla «coincido / no coincido» junto
-  a la decisión; el reporte de 2 páginas (lección 4) en la misma cola; la línea del resumen en el correo diario; la
+- **Falta de la lección 5:** ~~citas como enlaces~~ (hecho, 30/10); la casilla «coincido / no coincido» junto a la
+  decisión (**pospuesta por Ivania, 30/10**: Oscar quiere el resumen para leer rápido; los desacuerdos se reportan a
+  mano hasta que sean frecuentes); el reporte de 2 páginas (lección 4) en la misma cola; la línea del resumen en el correo diario; la
   vista de uso del día y del mes; el despliegue en el servidor.
 
 ## 6. Pendiente de la lección 1
