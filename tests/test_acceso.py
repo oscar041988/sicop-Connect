@@ -46,7 +46,8 @@ def _rutas_post():
                                   "/oportunidades/00000000001/documentos/1/ver",
                                   "/oportunidades/00000000001/documentos/1/ver/0",
                                   "/seguimiento/00000000001/archivos/1", "/seguimiento/00000000001/archivos/1/ver",
-                                  "/seguimiento/00000000001/archivos/1/ver/0"])
+                                  "/seguimiento/00000000001/archivos/1/ver/0",
+                                  "/seguimiento/00000000001/descargar"])
 def test_anonimo_es_redirigido_al_login(anonimo, ruta):
     respuesta = anonimo.get(ruta, follow_redirects=False)
 

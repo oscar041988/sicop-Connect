@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: pasos 1A (2026-10-26), 1B, 2 y 5 (2026-10-29) y 3 (2026-10-30) hechos, solo local.** Se construye
+> con Claude el 2026-10-26. **Estado: los 5 pasos hechos (1A el 2026-10-26; 1B, 2 y 5 el 2026-10-29; 3 y 4 el 2026-10-30), solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -53,7 +53,7 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 | 1B | Correo al nuevo encargado, con el ciclo diario | **Hecho** (2026-10-29) |
 | 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | **Hecho** (2026-10-29) |
 | 3 | Notas con autor y fecha | **Hecho** (2026-10-30) |
-| 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
+| 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | **Hecho** (2026-10-30) |
 | 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | **Hecho** (2026-10-29) |
 
 El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las notas no tienen dónde colgarse.
@@ -125,6 +125,24 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
 - **Pruebas:** 4 nuevas en `tests/test_seguimiento.py` (SINTÉTICO). La de acceso se comprobó con la regla rota a
   propósito: falla.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0028).
+
+### Paso 4, cómo quedó (2026-10-30, pedido por Ivania)
+
+- **Botón «Descargar todo el expediente (ZIP)»** en el expediente → `GET /seguimiento/<N.º>/descargar`. Lo usan
+  el encargado vigente y los administradores (la misma regla `puede_entrar`): en un traspaso, la persona nueva
+  baja todo y la anterior ya no. Sin migración ni dependencias nuevas.
+- **El ZIP** (`expediente_<N.º>_<aaaammdd-hhmm>.zip`, `app/expediente_descarga.py`) trae:
+  - `expediente.txt` (UTF-8): datos del cartel, encargado y etapa vigentes, historial de encargados, etapas, notas
+    y la lista de archivos con tipo, tamaño, quién lo subió, fecha y huella SHA-256 (para comprobar que llegaron
+    completos);
+  - `archivos/`: los archivos con el nombre que se ve en el panel; si dos se llaman igual, el segundo lleva « (2)».
+  - Un archivo que falta en disco no detiene la descarga: `expediente.txt` dice «FALTA EN DISCO».
+- **No van** los documentos de SICOP del cartel (se bajan desde la página del cartel; pueden pesar hasta 100 MB).
+- **Se arma en un archivo temporal**, no en memoria, y se borra después de enviarlo.
+- **Historial (`audit_log`):** «Descargó todo el expediente…» con cuántos archivos y notas llevaba. Solo se anotan
+  las descargas permitidas.
+- **Pruebas:** `tests/test_expediente_descarga.py` (6, SINTÉTICO) y la ruta en `test_anonimo_es_redirigido_al_login`.
+  La de acceso se comprobó con la regla rota a propósito: falla.
 
 ### Paso 5, cómo quedó (2026-10-29, plan aprobado por Ivania)
 

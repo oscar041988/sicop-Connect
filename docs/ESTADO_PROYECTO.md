@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos paso 3, notas, migración 0028; rama `desarrollo`) · Siguiente: gestor de documentos paso 4 (descargar el expediente completo) · `desarrollo` en GitHub: `ba8b7cb` · `main` de GitHub: `7f5c558`
+Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos pasos 3, notas, migración 0028, y 4, descargar el expediente; rama `desarrollo`) · Gestor de documentos: los 5 pasos hechos; falta mostrárselo a Oscar · `desarrollo` en GitHub: `ba8b7cb` · `main` de GitHub: `7f5c558`
 
 ## Último resultado
 
@@ -265,7 +265,7 @@
     «sin coincidencia». `score-rules`: sin errores nuevos. 733 passed.
   - GitHub rechazó la llave SSH aunque estaba registrada; se arregló borrándola y volviéndola a agregar. Push de
     `desarrollo` (`bd672af..ba8b7cb`).
-  - **Gestor de documentos, paso 3 (notas):** ver «Gestor de documentos» abajo.
+  - **Gestor de documentos, pasos 3 (notas) y 4 (descargar el expediente):** ver «Gestor de documentos» abajo.
 
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
   - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que
@@ -642,8 +642,17 @@
     2000 caracteres); `seguimiento.escribir_nota` / `notas_de`; ruta `POST /seguimiento/{nro}/notas` (CSRF,
     `puede_entrar`); sección «Notas» del expediente; `audit_log` «escribir_nota» sin el texto. 4 pruebas nuevas en
     `tests/test_seguimiento.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
-    **Pendiente · Ivania:** respaldo y `migrate` (0028) en la base local; probar en el panel.
-    **Siguiente:** paso 4 (descargar el expediente completo).
+    ~~Pendiente · Ivania: respaldo y `migrate` (0028)~~ **hecho (Claude a pedido de Ivania, 30/10):** respaldo
+    `sicop_20261030-084755` (esquema 0027, integridad ok; ZIP de documentos y de expedientes) → `migrate` aplicó la
+    0028; `doctor`: esquema 0028; conteos iguales (13462 carteles, 5 revisiones, 4 usuarios, 66 avisos).
+    **Pendiente · Ivania:** probar las notas en el panel; subir el respaldo al Drive.
+  - **Paso 4 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** «Descargar todo el
+    expediente (ZIP)»: `archivos/` + `expediente.txt` (cartel, encargado, historial, etapas, notas, archivos con
+    huella). Detalle en `GESTOR_DOCUMENTOS.md`. `app/expediente_descarga.py`, ruta `GET /seguimiento/{nro}/descargar`
+    (`puede_entrar`), `audit_log` «descargar_expediente». Sin migración. 6 pruebas nuevas en
+    `tests/test_expediente_descarga.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
+    **Pendiente · Ivania:** probarlo en el panel con el expediente que ya tiene un archivo. **Con esto, los 5 pasos
+    del gestor de documentos están hechos** (falta mostrárselo a Oscar).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel

@@ -21,6 +21,7 @@ from urllib.parse import quote, urlencode
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from starlette.background import BackgroundTask
 
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
@@ -29,8 +30,8 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos, exportar,
-                 fichas_panel, historial, panel, reintentos, resumen, seguimiento, usuarios, visor)
+from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
+                 expediente_descarga, exportar, fichas_panel, historial, panel, reintentos, resumen, seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, seguridad
 from app.web.intentos import BLOQUEO
@@ -614,6 +615,30 @@ def ver_dentro_del_archivo(request: Request, nro_sicop: str, archivo_id: int, in
         return _no_encontrado(request, "Ese archivo no es un ZIP.")
     return _ver_dentro(request, ruta, archivo.nombre, indice, settings.document_max_mb * 1024 * 1024,
                        f"/seguimiento/{nro_sicop}/archivos/{archivo_id}", _volver_expediente(nro_sicop))
+
+
+@router.get("/seguimiento/{nro_sicop}/descargar")
+def descargar_expediente(request: Request, nro_sicop: str) -> Response:
+    """Paso 4: todo el expediente en un ZIP (archivos, notas e historial), para el traspaso."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    ahora = _ahora()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        # Se arma en un archivo temporal (no en memoria: puede pesar varias veces EXPEDIENTE_MAX_MB) que se borra
+        # al terminar de enviarlo.
+        temporal = tempfile.NamedTemporaryFile(prefix="expediente-", suffix=".zip", delete=False)
+        try:
+            with temporal:
+                expediente_descarga.armar(conn, settings.expedientes_dir, nro_sicop, temporal, _quien(request), ahora)
+        except BaseException:
+            Path(temporal.name).unlink(missing_ok=True)
+            raise
+    respuesta = _archivo(Path(temporal.name), expediente_descarga.nombre_zip(nro_sicop, ahora), "application/zip")
+    respuesta.background = BackgroundTask(Path(temporal.name).unlink, missing_ok=True)
+    return respuesta
 
 
 # --- Calidad de las reglas (solo administradores) -------------------------------------------------------------
