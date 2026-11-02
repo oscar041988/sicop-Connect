@@ -9,7 +9,7 @@
     {{ vigente.diferencias | map(attribute="dato") | join(", ") | lower }}. Los datos oficiales son los de SICOP.</p>
   {% endif %}
   <div class="tabla-scroll"><table class="lista auto">
-    <thead><tr><th>Resumen</th><th>Recomendación preliminar</th><th>Generado</th><th></th></tr></thead>
+    <thead><tr><th>Resumen</th><th>{{ termino("Recomendación preliminar") }}</th><th>Generado</th><th></th></tr></thead>
     <tbody>
       <tr>
         <td>Resumen ejecutivo del cartel<br><small>{{ vigente.datos.de_que_trata | truncate(160) }}</small></td>

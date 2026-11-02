@@ -55,6 +55,14 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 | 19 | ¿Cómo leo el correo diario? | Correo → Cartel | `19-correo.md` | Borrador (2026-11-02) |
 | 20 | ¿Qué hago si algo no funciona? | Cualquiera | `20-problemas.md` | Borrador (2026-11-02) |
 
+## Dónde se ve la ayuda en la app
+
+- `/ayuda` («¿Cómo se usa?», enlace en el pie de cada página): tarjetas por bloque en el orden de esta lista,
+  buscador y glosario. Las misiones 13 a 18 solo las ven los administradores (`config/ayuda.yaml`).
+- `/ayuda/<misión>`: la misión con sus capturas. Se lee de su archivo: para cambiarla, edita el `.md`.
+- Botón «?» abajo a la derecha de cada pantalla: abre la misión de esa pantalla (mapa en `config/ayuda.yaml`).
+- Algunas palabras del panel muestran su explicación de `GLOSARIO.md` al pasar el mouse.
+
 ## Capturas
 
 Cada marcador `[captura: …]` tiene su imagen, hecha con datos de EJEMPLO (nunca reales):

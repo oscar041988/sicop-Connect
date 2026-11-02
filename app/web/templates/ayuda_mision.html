@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}{{ mision.titulo }} · Ayuda{% endblock %}
+{% block contenido %}
+{# El cuerpo viene de docs/ayuda/misiones/<misión>.md, convertido por app/ayuda/pagina.py (texto escapado) #}
+<p class="migas"><a href="/ayuda">← Todas las misiones</a> · <a href="/ayuda#glosario">Glosario</a></p>
+<article class="ayuda mision-ayuda">
+  <p class="sub">{{ mision.bloque }}{% if mision.solo_admin %} · solo administradores{% endif %}</p>
+  <h1>{{ mision.titulo }}</h1>
+  {{ cuerpo }}
+</article>
+{% endblock %}

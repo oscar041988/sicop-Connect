@@ -25,6 +25,7 @@ from starlette.background import BackgroundTask
 
 from app.ai import expediente as ia_expediente
 from app.ai import resumen as ia_resumen
+from app.ayuda import pagina as ayuda
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
 from app.database import check_database, connect
@@ -68,6 +69,7 @@ PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
     nombre_competidor=competencia.nombre_competidor, version_estatico=version_estatico,
+    termino=ayuda.termino, ayuda_para=ayuda.ayuda_para,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
 
@@ -1098,3 +1100,27 @@ def marcar_grabacion_revisada(request: Request, consulta_id: int) -> Response:
             return _render_grabacion(request, conn, consulta_id, 400, error=str(exc))
     request.session["hecho"] = "Grabación marcada como revisada: desde ahora sigue la retención normal."
     return RedirectResponse(f"/bitacora/consultas/{consulta_id}", status_code=303)
+
+
+# --- Ayuda «¿Cómo se usa?» (ayuda, lección 3): los textos se leen de docs/ayuda/ ---------------------------------
+
+@router.get("/ayuda", response_class=HTMLResponse)
+def pagina_ayuda(request: Request, q: str = "") -> Response:
+    es_admin = seguridad.es_admin(request)
+    consulta = q.strip()[:100]
+    return PLANTILLAS.TemplateResponse(request, "ayuda.html", {
+        "seccion": "ayuda", "bloques": ayuda.indice(es_admin), "q": consulta,
+        "resultados": ayuda.buscar(consulta, es_admin) if consulta else None, "glosario": ayuda.glosario(),
+    })
+
+
+@router.get("/ayuda/{nombre}", response_class=HTMLResponse)
+def pagina_mision(request: Request, nombre: str) -> Response:
+    mision = ayuda.buscar_mision(nombre)
+    if mision is None:
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": "No hay una misión con ese nombre.", "seccion": "ayuda"}, status_code=404)
+    if mision.solo_admin and not seguridad.es_admin(request):
+        raise seguridad.SinPermiso()
+    return PLANTILLAS.TemplateResponse(request, "ayuda_mision.html", {
+        "seccion": "ayuda", "mision": mision, "cuerpo": ayuda.pagina(mision)})

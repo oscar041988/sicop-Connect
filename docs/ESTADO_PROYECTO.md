@@ -4,6 +4,19 @@
 
 ## Último resultado
 
+- **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
+  Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para
+  administradores.
+  - `/ayuda`: tarjetas por bloque (orden de `docs/ayuda/MISIONES.md`), buscador sin tildes ni mayúsculas y
+    glosario (`GLOSARIO.md`). `/ayuda/<misión>`: la misión leída de su `.md`, con capturas y texto alternativo;
+    todo el texto escapado y solo enlaces a otras misiones. Enlace «¿Cómo se usa?» en el pie.
+  - Botón «?» fijo en cada pantalla → su misión (`config/ayuda.yaml`); 12 explicaciones del glosario al pasar el
+    mouse (`termino(...)` en las plantillas, sin JavaScript). Código: `app/ayuda/pagina.py`.
+  - Pruebas: `tests/test_ayuda_pagina.py` 31 passed. Capturas: siguen 132 de 132.
+  - Pendiente: Ivania recorre la ayuda dentro de la app (cada misión desde `/ayuda` y desde su «?»; buscar
+    «reporte», «descargar», «cierra»); preguntar a Oscar por el recorrido de bienvenida (Encargo 3B); revisión
+    de Oscar en su computadora.
+
 - **Ayuda · lección 2, Encargo 2: base de EJEMPLO y capturas automáticas (2026-11-02, rama `desarrollo`, solo
   local).** Antes, en la misma lección: misiones reordenadas de arriba abajo y 7 de administración (20 en total,
   commit `18b1b02`).
