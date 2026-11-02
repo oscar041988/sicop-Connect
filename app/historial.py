@@ -28,12 +28,19 @@ ACCIONES = {
     "subir_archivo": "Subió un archivo al expediente de un cartel",
     "escribir_nota": "Escribió una nota en el expediente de un cartel",
     "descargar_expediente": "Descargó todo el expediente de un cartel",
+    "crear_elemento_perfil": "Agregó un elemento al perfil de Hermatix",
+    "nueva_version_perfil": "Cargó una versión de un elemento del perfil",
+    "marcar_pendiente_perfil": "Marcó pendiente un elemento del perfil",
+    "ver_documento_perfil": "Vio un documento del perfil",
+    "descargar_documento_perfil": "Descargó un documento del perfil",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
 DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")
 DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado", "cambiar_etapa", "subir_archivo", "escribir_nota",
                   "descargar_expediente")
+DE_PERFIL = ("crear_elemento_perfil", "nueva_version_perfil", "marcar_pendiente_perfil")
+ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil")
 
 
 @dataclass(frozen=True)

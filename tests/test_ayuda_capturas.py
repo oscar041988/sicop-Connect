@@ -88,6 +88,15 @@ def test_la_base_de_ejemplo_solo_tiene_datos_inventados_y_marcados(base_ejemplo)
     assert all(linea.split(";")[1].startswith("EJEMPLO") for linea in golden.splitlines()[1:])
 
 
+def test_toda_carpeta_de_la_configuracion_de_ejemplo_queda_dentro_del_ejemplo(tmp_path):
+    from app.config import DEFAULTS
+    entorno = ejemplo.entorno(tmp_path)
+    rutas = [k for k in DEFAULTS if k.endswith("_DIR") or k == "DATABASE_PATH"]
+    assert "PROFILE_DOCS_DIR" in rutas
+    for clave in rutas:
+        assert Path(entorno[clave]).is_relative_to(tmp_path), clave   # nunca data/ ni otra carpeta real
+
+
 def test_se_niega_a_usar_la_base_real(tmp_path, monkeypatch):
     carpeta = tmp_path / "ejemplo"
     monkeypatch.setenv("DATABASE_PATH", str(carpeta / "sicop.db"))   # «la real» apunta adonde iría la de ejemplo

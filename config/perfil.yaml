@@ -1,0 +1,34 @@
+# Perfil de Hermatix (asistente de elegibilidad, lección 1): elementos sugeridos en /perfil.
+# Salen del borrador docs/PERFIL_LISTA_INICIAL.md (2026-11-02), todavía SIN aprobar por Oscar. Cuando él decida,
+# se edita esta lista: no hace falta tocar código. Un elemento sugerido no existe hasta que un administrador lo
+# agrega desde /perfil.
+# Tipos: experiencia, certificacion, permiso, personal, poliza, financiero, legal.
+
+sugerencias:
+  experiencia:
+    - Años de experiencia en GPS y gestión de flotas
+    - Constancias o cartas de clientes de servicios GPS (últimos 5 años)
+    - Clientes activos con número de vehículos y última factura
+  personal:
+    - Técnicos de instalación y mantenimiento (lista y currículos)
+    - Profesionales en planilla (ingeniería en sistemas, autotrónica)
+  certificacion:
+    - Carta del fabricante o certificado de marca de los equipos
+    - Certificados de calidad o normas de los equipos
+  permiso:
+    - Patente municipal vigente y constancia de estar al día
+    - Permiso sanitario de funcionamiento
+  poliza:
+    - Póliza de riesgos del trabajo (INS)
+    - Póliza de responsabilidad civil
+    - Seguro de los equipos
+  legal:
+    - Al día con la CCSS
+    - Al día con FODESAF
+    - Al día con Hacienda (actividad económica afín)
+    - Actividad comercial registrada
+    - Declaración jurada de prohibiciones (art. 28 y 29 LGCP)
+    - Declaración de beneficiarios finales y propiedad de las acciones
+    - Firma digital del representante legal
+  financiero:
+    - Estados financieros

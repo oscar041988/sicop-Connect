@@ -60,6 +60,8 @@ DEFAULTS: dict[str, str] = {
     "DOCUMENTS_MAX_MB_PER_TENDER": "100",
     "EXPEDIENTES_DIR": "data/expedientes",
     "EXPEDIENTE_MAX_MB": "10",
+    "PROFILE_DOCS_DIR": "data/perfil",
+    "PROFILE_DOC_MAX_MB": "10",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
@@ -308,6 +310,18 @@ class Settings:
     def expediente_max_mb(self) -> int:
         """Tamaño máximo de UN archivo subido a un expediente (EXPEDIENTE_MAX_MB; 10 por ahora, decisión de Oscar)."""
         return self._entero("EXPEDIENTE_MAX_MB", 1, 500, "MB")
+
+    @property
+    def profile_docs_dir(self) -> Path:
+        """Documentos del perfil de Hermatix (PROFILE_DOCS_DIR; data/perfil). Confidenciales: fuera de Git; entran en
+        el respaldo."""
+        path = Path(self.get("PROFILE_DOCS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def profile_doc_max_mb(self) -> int:
+        """Tamaño máximo de UN documento del perfil (PROFILE_DOC_MAX_MB; 10)."""
+        return self._entero("PROFILE_DOC_MAX_MB", 1, 500, "MB")
 
     @property
     def documents_max_mb_per_tender(self) -> int:

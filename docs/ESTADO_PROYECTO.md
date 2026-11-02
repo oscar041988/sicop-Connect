@@ -9,7 +9,22 @@
   dos niveles (Administrador y Encargado): registrado en `docs/DECISION_IA.md` §7 y en `CLAUDE.md`. Enviar
   documentos de Hermatix a OpenAI sigue pendiente (`ASSISTANT_SEND_DOCUMENTS=false`).
   - Lista inicial del perfil para revisar con Oscar: `docs/PERFIL_LISTA_INICIAL.md` (183 requerimientos de los 15
-    carteles con resumen; sin documentos de Hermatix). Siguiente: acordarla con Oscar y dar el Encargo 1.
+    carteles con resumen; sin documentos de Hermatix).
+  - **Encargo 1 hecho (2026-11-02, rama `desarrollo`, solo local): perfil de Hermatix.** Migración **0029**
+    (`company_profile_items` + `company_profile_versions`: historial, nada se borra ni se modifica). Página
+    `/perfil` y `/perfil/<id>` («Perfil» en el menú): la ven los dos niveles; **cargan, reemplazan y marcan
+    pendiente solo los administradores** (decisión de Ivania; un encargado recibe 403). Estado calculado al leer:
+    vigente · por vencer (≤ 30 días, falta que Oscar lo confirme) · vencido · pendiente; aviso «Revisar pronto».
+    Documentos solo PDF/PNG/JPG con firma comprobada, en `PROFILE_DOCS_DIR` (data/perfil, fuera de Git), límite
+    `PROFILE_DOC_MAX_MB` (10); cada vista o descarga queda en `audit_log` y se ve en la página del elemento. El
+    respaldo agrega `…_perfil.zip`. Sugerencias del borrador en `config/perfil.yaml` (botones «+», quedan
+    pendientes). La recepción de archivos del expediente pasó a `app/archivos.py` (compartida, mismo
+    comportamiento). La base de ejemplo de la ayuda también apunta su `PROFILE_DOCS_DIR` dentro del ejemplo
+    (prueba nueva que lo vigila).
+  - Pruebas: `tests/test_perfil.py` 21 passed (más migraciones, respaldo, expediente y ayuda).
+  - Pendiente: acordar la lista con Oscar (editar `config/perfil.yaml`); cargar el perfil real (Ivania, desde la
+    app); probar con un usuario encargado que no puede cargar; servidor: crear `PROFILE_DOCS_DIR` con permisos
+    solo para el usuario `sicop` y revisar que el respaldo lo incluya.
 
 - **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
   Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para

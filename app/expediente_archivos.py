@@ -13,19 +13,16 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
-import re
-import secrets
 import sqlite3
-import unicodedata
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
-from app import historial, visor
+from app import archivos, historial, visor
+from app.archivos import ArchivoInvalido, ArchivoMuyGrande, YaEsta, nombre_para_mostrar  # noqa: F401 (las usan las rutas)
 from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
@@ -39,21 +36,6 @@ MIME = {".pdf": "application/pdf",
 FIRMA_PDF = b"%PDF-"
 FIRMA_ZIP = b"PK\x03\x04"
 FIRMA_OLE = bytes.fromhex("D0CF11E0A1B11AE1")   # Word y Excel viejos (.doc, .xls)
-BLOQUE = 1024 * 1024
-LARGO_MAXIMO_NOMBRE = 150
-_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
-
-
-class ArchivoInvalido(ValueError):
-    """El archivo no se acepta; el mensaje es el que verá la persona."""
-
-
-class ArchivoMuyGrande(ArchivoInvalido):
-    pass
-
-
-class YaEsta(ArchivoInvalido):
-    pass
 
 
 @dataclass(frozen=True)
@@ -74,16 +56,6 @@ class Archivo:
     def vista(self) -> str | None:
         """'pdf', 'excel' o 'zip' si se puede «Ver» (app/visor.py); Word y .xls solo se descargan."""
         return visor.vista(f"x{self.extension}")
-
-
-def nombre_para_mostrar(original: str | None) -> str:
-    """«C:\\Users\\…\\Pliego final.pdf» → «Pliego final.pdf»: solo el último tramo, sin caracteres de control."""
-    base = PureWindowsPath(PurePosixPath(original or "").name).name
-    base = _CONTROL.sub("", unicodedata.normalize("NFC", base)).strip()
-    if len(base) > LARGO_MAXIMO_NOMBRE:
-        raiz, ext = os.path.splitext(base)
-        base = raiz[:LARGO_MAXIMO_NOMBRE - len(ext)] + ext
-    return base
 
 
 def extension_de(nombre: str) -> str:
@@ -150,32 +122,18 @@ def guardar(conn: sqlite3.Connection, base: Path, nro_sicop: str, origen: Binary
     seguimiento_id = _seguimiento_id(conn, nro_sicop)
     autor = _nombre_activo(conn, quien.user_id)
     carpeta = _carpeta(base, nro_sicop)
-    carpeta.mkdir(parents=True, exist_ok=True)
-    temporal = carpeta / f".subiendo-{secrets.token_hex(8)}"
-    huella, tamano = hashlib.sha256(), 0
-    try:
-        with open(temporal, "xb") as salida:
-            while bloque := origen.read(BLOQUE):
-                tamano += len(bloque)
-                if tamano > limite:
-                    raise ArchivoMuyGrande(f"El archivo supera el límite de {limite // (1024 * 1024)} MB"
-                                           " (EXPEDIENTE_MAX_MB).")
-                huella.update(bloque)
-                salida.write(bloque)
-        if tamano == 0:
-            raise ArchivoInvalido("El archivo está vacío.")
-        if not contenido_valido(temporal, extension):
+    aviso = f"El archivo supera el límite de {limite // (1024 * 1024)} MB (EXPEDIENTE_MAX_MB)."
+    with archivos.recibir(origen, carpeta, limite, aviso) as r:
+        if not contenido_valido(r.temporal, extension):
             raise ArchivoInvalido(f"El contenido de «{nombre}» no es un {TIPOS[extension]} de verdad: no coincide"
                                   f" con la extensión {extension}.")
-        sha = huella.hexdigest()
+        sha, tamano = r.sha256, r.tamano
         ya = conn.execute("SELECT nombre FROM seguimiento_archivos WHERE seguimiento_id = ? AND sha256 = ?",
                           (seguimiento_id, sha)).fetchone()
         if ya:
             raise YaEsta(f"Ese archivo ya está en el expediente (como «{ya[0]}»): no se duplica.")
         destino = carpeta / f"{sha}{extension}"
-        os.replace(temporal, destino)
-    finally:
-        temporal.unlink(missing_ok=True)
+        os.replace(r.temporal, destino)
     momento = ahora.astimezone(HORA_CR).isoformat(timespec="seconds")
     try:
         with transaccion(conn):   # la fila y su línea del historial, juntas

@@ -18,10 +18,11 @@
       </a>
       {% if usuario %}
       <nav>
-        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "seguimiento", "usuarios", "destinatarios", "avisos", "calidad", "bitacora", "ayuda") %} aria-current="page"{% endif %}>Panel de carteles</a>
+        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "seguimiento", "usuarios", "destinatarios", "avisos", "calidad", "bitacora", "ayuda", "perfil") %} aria-current="page"{% endif %}>Panel de carteles</a>
         <a href="/seguimiento"{% if seccion == "seguimiento" %} aria-current="page"{% endif %}>Seguimiento</a>
         <a href="/competencia"{% if seccion == "competencia" %} aria-current="page"{% endif %}>Competencia</a>
         <a href="/cargar"{% if seccion == "cargar" %} aria-current="page"{% endif %}>Cargar archivo</a>
+        <a href="/perfil"{% if seccion == "perfil" %} aria-current="page"{% endif %}>Perfil</a>
         <a href="/ayuda"{% if seccion == "ayuda" %} aria-current="page"{% endif %}>Ayuda</a>
         {% if usuario.rol == "admin" %}
         {# Las páginas de administración van agrupadas: sueltas, el menú no cabía en una línea (sin JavaScript) #}

@@ -34,7 +34,8 @@ from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, panel, reintentos, resumen, seguimiento, usuarios, visor)
+                 expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen, seguimiento,
+                 usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
 from app.web.intentos import BLOQUEO
@@ -64,6 +65,7 @@ PLANTILLAS = Jinja2Templates(directory=Path(__file__).parent / "templates",  # a
 PLANTILLAS.env.filters["fecha"] = panel.fecha_cr
 PLANTILLAS.env.filters["legible"] = panel.legible
 PLANTILLAS.env.filters["titulo"] = panel.formato_titulo
+PLANTILLAS.env.filters["dia"] = perfil.dia
 PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
@@ -1124,3 +1126,151 @@ def pagina_mision(request: Request, nombre: str) -> Response:
         raise seguridad.SinPermiso()
     return PLANTILLAS.TemplateResponse(request, "ayuda_mision.html", {
         "seccion": "ayuda", "mision": mision, "cuerpo": ayuda.pagina(mision)})
+
+
+# --- Perfil de Hermatix (asistente de elegibilidad, lección 1): lo ven los dos niveles; cargan los administradores --
+
+def _datos_perfil(valor: str, numero: str, unidad: str, vigente_desde: str, vence_el: str, nota: str) -> perfil.Datos:
+    return perfil.Datos(valor, numero, unidad, vigente_desde, vence_el, nota)
+
+
+def _subido(archivo: UploadFile | None):
+    return (archivo.file, archivo.filename) if archivo is not None and archivo.filename else None
+
+
+def _render_perfil(request: Request, conn, status_code: int = 200, **contexto) -> Response:
+    es_admin = seguridad.es_admin(request)
+    elementos = perfil.listar(conn)
+    return PLANTILLAS.TemplateResponse(request, "perfil.html", {
+        "seccion": "perfil", "elementos": elementos, "avisos": perfil.avisos(elementos), "TIPOS": perfil.TIPOS,
+        "sugerencias": perfil.sugerencias(conn) if es_admin else {}, "es_admin": es_admin,
+        "dias_aviso": perfil.AVISO_DIAS, "hecho": request.session.pop("hecho_perfil", None), "formulario": {},
+        **contexto}, status_code=status_code)
+
+
+def _render_elemento(request: Request, conn, item_id: int, status_code: int = 200, **contexto) -> Response:
+    elemento = perfil.obtener(conn, item_id)
+    if elemento is None:
+        return _no_encontrado(request, "Ese elemento del perfil no existe.")
+    return PLANTILLAS.TemplateResponse(request, "perfil_elemento.html", {
+        "seccion": "perfil", "e": elemento, "versiones": perfil.versiones(conn, item_id),
+        "cambios": perfil.cambios(conn, item_id), "accesos": perfil.accesos(conn, item_id),
+        "ACCIONES": historial.ACCIONES,
+        "es_admin": seguridad.es_admin(request), "hecho": request.session.pop("hecho_perfil", None),
+        "formulario": {}, **contexto}, status_code=status_code)
+
+
+def _estado_error(exc: Exception) -> int:
+    return 413 if isinstance(exc, expediente_archivos.ArchivoMuyGrande) else 400
+
+
+@router.get("/perfil", response_class=HTMLResponse)
+def pagina_perfil(request: Request) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_perfil(request, conn)
+
+
+@router.post("/perfil", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def crear_elemento_perfil(request: Request, tipo: str = Form(""), titulo: str = Form(""), valor: str = Form(""),
+                          numero: str = Form(""), unidad: str = Form(""), vigente_desde: str = Form(""),
+                          vence_el: str = Form(""), nota: str = Form(""),
+                          archivo: UploadFile | None = File(None)) -> Response:
+    """Agrega un elemento; si trae datos o documento, también su primera versión (si no, queda «pendiente»)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    datos = _datos_perfil(valor, numero, unidad, vigente_desde, vence_el, nota)
+    subido = _subido(archivo)
+    formulario = {"tipo": tipo, "titulo": titulo, **datos.__dict__}
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            perfil.validar(datos)
+            item_id = perfil.crear(conn, tipo, titulo, _quien(request), _ahora())
+        except perfil.PerfilInvalido as exc:
+            return _render_perfil(request, conn, 400, error=str(exc), formulario=formulario)
+        if subido is not None or datos.valor.strip() or datos.numero.strip():
+            try:
+                perfil.nueva_version(conn, settings.profile_docs_dir, item_id, datos, subido,
+                                     settings.profile_doc_max_mb * 1024 * 1024, _quien(request), _ahora())
+            except (perfil.PerfilInvalido, expediente_archivos.ArchivoInvalido) as exc:
+                return _render_elemento(request, conn, item_id, _estado_error(exc), formulario=formulario,
+                                        error=f"El elemento se agregó como pendiente, pero sus datos no: {exc}")
+    request.session["hecho_perfil"] = "Elemento agregado."
+    return RedirectResponse(f"/perfil/{item_id}", status_code=303)
+
+
+@router.get("/perfil/{item_id}", response_class=HTMLResponse)
+def pagina_elemento_perfil(request: Request, item_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_elemento(request, conn, item_id)
+
+
+@router.post("/perfil/{item_id}/version", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def nueva_version_perfil(request: Request, item_id: int, valor: str = Form(""), numero: str = Form(""),
+                         unidad: str = Form(""), vigente_desde: str = Form(""), vence_el: str = Form(""),
+                         nota: str = Form(""), archivo: UploadFile | None = File(None)) -> Response:
+    """Carga o reemplaza los datos del elemento; la versión anterior queda en el historial."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    datos = _datos_perfil(valor, numero, unidad, vigente_desde, vence_el, nota)
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            perfil.nueva_version(conn, settings.profile_docs_dir, item_id, datos, _subido(archivo),
+                                 settings.profile_doc_max_mb * 1024 * 1024, _quien(request), _ahora())
+        except (perfil.PerfilInvalido, expediente_archivos.ArchivoInvalido) as exc:
+            return _render_elemento(request, conn, item_id, _estado_error(exc), error=str(exc),
+                                    formulario=datos.__dict__)
+    request.session["hecho_perfil"] = "Datos guardados: la versión anterior quedó en el historial."
+    return RedirectResponse(f"/perfil/{item_id}", status_code=303)
+
+
+@router.post("/perfil/{item_id}/pendiente", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def pendiente_perfil(request: Request, item_id: int, nota: str = Form("")) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            perfil.marcar_pendiente(conn, item_id, nota, _quien(request), _ahora())
+        except perfil.PerfilInvalido as exc:
+            return _no_encontrado(request, str(exc))
+    request.session["hecho_perfil"] = "Marcado como pendiente."
+    return RedirectResponse(f"/perfil/{item_id}", status_code=303)
+
+
+def _documento_perfil(request: Request, item_id: int, version_id: int, accion: str):
+    """(ruta, Version) del documento, con el acceso ya registrado; o la página de «no encontrado»."""
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        elemento = perfil.obtener(conn, item_id)
+        hallado = perfil.documento(conn, settings.profile_docs_dir, item_id, version_id) if elemento else None
+        if hallado is None:
+            return _no_encontrado(request, "Ese documento no está en el perfil.")
+        perfil.registrar_acceso(conn, _quien(request), accion, item_id, elemento.titulo, hallado[1])
+    return hallado
+
+
+@router.get("/perfil/{item_id}/versiones/{version_id}/archivo")
+def descargar_documento_perfil(request: Request, item_id: int, version_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_perfil(request, item_id, version_id, "descargar_documento_perfil")
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, v = hallado
+    return _archivo(ruta, v.archivo_nombre, perfil.MIME[v.archivo_extension])
+
+
+@router.get("/perfil/{item_id}/versiones/{version_id}/ver")
+def ver_documento_perfil(request: Request, item_id: int, version_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_perfil(request, item_id, version_id, "ver_documento_perfil")
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, v = hallado
+    return _archivo(ruta, v.archivo_nombre, perfil.MIME[v.archivo_extension], en_linea=True)

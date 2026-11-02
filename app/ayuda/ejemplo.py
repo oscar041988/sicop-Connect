@@ -181,6 +181,7 @@ def entorno(carpeta: Path = CARPETA_EJEMPLO) -> dict[str, str]:
         "RAW_DATA_DIR": str(carpeta / "raw"), "INCOMING_DIR": str(carpeta / "entrada"),
         "EXPORTS_DIR": str(carpeta / "exportaciones"), "RECORDINGS_DIR": str(carpeta / "grabaciones"),
         "DOCUMENTS_DIR": str(carpeta / "documentos"), "EXPEDIENTES_DIR": str(carpeta / "expedientes"),
+        "PROFILE_DOCS_DIR": str(carpeta / "perfil"),
         "SESSION_SECRET": "sesion-de-ejemplo-para-las-capturas-de-la-ayuda-000",
         # Solo para que el panel muestre el bloque del resumen. No hay clave: nada puede llamar a OpenAI.
         "AI_MODE": "openai", "OPENAI_API_KEY": "", "OPENAI_MODEL": "modelo-de-ejemplo",

@@ -423,3 +423,15 @@ table.lista.auto .btn { white-space: nowrap; }
   color: #fff; font-size: .82rem; font-weight: 500; line-height: 1.4; text-transform: none; letter-spacing: 0;
   white-space: normal; text-align: left; box-shadow: 0 4px 14px rgba(16, 48, 80, .3); }
 .score .termino:hover::after, .score .termino:focus::after { left: auto; right: 0; }
+
+/* Perfil de Hermatix (asistente de elegibilidad, lección 1). */
+.estado-perfil { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .85rem; font-weight: 700; }
+.estado-vigente { background: var(--g1); color: var(--g7); }
+.estado-por_vencer { background: var(--warn-bg); color: var(--warn); }
+.estado-vencido { background: var(--rojo-bg); color: var(--rojo); }
+.estado-pendiente { background: var(--no-bg); color: var(--no); }
+.aviso-perfil { background: var(--warn-bg); border: 1px solid #F3D9A4; border-radius: 12px; padding: 12px 16px; margin-top: 12px; }
+.aviso-perfil ul { margin: 6px 0; }
+.sugerencias-perfil { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.sugerencias-perfil p { flex-basis: 100%; }
+.sugerencias-perfil form { margin: 0; }
