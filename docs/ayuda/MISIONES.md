@@ -55,6 +55,19 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 | 19 | ¿Cómo leo el correo diario? | Correo → Cartel | `19-correo.md` | Borrador (2026-11-02) |
 | 20 | ¿Qué hago si algo no funciona? | Cualquiera | `20-problemas.md` | Borrador (2026-11-02) |
 
+## Capturas
+
+Cada marcador `[captura: …]` tiene su imagen, hecha con datos de EJEMPLO (nunca reales):
+
+```
+python -m app.cli ayuda capturas                      # todas (rehace la base de ejemplo)
+python -m app.cli ayuda capturas --mision 08-revision # solo una misión
+```
+
+Quedan en `app/web/static/ayuda/<misión>/<paso>.png` con su texto alternativo en `indice.json` (no van a Git).
+Si un botón cambió de nombre, el comando dice la misión, el paso y lo que no encontró: corrige la misión, o
+`app/ayuda/pantallas.py` si el marcador no dice el botón entre «».
+
 ## Para después (todavía no existen en la app)
 
 - ¿Cómo leo y descargo el Reporte de cartel de 2 páginas? (lección 4 de la IA).

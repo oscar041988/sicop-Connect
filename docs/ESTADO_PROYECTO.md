@@ -4,6 +4,22 @@
 
 ## Último resultado
 
+- **Ayuda · lección 2, Encargo 2: base de EJEMPLO y capturas automáticas (2026-11-02, rama `desarrollo`, solo
+  local).** Antes, en la misma lección: misiones reordenadas de arriba abajo y 7 de administración (20 en total,
+  commit `18b1b02`).
+  - `python -m app.cli ayuda ejemplo` rehace `data/ayuda_ejemplo/`: base aparte con datos inventados («EJEMPLO ·»,
+    `@ejemplo.test`, origen `sintetico`), hecha con los importadores y funciones reales; resumen con IA con un OpenAI
+    SIMULADO. Se niega si la base coincide con `DATABASE_PATH` y solo borra una carpeta con la marca de ejemplo.
+  - `python -m app.cli ayuda capturas [--mision 08-revision]`: arranca la app con la base de ejemplo (todas las
+    claves de configuración en el entorno: el `.env` no influye), Chromium sin ventana 1280 × 800, borde rojo sobre
+    el elemento de cada marcador → `app/web/static/ayuda/<misión>/<paso>.png` + `indice.json` (texto alternativo).
+    «Calidad de reglas» y «Competencia» usan un golden set y nombres de empresas de ejemplo (`app/ayuda/servidor.py`).
+    Las imágenes no van a Git (`.gitignore`): se regeneran.
+  - Resultado: **132 de 132 capturas**. Pruebas: `tests/test_ayuda_capturas.py` 9 passed; suite completa 771 passed.
+  - Pendiente (Ivania): revisar las capturas una por una y recorrer las misiones en la app; revisión de Oscar
+    (misiones, orden nuevo y capturas). Detalle conocido: la captura del video de la bitácora muestra el círculo de
+    carga del reproductor encima del cuadro.
+
 - **Lección 9 cerrada (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
   - Cierre: autoevaluación ☑, `health` ☑, HTTPS con login ☑, oportunidad real revisada en el servidor desde otra
     computadora ☑ (Corredores y otras 4), acta cerrada (`docs/ACTA_DESPLIEGUE.md`) y bitácora. Hash del paquete:

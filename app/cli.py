@@ -1106,6 +1106,51 @@ def score_rules(settings: Settings, mostrar: int, reglas_path: Path = REGLAS_PAT
     return 0
 
 
+def ayuda_ejemplo_cmd() -> int:
+    """Rehace la base de EJEMPLO de la ayuda (data/ayuda_ejemplo/). Nunca toca la base real."""
+    from app.ayuda import CARPETA_EJEMPLO, ejemplo  # al usarlo: la ayuda importa módulos que importan esta CLI
+
+    try:
+        claves = ejemplo.crear()
+    except ejemplo.EjemploInseguro as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Base de EJEMPLO lista en {CARPETA_EJEMPLO} (datos inventados, origen «sintetico»).")
+    print(f"Para mirarla: DATABASE_PATH={CARPETA_EJEMPLO / 'sicop.db'} y entra con {claves.email} /"
+          f" «{claves.contrasena}».")
+    return 0
+
+
+def ayuda_capturas_cmd(mision: str | None) -> int:
+    """Regenera las capturas de las misiones con la base de EJEMPLO (app/web/static/ayuda/)."""
+    from app.ayuda import CAPTURAS_DIR, capturas, ejemplo, misiones
+
+    try:
+        marcadores = misiones.leer()
+    except misiones.MarcadorInvalido as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if mision:
+        marcadores = [m for m in marcadores if m.mision == mision]
+        if not marcadores:
+            print(f"Error: no hay capturas en la misión «{mision}» (usa el nombre del archivo, p. ej."
+                  " 08-revision).", file=sys.stderr)
+            return 1
+    try:
+        r = capturas.tomar(marcadores)
+    except ejemplo.EjemploInseguro as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Capturas: {len(r.hechas)} de {len(marcadores)} en {CAPTURAS_DIR}")
+    if r.errores:
+        print(f"Faltan {len(r.errores)}: corrige la misión (o app/ayuda/pantallas.py) y vuelve a correr.",
+              file=sys.stderr)
+        for error in r.errores:
+            print(f"  - {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def backup(settings: Settings, output: Path) -> int:
     try:
         r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir,
@@ -1208,6 +1253,11 @@ def build_parser() -> argparse.ArgumentParser:
     ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
                                         " presupuesto diario (tarea de las 10:00)")
     ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
+    ay = sub.add_parser("ayuda", help="Ayuda de la app: base de EJEMPLO y capturas de las misiones")
+    ay_sub = ay.add_subparsers(dest="ayuda_command", required=True)
+    ay_sub.add_parser("ejemplo", help="Rehace la base de EJEMPLO (data/ayuda_ejemplo/); nunca toca la base real")
+    ac = ay_sub.add_parser("capturas", help="Rehace la base de EJEMPLO y toma una captura por marcador de las misiones")
+    ac.add_argument("--mision", help="Solo esta misión (nombre del archivo sin .md, p. ej. 08-revision)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1284,6 +1334,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_resumir_cmd(settings, args.nro.strip())
     if args.command == "ia" and args.ia_command == "cola":
         return ia_cola_cmd(settings, args.ver)
+    if args.command == "ayuda":
+        return ayuda_ejemplo_cmd() if args.ayuda_command == "ejemplo" else ayuda_capturas_cmd(args.mision)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":
