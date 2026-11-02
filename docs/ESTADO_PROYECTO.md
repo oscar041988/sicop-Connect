@@ -16,9 +16,12 @@
     «Calidad de reglas» y «Competencia» usan un golden set y nombres de empresas de ejemplo (`app/ayuda/servidor.py`).
     Las imágenes no van a Git (`.gitignore`): se regeneran.
   - Resultado: **132 de 132 capturas**. Pruebas: `tests/test_ayuda_capturas.py` 9 passed; suite completa 771 passed.
-  - Pendiente (Ivania): revisar las capturas una por una y recorrer las misiones en la app; revisión de Oscar
-    (misiones, orden nuevo y capturas). Detalle conocido: la captura del video de la bitácora muestra el círculo de
-    carga del reproductor encima del cuadro.
+  - **Revisión de Ivania (2026-11-02):** revisó las 132 capturas una por una; todas tienen la marca roja.
+  - Comprobación de la lección 2: ☑ todas las misiones escritas (20) · ☑ cada paso importante con su captura y su
+    marca (revisión de Ivania) · ☐ ninguna captura con datos reales (falta la confirmación de Ivania) · ☐ revisión
+    de Oscar (misiones, orden nuevo y capturas).
+  - Pendiente: recorrer las misiones en la app real. Detalle conocido para mostrarle a Oscar: la captura del video
+    de la bitácora (misión 18, paso 13) muestra el círculo de carga del reproductor encima del cuadro.
 
 - **Lección 9 cerrada (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
   - Cierre: autoevaluación ☑, `health` ☑, HTTPS con login ☑, oportunidad real revisada en el servidor desde otra
