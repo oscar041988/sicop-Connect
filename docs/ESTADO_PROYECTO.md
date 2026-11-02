@@ -4,6 +4,13 @@
 
 ## Último resultado
 
+- **Asistente de elegibilidad · lección 1, antes del Encargo 1 (2026-11-02).** Guía nueva:
+  `docs/Guia_Asistente_Elegibilidad_SICOP.docx`. Oscar aprobó usar la IA también en el asistente y que lo usen los
+  dos niveles (Administrador y Encargado): registrado en `docs/DECISION_IA.md` §7 y en `CLAUDE.md`. Enviar
+  documentos de Hermatix a OpenAI sigue pendiente (`ASSISTANT_SEND_DOCUMENTS=false`).
+  - Lista inicial del perfil para revisar con Oscar: `docs/PERFIL_LISTA_INICIAL.md` (183 requerimientos de los 15
+    carteles con resumen; sin documentos de Hermatix). Siguiente: acordarla con Oscar y dar el Encargo 1.
+
 - **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
   Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para
   administradores.

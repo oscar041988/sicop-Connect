@@ -77,3 +77,21 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
 - [ ] Las filas de la sección 5 de las lecciones 1 y 2 están decididas antes de la lección 2. Faltan: modelo,
   límite de gasto (regla 4) y tamaño del expediente.
 - [x] `CLAUDE.md` actualizado: «Sin API de IA» → la excepción de este documento (2026-10-29).
+
+## 7. Ampliación: asistente de elegibilidad
+
+**APROBADO por Oscar el 2026-11-02 (comunicado por Ivania).** Guía: `docs/Guia_Asistente_Elegibilidad_SICOP.docx`.
+
+- **Qué se aprueba:** usar la API de OpenAI también en el asistente de elegibilidad: armar la lista de verificación
+  del cartel (lección 2), hacer las preguntas al encargado (lección 3) y explicar el resultado (lección 4).
+- **Cambia la regla 2 solo para el asistente:** además de la información pública de SICOP, se envían la lista de
+  verificación y las **respuestas escritas** del encargado (datos internos de Hermatix, como los años de
+  experiencia). Nunca contraseñas, usuarios ni datos personales.
+- **Documentos de Hermatix** (permisos, certificaciones, estados financieros): **no se envían** mientras
+  `ASSISTANT_SEND_DOCUMENTS=false`. Enviarlos o no: **[por decidir · Oscar]**.
+- **Reglas del asistente** (las de la guía): nunca supone, lo que no está confirmado lo pregunta; los números y las
+  fechas los compara la app, no la IA; el resultado es una orientación y decide el encargado; los documentos de
+  Hermatix van fuera de Git, en el respaldo, con permisos y registro de cada acceso; pruebas siempre con IA simulada.
+- **Quién usa el asistente y ve el perfil:** los dos niveles, Administrador y Encargado (Oscar, 2026-11-02, por
+  Ivania).
+- El costo se suma al presupuesto diario de la sección 5.
