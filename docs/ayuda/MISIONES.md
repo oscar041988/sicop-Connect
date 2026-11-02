@@ -1,26 +1,59 @@
 # Misiones de la ayuda
 
-Ordenadas de más a menos uso. Lista aprobada por Ivania el 2026-10-30; falta la aprobación de Oscar.
+Ordenadas como se recorre la app: primero el panel, luego el cartel de arriba abajo, después seguimiento,
+competencia y administración. Cada misión empieza en la página donde terminó la anterior.
+Orden nuevo aprobado por Ivania el 2026-11-02 (reemplaza la lista del 2026-10-30); falta la aprobación de Oscar.
 Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISION.md`.
 
-| # | Misión | Pantalla | Archivo | Estado |
+## A. Panel de carteles
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
 |---|---|---|---|---|
-| 1 | ¿Cómo entro a la app? | Iniciar sesión | `01-entrar.md` | Escrita; probada por una persona ajena (2026-10-30) |
-| 2 | ¿Cómo veo los carteles nuevos? | Panel de carteles | `02-carteles-nuevos.md` | Probada (2026-10-30); corregida: no siempre hay «Nuevo», se agregó «Sin revisar» |
-| 3 | ¿Cómo encuentro los carteles que cierran pronto? | Panel · «Más filtros» | `03-cierran-pronto.md` | Borrador (2026-10-30); falta probarla |
-| 4 | ¿Cómo sé si un cartel nos sirve? | Cartel · prioridad y «Por qué aparece» | `04-nos-sirve.md` | Borrador (2026-10-30); falta probarla |
-| 5 | ¿Cómo leo y descargo el resumen con IA? | Cartel · «Resumen ejecutivo» | `05-resumen-ia.md` | Borrador (2026-10-30); falta probarla |
-| 6 | ¿Cómo veo y descargo los documentos del cartel? | Cartel · «Documentos» | `06-documentos.md` | Borrador (2026-10-30); falta probarla |
-| 7 | ¿Cómo marco si un cartel interesa o no? | Cartel · «Revisión» | `07-revision.md` | Borrador (2026-10-30); falta probarla |
-| 8 | ¿Cómo le doy seguimiento a un cartel? | Cartel → «Seguimiento» | `08-seguimiento.md` | Borrador (2026-10-30); falta probarla |
-| 9 | ¿Cómo trabajo el expediente? | Expediente: etapa, archivos, notas, ZIP | `09-expediente.md` | Borrador (2026-10-30); falta probarla |
-| 10 | ¿Cómo leo el correo diario? | Correo | `10-correo.md` | Borrador (2026-10-30); falta probarla |
-| 11 | ¿Cómo veo quién gana los concursos? | Competencia | `11-competencia.md` | Borrador (2026-10-30); falta probarla |
-| 12 | ¿Qué hago si algo no funciona? | Cualquiera | `12-problemas.md` | Borrador (2026-10-30); falta probarla |
+| 1 | ¿Cómo entro a la app? | Iniciar sesión → Panel | `01-entrar.md` | Probada (2026-10-30) |
+| 2 | ¿Cómo veo los carteles nuevos? | Panel → Panel | `02-carteles-nuevos.md` | Probada (2026-10-30); ampliada (2026-11-02), falta probarla otra vez |
+| 3 | ¿Cómo busco y filtro carteles? | Panel → Cartel (arriba) | `03-buscar-y-filtrar.md` | Borrador (2026-11-02) |
 
-## Más cosas que puedes hacer (solo administradores)
+## B. Página del cartel, de arriba abajo
 
-Cargar archivo · Destinatarios · Usuarios · Avisos · Calidad de reglas · Bitácora de consultas.
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 4 | ¿Cómo leo la parte de arriba de un cartel? | Cartel: prioridad, plazo, datos | `04-arriba-del-cartel.md` | Borrador (2026-11-02) |
+| 5 | ¿Cómo leo y descargo el resumen con IA? | Cartel: «Resumen ejecutivo» | `05-resumen-ia.md` | Borrador (2026-11-02) |
+| 6 | ¿Cómo veo la información de SICOP y los documentos? | Cartel: «Información de SICOP», «Documentos» | `06-documentos.md` | Borrador (2026-11-02) |
+| 7 | ¿Por qué aparece el cartel y qué compran? | Cartel: «Por qué aparece», «Líneas», «Cobertura» | `07-por-que-aparece.md` | Borrador (2026-11-02) |
+| 8 | ¿Cómo marco si un cartel interesa o no? | Cartel: «Revisión» (al final) | `08-revision.md` | Borrador (2026-11-02) |
+
+## C. Seguimiento
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 9 | ¿Cómo le doy seguimiento a un cartel? | Cartel (sube al inicio) → Seguimiento | `09-seguimiento.md` | Borrador (2026-11-02) |
+| 10 | ¿Cómo trabajo el expediente? | Seguimiento → Expediente | `10-expediente.md` | Borrador (2026-11-02) |
+
+## D. Otras páginas
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 11 | ¿Cómo veo quién gana los concursos? | Menú → Competencia | `11-competencia.md` | Borrador (2026-11-02) |
+
+## E. Administración (solo administradores, salvo «Cargar archivo»)
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 12 | ¿Cómo cargo un reporte de SICOP? | Menú → Cargar archivo → Panel | `12-cargar-archivo.md` | Borrador (2026-11-02) |
+| 13 | ¿Cómo creo y cambio usuarios? | Administración → Usuarios | `13-usuarios.md` | Borrador (2026-11-02) |
+| 14 | ¿Cómo asigno el encargado de un cartel? | Seguimiento → Expediente | `14-encargado.md` | Borrador (2026-11-02) |
+| 15 | ¿Cómo elijo quién recibe el correo diario? | Administración → Destinatarios | `15-destinatarios.md` | Borrador (2026-11-02) |
+| 16 | ¿Qué hago con un aviso que no salió? | Administración → Avisos | `16-avisos.md` | Borrador (2026-11-02) |
+| 17 | ¿Qué tan bien encuentra carteles la app? | Administración → Calidad de reglas | `17-calidad.md` | Borrador (2026-11-02) |
+| 18 | ¿Cómo reviso lo que la app consultó en SICOP? | Administración → Bitácora de consultas | `18-bitacora.md` | Borrador (2026-11-02) |
+
+## F. Fuera de la app y ayuda general
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 19 | ¿Cómo leo el correo diario? | Correo → Cartel | `19-correo.md` | Borrador (2026-11-02) |
+| 20 | ¿Qué hago si algo no funciona? | Cualquiera | `20-problemas.md` | Borrador (2026-11-02) |
 
 ## Para después (todavía no existen en la app)
 

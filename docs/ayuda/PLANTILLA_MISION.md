@@ -1,6 +1,6 @@
 # Plantilla de misión
 
-Copia este archivo en `docs/ayuda/misiones/NN-nombre-corto.md` (por ejemplo `03-cierran-pronto.md`) y
+Copia este archivo en `docs/ayuda/misiones/NN-nombre-corto.md` (por ejemplo `03-buscar-y-filtrar.md`) y
 reemplaza lo que está entre `< >`. Sigue las reglas de `ESTILO.md`.
 
 El marcador `[captura: …]` dice qué imagen va en ese paso y qué hay que resaltar en ella. En la lección 2
@@ -13,13 +13,17 @@ un programa usará esos marcadores para tomar las capturas solo.
 
 **Para qué sirve:** <una frase: qué ganas al hacerlo>.
 
-**Antes de empezar:** <qué necesitas; por ejemplo «haber entrado a la app con tu usuario»>.
+**Antes de empezar:** <en qué página quedaste en la misión anterior, y qué necesitas>.
+
+### <Parte de la página, en el orden en que aparece>
 
 1. Haz clic en «<botón exacto>», <dónde está>.
    [captura: <pantalla> · resaltar «<botón exacto>»]
 2. <Verbo> <una sola acción>.
    [captura: <pantalla> · resaltar <qué>]
 3. Mira <qué>. <qué significa lo que ves>.
+
+**Dónde quedaste:** <la página y la sección donde termina; ahí empieza la misión siguiente>.
 
 ## ¿Y si…?
 
@@ -60,5 +64,5 @@ Quiere decir que ninguno cierra esta semana. ¡Buena noticia!
 **¿Y si no veo «Más filtros»?**
 Baja un poco en la página o haz la ventana más grande.
 
-**Sigue con:** [¿Cómo sé si un cartel nos sirve?](04-nos-sirve.md)
+**Sigue con:** [¿Cómo leo la parte de arriba de un cartel?](04-arriba-del-cartel.md)
 ```

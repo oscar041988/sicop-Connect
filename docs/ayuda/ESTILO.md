@@ -1,9 +1,9 @@
 # Guía de estilo de la ayuda
 
-La ayuda de SICOP CONNECT es para quien **usa** la app, no para quien la administra. Debe entenderla un
+La ayuda de SICOP CONNECT es para quien **usa** la app, también en sus páginas de administración. Debe entenderla un
 niño de 10 años. La instalación, el servidor y las claves están en `docs/OPERACION.md`, no aquí.
 
-## Las 8 reglas
+## Las 10 reglas
 
 1. **Frases cortas:** 15 palabras o menos.
 2. **Una acción por paso.** Si el paso tiene «y luego», divídelo en dos.
@@ -14,6 +14,10 @@ niño de 10 años. La instalación, el servidor y las claves están en `docs/OPE
 6. **Tuteo y tono amable:** «Haz clic», «Puedes volver cuando quieras». Nada de regaños.
 7. **Di dónde está cada cosa:** «arriba a la izquierda», «al final de la página».
 8. **Una imagen por cada paso importante**, con el marcador `[captura: …]` (ver `PLANTILLA_MISION.md`).
+9. **Sin saltos entre misiones.** «Antes de empezar» dice en qué página quedaste en la misión anterior, y
+   «Dónde quedaste» dice dónde termina esta. Si hay que cambiar de página, el primer paso lo dice.
+10. **De arriba abajo.** Explica la página en el orden en que aparece, sin subir y bajar. Si una página tiene
+    varias partes, sepáralas con subtítulos (`###`).
 
 ## Ejemplos: mal y bien
 

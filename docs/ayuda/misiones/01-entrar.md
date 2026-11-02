@@ -16,6 +16,10 @@
    [captura: Iniciar sesión · resaltar «Entrar»]
 6. Mira la lista de carteles. ¡Ya entraste!
    [captura: Panel de carteles · resaltar «Panel de carteles»]
+7. Mira el menú de arriba. Siempre está ahí, en todas las páginas.
+   [captura: Panel de carteles · resaltar el menú]
+
+**Dónde quedaste:** en el «Panel de carteles». La siguiente misión empieza aquí.
 
 ## ¿Y si…?
 
