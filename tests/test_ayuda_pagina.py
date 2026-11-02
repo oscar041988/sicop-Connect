@@ -168,6 +168,15 @@ def test_la_ayuda_no_lleva_su_propio_boton(clientes):
     assert "boton-ayuda" not in admin.get("/ayuda").text
 
 
+def test_ayuda_esta_en_el_menu_y_se_marca_al_estar_ahi(clientes):
+    _, encargada = clientes
+    menu = encargada.get("/oportunidades").text.split("<nav>", 1)[1].split("</nav>", 1)[0]
+    assert '<a href="/ayuda">Ayuda</a>' in menu
+    menu = encargada.get("/ayuda/08-revision").text.split("<nav>", 1)[1].split("</nav>", 1)[0]
+    assert '<a href="/ayuda" aria-current="page">Ayuda</a>' in menu
+    assert '<a href="/oportunidades" aria-current="page">' not in menu
+
+
 def test_cada_termino_de_las_plantillas_esta_en_el_glosario():
     usados = {m for f in PLANTILLAS.glob("*.html")
               for m in re.findall(r'termino\("([^"]+)"', f.read_text(encoding="utf-8"))}
