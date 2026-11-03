@@ -5,13 +5,17 @@ Nunca se llama a OpenAI.
 """
 
 import io
+import json
+import re
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 
 from app import asistente, perfil
+from app.ai import asistente as ia_asistente
 from app.ai import verificacion
 from app.archivos import ArchivoInvalido
 from app.config import load_settings
@@ -232,3 +236,75 @@ def test_sin_lista_no_se_empieza(db):  # noqa: F811
     with closing(connect(db)) as conn:
         with pytest.raises(asistente.AsistenteInvalido, match="no tiene lista"):
             asistente.empezar(conn, NRO, ANA, AHORA)
+
+
+# --- Preguntas redactadas con IA (OpenAI SIMULADO) ----------------------------------------------------------------
+
+class OpenAISimulado:
+    """Imita client.responses.create: una pregunta por cada R de la lista recibida; anota lo que se le mandó."""
+
+    def __init__(self, falla=False):
+        self.llamadas, self.falla = [], falla
+        self.responses = SimpleNamespace(create=self._crear)
+
+    def _crear(self, **kwargs):
+        self.llamadas.append(kwargs)
+        if self.falla:
+            raise RuntimeError("simulado")
+        refs = re.findall(r"^(R\d+) ·", kwargs["input"], flags=re.M)
+        datos = {"preguntas": [{"ref": r, "pregunta": f"Pregunta <b>{r}</b> de la IA."} for r in refs]}
+        return SimpleNamespace(status="completed", output_text=json.dumps(datos), output=[], model="modelo-simulado",
+                               usage=SimpleNamespace(input_tokens=500, output_tokens=100), incomplete_details=None)
+
+
+def _con_ia(settings, **extra):
+    return load_settings(env_file=None, environ={
+        **settings.raw, "AI_MODE": "openai", "OPENAI_API_KEY": "clave-simulada", "OPENAI_MODEL": "modelo-simulado",
+        "IA_PRECIO_ENTRADA_USD": "1.00", "IA_PRECIO_SALIDA_USD": "5.00", "IA_MAX_DAILY_COST": "1.00", **extra})
+
+
+def _redactar(db, settings, simulado):
+    with closing(connect(db)) as conn:
+        return ia_asistente.redactar(conn, settings, NRO, ANA, AHORA, cliente=simulado, dormir=lambda s: None)
+
+
+def test_la_ia_redacta_en_tandas_y_solo_recibe_la_lista(lista, monkeypatch):
+    db, ids, settings = lista
+    _empezar(db)
+    with closing(connect(db)) as conn:
+        anos = perfil.crear(conn, "experiencia", "Años de experiencia en GPS", ANA, AHORA)
+        perfil.nueva_version(conn, settings.profile_docs_dir, anos, perfil.Datos(valor="SECRETO-DEL-PERFIL",
+                             numero="8"), None, 1024, ANA, AHORA)
+        verificacion.elegir_perfil(conn, NRO, ids["anos"], anos, ANA)
+    _responder(db, settings, ids["patente"], archivo=PDF)                      # un documento ya subido
+    monkeypatch.setattr(ia_asistente, "TANDA", 2)
+    simulado = OpenAISimulado()
+    r = _redactar(db, _con_ia(settings), simulado)
+    assert (r.redactadas, r.motivo) == (5, None) and len(simulado.llamadas) == 3     # 5 requisitos en tandas de 2
+    enviado = " ".join(c["input"] + c["instructions"] for c in simulado.llamadas)
+    assert "TEXTO-UNICO-DEL-ARCHIVO" not in enviado and "SECRETO-DEL-PERFIL" not in enviado
+    assert "Multa" not in enviado and "Condición de la institución" not in enviado
+    assert "Nunca supongas" in simulado.llamadas[0]["instructions"]
+    pasos = {p.item.id: p for p in _pasos(db)}
+    assert all(p.origen == "ia" for p in pasos.values())
+    assert pasos[ids["sicop"]].pregunta == "Pregunta <b>R1</b> de la IA. [DOC 1 · pág. 1]"   # la app agrega la cita
+    assert _redactar(db, _con_ia(settings), simulado).redactadas == 0 and len(simulado.llamadas) == 3   # ya están
+    with closing(connect(db)) as conn:
+        assert {p for (p,) in conn.execute("SELECT proposito FROM ia_usage")} == {"asistente"}
+
+
+@pytest.mark.parametrize("caso", ["ia_apagada", "sin_presupuesto", "fallo"])
+def test_sin_ia_quedan_las_preguntas_de_la_app(lista, caso):
+    db, ids, settings = lista
+    _empezar(db)
+    simulado = OpenAISimulado(falla=caso == "fallo")
+    if caso == "ia_apagada":
+        usar = settings
+    elif caso == "sin_presupuesto":
+        usar = _con_ia(settings, IA_MAX_DAILY_COST="0")
+    else:
+        usar = _con_ia(settings)
+    r = _redactar(db, usar, simulado)
+    assert r.redactadas == 0 and "preguntas de la app" in r.motivo
+    assert len(simulado.llamadas) == (1 if caso == "fallo" else 0)
+    assert all(p.origen == "app" for p in _pasos(db))
