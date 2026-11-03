@@ -228,7 +228,23 @@ Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/verificacion.p
   (propósito `verificacion`).
 - No llama a OpenAI sin resumen, con `AI_MODE=none` o si el costo del día ya llegó a `IA_MAX_DAILY_COST`.
 
-## 7. Pendiente de la lección 1
+## 7. Preguntas del asistente de elegibilidad (lección 3; 2026-11-03)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/asistente.py`; prompt versionado
+`config/prompts/asistente_elegibilidad_v1.md` (el de la guía, adaptado a una pregunta por requisito).
+
+- **Cuándo:** una vez por cartel, al «Empezar el asistente», y con «Redactar con IA las preguntas que arma la app»
+  (requisitos agregados o corregidos después). En tandas de 30 requisitos para no pasar `IA_MAX_OUTPUT_TOKENS`.
+  Costo en `ia_usage` con propósito `asistente`.
+- **Se envía SOLO la lista de verificación:** requisito, tipo de respuesta, mínimo, excluyente y cita. Nunca el
+  perfil, las respuestas, los archivos ni su texto (lo comprueba `tests/test_asistente.py`). Las multas y
+  condiciones de la institución no se envían: no se preguntan.
+- **La app no depende de la IA:** con `AI_MODE=none`, sin presupuesto, si falla o si la respuesta no sirve, el
+  asistente usa las preguntas que arma la app con el requisito, su mínimo y su cita, y muestra el motivo. Si la IA
+  olvida la cita, la app la agrega.
+- **No decide:** la IA solo redacta preguntas. Las respuestas las da una persona y la evaluación es de la lección 4.
+
+## 8. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

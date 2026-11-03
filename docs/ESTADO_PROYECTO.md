@@ -96,6 +96,27 @@
   - Pendiente (Ivania): generar la lista de 5 carteles reales y compararla con su pliego; corregir desde la
     pantalla y comprobar que la corrección sigue al volver a generar; revisión con Oscar. Cada generación usa la
     IA (costo parecido a un resumen).
+- **Asistente · lección 3, Encargo 3 hecho (2026-11-03, rama `desarrollo`, solo local): el asistente que pregunta
+  y no supone.** Decisiones de Ivania: la IA redacta las preguntas **una vez por cartel** (si no hay IA, las arma
+  la app); lo usan **el encargado asignado y los administradores** (la regla del expediente);
+  `ASSISTANT_SEND_DOCUMENTS` **solo false** (con true la app avisa y no guarda ni envía nada).
+  - Migración **0031**: `eligibility_sessions` (una por cartel), `eligibility_questions` (las de la IA) y
+    `eligibility_answers` (no se borran ni se modifican: cambiar una respuesta agrega otra y vale la última).
+  - En el detalle del cartel, sección «Asistente de elegibilidad» (`templates/_asistente.html`); «Dar
+    seguimiento» vuelve ahí. Excluyentes primero y luego el resto, cada grupo en el orden del pliego; una pregunta
+    a la vez con su cita; respuesta según «Qué lo demuestra» (número, fecha, sí/no, texto, documento con fecha de
+    vencimiento) + «Todavía no lo sé» y, en documentos, «Hermatix no lo tiene». «Multa…» y «Condición de la
+    institución…» no se preguntan: van en «Para tener en cuenta».
+  - Perfil sin suponer: el dato vigente o por vencer se muestra y se confirma con «Sí, es correcto»; vencido o
+    pendiente se pregunta. «Guardar también en el perfil» (solo administradores) crea una versión nueva.
+  - Archivos en `ASSISTANT_DOCS_DIR` (data/asistente, fuera de Git; validados como los del perfil con
+    `perfil.guardar_documento`; cada vista o descarga en `audit_log`; el respaldo agrega `…_asistente.zip`).
+  - IA: `app/ai/asistente.py`, prompt `asistente_elegibilidad_v1` (el de la guía), en tandas de 30; solo recibe
+    la lista. Detalle en `docs/RESUMEN_IA.md` §7.
+  - Pruebas: `tests/test_asistente.py` 18 passed (IA SIMULADA; con true ningún archivo se guarda ni sale).
+  - Pendiente: Ivania recorre un cartel real respondiendo ella (pausar a la mitad y seguir otro día) y Oscar lo
+    usa sin explicación previa (sus dudas van a la ayuda); decidir con Oscar `ASSISTANT_SEND_DOCUMENTS`. El
+    resultado («¿podemos participar?») es la lección 4.
 
 - **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
   Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para

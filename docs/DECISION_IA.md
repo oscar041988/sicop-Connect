@@ -88,7 +88,9 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
   verificación y las **respuestas escritas** del encargado (datos internos de Hermatix, como los años de
   experiencia). Nunca contraseñas, usuarios ni datos personales.
 - **Documentos de Hermatix** (permisos, certificaciones, estados financieros): **no se envían** mientras
-  `ASSISTANT_SEND_DOCUMENTS=false`. Enviarlos o no: **[por decidir · Oscar]**.
+  `ASSISTANT_SEND_DOCUMENTS=false`. Enviarlos o no: **[por decidir · Oscar]**. Hoy (lección 3, 2026-11-03) solo
+  existe el camino false: las preguntas del asistente se redactan con la lista de verificación y nada más; con
+  true la app avisa que ese camino falta y no guarda ni envía nada.
 - **Reglas del asistente** (las de la guía): nunca supone, lo que no está confirmado lo pregunta; los números y las
   fechas los compara la app, no la IA; el resultado es una orientación y decide el encargado; los documentos de
   Hermatix van fuera de Git, en el respaldo, con permisos y registro de cada acceso; pruebas siempre con IA simulada.
