@@ -45,6 +45,29 @@
   - Orden (2026-11-03, pedido de Ivania al revisar el primer cartel): la pantalla y la terminal muestran la lista en
     el orden del pliego (DOC n y página de su primera cita; después «SICOP» y los sin cita). Los excluyentes quedan
     en su lugar con su etiqueta; el asistente (lección 3) los preguntará primero con su propio orden.
+  - Prueba con carteles reales (Ivania, 2026-11-03), 3 de 5:
+    - 20261002408 (cámaras, liceo): 16 requisitos, todos en los documentos y correctos; nada sobra.
+    - 20261003280 (GPS): 12 requisitos, todos en los documentos y correctos; nada sobra.
+    - 20261003242 (etiquetas RFID): 13 requisitos, 1 corregido (garantías de 12 y 24 meses de los anaqueles);
+      solo 1 excluyente (contraste con los otros dos).
+    - Falta comprobar: si faltan requisitos (Ivania aún no conoce bien el proceso: buscar las secciones típicas
+      del pliego y que Oscar revise uno); que la IA marca casi todo como excluyente en dos carteles (15 de 16,
+      11 de 12; viene del resumen) y en otro solo 1 de 13.
+    - Revisión de faltantes (Claude leyó el expediente completo, 2026-11-03): agregados 14 requisitos con
+      `verificacion.agregar` (firmados «Claude (pedido de Ivania)», cita dentro del texto): 3 en 20261002408, 6 en
+      20261003280 y 5 en 20261003242. Patrón: en 2 de 3 faltaba la garantía de cumplimiento y en los 3 las
+      especificaciones técnicas no salen como requisitos; viene del resumen con IA → revisar su prompt. Ivania debe
+      comprobar cada uno en la página citada. 20261003242 está «Objetado» en SICOP.
+    - **Prompt del resumen v3 hecho (2026-11-03, solo local, sin activar):** `config/prompts/resumen_cartel_v3.md`
+      (garantías, plazos, vigencia y especificaciones también como requerimientos; detalle en
+      `docs/RESUMEN_IA.md`) y `ia resumir --nro N --prompt v3` para probarlo en un cartel sin tocar `.env`.
+      Pruebas: `test_ia_resumen.py` + `test_verificacion.py` + `test_ia_cola.py` 46 passed (OpenAI SIMULADO).
+      Pendiente (Ivania, con presupuesto): resumen v3 y lista de los 3 carteles; comparar con los 14 agregados por
+      Claude y quitar los repetidos; activar `IA_PROMPT_VERSION=v3` solo después, con Oscar.
+    - Volver a generar 20261003242 **mañana** y ver que la corrección sigue con «Corregido»: hoy lo frenó el
+      presupuesto diario de IA (mensaje rojo; no llegó a llamar a OpenAI, no hay generación nueva). Hoy se
+      gastaron ~0,53 USD, la mayor parte en los 10 resúmenes de la cola (10:12–10:17). Decidir con Oscar si
+      conviene subir `IA_MAX_DAILY_COST` en el `.env`.
   - Pruebas: `tests/test_verificacion.py` 12 passed (OpenAI SIMULADO).
   - Pendiente (Ivania): generar la lista de 5 carteles reales y compararla con su pliego; corregir desde la
     pantalla y comprobar que la corrección sigue al volver a generar; revisión con Oscar. Cada generación usa la

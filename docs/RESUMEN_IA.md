@@ -139,6 +139,15 @@ Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes r
   confirmar, como cantidad de contratos, es duda y no descarte). Marcas propias: Wialon y Howen; otra marca exigida →
   riesgo y «revisar requisitos». Descartar solo si lo que piden no se alinea. La `v1` queda igual (sin criterio).
   Se activa con `IA_PROMPT_VERSION=v2` en `.env`; entonces todos los carteles vuelven a la cola.
+- **`v3` (2026-11-03), tras revisar 3 carteles reales contra su pliego:** a las listas de verificación les faltaban
+  la garantía de cumplimiento (la v2 la mandaba solo a los indicadores) y las especificaciones técnicas (solo en
+  «qué piden»). La regla 5b define requerimiento como todo lo que la empresa debe presentar, cumplir o
+  comprometerse a hacer, y nombra lo que no puede faltar: garantías con % y plazo, plazos de entrega/instalación/
+  atención, vigencia de la oferta, muestras, subcontratación, declaraciones; especificaciones = un requerimiento
+  por línea más uno por cada condición con un número (decisión de Ivania). La regla 8 aclara que garantías y plazos
+  van también en requerimientos, sin ser motivo para descartar. El criterio de Hermatix y el esquema no cambian.
+  **Probar sin activarla:** `python -m app.cli ia resumir --nro N --prompt v3` usa la v3 solo para ese cartel (no
+  toca `.env` ni la cola). Activarla para todos (`IA_PROMPT_VERSION=v3`) devuelve todos los carteles a la cola.
 
 ### Salida estructurada
 

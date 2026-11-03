@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import getpass
 import json
 import sqlite3
@@ -288,12 +289,15 @@ def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
     return 0
 
 
-def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
+def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None, prompt: str | None = None) -> int:
     """Lección 3 IA: el resumen ejecutivo de un cartel (salida estructurada). No repite un expediente sin cambios.
+    prompt: otra versión solo para este cartel (probar una versión nueva sin tocar IA_PROMPT_VERSION del .env).
     cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
     if not ia_expediente.nro_valido(nro_sicop):
         print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
         return 1
+    if prompt is not None:
+        settings = dataclasses.replace(settings, raw={**settings.raw, "IA_PROMPT_VERSION": prompt})
     db = check_database(settings.database_path)
     if db["status"] != "ok":
         print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
@@ -1280,7 +1284,9 @@ def build_parser() -> argparse.ArgumentParser:
     iv.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
-    ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
+    ir.add_argument("--prompt", metavar="VERSION",
+                    help="Usar esta versión del prompt (v3…) solo para este cartel, sin cambiar IA_PROMPT_VERSION")
+    ic =ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
                                         " presupuesto diario (tarea de las 10:00)")
     ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
     ay = sub.add_parser("ayuda", help="Ayuda de la app: base de EJEMPLO y capturas de las misiones")
@@ -1363,7 +1369,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "ia" and args.ia_command == "verificar":
         return ia_verificar_cmd(settings, args.nro.strip())
     if args.command == "ia" and args.ia_command == "resumir":
-        return ia_resumir_cmd(settings, args.nro.strip())
+        return ia_resumir_cmd(settings, args.nro.strip(), prompt=args.prompt.strip() if args.prompt else None)
     if args.command == "ia" and args.ia_command == "cola":
         return ia_cola_cmd(settings, args.ver)
     if args.command == "ayuda":

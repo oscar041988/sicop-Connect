@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from app import cli
 from app.ai import resumen
 from app.cli import ia_resumir_cmd, main
 from app.config import load_settings
@@ -261,3 +262,34 @@ def test_el_prompt_v2_tiene_el_criterio_de_hermatix():
         assert texto in v2
     assert "sin criterio definido" not in v2
     assert v1.split("Criterio de Hermatix")[0].split("Reglas:")[0] == v2.split("Reglas:")[0]   # mismo rol y portafolio
+
+
+def test_el_prompt_v3_pide_garantias_plazos_y_especificaciones_como_requerimientos():
+    # Revisión de 3 carteles reales (Ivania, 2026-11-03): faltaban la garantía de cumplimiento y las especificaciones.
+    v2, v3 = (" ".join(resumen.cargar_prompt(v).split()) for v in ("v2", "v3"))
+    for texto in ("garantías de participación y de cumplimiento", "vigencia mínima de la oferta",
+                  "UN requerimiento técnico por cada línea", "un requerimiento aparte por cada condición con un número",
+                  "también va en «requerimientos»", "en los indicadores y en «requerimientos» (regla 5b)"):
+        assert texto in v3 and texto not in v2
+    assert "no son riesgos ni motivo para descartar" in v3                               # el criterio sigue igual
+    assert v2.split("Criterio de Hermatix")[1] == v3.split("Criterio de Hermatix")[1]   # mismo criterio de Hermatix
+    assert v2.split("Reglas:")[0] == v3.split("Reglas:")[0]                              # mismo rol y portafolio
+
+
+def test_comando_resumir_con_otra_version_del_prompt_solo_para_ese_cartel(db, tmp_path, capsys, monkeypatch):
+    simulado = OpenAISimulado(respuesta(_resumen_valido()))
+    settings = _settings(db, tmp_path, IA_PROMPT_VERSION="v2")
+    pedido = {}
+    monkeypatch.setattr(cli, "ia_resumir_cmd", lambda s, nro, prompt=None: pedido.update(nro=nro, prompt=prompt) or 0)
+    assert main(["ia", "resumir", "--nro", NRO, "--prompt", " v3 "], settings) == 0
+    assert pedido == {"nro": NRO, "prompt": "v3"}                  # --prompt llega al comando
+    monkeypatch.undo()
+
+    assert ia_resumir_cmd(settings, NRO, cliente=simulado, prompt="v3") == 0
+    assert "prompt v3" in capsys.readouterr().out
+    assert "UN requerimiento técnico por cada línea" in " ".join(simulado.llamadas[0]["instructions"].split())
+    assert settings.ia_prompt_version == "v2"                      # el .env no cambia
+    assert _filas(db) == [("ok", None, 0, "v3")]
+    assert main(["ia", "resumir", "--nro", NRO, "--prompt", "../otro"], settings) == 1
+    assert "IA_PROMPT_VERSION debe ser" in capsys.readouterr().err
+    assert len(_filas(db)) == 1
