@@ -28,6 +28,8 @@ backups/
 
 # Guía de obtención: su captura 7 muestra un enlace real de descarga (processId)
 docs/Guia_Obtencion_Automatica_SICOP.docx
+# Las demás guías en Word también se guardan fuera de Git
+docs/*.docx
 
 # Capturas de la ayuda: se regeneran con «python -m app.cli ayuda capturas» (base de EJEMPLO)
 app/web/static/ayuda/
