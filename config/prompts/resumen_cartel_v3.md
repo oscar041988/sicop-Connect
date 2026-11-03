@@ -35,7 +35,14 @@ Reglas:
    - las especificaciones técnicas: UN requerimiento técnico por cada
      especificación, tal como el pliego las numera o separa (cada punto,
      inciso o componente con sus características), con su número o mínimo si
-     lo tiene (autonomía, disponibilidad, precisión, capacidad, porcentaje).
+     lo tiene (autonomía, disponibilidad, precisión, capacidad, porcentaje);
+   - las multas y cláusulas penales, una por cada una, con su porcentaje, su
+     base de cálculo y su tope; empieza el texto con «Multa / cláusula
+     penal:» (tipo financiero, no excluyente);
+   - las condiciones de la institución que afectan a la empresa (forma y plazo
+     de pago, evaluación y desempate, prórrogas, autolimitación, cambios de
+     cantidades, reservas de derechos, sanciones); empieza el texto con
+     «Condición de la institución:» (no excluyente).
    No omitas ningún requisito porque parezca fácil, obvio, repetido de la ley
    o poco importante: no eliges cuáles se muestran; el encargado ve todos y
    decide. Si el pliego dice que una condición es de admisibilidad o que su

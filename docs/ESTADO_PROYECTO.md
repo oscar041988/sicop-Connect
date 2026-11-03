@@ -61,9 +61,12 @@
     - **Regla de Ivania (2026-11-03): todo requisito se presenta, por fácil u obvio que sea; nadie filtra, el
       usuario decide.** Segunda revisión completa de los 3 pliegos: agregados 22 + 77 + 46 requisitos (cada
       especificación por separado, como el pliego las numera) y quitados (sin borrar) los 3 de Claude que las
-      agrupaban. Listas: 40, 94 y 63 requisitos. No se agregaron multas, cláusulas penales ni obligaciones de la
-      institución (no son requisitos de la empresa): consultarlo con Ivania. Los agregados a mano se ordenan por la
-      marca [DOC n · pág. p] escrita en su texto.
+      agrupaban. Los agregados a mano se ordenan por la marca [DOC n · pág. p] escrita en su texto.
+      Tercera tanda (pedido de Ivania): 10 + 21 + 17 multas, cláusulas penales y condiciones de la institución,
+      con el texto empezando por «Multa / cláusula penal:» o «Condición de la institución:» (no excluyentes), y
+      un requisito que faltaba en el GPS (datos del Registro de Proveedores). Listas: **50, 115 y 80**. La v3 los
+      pide igual. **Para la lección 3:** el asistente no debe preguntar por «Multa…» ni «Condición de la
+      institución…» como si fueran requisitos: se muestran como información.
     - **Antes de probar la v3: subir `IA_MAX_OUTPUT_TOKENS`** (4000 por defecto; los resúmenes ya usan hasta 3900).
       Con cada especificación por separado, el resumen y la lista de un cartel como el GPS (más de 90 requisitos)
       no caben en 4000 y quedarían «fallido» (respuesta incompleta).

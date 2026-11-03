@@ -145,7 +145,8 @@ Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes r
   comprometerse a hacer, y nombra lo que no puede faltar: garantías con % y plazo, plazos de entrega/instalación/
   atención, vigencia de la oferta, muestras, subcontratación, declaraciones; especificaciones = un requerimiento
   por cada especificación, como el pliego las numera, y ninguno se omite por fácil u obvio: el encargado ve todos y
-  decide (regla de Ivania, 2026-11-03; la v3 se ajustó antes de usarse). Necesita subir `IA_MAX_OUTPUT_TOKENS`
+  decide (regla de Ivania, 2026-11-03; la v3 se ajustó antes de usarse). También las multas y cláusulas penales
+  («Multa / cláusula penal: …») y las condiciones de la institución («Condición de la institución: …»). Necesita subir `IA_MAX_OUTPUT_TOKENS`
   (4000 no alcanza para más de 90 requisitos). La regla 8 aclara que garantías y plazos
   van también en requerimientos, sin ser motivo para descartar. El criterio de Hermatix y el esquema no cambian.
   **Probar sin activarla:** `python -m app.cli ia resumir --nro N --prompt v3` usa la v3 solo para ese cartel (no

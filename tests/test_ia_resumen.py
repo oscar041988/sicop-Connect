@@ -269,7 +269,7 @@ def test_el_prompt_v3_pide_garantias_plazos_y_especificaciones_como_requerimient
     v2, v3 = (" ".join(resumen.cargar_prompt(v).split()) for v in ("v2", "v3"))
     for texto in ("garantías de participación y de cumplimiento", "vigencia mínima de la oferta",
                   "UN requerimiento técnico por cada especificación", "No omitas ningún requisito",
-                  "el encargado ve todos y decide",
+                  "el encargado ve todos y decide", "«Multa / cláusula penal:»", "«Condición de la institución:»",
                   "también va en «requerimientos»", "en los indicadores y en «requerimientos» (regla 5b)"):
         assert texto in v3 and texto not in v2
     assert "no son riesgos ni motivo para descartar" in v3                               # el criterio sigue igual
