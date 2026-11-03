@@ -57,7 +57,7 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 
 ## Dónde se ve la ayuda en la app
 
-- `/ayuda` («¿Cómo se usa?», «Ayuda» en el menú de arriba y enlace en el pie): tarjetas por bloque en el orden de esta lista,
+- `/ayuda` («¿Cómo se usa?», enlace en el pie de cada página): tarjetas por bloque en el orden de esta lista,
   buscador y glosario. Las misiones 13 a 18 solo las ven los administradores (`config/ayuda.yaml`).
 - `/ayuda/<misión>`: la misión con sus capturas. Se lee de su archivo: para cambiarla, edita el `.md`.
 - Botón «?» abajo a la derecha de cada pantalla: abre la misión de esa pantalla (mapa en `config/ayuda.yaml`).

@@ -52,7 +52,8 @@
   administradores.
   - `/ayuda`: tarjetas por bloque (orden de `docs/ayuda/MISIONES.md`), buscador sin tildes ni mayúsculas y
     glosario (`GLOSARIO.md`). `/ayuda/<misión>`: la misión leída de su `.md`, con capturas y texto alternativo;
-    todo el texto escapado y solo enlaces a otras misiones. «Ayuda» en el menú de arriba (pedido de Ivania) y en el pie.
+    todo el texto escapado y solo enlaces a otras misiones. Enlace en el pie; el de «Ayuda» en el menú de arriba se quitó el 2026-11-03 para no
+    recargarlo (pedido de Ivania: ya está el botón «?»).
   - Botón «?» fijo en cada pantalla → su misión (`config/ayuda.yaml`); 12 explicaciones del glosario al pasar el
     mouse (`termino(...)` en las plantillas, sin JavaScript). Código: `app/ayuda/pagina.py`.
   - Pruebas: `tests/test_ayuda_pagina.py` 31 passed. Capturas: siguen 132 de 132.
