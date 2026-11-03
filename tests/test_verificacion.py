@@ -3,6 +3,7 @@
 Base SINTÉTICA de tests/test_panel.py; requerimientos y perfil INVENTADOS. Nunca se llama a la red ni se gasta.
 """
 
+import dataclasses
 import json
 import shutil
 import sqlite3
@@ -115,9 +116,20 @@ def test_cada_requerimiento_tiene_su_item_con_cita_y_el_minimo_no_se_inventa(bas
     assert (r3.minimo, r3.minimo_numero) == (NADA, None)                    # el 5 no está en el texto: no indicado
     r5 = _por_texto(items, "Contar con soporte")
     assert (r5.tipo_evidencia, r5.minimo, r5.citas) == ("texto", NADA, [])  # la IA lo omitió y no se perdió
-    assert items[0].excluyente and not items[-1].excluyente                # excluyentes primero
+    assert items == [r1, r3, r2, r5]                                        # por página: 2, 4, 9 y sin cita al final
     assert r1.perfil_item_id == ids["anos"] and r2.perfil_item_id == ids["poliza"]
     assert not r1.perfil_confirmado and r3.perfil_item_id is None
+
+
+def test_el_orden_sigue_al_expediente_documento_y_pagina(base):
+    db, _ = base
+    items, _ = _generar(db)
+    i = items[0]
+    casos = {"zip": ["[DOC 2 · Anexos.zip › tecnico.pdf · pág. 1]"], "doc1_p12": ["[DOC 1 · pág. 12]"],
+             "sicop": ["SICOP"], "sin_cita": [], "doc1_p3": ["SICOP", "[DOC 1 · pág. 3]"],
+             "doc10": ["[DOC 10 · pág. 1]"]}
+    orden = sorted(casos, key=lambda k: verificacion._lugar(dataclasses.replace(i, citas=casos[k])))
+    assert orden == ["doc1_p3", "doc1_p12", "zip", "doc10", "sicop", "sin_cita"]   # DOC 10 va después de DOC 2
 
 
 def test_lo_que_se_manda_a_la_ia_no_lleva_datos_del_perfil(base):

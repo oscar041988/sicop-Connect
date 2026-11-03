@@ -67,7 +67,8 @@
 {% if items %}
 <section>
   <h2>Requisitos ({{ items | length }})</h2>
-  <p class="sub">Primero los excluyentes. «Corregido» o «Agregado» = lo tocó una persona.</p>
+  <p class="sub">En el orden del pliego: documento por documento, de la primera a la última página; al final los
+    que no tienen página. «Corregido» o «Agregado» = lo tocó una persona.</p>
   {% for i in items %}
   <article class="tarjeta item-verificacion" id="item-{{ i.id }}">
     <p>

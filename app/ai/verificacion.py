@@ -131,11 +131,27 @@ def _item(f) -> Item:
                 f[12], f[13], bool(f[14]), f[15], bool(f[16]), bool(f[17]), f[18], f[19])
 
 
+_CITA_DOC = re.compile(r"\[DOC (\d+)([^\]]*)\]")
+_CITA_PAG = re.compile(r"pág\.\s*(\d+)")
+
+
+def _lugar(item: Item) -> tuple:
+    """Dónde está en el expediente: su primera cita [DOC n · pág. p]; luego las de solo «SICOP»; al final sin cita."""
+    lugares = []
+    for cita in item.citas:
+        for m in _CITA_DOC.finditer(cita):
+            pagina = _CITA_PAG.search(m.group(2))
+            lugares.append((0, int(m.group(1)), int(pagina.group(1)) if pagina else 0))
+    if not lugares:
+        lugares.append((1 if item.citas else 2, 0, 0))
+    return min(lugares) + (item.orden, item.id)
+
+
 def listar(conn: sqlite3.Connection, nro_sicop: str, activos: bool = True) -> list[Item]:
-    """La lista del cartel: primero los excluyentes y luego en el orden del pliego."""
-    return [_item(f) for f in conn.execute(
-        f"{_ITEM} WHERE i.nro_sicop = ? AND i.activo = ? ORDER BY i.excluyente DESC, i.orden, i.id",
-        (nro_sicop, 1 if activos else 0))]
+    """La lista del cartel en el orden del pliego: DOC 1 de la primera a la última página, luego DOC 2…
+    (pedido de Ivania, 2026-11-03: revisarla con el pliego abierto). Los excluyentes quedan en su lugar, marcados."""
+    return sorted((_item(f) for f in conn.execute(f"{_ITEM} WHERE i.nro_sicop = ? AND i.activo = ?",
+                                                  (nro_sicop, 1 if activos else 0))), key=_lugar)
 
 
 def ultima_generacion(conn: sqlite3.Connection, nro_sicop: str) -> Generacion | None:

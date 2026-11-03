@@ -42,6 +42,9 @@
   - Pantalla `/oportunidades/<nro>/verificacion` (los dos niveles; enlace desde el cartel): corregir, quitar,
     volver a poner, agregar y confirmar el elemento del perfil (propuesto con `claves:` de `config/perfil.yaml`).
     Terminal: `python -m app.cli ia verificar --nro N`.
+  - Orden (2026-11-03, pedido de Ivania al revisar el primer cartel): la pantalla y la terminal muestran la lista en
+    el orden del pliego (DOC n y página de su primera cita; después «SICOP» y los sin cita). Los excluyentes quedan
+    en su lugar con su etiqueta; el asistente (lección 3) los preguntará primero con su propio orden.
   - Pruebas: `tests/test_verificacion.py` 12 passed (OpenAI SIMULADO).
   - Pendiente (Ivania): generar la lista de 5 carteles reales y compararla con su pliego; corregir desde la
     pantalla y comprobar que la corrección sigue al volver a generar; revisión con Oscar. Cada generación usa la
