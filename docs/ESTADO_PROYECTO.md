@@ -73,9 +73,9 @@
       el pliego pide presentar algo. Decisiones: **texto literal del pliego** (resumen v3, aún sin usar) y
       **«Documento» si se presenta algo** (prompt de la lista v2). Los ~200 «Agregado» de Claude no se
       reescriben hasta comparar con la v3; los que la v3 no encuentre se pasan a texto literal y a documento.
-    - Revisión de Ivania del cartel GPS `20261003280` (2026-11-03): los requisitos están en el pliego, dicen lo
-      mismo con otras palabras (se arregla con la v3), los excluyentes y «Qué lo demuestra» están bien.
-      Falta: RFID `20261003242`.
+    - Revisión de Ivania de los carteles GPS `20261003280` y RFID `20261003242` (2026-11-03): los requisitos
+      están en el pliego, dicen lo mismo con otras palabras (se arregla con la v3), los excluyentes y «Qué lo
+      demuestra» están bien. En RFID vio la contradicción de la garantía de los anaqueles (12 y 24 meses).
     - Pedido de Ivania (2026-11-03): la marca `[DOC n · pág. p]` va en «Cita», no en el título. `agregar` y
       `corregir` la pasan solas (`verificacion.separar_citas`); los 207 «Agregado» ya guardados se movieron
       (copia previa de la base en el scratchpad de la sesión).
