@@ -167,7 +167,7 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
 
     respuesta = _dar_seguimiento(ana)
 
-    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/oportunidades/{NRO}"
+    assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/oportunidades/{NRO}#asistente"
     detalle = ana.get(f"/oportunidades/{NRO}").text
     assert "En seguimiento · sin encargado" in detalle and "Dar seguimiento</button>" not in detalle
     lista = ana.get("/seguimiento").text

@@ -446,3 +446,16 @@ table.lista.auto .btn { white-space: nowrap; }
 .perfil-item label { flex: 1 1 320px; }
 .perfil-item select { width: 100%; }
 form.en-linea { display: inline; margin-left: 8px; }
+
+/* Asistente de elegibilidad (lección 3), en el detalle del cartel. */
+.asistente { margin: 8px 0 24px; }
+.asistente progress { width: 100%; height: 10px; margin: 0 0 8px; }
+.asistente .avance { margin: 8px 0 4px; }
+.pregunta-asistente .pregunta { font-size: 1.05rem; font-weight: 600; margin: 6px 0 12px; overflow-wrap: anywhere; }
+.perfil-dato { background: var(--g1); border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; }
+.perfil-dato p { margin: 0 0 8px; }
+.perfil-dato form.en-linea { margin-left: 0; }
+.asistente fieldset.si-no { border: 0; padding: 0; margin: 0; display: flex; gap: 16px; }
+.botones-asistente { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.respuestas-asistente { margin-top: 14px; }
+.respuestas-asistente li { margin-bottom: 8px; overflow-wrap: anywhere; }

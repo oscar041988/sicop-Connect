@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
 
+from app.ai import asistente as ia_asistente
 from app.ai import expediente as ia_expediente
 from app.ai import resumen as ia_resumen
 from app.ai import verificacion
@@ -34,9 +35,9 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen, seguimiento,
-                 usuarios, visor)
+from app import (asistente, aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
+                 expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen,
+                 seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
 from app.web.intentos import BLOQUEO
@@ -213,7 +214,8 @@ def exportar_oportunidades(request: Request, prioridad: str = "candidatos", fami
 
 
 def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, error: str | None = None,
-                    formulario: dict[str, str] | None = None, status_code: int = 200) -> Response:
+                    formulario: dict[str, str] | None = None, status_code: int = 200, ver_item: int | None = None,
+                    **asistente_extra) -> Response:
     version = panel.version_vigente(conn)
     ahora = _ahora()
     datos = panel.detalle(conn, nro_sicop, version, ahora)
@@ -221,11 +223,12 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         return PLANTILLAS.TemplateResponse(
             request, "error.html", {"mensaje": f"No hay un cartel con Número SICOP {nro_sicop}."}, status_code=404)
     seg = seguimiento.estado(conn, nro_sicop)
+    puede = seguimiento.puede_entrar(seguridad.usuario_actual(request), seg)
     ia_visible = _ia_encendida()
     resumenes = ia_resumen.del_cartel(conn, nro_sicop) if ia_visible else []
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
-        "seg": seg, "puede_entrar": seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
+        "seg": seg, "puede_entrar": puede,
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
         # Enriquecimiento (lección 4, entrega 4B): la ficha más reciente de SICOP y sus documentos.
@@ -234,6 +237,8 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         "ESTADO_DOC": fichas_panel.ESTADOS,
         # Reporte con IA (lección 5): la fila del resumen («Ver» y «Descargar»). Con AI_MODE=none no se muestra.
         "ia_visible": ia_visible, "resumenes": resumenes, "IA": _TEXTOS_IA,
+        # Asistente de elegibilidad (lección 3): solo para quien entra al expediente (seguimiento.puede_entrar).
+        **(_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra) if seg and puede else {}),
     }, status_code=status_code)
 
 
@@ -272,11 +277,12 @@ def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Res
 
 
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)
-def oportunidad(request: Request, nro_sicop: str) -> Response:
+def oportunidad(request: Request, nro_sicop: str, pregunta: int | None = None) -> Response:
+    """El detalle del cartel. ?pregunta=<requisito> muestra esa pregunta del asistente («Cambiar» una respuesta)."""
     if (error := _base_no_lista(request)) is not None:
         return error
     with closing(connect(load_settings().database_path)) as conn:
-        return _render_detalle(request, conn, nro_sicop)
+        return _render_detalle(request, conn, nro_sicop, ver_item=pregunta)
 
 
 @router.post("/oportunidades/{nro_sicop}/revision", response_class=HTMLResponse,
@@ -313,7 +319,169 @@ def dar_seguimiento(request: Request, nro_sicop: str) -> Response:
             seguimiento.abrir(conn, nro_sicop, _quien(request), _ahora())
         except seguimiento.SeguimientoInvalido as exc:
             return _render_detalle(request, conn, nro_sicop, str(exc), status_code=400)
-    return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}#asistente", status_code=303)
+
+
+# --- Asistente de elegibilidad (lección 3): en el detalle del cartel, para quien entra al expediente ------------
+
+def _citador(conn, nro_sicop: str, settings):
+    """[DOC n] → documento, solo si el expediente sigue siendo el que leyó la IA de la lista (si no, sin enlace)."""
+    generacion = verificacion.ultima_generacion(conn, nro_sicop)
+    actual = ia_expediente.armar_expediente(conn, nro_sicop, settings.ia_max_input_tokens) if generacion else None
+    numerados = ia_expediente.numeracion(conn, nro_sicop) \
+        if generacion and actual is not None and actual.huella == generacion.huella else None
+    return lambda texto: citas.enlazar(texto, nro_sicop, numerados)
+
+
+def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime, ver_item: int | None,
+                        error_asistente: str | None = None, formulario_asistente: dict | None = None) -> dict:
+    settings = load_settings()
+    pasos = asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date())
+    actual = next((p for p in pasos if p.item.id == ver_item), None) or asistente.siguiente(pasos)
+    return {
+        "asis": {"sesion": asistente.sesion(conn, nro_sicop), "pasos": pasos, "actual": actual,
+                 "avance": asistente.avance(pasos), "info": asistente.informativos(conn, nro_sicop),
+                 "es_admin": seguridad.es_admin(request), "limite_mb": settings.assistant_doc_max_mb,
+                 "ia": _ia_encendida(), "faltan_ia": sum(p.origen == "app" for p in pasos),
+                 "error": error_asistente, "formulario": formulario_asistente or {},
+                 "hecho": request.session.pop("hecho_asistente", None)},
+        "EVIDENCIAS": verificacion.EVIDENCIAS, "citar": _citador(conn, nro_sicop, settings),
+    }
+
+
+def _asistente_permitido(request: Request, conn, nro_sicop: str) -> Response | None:
+    """None si la persona puede usar el asistente del cartel (la regla del expediente); si no, la página del error."""
+    actual = seguimiento.estado(conn, nro_sicop) if SOLO_DIGITOS.match(nro_sicop) else None
+    if actual is None:
+        return _no_encontrado(request, f"El cartel {nro_sicop} no está en seguimiento: primero «Dar seguimiento».")
+    if not seguimiento.puede_entrar(seguridad.usuario_actual(request), actual):
+        de = actual.encargado or "su encargado (todavía sin asignar)"
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": f"El asistente de este cartel lo usan {de} y los administradores."}, status_code=403)
+    return None
+
+
+def _volver_asistente(request: Request, nro_sicop: str, mensaje: str) -> Response:
+    request.session["hecho_asistente"] = mensaje
+    return RedirectResponse(f"/oportunidades/{nro_sicop}#asistente", status_code=303)
+
+
+def _redactar_mensaje(r) -> str:
+    if r.motivo is None:
+        return f"{r.redactadas} preguntas redactadas con IA." if r.redactadas else "Todas las preguntas ya estaban."
+    return f"{r.redactadas} preguntas redactadas con IA; {r.motivo}." if r.redactadas else f"Sin IA: {r.motivo}."
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/empezar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def empezar_asistente(request: Request, nro_sicop: str) -> Response:
+    """Abre la conversación (o la retoma) y pide a la IA las preguntas, una vez por cartel."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            asistente.empezar(conn, nro_sicop, _quien(request), _ahora())
+        except asistente.AsistenteInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+        r = ia_asistente.redactar(conn, settings, nro_sicop, _quien(request), _ahora())
+    return _volver_asistente(request, nro_sicop, f"Asistente listo. {_redactar_mensaje(r)}")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/redactar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def redactar_asistente(request: Request, nro_sicop: str) -> Response:
+    """Pide a la IA las preguntas que faltan (requisitos agregados o corregidos después de empezar)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            r = ia_asistente.redactar(conn, settings, nro_sicop, _quien(request), _ahora())
+        except asistente.AsistenteInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+    return _volver_asistente(request, nro_sicop, _redactar_mensaje(r))
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/{item_id}/responder", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def responder_asistente(request: Request, nro_sicop: str, item_id: int, estado: str = Form("respondido"),
+                        valor_texto: str = Form(""), valor_numero: str = Form(""), valor_fecha: str = Form(""),
+                        valor_si_no: str = Form(""), vence_el: str = Form(""), nota: str = Form(""),
+                        guardar_en_perfil: str = Form(""), archivo: UploadFile | None = File(None)) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    entrada = asistente.Entrada(estado, valor_texto, valor_numero, valor_fecha, valor_si_no, vence_el, nota)
+    guardar = guardar_en_perfil == "1"
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            if guardar and not seguridad.es_admin(request):
+                raise asistente.AsistenteInvalido("Guardar en el perfil es solo para administradores.")
+            asistente.responder(conn, settings, nro_sicop, item_id, entrada, _subido(archivo), _quien(request),
+                                _ahora(), guardar_en_perfil=guardar)
+        except (asistente.AsistenteInvalido, expediente_archivos.ArchivoInvalido) as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=_estado_error(exc), ver_item=item_id,
+                                   error_asistente=str(exc), formulario_asistente=entrada.__dict__)
+    return _volver_asistente(request, nro_sicop,
+                             "Respuesta guardada." + (" También quedó en el perfil." if guardar else ""))
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/{item_id}/perfil", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def confirmar_perfil_asistente(request: Request, nro_sicop: str, item_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            asistente.confirmar_perfil(conn, nro_sicop, item_id, _quien(request), _ahora())
+        except asistente.AsistenteInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, ver_item=item_id,
+                                   error_asistente=str(exc))
+    return _volver_asistente(request, nro_sicop, "Dato del perfil confirmado.")
+
+
+def _documento_asistente(request: Request, nro_sicop: str, respuesta_id: int, accion: str):
+    """(ruta, Respuesta) del archivo, con el acceso ya registrado; o la página del error."""
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        hallado = asistente.documento(conn, settings.assistant_docs_dir, nro_sicop, respuesta_id)
+        if hallado is None:
+            return _no_encontrado(request, "Ese archivo no está en las respuestas del asistente.")
+        asistente.registrar_acceso(conn, _quien(request), accion, nro_sicop, hallado[1])
+    return hallado
+
+
+@router.get("/oportunidades/{nro_sicop}/asistente/respuestas/{respuesta_id}/archivo")
+def descargar_documento_asistente(request: Request, nro_sicop: str, respuesta_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_asistente(request, nro_sicop, respuesta_id, "descargar_documento_asistente")
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, r = hallado
+    return _archivo(ruta, r.archivo_nombre, perfil.MIME[r.archivo_extension])
+
+
+@router.get("/oportunidades/{nro_sicop}/asistente/respuestas/{respuesta_id}/ver")
+def ver_documento_asistente(request: Request, nro_sicop: str, respuesta_id: int) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    hallado = _documento_asistente(request, nro_sicop, respuesta_id, "ver_documento_asistente")
+    if isinstance(hallado, Response):
+        return hallado
+    ruta, r = hallado
+    return _archivo(ruta, r.archivo_nombre, perfil.MIME[r.archivo_extension], en_linea=True)
 
 
 @dataclass

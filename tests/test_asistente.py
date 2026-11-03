@@ -13,15 +13,17 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
+from fastapi.testclient import TestClient
 
-from app import asistente, perfil
+from app import asistente, perfil, seguimiento, usuarios
 from app.ai import asistente as ia_asistente
 from app.ai import verificacion
 from app.archivos import ArchivoInvalido
 from app.config import load_settings
 from app.database import connect
 from app.historial import Quien
-from tests.test_panel import db  # noqa: F401 (db es una fixture)
+from app.main import app
+from tests.test_panel import CONTRASENA, db, iniciar_sesion, token_csrf  # noqa: F401 (db es una fixture)
 
 NRO = "00000000001"
 ANA = Quien(None, "Ana Sintética")
@@ -308,3 +310,102 @@ def test_sin_ia_quedan_las_preguntas_de_la_app(lista, caso):
     assert r.redactadas == 0 and "preguntas de la app" in r.motivo
     assert len(simulado.llamadas) == (1 if caso == "fallo" else 0)
     assert all(p.origen == "app" for p in _pasos(db))
+
+
+# --- En el detalle del cartel (web) --------------------------------------------------------------------------------
+
+@pytest.fixture
+def web(lista, monkeypatch):
+    """Oscar (admin), Ivania (encargada asignada) y Ana (encargada de otro): con la IA APAGADA (nunca a OpenAI)."""
+    db, ids, settings = lista
+    for clave in ("DATABASE_PATH", "ASSISTANT_DOCS_DIR", "PROFILE_DOCS_DIR", "ASSISTANT_DOC_MAX_MB"):
+        monkeypatch.setenv(clave, settings.raw[clave])
+    monkeypatch.setenv("AI_MODE", "none")
+    monkeypatch.setenv("ASSISTANT_SEND_DOCUMENTS", "false")
+    with closing(connect(db)) as conn:
+        oscar = usuarios.crear_usuario(conn, "oscar@ejemplo.test", "Oscar Sintético", CONTRASENA, usuarios.ADMIN)
+        ivania = usuarios.crear_usuario(conn, "ivania@ejemplo.test", "Ivania Sintética", CONTRASENA)
+        usuarios.crear_usuario(conn, "ana@ejemplo.test", "Ana Sintética", CONTRASENA)
+    clientes = {}
+    for nombre in ("oscar", "ivania", "ana"):
+        clientes[nombre] = TestClient(app)
+        assert iniciar_sesion(clientes[nombre], f"{nombre}@ejemplo.test").status_code == 303
+    return db, ids, settings, clientes, {"oscar": oscar, "ivania": ivania}
+
+
+def _post(cliente, ruta, datos=None, archivos=None):
+    token = token_csrf(cliente.get(f"/oportunidades/{NRO}").text)
+    return cliente.post(ruta, data={"csrf_token": token, **(datos or {})}, files=archivos, follow_redirects=False)
+
+
+def test_dar_seguimiento_abre_el_asistente_en_la_misma_pagina(web):
+    db, ids, _, c, u = web
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/seguimiento")
+    assert r.headers["location"] == f"/oportunidades/{NRO}#asistente"
+    pagina = " ".join(c["ivania"].get(f"/oportunidades/{NRO}").text.split())
+    assert "lo usan su encargado (todavía sin asignar) y los administradores" in pagina
+    with closing(connect(db)) as conn:
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    assert 'id="asistente"' in pagina and "Empezar el asistente" in pagina and "La IA está apagada" in pagina
+    assert _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar").status_code == 303
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    assert "0 de 5</strong> respondidas" in pagina and "Ofertar por SICOP." in pagina      # el primer excluyente
+    assert "Para tener en cuenta (2)" in pagina
+
+
+def test_responder_pausar_y_que_otra_persona_siga(web):
+    db, ids, _, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar")
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "1"})
+    assert r.status_code == 303
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "varios"})
+    assert r.status_code == 400 and "no es un número" in r.text and "Al menos tres años" in r.text   # misma pregunta
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}").text                    # otra persona, otra sesión
+    assert "1 de 5</strong> respondidas" in pagina and "Al menos tres años" in pagina
+    r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"vence_el": "2027-01-15"},
+              {"archivo": ("permiso.pdf", PDF, "application/pdf")})
+    assert r.status_code == 303
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}").text
+    rid = re.search(r"/asistente/respuestas/(\d+)/archivo", pagina).group(1)
+    assert c["oscar"].get(f"/oportunidades/{NRO}/asistente/respuestas/{rid}/archivo").content == PDF
+    cambiar = c["ivania"].get(f"/oportunidades/{NRO}?pregunta={ids['sicop']}").text
+    assert "Respuesta actual: Sí" in cambiar
+
+
+def test_quien_no_es_el_encargado_no_ve_ni_responde(web):
+    db, ids, settings, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar")
+    rid = _responder(db, settings, ids["patente"], archivo=PDF)
+    pagina = " ".join(c["ana"].get(f"/oportunidades/{NRO}").text.split())
+    assert "Ivania Sintética y los administradores" in pagina and "Empezar el asistente" not in pagina
+    assert "Aportar patente" not in pagina.split('id="asistente"')[1]
+    for ruta in ("asistente/empezar", f"asistente/{ids['sicop']}/responder", f"asistente/{ids['anos']}/perfil",
+                 "asistente/redactar"):
+        assert _post(c["ana"], f"/oportunidades/{NRO}/{ruta}", {"valor_si_no": "1"}).status_code == 403
+    assert c["ana"].get(f"/oportunidades/{NRO}/asistente/respuestas/{rid}/archivo").status_code == 403
+    with closing(connect(db)) as conn:
+        assert len(asistente.ultimas_respuestas(conn, asistente.sesion(conn, NRO).id)) == 1   # Ana no respondió nada
+
+
+def test_guardar_en_el_perfil_es_solo_de_administradores_y_todo_sale_escapado(web):
+    db, ids, _, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        patente = perfil.crear(conn, "permiso", "Patente municipal", ANA, AHORA)
+        verificacion.elegir_perfil(conn, NRO, ids["patente"], patente, ANA)
+    _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar")
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"guardar_en_perfil": "1"},
+              {"archivo": ("permiso.pdf", PDF, "application/pdf")})
+    assert r.status_code == 400 and "solo para administradores" in r.text
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['soporte']}").text
+    assert "<script>alert(1)</script>" not in pagina and "&lt;script&gt;alert(1)&lt;/script&gt;" in pagina
+    assert "Guardar también en el perfil" not in pagina                     # «soporte» no tiene elemento del perfil
+    assert "Guardar también en el perfil" in c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
