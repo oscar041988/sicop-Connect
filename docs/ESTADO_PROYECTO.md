@@ -114,9 +114,12 @@
   - IA: `app/ai/asistente.py`, prompt `asistente_elegibilidad_v1` (el de la guía), en tandas de 30; solo recibe
     la lista. Detalle en `docs/RESUMEN_IA.md` §7.
   - Pruebas: `tests/test_asistente.py` 18 passed (IA SIMULADA; con true ningún archivo se guarda ni sale).
-  - Pendiente: Ivania recorre un cartel real respondiendo ella (pausar a la mitad y seguir otro día) y Oscar lo
-    usa sin explicación previa (sus dudas van a la ayuda); decidir con Oscar `ASSISTANT_SEND_DOCUMENTS`. El
-    resultado («¿podemos participar?») es la lección 4.
+  - Prueba de Ivania (2026-11-03, cartel GPS `20261003280`, `AI_MODE=none`, después de `migrate` a 0031):
+    funciona, sigue donde quedó al cerrar el navegador, las preguntas se entienden y el campo de respuesta es el
+    correcto; nada la confundió.
+  - Pendiente: probarlo con la IA encendida (preguntas redactadas por la IA); Oscar lo usa sin explicación previa
+    (sus dudas van a la ayuda); decidir con Oscar `ASSISTANT_SEND_DOCUMENTS`. El resultado («¿podemos
+    participar?») es la lección 4.
 
 - **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
   Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para
