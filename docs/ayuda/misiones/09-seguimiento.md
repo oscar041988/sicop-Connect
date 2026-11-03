@@ -13,7 +13,8 @@
 3. Lee la frase gris al lado del botón.
    Dice que el cartel pasa a la página «Seguimiento» y que un administrador asigna el encargado.
 4. Haz clic en «Dar seguimiento».
-5. Mira la etiqueta nueva arriba del título: «En seguimiento · sin encargado · preparando».
+   La página baja sola hasta «Asistente de elegibilidad». Lo verás en la misión 23.
+5. Mira la etiqueta nueva arriba del título, al inicio: «En seguimiento · sin encargado · preparando».
    [captura: Cartel · resaltar la etiqueta «En seguimiento»]
    Dice quién es el encargado y en qué etapa va la oferta.
 
@@ -44,5 +45,8 @@ Ya está en seguimiento y tú eres su encargado o administrador. Sigue con la mi
 
 **¿Y si no veo «Abrir expediente» en la tarjeta?**
 Solo lo abren su encargado y los administradores. Pide que te pongan de encargado.
+
+**¿Y si quiero saber si Hermatix cumple lo que pide el cartel?**
+Usa el asistente, abajo en la página del cartel. Sigue la misión 23.
 
 **Sigue con:** [¿Cómo trabajo el expediente?](10-expediente.md)

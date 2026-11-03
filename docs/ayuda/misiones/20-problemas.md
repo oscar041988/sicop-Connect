@@ -27,4 +27,4 @@ Vale siempre lo que dice SICOP. Avísale a quien administra la app.
 **¿Y si sale «Esta página es solo para administradores.»?**
 Tu usuario es «Encargado». Si necesitas esa página, pide a un administrador que cambie tu nivel.
 
-**Sigue con:** [Volver al inicio de la ayuda](../MISIONES.md)
+**Sigue con:** [¿Cómo veo y cargo el perfil de Hermatix?](21-perfil.md)

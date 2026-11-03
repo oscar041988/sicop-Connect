@@ -43,11 +43,12 @@
     {% if p.perfil %}
     {% set v = p.perfil.vigente %}
     <div class="perfil-dato">
+      {% set partes = [] %}
+      {% if v.valor %}{% set _ = partes.append(v.valor) %}{% endif %}
+      {% if v.archivo_nombre %}{% set _ = partes.append(v.archivo_nombre) %}{% endif %}
+      {% if v.vence_el %}{% set _ = partes.append("vence " ~ (v.vence_el | dia)) %}{% endif %}
       <p>En el perfil («{{ p.perfil.titulo }}»):
-        {% if v.numero %}<strong>{{ v.numero }} {{ v.unidad or "" }}</strong>{% endif %}
-        {% if v.valor %}{{ v.valor }}{% endif %}
-        {% if v.archivo_nombre %}· {{ v.archivo_nombre }}{% endif %}
-        {% if v.vence_el %}· vence {{ v.vence_el | dia }}{% endif %}.
+        {% if v.numero %}<strong>{{ v.numero }} {{ v.unidad or "" }}</strong>{% if partes %} · {% endif %}{% endif %}{{ partes | join(" · ") }}.
         ¿Sigue siendo correcto?</p>
       <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ p.item.id }}/perfil">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

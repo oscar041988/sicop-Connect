@@ -117,6 +117,11 @@
   - Prueba de Ivania (2026-11-03, cartel GPS `20261003280`, `AI_MODE=none`, después de `migrate` a 0031):
     funciona, sigue donde quedó al cerrar el navegador, las preguntas se entienden y el campo de respuesta es el
     correcto; nada la confundió.
+  - Ayuda (2026-11-03, pedido de Ivania): bloque nuevo «G. Asistente de elegibilidad» con las misiones
+    21-perfil, 22-lista-verificacion y 23-asistente (borrador); la 09 dice que «Dar seguimiento» baja al
+    asistente; 5 palabras nuevas en el glosario; botón «?» de `/perfil` y de la lista. La base de ejemplo de la
+    ayuda trae perfil, lista (IA SIMULADA) y un asistente empezado: capturas 21–23 hechas (19 de 19). Falta que
+    Ivania las pruebe siguiendo los pasos (ESTILO.md).
   - Pendiente: probarlo con la IA encendida (preguntas redactadas por la IA); Oscar lo usa sin explicación previa
     (sus dudas van a la ayuda); decidir con Oscar `ASSISTANT_SEND_DOCUMENTS`. El resultado («¿podemos
     participar?») es la lección 4.

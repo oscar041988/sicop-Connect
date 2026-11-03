@@ -22,6 +22,11 @@ Cada palabra del panel explicada en una frase, con un ejemplo. Los nombres van c
 | **Recomendación preliminar** | Lo que sugiere el resumen: ofertar, revisar o no ofertar. La decisión la toma una persona. | «Revisar: piden un técnico en planilla». |
 | **Cita** | La marca que dice de dónde salió un dato del resumen. Es un enlace. | [DOC 1 · pág. 3] = documento 1, página 3. |
 | **Requisito excluyente** | Algo obligatorio: si no se cumple, la oferta queda fuera. | «Ingeniero en sistemas en planilla». |
+| **Perfil de Hermatix** | Los datos y documentos de la empresa que piden los carteles, guardados una sola vez. | «Patente municipal · vence el 15/01/2027». |
+| **Lista de verificación** | Cada requisito del pliego convertido en algo que se puede comprobar. | «Experiencia mínima de 3 años · Número · al menos 3 años». |
+| **Qué lo demuestra** | El tipo de respuesta que prueba un requisito: Número, Sí o no, Fecha, Documento o Texto. | Si el pliego pide presentar algo: Documento. |
+| **Mínimo** | Lo menos que acepta el pliego. «No indicado» si el pliego no lo dice. | «Al menos 3 años». |
+| **Asistente de elegibilidad** | Pregunta uno por uno lo que pide el cartel y guarda las respuestas. No supone nada. | «¿Cuántos años de experiencia tiene Hermatix?». |
 | **Revisión** | Lo que una persona decide del cartel, con su motivo. | «Interesa», «No interesa», «Revisar requisitos». |
 | **Dar seguimiento** | Avisar a todos que alguien está trabajando ese cartel. | El cartel pasa a «Seguimiento». |
 | **Encargado** | La persona responsable de un cartel en seguimiento. | Encargada: Ana. |

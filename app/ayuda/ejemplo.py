@@ -5,8 +5,8 @@
 * Nunca toca la base real: se niega si la base de ejemplo coincide con DATABASE_PATH.
 * Todo va marcado: títulos «EJEMPLO · …», instituciones y usuarios «de Ejemplo», correos @ejemplo.test e
   importaciones con origen «sintetico».
-* Usa las funciones reales de la app (importadores, evaluación, revisiones, seguimiento, expediente, resumen con
-  un OpenAI SIMULADO que nunca llama a la red). Solo las tablas sin función de escritura (ficha y documentos de
+* Usa las funciones reales de la app (importadores, evaluación, revisiones, seguimiento, expediente, resumen y
+  lista de verificación con un OpenAI SIMULADO que nunca llama a la red, perfil y asistente de elegibilidad). Solo las tablas sin función de escritura (ficha y documentos de
   SICOP, bitácora) se llenan con INSERT, como en tests/test_panel_enriquecimiento.py.
 """
 
@@ -22,8 +22,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
-from app import avisos, destinatarios, expediente_archivos, panel, seguimiento, usuarios
+from app import asistente, avisos, destinatarios, expediente_archivos, panel, perfil, seguimiento, usuarios
 from app.ai import resumen as ia_resumen
+from app.ai import verificacion
 from app.ayuda import CARPETA_EJEMPLO, PROJECT_ROOT
 from app.config import DEFAULTS, load_settings
 from app.database import apply_migrations, connect
@@ -202,6 +203,7 @@ class Claves:
     grabacion: str          # «AAAA-MM-DD/nro/HHMMSS», relativa a RECORDINGS_DIR
     email: str
     contrasena: str
+    perfil: int = 0         # un elemento del perfil (la patente, con documento): /perfil/{perfil}
 
 
 def leer_claves(carpeta: Path = CARPETA_EJEMPLO) -> Claves:
@@ -266,6 +268,63 @@ def _resumen_de_ejemplo() -> dict:
         "recomendacion": "dar_seguimiento",
         "justificacion": "EJEMPLO: encaja con el producto de GPS y el plazo alcanza.",
     }
+
+
+# --- Asistente de elegibilidad: perfil, lista de verificación y respuestas -----------------------------------
+
+def _lista_de_ejemplo() -> dict:
+    """La respuesta SIMULADA de la IA de la lista para los 2 requerimientos del resumen de ejemplo."""
+    nada = "no indicado"
+    return {"items": [
+        {"ref": "R1", "tipo_evidencia": "numero", "minimo": "al menos 3 años", "minimo_numero": "3",
+         "minimo_fecha": nada, "unidad": "años", "igual_a": "ninguno", "citas": ["[DOC 1 · pág. 1]"]},
+        {"ref": "R2", "tipo_evidencia": "texto", "minimo": nada, "minimo_numero": nada, "minimo_fecha": nada,
+         "unidad": nada, "igual_a": "ninguno", "citas": ["[DOC 1 · pág. 1]"]}]}
+
+
+def _requisito(texto: str, tipo: str, evidencia: str, excluyente: bool, minimo: str = "", numero: str = "",
+               unidad: str = "") -> verificacion.Cambios:
+    return verificacion.Cambios(texto, tipo, evidencia, minimo, numero, "", unidad, excluyente)
+
+
+def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime, ana: Quien, luis: Quien) -> int:
+    """Perfil (vigente, por vencer y pendiente), la lista del cartel principal (generada con la IA SIMULADA) y la
+    del seguido (con el asistente empezado y una respuesta). Devuelve el id de la patente del perfil."""
+    anos = perfil.crear(conn, "experiencia", "Años de experiencia en GPS y gestión de flotas", ana, ahora)
+    perfil.nueva_version(conn, settings.profile_docs_dir, anos, perfil.Datos(
+        valor="EJEMPLO: monitoreo GPS de flotas", numero="8", unidad="años"), None, 1024 * 1024, ana, ahora)
+    patente = perfil.crear(conn, "permiso", "Patente municipal vigente y constancia de estar al día", ana, ahora)
+    with PDF_DE_EJEMPLO.open("rb") as pdf:
+        perfil.nueva_version(conn, settings.profile_docs_dir, patente, perfil.Datos(
+            valor="EJEMPLO: patente de la municipalidad de ejemplo",
+            vence_el=(ahora + timedelta(days=20)).astimezone(CR).date().isoformat()),
+            (pdf, "Patente de ejemplo.pdf"), settings.profile_doc_max_mb * 1024 * 1024, ana, ahora)
+    poliza = perfil.crear(conn, "poliza", "Póliza de riesgos del trabajo (INS)", ana, ahora)
+    perfil.marcar_pendiente(conn, poliza, "EJEMPLO: se está renovando", ana, ahora)
+
+    verificacion.generar(conn, ia_settings, PRINCIPAL, ana, cliente=_OpenAIDeEjemplo(_lista_de_ejemplo()),
+                         dormir=lambda s: None)
+
+    p = "[DOC 1 · pág. "
+    ids = {}
+    for clave, cambios in (
+        ("sicop", _requisito(f"Presentar la oferta por SICOP, firmada digitalmente. {p}1]", "legal", "si_no", True)),
+        ("anos", _requisito(f"Experiencia mínima de 3 años en monitoreo GPS de flotas. {p}2]", "experiencia",
+                            "numero", True, "al menos 3 años", "3", "años")),
+        ("patente", _requisito(f"Aportar la patente municipal vigente. {p}3]", "legal", "documento", False)),
+        ("tecnicos", _requisito(f"Indicar cuántos técnicos de soporte tiene la empresa. {p}4]", "tecnico",
+                                "numero", False, unidad="técnicos")),
+        ("multa", _requisito(f"Multa / cláusula penal: 1 % por cada día de atraso en la entrega. {p}5]",
+                             "financiero", "texto", False)),
+        ("condicion", _requisito(f"Condición de la institución: pago a 30 días naturales. {p}5]", "financiero",
+                                 "texto", False)),
+    ):
+        ids[clave] = verificacion.agregar(conn, SEGUIDO, cambios, luis)
+    verificacion.elegir_perfil(conn, SEGUIDO, ids["anos"], anos, luis)
+    verificacion.elegir_perfil(conn, SEGUIDO, ids["patente"], patente, luis)
+    asistente.empezar(conn, SEGUIDO, luis, ahora)
+    asistente.responder(conn, settings, SEGUIDO, ids["sicop"], asistente.Entrada(valor_si_no="1"), None, luis, ahora)
+    return patente
 
 
 # --- Crear la base ----------------------------------------------------------------------------------------------
@@ -385,6 +444,9 @@ def crear(carpeta: Path = CARPETA_EJEMPLO, ahora: datetime | None = None) -> Cla
             **entorno(carpeta), "OPENAI_API_KEY": "clave-de-ejemplo-sin-uso", "IA_PRECIO_ENTRADA_USD": "1.00",
             "IA_PRECIO_SALIDA_USD": "5.00"}), PRINCIPAL, cliente=_OpenAIDeEjemplo(_resumen_de_ejemplo()),
             dormir=lambda s: None)
+        patente = _asistente(conn, settings, load_settings(env_file=None, environ={
+            **entorno(carpeta), "OPENAI_API_KEY": "clave-de-ejemplo-sin-uso", "IA_PRECIO_ENTRADA_USD": "1.00",
+            "IA_PRECIO_SALIDA_USD": "5.00"}), ahora, ana, Quien(luis, ENCARGADO[1]))
 
         version = panel.version_vigente(conn)
         avisos.preparar(conn, version, ahora, settings.notify_lookback_days)
@@ -400,7 +462,7 @@ def crear(carpeta: Path = CARPETA_EJEMPLO, ahora: datetime | None = None) -> Cla
 
         consulta, grabacion = _bitacora(conn, ahora)
     _golden(carpeta / "golden")
-    claves = Claves(PRINCIPAL, SEGUIDO, SIN_ENCARGADO, consulta, grabacion, ADMIN[0], CONTRASENA)
+    claves = Claves(PRINCIPAL, SEGUIDO, SIN_ENCARGADO, consulta, grabacion, ADMIN[0], CONTRASENA, patente)
     (carpeta / "claves.json").write_text(json.dumps(asdict(claves), ensure_ascii=False, indent=2), encoding="utf-8")
     return claves
 

@@ -14,6 +14,8 @@ solo_admin:
 pantallas:
   - ruta: /oportunidades/*/resumen
     mision: 05-resumen-ia
+  - ruta: /oportunidades/*/verificacion
+    mision: 22-lista-verificacion
   - ruta: /oportunidades/*
     mision: 04-arriba-del-cartel
   - ruta: /oportunidades
@@ -36,3 +38,5 @@ pantallas:
     mision: 17-calidad
   - ruta: /bitacora*
     mision: 18-bitacora
+  - ruta: /perfil*
+    mision: 21-perfil

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 from app.ayuda.misiones import Marcador
 
-# Pantalla → dirección. {principal}, {seguido}, {sin_encargado} y {consulta} salen de claves.json.
+# Pantalla → dirección. {principal}, {seguido}, {sin_encargado}, {consulta} y {perfil} salen de claves.json.
 PANTALLAS: dict[str, str] = {
     "Iniciar sesión": "/login",
     "Panel de carteles": "/oportunidades",
@@ -32,6 +32,10 @@ PANTALLAS: dict[str, str] = {
     "Bitácora": "/bitacora",
     "Grabación": "/bitacora/consultas/{consulta}",
     "Correo": "/ayuda-ejemplo/correo",
+    "Perfil": "/perfil",
+    "Elemento del perfil": "/perfil/{perfil}",
+    "Lista de verificación": "/oportunidades/{principal}/verificacion",
+    "Asistente": "/oportunidades/{seguido}",       # en seguimiento, con el asistente empezado
 }
 SIN_SESION = {"Iniciar sesión"}
 MENU = "header nav"
@@ -117,6 +121,17 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     # Iniciar sesión
     ("Iniciar sesión", "el título «Iniciar sesión»"): Objetivo(selector="h1"),
     ("Iniciar sesión", "el ojito de «Contraseña»"): Objetivo(selector=".btn-mostrar"),
+    # Asistente de elegibilidad: perfil, lista de verificación y asistente
+    ("Perfil", "el cuadro «Revisar pronto»"): Objetivo(selector=".aviso-perfil"),
+    ("Perfil", "una fila"): Objetivo(selector="table.lista tbody tr"),
+    ("Perfil", "el estado"): Objetivo(selector="table.lista .estado-perfil"),
+    ("Elemento del perfil", "el estado"): Objetivo(selector=".ficha .estado-perfil"),
+    ("Lista de verificación", "el botón de generar"): Objetivo(selector=".generar-lista button"),
+    ("Lista de verificación", "un requisito"): Objetivo(selector=".item-verificacion"),
+    ("Asistente", "la sección «Asistente de elegibilidad»"): Objetivo(selector="#asistente"),
+    ("Asistente", "el avance"): Objetivo(selector=".asistente .avance"),
+    ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),
+    ("Asistente", "el dato del perfil"): Objetivo(selector=".perfil-dato"),
     # Correo
     ("Correo", "el asunto"): Objetivo(selector=".asunto"),
     ("Correo", "el cuadro «Resumen con IA»"): Objetivo(selector="div", contiene="Resumen con IA · preliminar"),

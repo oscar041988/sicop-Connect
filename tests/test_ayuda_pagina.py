@@ -40,10 +40,10 @@ def clientes(db, monkeypatch):  # noqa: F811
 
 # --- Índice y misiones ------------------------------------------------------------------------------------------
 
-def test_el_indice_tiene_las_20_misiones_en_orden_y_toda_mision_se_abre(clientes):
+def test_el_indice_tiene_las_23_misiones_en_orden_y_toda_mision_se_abre(clientes):
     admin, _ = clientes
     nombres = [m.nombre for m in pagina.todas()]
-    assert len(nombres) == 20 and nombres == sorted(nombres)
+    assert len(nombres) == 23 and nombres == sorted(nombres)
     html = admin.get("/ayuda").text
     assert "¿Cómo se usa?" in html and 'id="glosario"' in html
     for nombre in nombres:
@@ -126,7 +126,7 @@ def test_el_buscador_encuentra_reporte_sin_importar_tildes_ni_mayusculas(cliente
 
 def test_el_buscador_dice_si_no_encuentra_y_escapa_la_consulta(clientes):
     admin, encargada = clientes
-    assert "No encontré ninguna misión con «asistente»" in admin.get("/ayuda", params={"q": "asistente"}).text
+    assert "No encontré ninguna misión con «helicóptero»" in admin.get("/ayuda", params={"q": "helicóptero"}).text
     html = admin.get("/ayuda", params={"q": "<script>alert(1)</script>"}).text
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
     resultados = encargada.get("/ayuda", params={"q": "destinatarios"}).text.split("Resultados para", 1)[1]
@@ -147,7 +147,8 @@ def test_cada_mision_del_mapa_existe():
     ("/seguimiento", "09-seguimiento"), (f"/seguimiento/{NRO}", "10-expediente"),
     ("/competencia", "11-competencia"), ("/cargar", "12-cargar-archivo"), ("/usuarios", "13-usuarios"),
     ("/destinatarios", "15-destinatarios"), ("/avisos", "16-avisos"), ("/calidad", "17-calidad"),
-    ("/bitacora", "18-bitacora"),
+    ("/bitacora", "18-bitacora"), ("/perfil", "21-perfil"),
+    (f"/oportunidades/{NRO}/verificacion", "22-lista-verificacion"),
 ])
 def test_cada_pantalla_tiene_su_boton_de_ayuda(clientes, url, mision):
     admin, _ = clientes

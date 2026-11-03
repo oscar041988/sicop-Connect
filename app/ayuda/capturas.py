@@ -202,7 +202,7 @@ def tomar(marcadores: list[Marcador], carpeta: Path = CARPETA_EJEMPLO, salida: P
     subidas = iter(range(1, 100))
     subida = lambda: ejemplo.subida_de_ejemplo(carpeta, next(subidas))  # noqa: E731 — un archivo nuevo cada vez
     datos = {"principal": claves.principal, "seguido": claves.seguido, "sin_encargado": claves.sin_encargado,
-             "consulta": claves.consulta_grabacion}
+             "consulta": claves.consulta_grabacion, "perfil": claves.perfil}
     puerto = _puerto_libre()
     base = f"http://127.0.0.1:{puerto}"
     proceso = _arrancar(carpeta, puerto)
