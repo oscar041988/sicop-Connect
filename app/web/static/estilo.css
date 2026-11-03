@@ -435,3 +435,14 @@ table.lista.auto .btn { white-space: nowrap; }
 .sugerencias-perfil { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
 .sugerencias-perfil p { flex-basis: 100%; }
 .sugerencias-perfil form { margin: 0; }
+
+/* Lista de verificación del cartel (asistente de elegibilidad, lección 2). */
+.enlace-verificacion { margin: 4px 0 20px; }
+.enlace-verificacion a { font-weight: 700; }
+.generar-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 12px 0 4px; }
+.item-verificacion { margin-bottom: 12px; }
+.item-verificacion .requisito { font-weight: 600; margin: 6px 0 10px; }
+.perfil-item { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin: 10px 0; }
+.perfil-item label { flex: 1 1 320px; }
+.perfil-item select { width: 100%; }
+form.en-linea { display: inline; margin-left: 8px; }

@@ -260,6 +260,34 @@ def ia_expediente_cmd(settings: Settings, nro_sicop: str, ver: bool) -> int:
     return 0
 
 
+def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
+    """Asistente, lección 2: genera (o vuelve a generar) la lista de verificación de un cartel con IA. Lo que una
+    persona corrigió, agregó o quitó no se toca. cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
+    from app.ai import verificacion
+    from app.historial import TERMINAL
+
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            g = verificacion.generar(conn, settings, nro_sicop, TERMINAL, cliente=cliente)
+        except verificacion.VerificacionError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        items = verificacion.listar(conn, nro_sicop)
+    print(f"Lista de verificación del cartel {nro_sicop}: {g.items} requisitos · modelo {g.modelo}")
+    for i in items:
+        excluyente = "EXCLUYENTE · " if i.excluyente else ""
+        print(f"  - {excluyente}{i.requisito[:90]} → {i.evidencia_texto} · mínimo: {i.minimo}")
+    print(f"Revísala en el panel: /oportunidades/{nro_sicop}/verificacion")
+    return 0
+
+
 def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
     """Lección 3 IA: el resumen ejecutivo de un cartel (salida estructurada). No repite un expediente sin cambios.
     cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
@@ -1248,6 +1276,8 @@ def build_parser() -> argparse.ArgumentParser:
     ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
     ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
+    iv = ia_sub.add_parser("verificar", help="Lista de verificación de un cartel con IA (asistente, lección 2)")
+    iv.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ic = ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
@@ -1330,6 +1360,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_expediente_cmd(settings, args.nro.strip(), args.ver)
     if args.command == "ia" and args.ia_command == "probar":
         return ia_probar_cmd(settings)
+    if args.command == "ia" and args.ia_command == "verificar":
+        return ia_verificar_cmd(settings, args.nro.strip())
     if args.command == "ia" and args.ia_command == "resumir":
         return ia_resumir_cmd(settings, args.nro.strip())
     if args.command == "ia" and args.ia_command == "cola":

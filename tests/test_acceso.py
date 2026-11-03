@@ -252,7 +252,15 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
-                             "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/archivos",
+                             "/oportunidades/{nro_sicop}/seguimiento",
+                             "/oportunidades/{nro_sicop}/verificacion/agregar",
+                             "/oportunidades/{nro_sicop}/verificacion/generar",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/corregir",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/perfil",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/quitar",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/volver",
+                             "/perfil", "/perfil/{item_id}/pendiente", "/perfil/{item_id}/version",
+                             "/seguimiento/{nro_sicop}/archivos",
                              "/seguimiento/{nro_sicop}/encargado", "/seguimiento/{nro_sicop}/etapa",
                              "/seguimiento/{nro_sicop}/notas",
                              "/usuarios", "/usuarios/{user_id}/contrasena", "/usuarios/{user_id}/eliminar",
@@ -260,6 +268,7 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/usuarios/{user_id}/nivel"]
     assert all(verificar_csrf in dependencias for dependencias in rutas.values())
     assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith(("/usuarios", "/destinatarios")))
+    assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith("/perfil"))
 
 
 @pytest.mark.parametrize("token", [None, "", "token-inventado"])

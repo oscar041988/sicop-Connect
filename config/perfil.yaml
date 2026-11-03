@@ -32,3 +32,60 @@ sugerencias:
     - Firma digital del representante legal
   financiero:
     - Estados financieros
+
+# Asistente, lección 2: frases que, si aparecen en un requisito del cartel, proponen ese elemento del perfil
+# (sin tildes ni mayúsculas importan). El usuario confirma o cambia la propuesta en la lista de verificación.
+claves:
+  Años de experiencia en GPS y gestión de flotas:
+    - anos de experiencia
+    - experiencia minima
+    - experiencia en labores
+    - experiencia en actividades
+  Constancias o cartas de clientes de servicios GPS (últimos 5 años):
+    - cartas de recomendacion
+    - constancias de procedimientos
+    - certificaciones firmadas
+    - ventas adjudicadas
+  Clientes activos con número de vehículos y última factura:
+    - clientes activos
+  Técnicos de instalación y mantenimiento (lista y currículos):
+    - curriculo
+    - tecnicos de instalacion
+    - personal tecnico
+  Profesionales en planilla (ingeniería en sistemas, autotrónica):
+    - en planilla
+    - ingeniero en sistemas
+  Carta del fabricante o certificado de marca de los equipos:
+    - carta de fabrica
+    - certificado de marca
+    - integrador autorizado
+  Patente municipal vigente y constancia de estar al día:
+    - patente
+  Permiso sanitario de funcionamiento:
+    - permiso sanitario
+  Póliza de riesgos del trabajo (INS):
+    - riesgos del trabajo
+    - riesgos de trabajo
+  Póliza de responsabilidad civil:
+    - responsabilidad civil
+  Seguro de los equipos:
+    - seguro para los equipos
+  Al día con la CCSS:
+    - ccss
+  Al día con FODESAF:
+    - fodesaf
+  Al día con Hacienda (actividad económica afín):
+    - obligaciones tributarias
+    - hacienda
+    - impuestos nacionales
+  Actividad comercial registrada:
+    - actividad comercial
+    - actividad economica
+  Declaración jurada de prohibiciones (art. 28 y 29 LGCP):
+    - prohibiciones
+  Declaración de beneficiarios finales y propiedad de las acciones:
+    - beneficiario final
+    - beneficiarios finales
+  Firma digital del representante legal:
+    - firma digital
+    - firmada digitalmente

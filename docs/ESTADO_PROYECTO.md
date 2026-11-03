@@ -25,6 +25,27 @@
   - Pendiente: acordar la lista con Oscar (editar `config/perfil.yaml`); cargar el perfil real (Ivania, desde la
     app); probar con un usuario encargado que no puede cargar; servidor: crear `PROFILE_DOCS_DIR` con permisos
     solo para el usuario `sicop` y revisar que el respaldo lo incluya.
+  - Corrección (2026-11-02): el commit `a916a86` dejó 3 pruebas fallando que no corrí en su momento:
+    `test_obtencion.py` y `test_obtencion_turnos.py` tienen su propia lista de migraciones, y `test_acceso.py` el
+    inventario de rutas POST (faltaban las del perfil). Arreglado en el commit del Encargo 2.
+- **Asistente · lección 2, Encargo 2 hecho (2026-11-02, rama `desarrollo`, solo local): lista de verificación.**
+  Migración **0030**: `eligibility_items` (un requisito verificable por fila: tipo de evidencia, mínimo o «no
+  indicado», excluyente, citas, elemento del perfil propuesto/confirmado, origen ia o usuario; nada se borra),
+  `eligibility_generations` y `ia_usage` reconstruida para aceptar los propósitos `verificacion`, `asistente` y
+  `explicacion` (las filas y sus ids se conservan). Para eso el ejecutor de migraciones acepta la línea
+  `-- migracion: sin llaves foraneas` (procedimiento de SQLite: llaves apagadas solo en esa migración y
+  `foreign_key_check` antes de confirmar).
+  - Generación con IA (`app/ai/verificacion.py`, prompt `lista_verificacion_v1`): requerimientos del resumen +
+    expediente (decisión de Ivania); la app descarta mínimos que no están en el texto, conserva los requisitos que
+    la IA omite y junta los repetidos con sus citas; volver a generar respeta lo corregido, agregado y quitado.
+    Presupuesto diario y `AI_MODE=none` respetados. Detalle en `docs/RESUMEN_IA.md` §6.
+  - Pantalla `/oportunidades/<nro>/verificacion` (los dos niveles; enlace desde el cartel): corregir, quitar,
+    volver a poner, agregar y confirmar el elemento del perfil (propuesto con `claves:` de `config/perfil.yaml`).
+    Terminal: `python -m app.cli ia verificar --nro N`.
+  - Pruebas: `tests/test_verificacion.py` 12 passed (OpenAI SIMULADO).
+  - Pendiente (Ivania): generar la lista de 5 carteles reales y compararla con su pliego; corregir desde la
+    pantalla y comprobar que la corrección sigue al volver a generar; revisión con Oscar. Cada generación usa la
+    IA (costo parecido a un resumen).
 
 - **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
   Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para

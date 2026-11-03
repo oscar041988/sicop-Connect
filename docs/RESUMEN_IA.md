@@ -190,7 +190,27 @@ el enlace «Leer el resumen completo» (`/oportunidades/{nro}/resumen`). Decisi�
 8:00 (Oscar); como los resúmenes se hacen después de las 10:00, un cartel nuevo casi siempre llega sin resumen y el
 correo dice «todavía no está… se ve en el panel». Con `AI_MODE=none` el correo no menciona el resumen.
 
-## 6. Pendiente de la lección 1
+## 6. Lista de verificación (asistente de elegibilidad, lección 2; 2026-11-02)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/verificacion.py`; prompt versionado
+`config/prompts/lista_verificacion_v1.md`; pantalla `/oportunidades/{nro}/verificacion`; terminal
+`python -m app.cli ia verificar --nro N`.
+
+- **Se envía:** los requerimientos del último resumen ok o revisar, numerados (R1, R2…, con tipo, excluyente y
+  cita) y el **mismo expediente** del resumen (decisión de Ivania). Nada del perfil de Hermatix: lo comprueba una
+  prueba (`tests/test_verificacion.py`).
+- **La IA solo agrega** tipo de evidencia (número, sí o no, fecha, documento, texto), mínimo, unidad, citas y si un
+  requisito repite a otro. El requisito, su tipo y si es excluyente salen del resumen.
+- **Mínimos inventados:** un número o una fecha del mínimo que no aparece en el requerimiento ni en el expediente se
+  descarta y queda «no indicado» (los números escritos en palabras, «tres años», cuentan).
+- Un requerimiento que la IA no devuelva igual queda en la lista (texto, no indicado). Los repetidos se juntan con
+  todas sus citas.
+- **Volver a generar** no toca lo corregido, agregado o quitado por una persona (`eligibility_items`, migración
+  0030). Cada cambio queda en `audit_log`; cada generación en `eligibility_generations` y su costo en `ia_usage`
+  (propósito `verificacion`).
+- No llama a OpenAI sin resumen, con `AI_MODE=none` o si el costo del día ya llegó a `IA_MAX_DAILY_COST`.
+
+## 7. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

@@ -33,6 +33,10 @@ ACCIONES = {
     "marcar_pendiente_perfil": "Marcó pendiente un elemento del perfil",
     "ver_documento_perfil": "Vio un documento del perfil",
     "descargar_documento_perfil": "Descargó un documento del perfil",
+    "generar_lista_verificacion": "Generó con IA la lista de verificación de un cartel",
+    "corregir_item_verificacion": "Corrigió un requisito de la lista de verificación",
+    "agregar_item_verificacion": "Agregó un requisito a la lista de verificación",
+    "quitar_item_verificacion": "Quitó un requisito de la lista de verificación",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
@@ -41,6 +45,8 @@ DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado", "cambiar_etapa", "su
                   "descargar_expediente")
 DE_PERFIL = ("crear_elemento_perfil", "nueva_version_perfil", "marcar_pendiente_perfil")
 ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil")
+DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "agregar_item_verificacion",
+                   "quitar_item_verificacion")
 
 
 @dataclass(frozen=True)
