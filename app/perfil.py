@@ -225,22 +225,24 @@ def validar(d: Datos) -> None:
     _limpiar(d)
 
 
-def _guardar_archivo(base: Path, item_id: int, origen: BinaryIO, nombre_original: str | None,
-                     limite: int) -> dict:
+def guardar_documento(base: Path, carpeta: str, origen: BinaryIO, nombre_original: str | None, limite: int,
+                      donde: str = "En el perfil", variable: str = "PROFILE_DOC_MAX_MB") -> dict:
+    """Valida (PDF/PNG/JPG con su firma, tamaño) y guarda en base/carpeta/<sha256>.<ext>. También lo usa el
+    asistente de elegibilidad (app/asistente.py) para los archivos de sus respuestas."""
     nombre = archivos.nombre_para_mostrar(nombre_original)
     extension = EXTENSIONES.get(PurePosixPath(nombre).suffix.lower())
     if extension is None:
-        raise ArchivoInvalido("En el perfil se aceptan solo PDF e imágenes PNG o JPG.")
-    carpeta = base / str(item_id)
-    aviso = f"El archivo supera el límite de {limite // (1024 * 1024)} MB (PROFILE_DOC_MAX_MB)."
-    with archivos.recibir(origen, carpeta, limite, aviso) as r:
+        raise ArchivoInvalido(f"{donde} se aceptan solo PDF e imágenes PNG o JPG.")
+    destino_dir = base / carpeta
+    aviso = f"El archivo supera el límite de {limite // (1024 * 1024)} MB ({variable})."
+    with archivos.recibir(origen, destino_dir, limite, aviso) as r:
         if not archivos.primeros_bytes(r.temporal).startswith(FIRMAS[extension]):
             raise ArchivoInvalido(f"El contenido de «{nombre}» no es un {NOMBRES[extension]} de verdad: no coincide"
                                   " con su extensión.")
-        destino = carpeta / f"{r.sha256}{extension}"
+        destino = destino_dir / f"{r.sha256}{extension}"
         os.replace(r.temporal, destino)
     return {"archivo_nombre": nombre, "archivo_extension": extension, "archivo_tamano": r.tamano,
-            "archivo_sha256": r.sha256, "archivo_ruta": f"{item_id}/{destino.name}"}
+            "archivo_sha256": r.sha256, "archivo_ruta": f"{carpeta}/{destino.name}"}
 
 
 def _insertar_version(conn: sqlite3.Connection, item_id: int, campos: dict, quien: Quien, momento: str) -> int:
@@ -279,7 +281,7 @@ def nueva_version(conn: sqlite3.Connection, base: Path, item_id: int, datos: Dat
         raise PerfilInvalido("Ese elemento del perfil no existe.")
     campos = _limpiar(datos)
     if archivo is not None:
-        campos.update(_guardar_archivo(base, item_id, archivo[0], archivo[1], limite))
+        campos.update(guardar_documento(base, str(item_id), archivo[0], archivo[1], limite))
     if not (campos["valor"] or campos["numero"] or archivo is not None):
         raise PerfilInvalido("Escribe un valor, un número o sube un documento. Si todavía no lo tienes, márcalo"
                              " pendiente.")

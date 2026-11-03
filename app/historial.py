@@ -37,6 +37,12 @@ ACCIONES = {
     "corregir_item_verificacion": "Corrigió un requisito de la lista de verificación",
     "agregar_item_verificacion": "Agregó un requisito a la lista de verificación",
     "quitar_item_verificacion": "Quitó un requisito de la lista de verificación",
+    "empezar_asistente": "Empezó el asistente de elegibilidad de un cartel",
+    "redactar_preguntas_asistente": "Pidió a la IA las preguntas del asistente de un cartel",
+    "responder_asistente": "Respondió una pregunta del asistente",
+    "confirmar_perfil_asistente": "Confirmó un dato del perfil en el asistente",
+    "ver_documento_asistente": "Vio un documento de una respuesta del asistente",
+    "descargar_documento_asistente": "Descargó un documento de una respuesta del asistente",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
@@ -47,6 +53,8 @@ DE_PERFIL = ("crear_elemento_perfil", "nueva_version_perfil", "marcar_pendiente_
 ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil")
 DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "agregar_item_verificacion",
                    "quitar_item_verificacion")
+DE_ASISTENTE = ("empezar_asistente", "redactar_preguntas_asistente", "responder_asistente",
+                "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente")
 
 
 @dataclass(frozen=True)

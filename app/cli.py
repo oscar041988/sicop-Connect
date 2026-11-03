@@ -1186,7 +1186,7 @@ def ayuda_capturas_cmd(mision: str | None) -> int:
 def backup(settings: Settings, output: Path) -> int:
     try:
         r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir,
-                               settings.expedientes_dir, settings.profile_docs_dir)
+                               settings.expedientes_dir, settings.profile_docs_dir, settings.assistant_docs_dir)
     except respaldo.RespaldoError as exc:
         print(f"Error: {exc}. No se hizo el respaldo.", file=sys.stderr)
         return 1
@@ -1204,6 +1204,11 @@ def backup(settings: Settings, output: Path) -> int:
         exp = d["expedientes"]
         print(f"Expedientes: {output / exp['archivo']} · {exp['archivos']} archivos · {exp['bytes']} bytes"
               f" · SHA-256 {exp['sha256'][:16]}…")
+    for clave, titulo in (("perfil", "Perfil"), ("asistente", "Asistente")):
+        if clave in d:
+            x = d[clave]
+            print(f"{titulo}: {output / x['archivo']} · {x['archivos']} archivos · {x['bytes']} bytes"
+                  f" · SHA-256 {x['sha256'][:16]}…")
     return 0
 
 

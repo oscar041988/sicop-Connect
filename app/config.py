@@ -62,6 +62,9 @@ DEFAULTS: dict[str, str] = {
     "EXPEDIENTE_MAX_MB": "10",
     "PROFILE_DOCS_DIR": "data/perfil",
     "PROFILE_DOC_MAX_MB": "10",
+    "ASSISTANT_DOCS_DIR": "data/asistente",
+    "ASSISTANT_DOC_MAX_MB": "10",
+    "ASSISTANT_SEND_DOCUMENTS": "false",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
@@ -322,6 +325,24 @@ class Settings:
     def profile_doc_max_mb(self) -> int:
         """Tamaño máximo de UN documento del perfil (PROFILE_DOC_MAX_MB; 10)."""
         return self._entero("PROFILE_DOC_MAX_MB", 1, 500, "MB")
+
+    @property
+    def assistant_docs_dir(self) -> Path:
+        """Archivos que se suben al responder el asistente de elegibilidad (ASSISTANT_DOCS_DIR; data/asistente).
+        Confidenciales, como los del perfil: fuera de Git; entran en el respaldo."""
+        path = Path(self.get("ASSISTANT_DOCS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def assistant_doc_max_mb(self) -> int:
+        """Tamaño máximo de UN archivo del asistente (ASSISTANT_DOC_MAX_MB; 10)."""
+        return self._entero("ASSISTANT_DOC_MAX_MB", 1, 500, "MB")
+
+    @property
+    def assistant_send_documents(self) -> bool:
+        """ASSISTANT_SEND_DOCUMENTS (false): si el texto de los documentos de Hermatix va a OpenAI. Oscar no lo ha
+        decidido: con true la app no envía nada y avisa que ese camino todavía no está construido."""
+        return _as_bool(self.get("ASSISTANT_SEND_DOCUMENTS"))
 
     @property
     def documents_max_mb_per_tender(self) -> int:
