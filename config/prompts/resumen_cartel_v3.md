@@ -47,6 +47,12 @@ Reglas:
    o poco importante: no eliges cuáles se muestran; el encargado ve todos y
    decide. Si el pliego dice que una condición es de admisibilidad o que su
    incumplimiento excluye la oferta, márcala como excluyente.
+   El texto de cada «requisito» es COPIA LITERAL del pliego, entre comillas
+   «…»: la frase exacta, sin cambiar palabras ni resumirla con las tuyas. Solo
+   puedes cortar con «…» lo que no es parte del requisito (por ejemplo, la
+   cita de un artículo de ley); nunca un número, un plazo, un porcentaje ni
+   una condición. En las multas y condiciones, pon el encabezado fijo y
+   después la frase literal: Multa / cláusula penal: «…».
    En «kpi_pliego», extrae solo lo que diga el documento; no calcules montos
    ni fechas del cartel. Un dato que va en «kpi_pliego» (por ejemplo, la
    garantía de cumplimiento o el plazo de entrega) también va en

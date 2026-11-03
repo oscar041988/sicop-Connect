@@ -37,7 +37,7 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v1"
+VERSION = "v2"     # v2 (2026-11-03, Ivania): si el pliego pide presentar algo, la evidencia es «documento»
 NO_INDICADO = "no indicado"
 EVIDENCIAS = {"numero": "Número", "si_no": "Sí o no", "fecha": "Fecha", "documento": "Documento", "texto": "Texto"}
 TIPOS = {"tecnico": "Técnico", "legal": "Legal", "financiero": "Financiero", "experiencia": "Experiencia"}

@@ -67,6 +67,11 @@
       un requisito que faltaba en el GPS (datos del Registro de Proveedores). Listas: **50, 115 y 80**. La v3 los
       pide igual. **Para la lección 3:** el asistente no debe preguntar por «Multa…» ni «Condición de la
       institución…» como si fueran requisitos: se muestran como información.
+    - Revisión de Ivania del cartel de cámaras (2026-11-03): los requisitos están en el pliego y los excluyentes
+      están bien; el texto dice lo mismo con otras palabras y «Qué lo demuestra» a veces dice «Sí o no» cuando
+      el pliego pide presentar algo. Decisiones: **texto literal del pliego** (resumen v3, aún sin usar) y
+      **«Documento» si se presenta algo** (prompt de la lista v2). Los ~200 «Agregado» de Claude no se
+      reescriben hasta comparar con la v3; los que la v3 no encuentre se pasan a texto literal y a documento.
     - **Antes de probar la v3: subir `IA_MAX_OUTPUT_TOKENS`** (4000 por defecto; los resúmenes ya usan hasta 3900).
       Con cada especificación por separado, el resumen y la lista de un cartel como el GPS (más de 90 requisitos)
       no caben en 4000 y quedarían «fallido» (respuesta incompleta).

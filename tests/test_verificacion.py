@@ -136,6 +136,22 @@ def test_el_orden_sigue_al_expediente_documento_y_pagina(base):
     assert verificacion._lugar(dataclasses.replace(a_mano, requisito="Sin marca"))[:3] == (2, 0, 0)
 
 
+def test_el_prompt_v2_pide_documento_cuando_el_pliego_pide_presentar_algo(base):
+    # Revisión de Ivania (2026-11-03): «Sí o no» salía para cosas que el pliego pide presentar (CCSS en
+    # «documentos por aportar»). La v1 queda igual: ya se usó.
+    v1, v2 = ((verificacion.PROMPTS_DIR / f"lista_verificacion_{v}.md").read_text(encoding="utf-8") for v in ("v1", "v2"))
+    v1, v2 = " ".join(v1.split()), " ".join(v2.split())
+    assert "si_no: una afirmación (estar al día con la CCSS" in v1
+    assert "si_no: SOLO un compromiso que no se prueba con un papel" in v2 and "Si dudas entre documento" in v2
+    assert v2.index("documento: si el pliego dice que hay que presentar") < v2.index("si_no:")
+    assert "estar al día con la CCSS" in v2.split("documento:")[1].split("numero:")[0]   # la CCSS va en documento
+    db, _ = base
+    _, simulado = _generar(db)
+    assert "si_no: SOLO un compromiso" in " ".join(simulado.llamadas[0]["instructions"].split())
+    with closing(sqlite3.connect(db)) as conn:
+        assert conn.execute("SELECT prompt_version FROM eligibility_generations").fetchall() == [("v2",)]
+
+
 def test_lo_que_se_manda_a_la_ia_no_lleva_datos_del_perfil(base):
     db, _ = base
     _, simulado = _generar(db)

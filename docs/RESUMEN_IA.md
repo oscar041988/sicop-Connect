@@ -146,7 +146,13 @@ Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes r
   atención, vigencia de la oferta, muestras, subcontratación, declaraciones; especificaciones = un requerimiento
   por cada especificación, como el pliego las numera, y ninguno se omite por fácil u obvio: el encargado ve todos y
   decide (regla de Ivania, 2026-11-03; la v3 se ajustó antes de usarse). También las multas y cláusulas penales
-  («Multa / cláusula penal: …») y las condiciones de la institución («Condición de la institución: …»). Necesita subir `IA_MAX_OUTPUT_TOKENS`
+  («Multa / cláusula penal: …») y las condiciones de la institución («Condición de la institución: …»).
+  El texto de cada requisito es **copia literal del pliego** entre «…» (decisión de Ivania tras revisar el cartel
+  de cámaras: la IA lo decía igual pero con otras palabras); solo se corta con «…» lo que no es requisito.
+- **Lista de verificación `lista_verificacion_v2.md` (2026-11-03):** si el pliego pide presentar, aportar,
+  adjuntar, acreditar, certificar o declarar algo, la evidencia es «documento» (la v1 ponía de ejemplo de «sí o
+  no» estar al día con la CCSS, que el pliego pedía como documento). «Sí o no» queda solo para compromisos sin
+  papel. `VERSION = "v2"` en `app/ai/verificacion.py`; cada generación guarda la versión. Necesita subir `IA_MAX_OUTPUT_TOKENS`
   (4000 no alcanza para más de 90 requisitos). La regla 8 aclara que garantías y plazos
   van también en requerimientos, sin ser motivo para descartar. El criterio de Hermatix y el esquema no cambian.
   **Probar sin activarla:** `python -m app.cli ia resumir --nro N --prompt v3` usa la v3 solo para ese cartel (no
