@@ -185,6 +185,25 @@ def test_volver_a_generar_respeta_lo_que_hizo_una_persona(base):
             conn.execute("DELETE FROM eligibility_items")
 
 
+def test_la_marca_de_pagina_escrita_va_a_cita_y_no_al_titulo(base):
+    # Pedido de Ivania (2026-11-03): «1.5 Tamaño de 60 x 25 mm. [DOC 1 · pág. 1]» mostraba la marca en el título.
+    db, _ = base
+    items, _ = _generar(db)
+    r1 = _por_texto(items, "Acreditar")
+    with closing(connect(db)) as conn:
+        nuevo = verificacion.agregar(conn, NRO, verificacion.Cambios(
+            "1.5 Tamaño de 60 x 25 ± 10 mm. [DOC 1 · pág. 1]", "tecnico", "documento", "", "", "", "", False), ANA)
+        verificacion.corregir(conn, NRO, r1.id, verificacion.Cambios(
+            r1.requisito + " [DOC 1 · pág. 3] [SICOP]", "experiencia", "numero", "", "", "", "", True), ANA)
+        items = {i.id: i for i in verificacion.listar(conn, NRO)}
+        with pytest.raises(verificacion.VerificacionError, match="Escribe el requisito"):
+            verificacion.agregar(conn, NRO, verificacion.Cambios(
+                "[DOC 1 · pág. 2]", "tecnico", "documento", "", "", "", "", False), ANA)
+    assert (items[nuevo].requisito, items[nuevo].citas) == ("1.5 Tamaño de 60 x 25 ± 10 mm.", ["[DOC 1 · pág. 1]"])
+    assert items[r1.id].requisito == r1.requisito                                  # la corrección suma sus citas
+    assert items[r1.id].citas == ["[DOC 1 · pág. 2]", "[DOC 1 · pág. 3]", "SICOP"]
+
+
 @pytest.mark.parametrize("caso", ["sin_resumen", "ia_apagada", "sin_presupuesto"])
 def test_no_se_llama_a_openai_cuando_no_corresponde(base, caso):
     db, _ = base

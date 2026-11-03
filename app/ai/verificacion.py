@@ -137,7 +137,7 @@ _CITA_PAG = re.compile(r"pág\.\s*(\d+)")
 
 def _lugar(item: Item) -> tuple:
     """Dónde está en el expediente: su primera cita [DOC n · pág. p]; luego las de solo «SICOP»; al final sin cita.
-    Un requisito agregado a mano no tiene citas: vale la marca [DOC n · pág. p] que se haya escrito en su texto."""
+    Un requisito sin citas guardadas (anterior al 2026-11-03): vale la marca [DOC n · pág. p] escrita en su texto."""
     lugares = []
     for cita in item.citas or [item.requisito]:
         for m in _CITA_DOC.finditer(cita):
@@ -399,9 +399,24 @@ class Cambios:
     excluyente: bool
 
 
+_MARCA = re.compile(r"\s*\[(?:DOC \d+[^\]]*|SICOP)\]")
+
+
+def separar_citas(texto: str) -> tuple[str, list[str]]:
+    """Las marcas [DOC n · pág. p] o [SICOP] escritas en el texto van a «Cita», no al título (pedido de Ivania,
+    2026-11-03).  «Tamaño 60 x 25 mm. [DOC 1 · pág. 1]» → («Tamaño 60 x 25 mm.», ["[DOC 1 · pág. 1]"])."""
+    citas = []
+    for m in _MARCA.finditer(texto):
+        cita = m.group().strip()
+        cita = "SICOP" if cita == "[SICOP]" else cita
+        if cita not in citas:
+            citas.append(cita)
+    return " ".join(_MARCA.sub(" ", texto).split()), citas
+
+
 def _limpiar(c: Cambios) -> dict:
     requisito = " ".join(c.requisito.split())[:1000]
-    if not requisito:
+    if not separar_citas(requisito)[0]:
         raise VerificacionError("Escribe el requisito.")
     if c.tipo not in TIPOS:
         raise VerificacionError("Elige el tipo del requisito.")
@@ -436,25 +451,33 @@ def _del_cartel(conn: sqlite3.Connection, nro_sicop: str, item_id: int) -> tuple
 def corregir(conn: sqlite3.Connection, nro_sicop: str, item_id: int, cambios: Cambios, quien: Quien) -> None:
     _del_cartel(conn, nro_sicop, item_id)
     campos = _limpiar(cambios)
+    campos["requisito"], escritas = separar_citas(campos["requisito"])
+    previas = json.loads(conn.execute("SELECT citas FROM eligibility_items WHERE id = ?", (item_id,)).fetchone()[0]
+                         or "[]")
+    citas = previas + [c for c in escritas if c not in previas]
     with transaccion(conn):
         conn.execute(
             "UPDATE eligibility_items SET requisito = ?, tipo = ?, tipo_evidencia = ?, minimo = ?, minimo_numero = ?,"
-            " minimo_fecha = ?, unidad = ?, excluyente = ?, editado = 1, editado_por_nombre = ?, editado_en = ?"
-            " WHERE id = ?", (*campos.values(), quien.nombre, _ahora(), item_id))
+            " minimo_fecha = ?, unidad = ?, excluyente = ?, citas = ?, editado = 1, editado_por_nombre = ?,"
+            " editado_en = ? WHERE id = ?",
+            (*campos.values(), json.dumps(citas, ensure_ascii=False), quien.nombre, _ahora(), item_id))
         historial.registrar(conn, quien, "corregir_item_verificacion", f"{nro_sicop}: {campos['requisito'][:120]}")
 
 
 def agregar(conn: sqlite3.Connection, nro_sicop: str, cambios: Cambios, quien: Quien) -> int:
     campos = _limpiar(cambios)
+    campos["requisito"], citas = separar_citas(campos["requisito"])
     orden = (conn.execute("SELECT max(orden) FROM eligibility_items WHERE nro_sicop = ?", (nro_sicop,)).fetchone()[0]
              or 0) + 1
     with transaccion(conn):
         item_id = conn.execute(
             "INSERT INTO eligibility_items (nro_sicop, orden, clave, requisito, tipo, tipo_evidencia, minimo,"
-            " minimo_numero, minimo_fecha, unidad, excluyente, perfil_item_id, origen, editado, editado_por_nombre,"
-            " editado_en, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'usuario', 1, ?, ?, ?)",
+            " minimo_numero, minimo_fecha, unidad, excluyente, citas, perfil_item_id, origen, editado,"
+            " editado_por_nombre, editado_en, creado_en)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'usuario', 1, ?, ?, ?)",
             (nro_sicop, orden, f"usuario-{secrets.token_hex(6)}", *campos.values(),
-             proponer_perfil(conn, campos["requisito"]), quien.nombre, _ahora(), _ahora())).lastrowid
+             json.dumps(citas, ensure_ascii=False), proponer_perfil(conn, campos["requisito"]), quien.nombre,
+             _ahora(), _ahora())).lastrowid
         historial.registrar(conn, quien, "agregar_item_verificacion", f"{nro_sicop}: {campos['requisito'][:120]}")
     return item_id
 

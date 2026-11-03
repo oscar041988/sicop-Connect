@@ -48,7 +48,8 @@
   - Prueba con carteles reales (Ivania, 2026-11-03), 3 de 5:
     - 20261002408 (cámaras, liceo): 16 requisitos, todos en los documentos y correctos; nada sobra.
     - 20261003280 (GPS): 12 requisitos, todos en los documentos y correctos; nada sobra.
-    - 20261003242 (etiquetas RFID): 13 requisitos, 1 corregido (garantías de 12 y 24 meses de los anaqueles);
+    - 20261003242 (etiquetas RFID): 13 requisitos, 1 corregido (garantías de 12 y 24 meses de los anaqueles:
+      pág. 2, punto 1.7.17 → 12 meses; pág. 10, punto 9 → 24 meses; Ivania lo vio en el pliego y se mantiene);
       solo 1 excluyente (contraste con los otros dos).
     - Falta comprobar: si faltan requisitos (Ivania aún no conoce bien el proceso: buscar las secciones típicas
       del pliego y que Oscar revise uno); que la IA marca casi todo como excluyente en dos carteles (15 de 16,
@@ -72,6 +73,12 @@
       el pliego pide presentar algo. Decisiones: **texto literal del pliego** (resumen v3, aún sin usar) y
       **«Documento» si se presenta algo** (prompt de la lista v2). Los ~200 «Agregado» de Claude no se
       reescriben hasta comparar con la v3; los que la v3 no encuentre se pasan a texto literal y a documento.
+    - Revisión de Ivania del cartel GPS `20261003280` (2026-11-03): los requisitos están en el pliego, dicen lo
+      mismo con otras palabras (se arregla con la v3), los excluyentes y «Qué lo demuestra» están bien.
+      Falta: RFID `20261003242`.
+    - Pedido de Ivania (2026-11-03): la marca `[DOC n · pág. p]` va en «Cita», no en el título. `agregar` y
+      `corregir` la pasan solas (`verificacion.separar_citas`); los 207 «Agregado» ya guardados se movieron
+      (copia previa de la base en el scratchpad de la sesión).
     - **Antes de probar la v3: subir `IA_MAX_OUTPUT_TOKENS`** (4000 por defecto; los resúmenes ya usan hasta 3900).
       Con cada especificación por separado, el resumen y la lista de un cartel como el GPS (más de 90 requisitos)
       no caben en 4000 y quedarían «fallido» (respuesta incompleta).
