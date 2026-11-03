@@ -268,7 +268,8 @@ def test_el_prompt_v3_pide_garantias_plazos_y_especificaciones_como_requerimient
     # Revisión de 3 carteles reales (Ivania, 2026-11-03): faltaban la garantía de cumplimiento y las especificaciones.
     v2, v3 = (" ".join(resumen.cargar_prompt(v).split()) for v in ("v2", "v3"))
     for texto in ("garantías de participación y de cumplimiento", "vigencia mínima de la oferta",
-                  "UN requerimiento técnico por cada línea", "un requerimiento aparte por cada condición con un número",
+                  "UN requerimiento técnico por cada especificación", "No omitas ningún requisito",
+                  "el encargado ve todos y decide",
                   "también va en «requerimientos»", "en los indicadores y en «requerimientos» (regla 5b)"):
         assert texto in v3 and texto not in v2
     assert "no son riesgos ni motivo para descartar" in v3                               # el criterio sigue igual
@@ -287,7 +288,7 @@ def test_comando_resumir_con_otra_version_del_prompt_solo_para_ese_cartel(db, tm
 
     assert ia_resumir_cmd(settings, NRO, cliente=simulado, prompt="v3") == 0
     assert "prompt v3" in capsys.readouterr().out
-    assert "UN requerimiento técnico por cada línea" in " ".join(simulado.llamadas[0]["instructions"].split())
+    assert "UN requerimiento técnico por cada especificación" in " ".join(simulado.llamadas[0]["instructions"].split())
     assert settings.ia_prompt_version == "v2"                      # el .env no cambia
     assert _filas(db) == [("ok", None, 0, "v3")]
     assert main(["ia", "resumir", "--nro", NRO, "--prompt", "../otro"], settings) == 1

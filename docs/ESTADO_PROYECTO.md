@@ -58,6 +58,15 @@
       20261003280 y 5 en 20261003242. Patrón: en 2 de 3 faltaba la garantía de cumplimiento y en los 3 las
       especificaciones técnicas no salen como requisitos; viene del resumen con IA → revisar su prompt. Ivania debe
       comprobar cada uno en la página citada. 20261003242 está «Objetado» en SICOP.
+    - **Regla de Ivania (2026-11-03): todo requisito se presenta, por fácil u obvio que sea; nadie filtra, el
+      usuario decide.** Segunda revisión completa de los 3 pliegos: agregados 22 + 77 + 46 requisitos (cada
+      especificación por separado, como el pliego las numera) y quitados (sin borrar) los 3 de Claude que las
+      agrupaban. Listas: 40, 94 y 63 requisitos. No se agregaron multas, cláusulas penales ni obligaciones de la
+      institución (no son requisitos de la empresa): consultarlo con Ivania. Los agregados a mano se ordenan por la
+      marca [DOC n · pág. p] escrita en su texto.
+    - **Antes de probar la v3: subir `IA_MAX_OUTPUT_TOKENS`** (4000 por defecto; los resúmenes ya usan hasta 3900).
+      Con cada especificación por separado, el resumen y la lista de un cartel como el GPS (más de 90 requisitos)
+      no caben en 4000 y quedarían «fallido» (respuesta incompleta).
     - **Prompt del resumen v3 hecho (2026-11-03, solo local, sin activar):** `config/prompts/resumen_cartel_v3.md`
       (garantías, plazos, vigencia y especificaciones también como requerimientos; detalle en
       `docs/RESUMEN_IA.md`) y `ia resumir --nro N --prompt v3` para probarlo en un cartel sin tocar `.env`.

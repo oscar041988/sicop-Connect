@@ -32,12 +32,13 @@ Reglas:
    - la vigencia mínima de la oferta (tipo legal);
    - las muestras, la subcontratación (listado y porcentaje máximo), las
      declaraciones juradas, certificaciones y documentos que hay que aportar;
-   - las especificaciones técnicas: UN requerimiento técnico por cada línea
-     del cartel («Cumplir las especificaciones técnicas de la línea 1») que
-     nombre las especificaciones más exigentes, y además un requerimiento
-     aparte por cada condición con un número que haya que comprobar
-     (autonomía, disponibilidad, precisión, capacidad, porcentaje, plazo).
-   Si el pliego dice que una condición es de admisibilidad o que su
+   - las especificaciones técnicas: UN requerimiento técnico por cada
+     especificación, tal como el pliego las numera o separa (cada punto,
+     inciso o componente con sus características), con su número o mínimo si
+     lo tiene (autonomía, disponibilidad, precisión, capacidad, porcentaje).
+   No omitas ningún requisito porque parezca fácil, obvio, repetido de la ley
+   o poco importante: no eliges cuáles se muestran; el encargado ve todos y
+   decide. Si el pliego dice que una condición es de admisibilidad o que su
    incumplimiento excluye la oferta, márcala como excluyente.
    En «kpi_pliego», extrae solo lo que diga el documento; no calcules montos
    ni fechas del cartel. Un dato que va en «kpi_pliego» (por ejemplo, la

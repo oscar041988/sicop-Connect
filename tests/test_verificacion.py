@@ -130,6 +130,10 @@ def test_el_orden_sigue_al_expediente_documento_y_pagina(base):
              "doc10": ["[DOC 10 · pág. 1]"]}
     orden = sorted(casos, key=lambda k: verificacion._lugar(dataclasses.replace(i, citas=casos[k])))
     assert orden == ["doc1_p3", "doc1_p12", "zip", "doc10", "sicop", "sin_cita"]   # DOC 10 va después de DOC 2
+    # Agregado a mano, sin citas: vale la marca escrita en el texto (si no tiene, va al final).
+    a_mano = dataclasses.replace(i, citas=[], requisito="Garantía de cumplimiento del 5 % [DOC 1 · pág. 5-6]")
+    assert verificacion._lugar(a_mano)[:3] == (0, 1, 5)
+    assert verificacion._lugar(dataclasses.replace(a_mano, requisito="Sin marca"))[:3] == (2, 0, 0)
 
 
 def test_lo_que_se_manda_a_la_ia_no_lleva_datos_del_perfil(base):

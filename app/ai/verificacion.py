@@ -136,9 +136,10 @@ _CITA_PAG = re.compile(r"pág\.\s*(\d+)")
 
 
 def _lugar(item: Item) -> tuple:
-    """Dónde está en el expediente: su primera cita [DOC n · pág. p]; luego las de solo «SICOP»; al final sin cita."""
+    """Dónde está en el expediente: su primera cita [DOC n · pág. p]; luego las de solo «SICOP»; al final sin cita.
+    Un requisito agregado a mano no tiene citas: vale la marca [DOC n · pág. p] que se haya escrito en su texto."""
     lugares = []
-    for cita in item.citas:
+    for cita in item.citas or [item.requisito]:
         for m in _CITA_DOC.finditer(cita):
             pagina = _CITA_PAG.search(m.group(2))
             lugares.append((0, int(m.group(1)), int(pagina.group(1)) if pagina else 0))
