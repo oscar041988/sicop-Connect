@@ -27,6 +27,11 @@
     elementos, 4 versiones y 4 requisitos con elemento del perfil antes y después; `foreign_key_check` vacío.
     **Pendiente · encargados y administradores:** cargar los datos en `/perfil`. **Pendiente · Ivania:** el
     elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo (no se borra).
+  - **Respaldo al Drive (2026-11-04):** Ivania instaló Google Drive para escritorio (`G:\`). Claude creó
+    `G:\Mi unidad\sicop-respaldos` y copió el último respaldo del día, `sicop_20261104-133112` (6 archivos, ≈475
+    MB; contiene todo lo de los tres anteriores), en su subcarpeta: tamaños iguales y huella del `.db` igual al
+    manifiesto. **Pendiente · Ivania:** compartir la carpeta solo con Oscar (sin enlace público). La copia vieja del
+    proyecto en «Mi unidad\sicop-connect» (del 14/10, con `.env` y `data/`) ya no está.
   - **Prueba del resumen v3 en 3 carteles (Claude, 2026-11-04):** `docs/comparacion_resumen_v3_20261104.md`. El v3
     y un v4 más corto fallaron (respuesta incompleta con 8000 tokens; con 16000, la IA tardó más de 120 s). Un **v5**
     (el v2 + garantías, plazos y vigencia de la oferta) funcionó en los 3: 19/29/23 requerimientos contra 16/12/13
