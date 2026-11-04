@@ -13,7 +13,8 @@
   capturas). Detalle: `docs/RESUMEN_IA.md` §9. Pruebas: `tests/test_reporte.py`.
   918 pruebas (las 2 que fallaron en la primera corrida se arreglaron: `REPORTS_DIR` faltaba en la base de
   ejemplo de la ayuda, y una prueba buscaba el formato viejo). Respaldo `sicop_20261104-150812` y `migrate` (0036)
-  hechos (panel cerrado): 37 resúmenes y 66 respuestas antes y después. **Pendiente · Ivania:** generar 3
+  hechos (panel cerrado): 37 resúmenes y 66 respuestas antes y después. Ese respaldo también está en
+  `G:\Mi unidad\sicop-respaldos\sicop_20261104-150812` (tamaños y huella del `.db` comprobados). **Pendiente · Ivania:** generar 3
   reportes («Reporte PDF»), abrirlos e imprimir uno.
   **Pendiente · Oscar:** aprobar el diseño y el logo (hoy el de `app/web/static/logo-hermatix.png`) y leer 3
   reportes cronometrando (¿se entiende en 2 minutos?).
