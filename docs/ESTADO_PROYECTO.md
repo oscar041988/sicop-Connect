@@ -4,6 +4,15 @@
 
 ## Último resultado
 
+- **Página de ayuda · lección 4, ayuda viva, hecha (2026-11-04, plan aprobado por Ivania).** (1) Al final de cada
+  misión, «¿Te sirvió esta ayuda?» (Sí / No y un comentario opcional de hasta 500 caracteres). Ruta
+  `POST /ayuda/{nombre}/voto`, `app/ayuda/votos.py` y migración **0037** (`ayuda_votos`, no se borra ni se
+  modifica). En `/ayuda`, solo los administradores ven «Cómo les fue con la ayuda», con las misiones de más «no»
+  primero. (2) `tests/test_ayuda_viva.py` falla si una misión dice «clic en «X»» o «pulsa «X»» y X ya no está en la
+  app. Hoy pasan todas. (3) `docs/OPERACION.md` §8 «Mantener la ayuda al día», con la pregunta «¿Este cambio afecta
+  alguna misión de la ayuda?», más una nota en `docs/ayuda/ESTILO.md`. **Pendiente · Ivania:** respaldo y `migrate`
+  (0037), votar una misión y ver la tabla en `/ayuda`. **En el servidor**, con el PR: `migrate` hasta 0037.
+
 - **Reporte con IA · lección 4, Encargo 4 hecho (2026-11-04, plan aprobado por Ivania): Reporte de cartel
   Hermatix en PDF, máximo 2 páginas.** `app/ai/reporte.py` + `templates/reporte_cartel.html`; PDF con el Chromium
   de Playwright (sin librerías nuevas); KPI de SICOP calculados por la app (el monto del modelo no se usa); límites

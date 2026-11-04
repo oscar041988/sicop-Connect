@@ -303,7 +303,7 @@ def test_0030_conserva_ia_usage_y_las_referencias_de_los_resumenes(tmp_path):
         conn.execute("INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, estado, motivo, ia_usage_id,"
                      " creado_en) VALUES (?, 'v1', 'm', ?, 'fallido', 'prueba', 1, 't')", (NRO, "a" * 64))
         conn.commit()
-    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql"]
+    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, proposito FROM ia_usage").fetchall() == [(1, "resumen")]
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []

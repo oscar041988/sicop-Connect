@@ -30,6 +30,7 @@ from app.ai import reporte as ia_reporte
 from app.ai import resumen as ia_resumen
 from app.ai import verificacion
 from app.ayuda import pagina as ayuda
+from app.ayuda import votos as ayuda_votos
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
 from app.database import check_database, connect
@@ -1393,9 +1394,14 @@ def marcar_grabacion_revisada(request: Request, consulta_id: int) -> Response:
 def pagina_ayuda(request: Request, q: str = "") -> Response:
     es_admin = seguridad.es_admin(request)
     consulta = q.strip()[:100]
+    votos = None
+    if es_admin and _base_no_lista(request) is None:   # «Cómo les fue con la ayuda»: solo administradores
+        with closing(connect(load_settings().database_path)) as conn:
+            votos = ayuda_votos.resumen(conn)
     return PLANTILLAS.TemplateResponse(request, "ayuda.html", {
         "seccion": "ayuda", "bloques": ayuda.indice(es_admin), "q": consulta,
         "resultados": ayuda.buscar(consulta, es_admin) if consulta else None, "glosario": ayuda.glosario(),
+        "votos": votos, "titulos": {m.nombre: m.titulo for m in ayuda.todas()},
     })
 
 
@@ -1408,7 +1414,27 @@ def pagina_mision(request: Request, nombre: str) -> Response:
     if mision.solo_admin and not seguridad.es_admin(request):
         raise seguridad.SinPermiso()
     return PLANTILLAS.TemplateResponse(request, "ayuda_mision.html", {
-        "seccion": "ayuda", "mision": mision, "cuerpo": ayuda.pagina(mision)})
+        "seccion": "ayuda", "mision": mision, "cuerpo": ayuda.pagina(mision),
+        "hecho": request.session.pop("hecho_voto", None), "error": request.session.pop("error_voto", None)})
+
+
+@router.post("/ayuda/{nombre}/voto", dependencies=[Depends(verificar_csrf)])
+def votar_mision(request: Request, nombre: str, util: str = Form(""), comentario: str = Form("")) -> Response:
+    mision = ayuda.buscar_mision(nombre)
+    if mision is None:
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": "No hay una misión con ese nombre.", "seccion": "ayuda"}, status_code=404)
+    if mision.solo_admin and not seguridad.es_admin(request):
+        raise seguridad.SinPermiso()
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        try:
+            ayuda_votos.votar(conn, mision.nombre, util, comentario, _quien(request), _ahora())
+            request.session["hecho_voto"] = "Gracias: tu respuesta ayuda a mejorar la ayuda."
+        except ayuda_votos.VotoInvalido as exc:
+            request.session["error_voto"] = str(exc)
+    return RedirectResponse(f"/ayuda/{mision.nombre}#te-sirvio", status_code=303)
 
 
 # --- Perfil de Hermatix (asistente de elegibilidad, lección 1): lo ven los dos niveles; cargan los administradores --

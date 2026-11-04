@@ -33,3 +33,9 @@ niño de 10 años. La instalación, el servidor y las claves están en `docs/OPE
 - Abre la app y sigue los pasos tal como están escritos, sin saltarte nada.
 - Comprueba que cada botón entre comillas existe con ese nombre exacto.
 - Las capturas usan solo datos de **ejemplo**: nunca carteles, decisiones, notas, documentos ni usuarios reales.
+
+## Cuando la app cambia
+
+- Pregunta en cada cambio: **«¿Este cambio afecta alguna misión de la ayuda?»** Si sí, sigue `docs/OPERACION.md`,
+  sección 8 (corregir la misión, rehacer las capturas, correr las pruebas de la ayuda).
+- La prueba `tests/test_ayuda_viva.py` avisa si una misión nombra un botón que ya no existe.

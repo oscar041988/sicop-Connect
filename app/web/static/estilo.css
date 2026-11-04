@@ -385,6 +385,12 @@ table.lista.auto .btn { white-space: nowrap; }
 .mision-ayuda li { margin: 10px 0; }
 .mision-ayuda li p { margin: 4px 0; }
 .mision-ayuda h3 { margin-top: 28px; color: var(--g9); }
+.te-sirvio { max-width: 860px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--g1); }
+.te-sirvio form { display: grid; gap: 8px; }
+.te-sirvio h2 { margin: 0; font-size: 1.25rem; }
+.te-sirvio textarea { width: 100%; }
+.botones-voto { display: flex; gap: 10px; }
+.votos-ayuda td:nth-child(2), .votos-ayuda td:nth-child(3) { text-align: center; }
 .captura-ayuda { margin: 10px 0 14px; }
 .captura-ayuda img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px;
   box-shadow: 0 2px 8px rgba(16, 48, 80, .08); }
