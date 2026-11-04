@@ -1,8 +1,12 @@
 """Resultado de elegibilidad (asistente, lección 4): la app compara cada respuesta con su mínimo.
 
-Requisitos y respuestas INVENTADOS, armados en memoria (sin base ni IA).
+Requisitos y respuestas INVENTADOS: primero en memoria (sin base ni IA), después con la base SINTÉTICA de
+tests/test_asistente.py. Nunca se llama a OpenAI.
 """
 
+import shutil
+import sqlite3
+from contextlib import closing
 from datetime import date
 from itertools import count
 
@@ -10,6 +14,9 @@ import pytest
 
 from app import asistente, elegibilidad
 from app.ai import verificacion
+from app.database import MIGRATIONS_DIR, apply_migrations, connect
+from tests.test_asistente import AHORA, ANA, LUIS, NRO, PDF, _empezar, _responder, lista  # noqa: F401 (fixture)
+from tests.test_panel import db  # noqa: F401 (fixture)
 
 CIERRE = date(2026, 11, 20)
 _ids = count(1)
@@ -107,3 +114,98 @@ def test_los_cuatro_resultados():
     exc_texto = _item("texto", excluyente=True)
     assert _global((exc_texto, _resp(exc_texto, valor_texto="x"))) == "falta_informacion"
     assert elegibilidad.resultado_global([]) == "falta_informacion"
+
+
+# --- Con base SINTÉTICA (la de tests/test_asistente.py): revisiones y constancias -----------------------------
+
+def _calcular(db_path, quien=ANA):
+    with closing(connect(db_path)) as conn:
+        cid = elegibilidad.calcular(conn, NRO, quien, AHORA)
+        return elegibilidad.constancia(conn, NRO, cid)
+
+
+def test_la_constancia_guarda_todas_las_respuestas_y_la_version_de_la_lista(lista):
+    db_path, ids, settings = lista
+    _empezar(db_path)
+    _responder(db_path, settings, ids["sicop"], valor_si_no="1")
+    _responder(db_path, settings, ids["anos"], valor_numero="8")
+    _responder(db_path, settings, ids["patente"], archivo=PDF, vence_el="2099-01-15")
+    _responder(db_path, settings, ids["cierre"], estado="no_se")
+    c = _calcular(db_path)
+    assert c.resultado == "falta_informacion" and c.calculado_por == ANA.nombre and len(c.lista_huella) == 64
+    por_item = {d["item_id"]: d for d in c.detalle}
+    assert set(por_item) == {ids["sicop"], ids["anos"], ids["patente"], ids["cierre"], ids["soporte"]}   # sin multas
+    assert por_item[ids["anos"]]["respuesta"] == "8 años" and por_item[ids["anos"]]["estado"] == "cumple"
+    assert por_item[ids["patente"]]["respuesta"] == "permiso.pdf · vence 15/01/2099"
+    assert por_item[ids["cierre"]]["estado"] == "falta" and por_item[ids["soporte"]]["respuesta"] is None
+    assert "Esto es lo que falta" in c.explicacion and c.explicacion_origen == "app"
+    with closing(connect(db_path)) as conn:
+        with pytest.raises(sqlite3.IntegrityError, match="no se modifican"):
+            conn.execute("UPDATE eligibility_results SET resultado = 'puede_participar'")
+        with pytest.raises(sqlite3.IntegrityError, match="no se borran"):
+            conn.execute("DELETE FROM eligibility_results")
+        assert "calcular_resultado" in [a for (a,) in conn.execute("SELECT accion FROM audit_log")]
+
+
+def test_revisar_cambia_el_resultado_y_deja_de_valer_si_cambia_la_respuesta(lista):
+    db_path, ids, settings = lista
+    _empezar(db_path)
+    _responder(db_path, settings, ids["sicop"], valor_si_no="1")
+    _responder(db_path, settings, ids["anos"], valor_numero="8")
+    _responder(db_path, settings, ids["patente"], archivo=PDF)
+    _responder(db_path, settings, ids["cierre"], valor_fecha="2026-12-01")
+    _responder(db_path, settings, ids["soporte"], valor_texto="24/7")
+    assert _calcular(db_path).resultado == "puede_si_completa"           # fecha y texto en «revisar»
+    with closing(connect(db_path)) as conn:
+        with pytest.raises(elegibilidad.ResultadoInvalido, match="lo compara la app"):
+            elegibilidad.revisar(conn, NRO, ids["anos"], True, "", ANA, AHORA)
+        elegibilidad.revisar(conn, NRO, ids["cierre"], True, "inicia a tiempo", LUIS, AHORA)
+        elegibilidad.revisar(conn, NRO, ids["soporte"], True, "", LUIS, AHORA)
+        with pytest.raises(sqlite3.IntegrityError, match="no se borran"):
+            conn.execute("DELETE FROM eligibility_item_reviews")
+    c = _calcular(db_path)
+    assert c.resultado == "puede_participar"
+    assert {d["item_id"]: d for d in c.detalle}[ids["cierre"]]["revision"]["por"] == LUIS.nombre
+    _responder(db_path, settings, ids["soporte"], valor_texto="lunes a viernes")   # cambió: vuelve a «revisar»
+    assert _calcular(db_path).resultado == "puede_si_completa"
+    with closing(connect(db_path)) as conn:
+        assert len(elegibilidad.constancias(conn, NRO)) == 3                       # recalcular agrega otra
+
+
+def test_documento_vencido_al_cierre_del_cartel(lista):
+    db_path, ids, settings = lista
+    with closing(connect(db_path)) as conn:
+        conn.execute("UPDATE tenders SET fecha_cierre_recepcion = '2026-11-20T09:00:00-06:00' WHERE nro_sicop = ?",
+                     (NRO,))
+        conn.commit()
+        assert elegibilidad.cierre_de(conn, NRO) == date(2026, 11, 20)
+    _empezar(db_path)
+    _responder(db_path, settings, ids["patente"], archivo=PDF, vence_el="2026-11-19")
+    e = next(d for d in _calcular(db_path).detalle if d["item_id"] == ids["patente"])
+    assert e["estado"] == "no_cumple" and "antes del cierre (20/11/2026)" in e["motivo"]
+
+
+def test_0033_se_aplica_sobre_una_base_con_respuestas(tmp_path):
+    hasta_0032 = tmp_path / "hasta_0032"
+    hasta_0032.mkdir()
+    for archivo in MIGRATIONS_DIR.glob("*.sql"):
+        if archivo.name < "0033":
+            shutil.copy(archivo, hasta_0032)
+    base = tmp_path / "sicop.db"
+    apply_migrations(base, hasta_0032)
+    with closing(connect(base)) as conn:
+        conn.execute("INSERT INTO tenders (nro_sicop, descripcion, content_hash, first_seen, last_seen)"
+                     " VALUES (?, 'x', 'h', 't', 't')", (NRO,))
+        conn.commit()
+        item = verificacion.agregar(conn, NRO, verificacion.Cambios("Ofertar por SICOP.", "legal", "si_no", "", "",
+                                                                    "", "", True), ANA)
+        asistente.empezar(conn, NRO, ANA, AHORA)
+        conn.execute("INSERT INTO eligibility_answers (session_id, item_id, requisito, pregunta, tipo_evidencia,"
+                     " estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES (1, ?, 'r', 'p',"
+                     " 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,))
+        conn.commit()
+    assert apply_migrations(base) == ["0033_resultado_elegibilidad.sql"]
+    with closing(connect(base)) as conn:
+        assert conn.execute("SELECT count(*) FROM eligibility_answers").fetchone() == (1,)
+        assert elegibilidad.calcular(conn, NRO, ANA, AHORA) == 1
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []

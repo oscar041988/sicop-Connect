@@ -481,7 +481,7 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
         item = verificacion.agregar(conn, NRO, _req("Ofertar por SICOP. [DOC 1 · pág. 1]"), ANA)
         asistente.empezar(conn, NRO, ANA, AHORA)
         antes = asistente.responder(conn, settings, NRO, item, asistente.Entrada(valor_si_no="1"), None, ANA, AHORA)
-    assert apply_migrations(base) == ["0032_archivo_pendiente.sql"]
+    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, estado, valor_si_no FROM eligibility_answers").fetchall() == [
             (antes, "respondido", 1)]

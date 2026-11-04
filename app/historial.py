@@ -43,6 +43,8 @@ ACCIONES = {
     "confirmar_perfil_asistente": "Confirmó un dato del perfil en el asistente",
     "ver_documento_asistente": "Vio un documento de una respuesta del asistente",
     "descargar_documento_asistente": "Descargó un documento de una respuesta del asistente",
+    "revisar_resultado": "Decidió si un requisito cumple en el resultado de elegibilidad",
+    "calcular_resultado": "Calculó el resultado de elegibilidad de un cartel",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
@@ -54,7 +56,8 @@ ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil")
 DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "agregar_item_verificacion",
                    "quitar_item_verificacion")
 DE_ASISTENTE = ("empezar_asistente", "redactar_preguntas_asistente", "responder_asistente",
-                "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente")
+                "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente",
+                "revisar_resultado", "calcular_resultado")
 
 
 @dataclass(frozen=True)
