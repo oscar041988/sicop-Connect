@@ -85,8 +85,8 @@ La lista está en dos partes:
 1. ¿Qué filas entran al perfil? (columna «¿Va?»)
 2. ¿Quién da cada dato o documento? (columna «¿Quién lo da?»)
 3. ¿Se cargan ya los datos de la **Parte A**, aunque los documentos esperen?
-4. ¿Las filas de **Capacidad** y **Evaluación** van como tipos nuevos del perfil? (hoy los tipos son experiencia,
-   certificación, permiso, personal, póliza, legal y financiero)
+4. ~~¿Las filas de **Capacidad** y **Evaluación** van como tipos nuevos del perfil?~~ **Sí** (Ivania, 2026-11-04):
+   migración 0035; `config/perfil.yaml` ya trae la parte A como sugerencias.
 5. ¿Con cuánta anticipación avisa la app que algo vence? La guía dice 30 días.
 6. **Para que el asistente no retrase** (comentario de Ivania, 2026-11-04): ¿pregunta primero solo los
    excluyentes y deja el resto para cuando el cartel interese de verdad?

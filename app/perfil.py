@@ -28,7 +28,9 @@ from app.historial import Evento, Quien
 from app.importers.comun import HORA_CR
 
 TIPOS = {"experiencia": "Experiencia", "personal": "Personal", "certificacion": "Certificación", "permiso": "Permiso",
-         "poliza": "Póliza", "legal": "Legal", "financiero": "Financiero"}
+         "poliza": "Póliza", "legal": "Legal", "financiero": "Financiero",
+         # Migración 0035 (2026-11-04): soporte, taller, garantía y marcas; lo que da puntos en la evaluación.
+         "capacidad": "Capacidad", "evaluacion": "Evaluación"}
 ESTADOS = {"vigente": "Vigente", "por_vencer": "Por vencer", "vencido": "Vencido", "pendiente": "Pendiente"}
 AVISO_DIAS = 30   # aviso de vencimiento (la guía dice 30 días; falta que Oscar lo confirme)
 EXTENSIONES = {".pdf": ".pdf", ".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg"}

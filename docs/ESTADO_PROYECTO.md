@@ -17,7 +17,16 @@
     muestra el resultado rápido; «Seguir con los demás requisitos» abre el resto (una vez, queda en el historial).
     Sin excluyentes, empieza con todo. La sección «Resultado» aparece al ampliar, o antes si un excluyente no
     cumple. Misiones 23 (7 capturas) y 24 (8) actualizadas. Pruebas nuevas en `tests/test_asistente.py` y
-    `tests/test_elegibilidad.py`. **Pendiente · Ivania:** respaldo y `migrate` (0034) en la base real.
+    `tests/test_elegibilidad.py`. 910 passed. ~~Respaldo y `migrate` (0034)~~ **hecho (2026-11-04, panel
+    cerrado):** respaldo `sicop_20261104-131541`; `doctor`: 0034; 3 sesiones, 66 respuestas y 3 constancias antes y
+    después.
+  - **Perfil: tipos nuevos «Capacidad» y «Evaluación»** (decisión de Ivania, 2026-11-04). Migración **0035**
+    (`company_profile_items` reconstruida con sus ids, llaves foráneas revisadas). `config/perfil.yaml` trae la
+    **parte A** como sugerencias (17 datos, con frases que proponen cada elemento en la lista de verificación).
+    912 passed. Respaldo `sicop_20261104-133112` y `migrate` (0035) hechos (2026-11-04, panel cerrado): 3
+    elementos, 4 versiones y 4 requisitos con elemento del perfil antes y después; `foreign_key_check` vacío.
+    **Pendiente · encargados y administradores:** cargar los datos en `/perfil`. **Pendiente · Ivania:** el
+    elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo (no se borra).
   - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
     de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
 

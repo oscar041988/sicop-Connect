@@ -104,6 +104,48 @@ def test_las_sugerencias_que_ya_existen_no_se_repiten(entorno):
         assert "Póliza de riesgos del trabajo (INS)" not in perfil.sugerencias(conn).get("poliza", [])
 
 
+def test_tipos_nuevos_capacidad_y_evaluacion_con_la_parte_a(entorno):
+    """Migración 0035 (2026-11-04): la parte A del perfil trae soporte, taller, PYME, ISO 14001…"""
+    db, _ = entorno
+    with closing(connect(db)) as conn:
+        sugeridas = perfil.sugerencias(conn)
+        assert "Soporte técnico (horario y tiempo de atención)" in sugeridas["capacidad"]
+        assert "Condición PYME (certificación del MEIC)" in sugeridas["evaluacion"]
+        soporte = perfil.crear(conn, "capacidad", "Soporte técnico (horario y tiempo de atención)", ANA, AHORA)
+        pyme = perfil.crear(conn, "evaluacion", "Condición PYME (certificación del MEIC)", ANA, AHORA)
+        assert (perfil.obtener(conn, soporte, HOY).tipo_texto, perfil.obtener(conn, pyme, HOY).tipo_texto) == (
+            "Capacidad", "Evaluación")
+        with pytest.raises(sqlite3.IntegrityError, match="CHECK"):
+            conn.execute("INSERT INTO company_profile_items (tipo, titulo, creado_por_nombre, created_at)"
+                         " VALUES ('inventado', 'x', 'Ana', 't')")
+
+
+def test_0035_conserva_los_elementos_sus_versiones_y_las_referencias(tmp_path):
+    from app.database import MIGRATIONS_DIR
+    import shutil
+    hasta_0034 = tmp_path / "hasta_0034"
+    hasta_0034.mkdir()
+    for archivo in MIGRATIONS_DIR.glob("*.sql"):
+        if archivo.name < "0035":
+            shutil.copy(archivo, hasta_0034)
+    base = tmp_path / "sicop.db"
+    apply_migrations(base, hasta_0034)
+    with closing(sqlite3.connect(base)) as conn:
+        conn.execute("INSERT INTO company_profile_items (tipo, titulo, creado_por_nombre, created_at)"
+                     " VALUES ('experiencia', 'Años de experiencia', 'Ana', 't')")
+        conn.execute("INSERT INTO company_profile_versions (item_id, numero, cargado_por_nombre, created_at)"
+                     " VALUES (1, '8', 'Ana', 't')")
+        conn.commit()
+    assert apply_migrations(base) == ["0035_perfil_tipos_nuevos.sql"]
+    with closing(connect(base)) as conn:
+        assert conn.execute("SELECT id, tipo, titulo FROM company_profile_items").fetchall() == [
+            (1, "experiencia", "Años de experiencia")]
+        assert conn.execute("SELECT item_id, numero FROM company_profile_versions").fetchall() == [(1, "8")]
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+        with pytest.raises(sqlite3.IntegrityError, match="no se borran"):
+            conn.execute("DELETE FROM company_profile_items")
+
+
 # --- Documentos: solo PDF e imágenes de verdad ----------------------------------------------------------------------
 
 @pytest.mark.parametrize("contenido, nombre, mensaje", [
