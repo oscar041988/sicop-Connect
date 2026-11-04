@@ -473,5 +473,9 @@ form.en-linea { display: inline; margin-left: 8px; }
 /* La columna «Estado» toma lo que mide su etiqueta: «No cumple» nunca se parte en pedazos (Ivania, 2026-11-04) */
 .tabla-resultado th:nth-child(2), .tabla-resultado td:nth-child(2) { width: 1%; white-space: nowrap; overflow-wrap: normal; }
 .tabla-resultado .tag { white-space: nowrap; overflow-wrap: normal; display: inline-block; }
+.revision-rapida { margin-top: 16px; display: grid; gap: 8px; }
+.revision-rapida ul { margin: 0; padding-left: 20px; }
+.resultado-titular.rapido-fuera { background: var(--no-bg); color: var(--no); }
+.resultado-titular.rapido-faltan { background: var(--warn-bg); color: var(--warn); }
 .revisar-requisito { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .revisar-requisito input[type="text"] { flex: 1 1 160px; }

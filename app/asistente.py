@@ -9,6 +9,8 @@
   (confirmar_perfil); si venció, está pendiente o no existe, se pregunta.
 * Las respuestas no se borran ni se modifican (triggers): cambiar una agrega otra y vale la última. La conversación
   se pausa sola y otra persona autorizada la retoma (quién puede entrar lo revisa la ruta: seguimiento.puede_entrar).
+* Revisión rápida (migración 0034, decisión de Oscar del 2026-11-04): primero solo los excluyentes; el resto se abre
+  con «Seguir con los demás requisitos» (ampliar). recorrido trae siempre todos; visibles dice qué se pregunta ahora.
 * «Lo tiene · archivo pendiente» (migración 0032, solo documentos): Hermatix tiene el documento pero todavía no se
   sube (son delicados); se completa después con «Cambiar». El avance lo cuenta aparte.
 * Archivos: PDF/PNG/JPG validados igual que en el perfil, en ASSISTANT_DOCS_DIR/<nro_sicop>/, fuera de Git; cada
@@ -51,6 +53,8 @@ class Sesion:
     nro_sicop: str
     iniciada_por: str
     creado_en: str
+    ampliada_en: str | None = None          # «Seguir con los demás requisitos» (migración 0034)
+    ampliada_por: str | None = None
 
 
 @dataclass(frozen=True)
@@ -143,8 +147,8 @@ def informativos(conn: sqlite3.Connection, nro_sicop: str) -> list[verificacion.
 
 
 def sesion(conn: sqlite3.Connection, nro_sicop: str) -> Sesion | None:
-    f = conn.execute("SELECT id, nro_sicop, iniciada_por_nombre, creado_en FROM eligibility_sessions"
-                     " WHERE nro_sicop = ?", (nro_sicop,)).fetchone()
+    f = conn.execute("SELECT id, nro_sicop, iniciada_por_nombre, creado_en, ampliada_en, ampliada_por_nombre"
+                     " FROM eligibility_sessions WHERE nro_sicop = ?", (nro_sicop,)).fetchone()
     return Sesion(*f) if f else None
 
 
@@ -217,6 +221,16 @@ def recorrido(conn: sqlite3.Connection, nro_sicop: str, dia: date | None = None)
     return pasos
 
 
+def ampliada(pasos: list[Paso], actual: Sesion | None) -> bool:
+    """True si se pregunta todo: alguien pulsó «Seguir con los demás requisitos» o el cartel no tiene excluyentes."""
+    return bool(actual and actual.ampliada_en) or not any(p.item.excluyente for p in pasos)
+
+
+def visibles(pasos: list[Paso], actual: Sesion | None) -> list[Paso]:
+    """Lo que se pregunta ahora: en la revisión rápida, solo los excluyentes (decisión de Oscar, 2026-11-04)."""
+    return pasos if ampliada(pasos, actual) else [p for p in pasos if p.item.excluyente]
+
+
 def siguiente(pasos: list[Paso]) -> Paso | None:
     """La próxima pregunta: el primer requisito sin ninguna respuesta («Todavía no lo sé» también avanza)."""
     return next((p for p in pasos if p.respuesta is None), None)
@@ -253,6 +267,19 @@ def empezar(conn: sqlite3.Connection, nro_sicop: str, quien: Quien, ahora: datet
                               " creado_en) VALUES (?, ?, ?, ?)", (nro_sicop, quien.user_id, quien.nombre, _momento(ahora)))
         if cursor.rowcount:
             historial.registrar(conn, quien, "empezar_asistente", nro_sicop)
+    return sesion(conn, nro_sicop)
+
+
+def ampliar(conn: sqlite3.Connection, nro_sicop: str, quien: Quien, ahora: datetime) -> Sesion:
+    """«Seguir con los demás requisitos»: abre el resto del cuestionario. Una sola vez; lo respondido se conserva."""
+    actual = sesion(conn, nro_sicop)
+    if actual is None:
+        raise AsistenteInvalido("El asistente de este cartel no se ha empezado.")
+    if actual.ampliada_en is None:
+        with transaccion(conn):
+            conn.execute("UPDATE eligibility_sessions SET ampliada_en = ?, ampliada_por_nombre = ? WHERE id = ?"
+                         " AND ampliada_en IS NULL", (_momento(ahora), quien.nombre, actual.id))
+            historial.registrar(conn, quien, "ampliar_asistente", nro_sicop)
     return sesion(conn, nro_sicop)
 
 

@@ -4,7 +4,8 @@
 falta. La app compara cada respuesta con lo que pide el pliego. La IA solo lo explica.
 
 **Antes de empezar:** el asistente del cartel ya está empezado (misión 23). Lo usan su encargado y los
-administradores.
+administradores. La sección «Resultado» aparece después de «Seguir con los demás requisitos», o antes si un
+requisito excluyente no se cumple.
 
 ### Calcular el resultado
 

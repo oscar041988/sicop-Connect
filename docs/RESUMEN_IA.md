@@ -242,6 +242,10 @@ Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/asistente.py`;
 - **La app no depende de la IA:** con `AI_MODE=none`, sin presupuesto, si falla o si la respuesta no sirve, el
   asistente usa las preguntas que arma la app con el requisito, su mínimo y su cita, y muestra el motivo. Si la IA
   olvida la cita, la app la agrega.
+- **Revisión rápida (2026-11-04, decisión de Oscar; migración 0034):** el asistente pregunta primero solo los
+  excluyentes y muestra el resultado rápido (la app, sin guardar: «Queda fuera» · «Faltan excluyentes por
+  confirmar» · «Los excluyentes cumplen»). El resto se abre con «Seguir con los demás requisitos» (queda quién y
+  cuándo). La IA redacta igual todas las preguntas de una vez: no cambia lo que recibe ni el costo.
 - **No decide:** la IA solo redacta preguntas. Las respuestas las da una persona y la evaluación es de la lección 4.
 
 ## 8. Explicación del resultado de elegibilidad (lección 4; 2026-11-04)

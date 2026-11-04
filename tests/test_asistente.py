@@ -384,7 +384,8 @@ def test_dar_seguimiento_abre_el_asistente_en_la_misma_pagina(web):
     assert 'id="asistente"' in pagina and "Empezar el asistente" in pagina and "La IA está apagada" in pagina
     assert _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar").status_code == 303
     pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
-    assert "0 de 5</strong> respondidas" in pagina and "Ofertar por SICOP." in pagina      # el primer excluyente
+    assert "Revisión rápida" in pagina and "0 de 2</strong> excluyentes respondidos" in " ".join(pagina.split())
+    assert "Ofertar por SICOP." in pagina                                    # el primer excluyente
     assert "Para tener en cuenta (2)" in pagina
 
 
@@ -399,7 +400,7 @@ def test_responder_pausar_y_que_otra_persona_siga(web):
     r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "varios"})
     assert r.status_code == 400 and "no es un número" in r.text and "Al menos tres años" in r.text   # misma pregunta
     pagina = c["oscar"].get(f"/oportunidades/{NRO}").text                    # otra persona, otra sesión
-    assert "1 de 5</strong> respondidas" in pagina and "Al menos tres años" in pagina
+    assert "1 de 2</strong> excluyentes respondidos" in " ".join(pagina.split()) and "Al menos tres años" in pagina
     r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"vence_el": "2027-01-15"},
               {"archivo": ("permiso.pdf", PDF, "application/pdf")})
     assert r.status_code == 303
@@ -415,6 +416,7 @@ def test_en_la_pagina_lo_tiene_sin_subir_el_archivo(web):
     with closing(connect(db)) as conn:
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
     _post(c["oscar"], f"/oportunidades/{NRO}/asistente/empezar")
+    _post(c["oscar"], f"/oportunidades/{NRO}/asistente/ampliar")           # todo el cuestionario
     pregunta = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
     assert 'value="archivo_pendiente"' in pregunta and "Lo tiene · subo el archivo después" in pregunta
     sicop = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['sicop']}").text
@@ -479,9 +481,13 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
                      " VALUES (?, 'x', 'h', 't', 't')", (NRO,))
         conn.commit()
         item = verificacion.agregar(conn, NRO, _req("Ofertar por SICOP. [DOC 1 · pág. 1]"), ANA)
-        asistente.empezar(conn, NRO, ANA, AHORA)
-        antes = asistente.responder(conn, settings, NRO, item, asistente.Entrada(valor_si_no="1"), None, ANA, AHORA)
-    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql"]
+        conn.execute("INSERT INTO eligibility_sessions (nro_sicop, iniciada_por_nombre, creado_en)"
+                     " VALUES (?, 'Ana', 't')", (NRO,))       # SQL: asistente.sesion() ya lee la 0034
+        antes = conn.execute("INSERT INTO eligibility_answers (session_id, item_id, requisito, pregunta,"
+                             " tipo_evidencia, estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES"
+                             " (1, ?, 'r', 'p', 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,)).lastrowid
+        conn.commit()
+    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, estado, valor_si_no FROM eligibility_answers").fetchall() == [
             (antes, "respondido", 1)]
@@ -491,3 +497,56 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
         with pytest.raises(sqlite3.IntegrityError, match="no se modifican"):
             conn.execute("UPDATE eligibility_answers SET nota = 'x'")
     assert apply_migrations(base) == []
+
+
+# --- Revisión rápida: primero solo los excluyentes (decisión de Oscar, 2026-11-04) -------------------------------
+
+def test_la_revision_rapida_pregunta_solo_los_excluyentes_y_despues_el_resto(lista):
+    db, ids, settings = lista
+    _empezar(db)
+    with closing(connect(db)) as conn:
+        actual = asistente.sesion(conn, NRO)
+        pasos = asistente.recorrido(conn, NRO, AHORA.date())
+    assert actual.ampliada_en is None and not asistente.ampliada(pasos, actual)
+    assert [p.item.id for p in asistente.visibles(pasos, actual)] == [ids["sicop"], ids["anos"]]
+    _responder(db, settings, ids["sicop"], valor_si_no="1")
+    _responder(db, settings, ids["anos"], valor_numero="8")
+    with closing(connect(db)) as conn:
+        assert asistente.siguiente(asistente.visibles(_pasos(db), asistente.sesion(conn, NRO))) is None
+        asistente.ampliar(conn, NRO, LUIS, AHORA)
+        asistente.ampliar(conn, NRO, ANA, AHORA)                         # la segunda vez no cambia nada
+        actual = asistente.sesion(conn, NRO)
+        acciones = [a for (a,) in conn.execute("SELECT accion FROM audit_log")]
+    assert actual.ampliada_por == LUIS.nombre and acciones.count("ampliar_asistente") == 1
+    assert not asistente.siguiente(asistente.visibles(_pasos(db), actual)).item.excluyente   # ahora, el resto
+
+
+def test_sin_excluyentes_empieza_con_todo(db):  # noqa: F811
+    with closing(connect(db)) as conn:
+        verificacion.agregar(conn, NRO, _req("Indicar el horario de soporte. [DOC 1 · pág. 2]", "texto"), ANA)
+        asistente.empezar(conn, NRO, ANA, AHORA)
+        pasos = asistente.recorrido(conn, NRO, AHORA.date())
+        assert asistente.ampliada(pasos, asistente.sesion(conn, NRO))
+
+
+def test_en_la_pagina_el_resultado_rapido_y_seguir_con_los_demas(web):
+    db, ids, _, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    oscar = c["oscar"]
+    _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "Cuando respondas los excluyentes" in pagina and 'id="resultado"' not in pagina
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "1"})
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "2"})
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "Queda fuera: no cumple un requisito excluyente" in pagina and "2 años &lt; 3 años" in pagina
+    assert 'id="resultado"' in pagina                                    # se puede guardar la constancia
+    assert _post(oscar, f"/oportunidades/{NRO}/asistente/resultado").status_code == 303
+    assert "No cumplen un requisito excluyente" in oscar.get(f"/oportunidades/{NRO}").text
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "8"})
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "Los excluyentes cumplen: vale la pena seguir" in pagina and 'id="resultado"' not in pagina
+    assert _post(oscar, f"/oportunidades/{NRO}/asistente/ampliar").status_code == 303
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "2 de 5</strong> respondidas" in pagina and 'id="resultado"' in pagina and "Revisión rápida" not in pagina

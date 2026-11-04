@@ -205,12 +205,13 @@ def test_0033_se_aplica_sobre_una_base_con_respuestas(tmp_path):
         conn.commit()
         item = verificacion.agregar(conn, NRO, verificacion.Cambios("Ofertar por SICOP.", "legal", "si_no", "", "",
                                                                     "", "", True), ANA)
-        asistente.empezar(conn, NRO, ANA, AHORA)
+        conn.execute("INSERT INTO eligibility_sessions (nro_sicop, iniciada_por_nombre, creado_en)"
+                     " VALUES (?, 'Ana', 't')", (NRO,))       # SQL: asistente.sesion() ya lee la 0034
         conn.execute("INSERT INTO eligibility_answers (session_id, item_id, requisito, pregunta, tipo_evidencia,"
                      " estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES (1, ?, 'r', 'p',"
                      " 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,))
         conn.commit()
-    assert apply_migrations(base) == ["0033_resultado_elegibilidad.sql"]
+    assert apply_migrations(base) == ["0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT count(*) FROM eligibility_answers").fetchone() == (1,)
         assert elegibilidad.calcular(conn, NRO, ANA, AHORA) == 1
@@ -225,6 +226,7 @@ def test_calcular_revisar_y_descargar_la_constancia_en_la_pagina(web):
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
     oscar = c["oscar"]
     _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")
+    _post(oscar, f"/oportunidades/{NRO}/asistente/ampliar")              # después de la revisión rápida
     for item, datos in ((ids["sicop"], {"valor_si_no": "1"}), (ids["anos"], {"valor_numero": "8"}),
                         (ids["patente"], {"estado": "archivo_pendiente"}),
                         (ids["cierre"], {"valor_fecha": "2026-12-01"}), (ids["soporte"], {"valor_texto": "24/7"})):
@@ -348,3 +350,23 @@ def test_la_constancia_no_trae_las_etiquetas_r(lista):
     assert c.explicacion_origen == "ia"
     assert c.explicacion == "Falta responder la fecha.\n- Responder la fecha de inicio.\n- Revisar el horario de soporte."
     assert "No uses las etiquetas R1, R2" in simulado.llamadas[0]["instructions"]
+
+
+
+@pytest.mark.parametrize("respuestas, esperado", [
+    ((True, True), "cumplen"), ((True, False), "fuera"), ((True, None), None), ((False, None), "fuera")])
+def test_resultado_rapido_solo_mira_los_excluyentes(respuestas, esperado):
+    pares = []
+    for valor in respuestas:
+        i = _item(excluyente=True)
+        pares.append((i, None if valor is None else _resp(i, valor_si_no=valor)))
+    otro = _item("texto")
+    pares.append((otro, None))                                            # el resto no cuenta
+    evals = elegibilidad.evaluar([_paso(i, r) for i, r in pares], CIERRE)
+    assert elegibilidad.resultado_rapido(evals) == esperado
+
+
+def test_resultado_rapido_faltan_si_un_excluyente_queda_pendiente():
+    doc = _item("documento", excluyente=True)
+    evals = elegibilidad.evaluar([_paso(doc, _resp(doc, "archivo_pendiente"))], CIERRE)
+    assert elegibilidad.resultado_rapido(evals) == "faltan"

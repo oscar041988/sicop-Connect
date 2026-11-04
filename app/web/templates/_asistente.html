@@ -25,9 +25,17 @@
     perfil ni tus archivos.{% else %}La IA está apagada: las preguntas las arma la app.{% endif %}</small>
   {% else %}
   {% set av = a.avance %}
+  {% if not a.ampliada %}
+  <p class="avance"><span class="tag r">Revisión rápida</span> <strong>{{ av.respondidos }} de {{ av.total }}</strong>
+    excluyentes respondidos{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}{% if av.archivo_pendiente %} · {{ av.archivo_pendiente }}
+    {{ "archivo pendiente" if av.archivo_pendiente == 1 else "archivos pendientes" }}{% endif %}</p>
+  <p class="sub">Primero solo los requisitos excluyentes: si alguno no se cumple, Hermatix queda fuera. El resto se
+    pregunta si el cartel interesa.</p>
+  {% else %}
   <p class="avance"><strong>{{ av.respondidos }} de {{ av.total }}</strong> respondidas · excluyentes
     {{ av.excluyentes_respondidos }} de {{ av.excluyentes }}{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}{% if av.archivo_pendiente %} · {{ av.archivo_pendiente }}
     {{ "archivo pendiente" if av.archivo_pendiente == 1 else "archivos pendientes" }}{% endif %}</p>
+  {% endif %}
   <progress max="{{ av.total or 1 }}" value="{{ av.respondidos }}"></progress>
 
   {% if a.actual %}
@@ -99,8 +107,22 @@
       </div>
     </form>
   </article>
-  {% else %}
+  {% elif a.ampliada %}
   <p class="hecho">Respondiste todas las preguntas. Puedes cambiar cualquier respuesta abajo.</p>
+  {% endif %}
+
+  {% if not a.ampliada %}
+  {% set rap = res_eleg.rapido %}
+  <div id="revision-rapida" class="revision-rapida {{ rap or 'pendiente' }}">
+    {% if rap %}<p class="resultado-titular rapido-{{ rap }}"><strong>{{ res_eleg.RAPIDOS[rap] }}</strong></p>
+    {% if rap == "fuera" %}<ul>{% for e in res_eleg.evaluaciones if e.item.excluyente and e.estado == "no_cumple" %}<li>{{ e.item.requisito }} — {{ e.motivo }}</li>{% endfor %}</ul>
+    <p class="sub">Calcula el resultado abajo para guardar la constancia.</p>{% endif %}
+    {% else %}<p class="sub">Cuando respondas los excluyentes, aquí sale el resultado rápido.</p>{% endif %}
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/ampliar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="{{ '' if rap == 'cumplen' else 'btn o' }}">Seguir con los demás requisitos</button>
+    </form>
+  </div>
   {% endif %}
 
   {% if a.ia and a.faltan_ia %}
@@ -131,6 +153,7 @@
   {% set re = res_eleg %}
   {% set ultima = re.constancias[0] if re.constancias else none %}
   {% macro tag_estado(estado) %}<span class="tag {{ {'cumple': '', 'no_cumple': 'g', 'falta': 'w', 'revisar': 'r'}[estado] }}">{{ ELEG.estados[estado] }}</span>{% endmacro %}
+  {% if a.ampliada or res_eleg.rapido == "fuera" %}
   <div id="resultado" class="resultado-eleg">
     <h3>Resultado: ¿podemos participar?</h3>
     {% if ultima %}
@@ -185,6 +208,7 @@
     </details>
     {% endif %}
   </div>
+  {% endif %}
 
   {% if a.info %}
   <details class="respuestas-asistente">

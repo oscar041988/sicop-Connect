@@ -37,6 +37,7 @@ PANTALLAS: dict[str, str] = {
     "Elemento del perfil": "/perfil/{perfil}",
     "Lista de verificación": "/oportunidades/{principal}/verificacion",
     "Asistente": "/oportunidades/{seguido}",       # en seguimiento, con el asistente empezado
+    "Revisión rápida": "/oportunidades/{sin_encargado}",   # asistente sin ampliar, excluyentes respondidos
     "Resultado": "/oportunidades/{seguido}",       # el mismo cartel, con un resultado ya calculado
     "Constancia": "/oportunidades/{seguido}/asistente/resultados/{constancia}",
 }
@@ -132,9 +133,10 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Lista de verificación", "el botón de generar"): Objetivo(selector=".generar-lista button"),
     ("Lista de verificación", "un requisito"): Objetivo(selector=".item-verificacion"),
     ("Asistente", "la sección «Asistente de elegibilidad»"): Objetivo(selector="#asistente"),
-    ("Asistente", "el avance"): Objetivo(selector=".asistente .avance"),
+    ("Asistente", "el avance"): Objetivo(selector=".asistente .avance", url="/oportunidades/{sin_encargado}"),
     ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),
     ("Asistente", "el dato del perfil"): Objetivo(selector=".perfil-dato"),
+    ("Revisión rápida", "el resultado rápido"): Objetivo(selector="#revision-rapida"),
     ("Resultado", "la sección «Resultado»"): Objetivo(selector="#resultado"),
     ("Resultado", "el resultado"): Objetivo(selector=".resultado-eleg .resultado-titular"),
     ("Resultado", "la tabla de requisitos"): Objetivo(selector=".resultado-eleg .tabla-resultado"),

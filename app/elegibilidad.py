@@ -152,6 +152,24 @@ def resultado_global(evaluaciones: list[Evaluacion]) -> str:
     return "puede_participar"
 
 
+RAPIDOS = {
+    "fuera": "Queda fuera: no cumple un requisito excluyente",
+    "faltan": "Faltan excluyentes por confirmar",
+    "cumplen": "Los excluyentes cumplen: vale la pena seguir",
+}
+
+
+def resultado_rapido(evaluaciones: list[Evaluacion]) -> str | None:
+    """La revisión rápida (solo los excluyentes, sin guardar nada). Un excluyente que no cumple ya basta para
+    «fuera»; si no, None mientras falte responder alguno."""
+    excluyentes = [e for e in evaluaciones if e.item.excluyente]
+    if any(e.estado == "no_cumple" for e in excluyentes):
+        return "fuera"
+    if not excluyentes or any(e.respuesta is None for e in excluyentes):
+        return None
+    return "cumplen" if all(e.estado == "cumple" for e in excluyentes) else "faltan"
+
+
 def pendientes(evaluaciones: list[Evaluacion]) -> list[Evaluacion]:
     """Lo que impide «Sí, pueden participar»: excluyentes primero, como en el asistente."""
     return [e for e in evaluaciones if e.estado != "cumple"]

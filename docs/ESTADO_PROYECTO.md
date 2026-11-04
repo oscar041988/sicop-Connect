@@ -4,6 +4,23 @@
 
 ## Último resultado
 
+- **Reunión de Ivania con Oscar (2026-11-04)** (hoja de decisiones preparada por Claude). Decidió:
+  - **PR #5:** lo une hoy. En el servidor: respaldo, `migrate` (0033) y `ayuda capturas`.
+  - **Perfil:** cargar ya la **parte A** (datos, no documentos) de `docs/PERFIL_LISTA_INICIAL.md`; los datos los
+    dan los encargados y administradores del sistema.
+  - **Asistente:** preguntar **primero solo los excluyentes**; el resto, si el cartel interesa.
+  - **Documentos delicados:** solo en el servidor cuando esté actualizado; a la IA, nunca (`false`).
+  - **Reglas del resultado:** de acuerdo con las dos. **Presupuesto IA:** sigue en 1.00 USD. **Resumen v3:**
+    probarlo en 3 carteles y comparar. Registrado en `docs/DECISION_IA.md` §7.
+  - **Hecho (Claude, plan aprobado por Ivania): revisión rápida.** Migración **0034** (`eligibility_sessions`:
+    `ampliada_en` y `ampliada_por_nombre`). El asistente pregunta primero solo los excluyentes; al responderlos
+    muestra el resultado rápido; «Seguir con los demás requisitos» abre el resto (una vez, queda en el historial).
+    Sin excluyentes, empieza con todo. La sección «Resultado» aparece al ampliar, o antes si un excluyente no
+    cumple. Misiones 23 (7 capturas) y 24 (8) actualizadas. Pruebas nuevas en `tests/test_asistente.py` y
+    `tests/test_elegibilidad.py`. **Pendiente · Ivania:** respaldo y `migrate` (0034) en la base real.
+  - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
+    de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
+
 - **Asistente · lección 4, Encargo 4 hecho (2026-11-04, rama `desarrollo`, solo local): el resultado «¿podemos
   participar?».** Plan aprobado por Ivania; un commit por paso. La app compara (sí/no, número contra su mínimo con
   «al menos» / «máximo» leídos del texto, documento contra el cierre del cartel) y calcula uno de cuatro resultados;

@@ -339,18 +339,23 @@ def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime,
                         error_asistente: str | None = None, formulario_asistente: dict | None = None) -> dict:
     settings = load_settings()
     pasos = asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date())
-    actual = next((p for p in pasos if p.item.id == ver_item), None) or asistente.siguiente(pasos)
     sesion = asistente.sesion(conn, nro_sicop)
+    # Revisión rápida (decisión de Oscar, 2026-11-04): mientras no se amplíe, solo se preguntan los excluyentes.
+    # «Cambiar» abre cualquier requisito ya respondido; la pregunta siguiente sale solo de los visibles.
+    visibles = asistente.visibles(pasos, sesion)
+    actual = next((p for p in pasos if p.item.id == ver_item), None) or asistente.siguiente(visibles)
     # Resultado (lección 4): cómo va cada requisito con las respuestas de hoy y las constancias ya calculadas.
     evaluaciones = elegibilidad.evaluar(pasos, elegibilidad.cierre_de(conn, nro_sicop),
                                         elegibilidad.revisiones(conn, sesion.id)) if sesion else []
     return {
         "res_eleg": {"evaluaciones": evaluaciones, "global": elegibilidad.resultado_global(evaluaciones),
                      "constancias": elegibilidad.constancias(conn, nro_sicop) if sesion else [],
-                     "conteo": {k: sum(e.estado == k for e in evaluaciones) for k in elegibilidad.ESTADOS}},
+                     "conteo": {k: sum(e.estado == k for e in evaluaciones) for k in elegibilidad.ESTADOS},
+                     "rapido": elegibilidad.resultado_rapido(evaluaciones), "RAPIDOS": elegibilidad.RAPIDOS},
         "ELEG": {"resultados": elegibilidad.RESULTADOS, "estados": elegibilidad.ESTADOS, "aviso": elegibilidad.AVISO},
         "asis": {"sesion": sesion, "pasos": pasos, "actual": actual,
-                 "avance": asistente.avance(pasos), "info": asistente.informativos(conn, nro_sicop),
+                 "ampliada": asistente.ampliada(pasos, sesion), "visibles": visibles,
+                 "avance": asistente.avance(visibles), "info": asistente.informativos(conn, nro_sicop),
                  "es_admin": seguridad.es_admin(request), "limite_mb": settings.assistant_doc_max_mb,
                  "ia": _ia_encendida(), "faltan_ia": sum(p.origen == "app" for p in pasos),
                  "error": error_asistente, "formulario": formulario_asistente or {},
@@ -457,6 +462,22 @@ def confirmar_perfil_asistente(request: Request, nro_sicop: str, item_id: int) -
             return _render_detalle(request, conn, nro_sicop, status_code=400, ver_item=item_id,
                                    error_asistente=str(exc))
     return _volver_asistente(request, nro_sicop, "Dato del perfil confirmado.")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/ampliar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def ampliar_asistente(request: Request, nro_sicop: str) -> Response:
+    """«Seguir con los demás requisitos»: después de la revisión rápida (solo excluyentes), abre el resto."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            asistente.ampliar(conn, nro_sicop, _quien(request), _ahora())
+        except asistente.AsistenteInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+    return _volver_asistente(request, nro_sicop, "Listo: ahora el asistente pregunta también los demás requisitos.")
 
 
 # --- Resultado de elegibilidad (lección 4): la app compara, una persona decide los «revisar» --------------------

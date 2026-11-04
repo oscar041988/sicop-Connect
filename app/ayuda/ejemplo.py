@@ -333,7 +333,22 @@ def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime,
     asistente.responder(conn, settings, SEGUIDO, ids["soporte"],
                         asistente.Entrada(valor_texto="EJEMPLO: de lunes a viernes, de 8 a. m. a 5 p. m."), None, luis,
                         ahora)
-    return patente, elegibilidad.calcular(conn, SEGUIDO, luis, ahora)
+    asistente.ampliar(conn, SEGUIDO, luis, ahora)           # misión 24: el resultado completo, después de la rápida
+    constancia = elegibilidad.calcular(conn, SEGUIDO, luis, ahora)
+
+    # Misión 23, revisión rápida: el cartel sin encargado tiene sus dos excluyentes respondidos y sin ampliar.
+    rapido = {}
+    for clave, cambios in (
+        ("sicop", _requisito(f"Presentar la oferta por SICOP, firmada digitalmente. {p}1]", "legal", "si_no", True)),
+        ("inscrita", _requisito(f"Estar inscrita en el Registro de Proveedores. {p}2]", "legal", "si_no", True)),
+        ("garantia", _requisito(f"Ofrecer garantía de los equipos. {p}3]", "tecnico", "texto", False)),
+    ):
+        rapido[clave] = verificacion.agregar(conn, SIN_ENCARGADO, cambios, ana)
+    asistente.empezar(conn, SIN_ENCARGADO, ana, ahora)
+    for clave in ("sicop", "inscrita"):
+        asistente.responder(conn, settings, SIN_ENCARGADO, rapido[clave], asistente.Entrada(valor_si_no="1"), None,
+                            ana, ahora)
+    return patente, constancia
 
 
 # --- Crear la base ----------------------------------------------------------------------------------------------

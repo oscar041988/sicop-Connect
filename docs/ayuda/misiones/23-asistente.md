@@ -19,7 +19,8 @@ Lo usan su encargado y los administradores.
 
 4. Mira la línea del avance, arriba de la pregunta.
    [captura: Asistente · resaltar el avance]
-   Dice cuántas preguntas respondiste y cuántas de las excluyentes.
+   Al principio dice «Revisión rápida»: el asistente pregunta solo los requisitos excluyentes.
+   Si alguno no se cumple, Hermatix queda fuera y no hace falta responder lo demás.
 
 ### Responder una pregunta
 
@@ -49,6 +50,16 @@ Lo usan su encargado y los administradores.
     - Si Hermatix sí lo tiene pero todavía no quieres subirlo, haz clic en «Lo tiene · subo el archivo después».
       Puedes escribir hasta cuándo vence. Queda como «archivo pendiente».
     - Para subirlo después, usa «Cambiar» (paso 15).
+
+### Después de los excluyentes
+
+- Cuando respondes los excluyentes, sale el resultado rápido.
+  [captura: Revisión rápida · resaltar el resultado rápido]
+  - «Queda fuera»: un excluyente no se cumple. Calcula el resultado para guardar la constancia (misión 24).
+  - «Faltan excluyentes por confirmar»: hay alguno en «Todavía no lo sé», con archivo pendiente o por revisar.
+  - «Los excluyentes cumplen: vale la pena seguir».
+- Si el cartel interesa, haz clic en «Seguir con los demás requisitos».
+  El asistente pregunta el resto. Lo que ya respondiste se conserva.
 
 ### Seguir otro día
 
