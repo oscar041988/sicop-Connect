@@ -64,6 +64,7 @@ DEFAULTS: dict[str, str] = {
     "PROFILE_DOC_MAX_MB": "10",
     "ASSISTANT_DOCS_DIR": "data/asistente",
     "ASSISTANT_DOC_MAX_MB": "10",
+    "REPORTS_DIR": "data/reportes",
     "ASSISTANT_SEND_DOCUMENTS": "false",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
@@ -331,6 +332,13 @@ class Settings:
         """Archivos que se suben al responder el asistente de elegibilidad (ASSISTANT_DOCS_DIR; data/asistente).
         Confidenciales, como los del perfil: fuera de Git; entran en el respaldo."""
         path = Path(self.get("ASSISTANT_DOCS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def reports_dir(self) -> Path:
+        """Reportes de cartel en PDF (REPORTS_DIR; data/reportes; Reporte con IA, lección 4): fuera de Git; entran en
+        el respaldo."""
+        path = Path(self.get("REPORTS_DIR"))
         return path if path.is_absolute() else PROJECT_ROOT / path
 
     @property

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reporte de cartel {{ d.nro }}</title>
+{# Reporte de cartel Hermatix (Reporte con IA, lección 4): 2 páginas como máximo, para imprimir a PDF con Playwright.
+   Orden: encabezado, KPI de SICOP (los calcula la app), recomendación, de qué trata, qué piden, garantías del pliego,
+   requerimientos, plazos, criterios, riesgos y fuentes. Sin salto de página fijo: el contenido fluye y la app
+   comprueba que no pase de 2 páginas (app/ai/reporte.py). Todo el texto va escapado. #}
+<style>
+  @page { size: Letter; }
+  :root { --azul: #103050; --verde: #1e7a4e; --verde-bg: #e3f3ea; --linea: #d6e0ea; --mut: #5a6b7b;
+          --aviso: #8a5a00; --aviso-bg: #fff3d6; --no: #8b2e2e; --no-bg: #fbe9e9; --fondo: #f3f6f9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; font-size: 9.2pt; line-height: 1.32; color: #14212f;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h2 { font-size: 10.5pt; color: var(--azul); margin: 9px 0 4px; padding-bottom: 2px; border-bottom: 1px solid var(--linea); }
+  p { margin: 0 0 4px; }
+  .cabecera { display: flex; gap: 14px; align-items: center; border-bottom: 3px solid var(--azul); padding-bottom: 6px; }
+  .cabecera img { height: 34px; }
+  .cabecera .marca { font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); margin: 0; }
+  .cabecera h1 { font-size: 12.5pt; margin: 1px 0; color: var(--azul); line-height: 1.2; }
+  .cabecera .sub { color: var(--mut); font-size: 8.3pt; }
+  .etiqueta-ia { display: inline-block; font-size: 7.5pt; font-weight: 700; color: var(--aviso); background: var(--aviso-bg);
+                 border-radius: 999px; padding: 1px 8px; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px; }
+  .kpi { background: var(--fondo); border-radius: 6px; padding: 5px 7px; }
+  .kpi span { display: block; font-size: 7.3pt; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
+  .kpi strong { font-size: 9.2pt; }
+  .origen { font-size: 7.3pt; color: var(--mut); margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 3px 5px; border-bottom: 1px solid var(--linea); }
+  th { font-size: 7.8pt; color: var(--mut); text-transform: uppercase; letter-spacing: .03em; }
+  ul { margin: 0; padding-left: 14px; }
+  .cita { color: var(--mut); font-size: 7.6pt; white-space: nowrap; }
+  .mas { color: var(--mut); font-style: italic; font-size: 8pt; margin-top: 2px; }
+  .recomendacion { margin-top: 9px; border-radius: 8px; padding: 7px 10px; background: var(--verde-bg); color: var(--verde); }
+  .recomendacion.rec-revisar_requisitos { background: var(--aviso-bg); color: var(--aviso); }
+  .recomendacion.rec-descartar { background: var(--no-bg); color: var(--no); }
+  .recomendacion span { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; }
+  .recomendacion strong { display: block; font-size: 11pt; }
+  .recomendacion p, .recomendacion small { color: #14212f; }
+  .exc { font-weight: 700; color: var(--no); }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pliego { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; margin: 0; }
+  .pliego div { border-bottom: 1px solid var(--linea); padding: 2px 0; }
+  .pliego dt { font-size: 7.6pt; color: var(--mut); text-transform: uppercase; letter-spacing: .03em; }
+  .pliego dd { margin: 0; }
+  tr, .kpi, .pliego div, li { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  .vacio { color: var(--mut); }
+</style>
+</head>
+<body>
+{% macro cita(x) %}{% if x and x != d.NO %} <span class="cita">{% if x == "SICOP" %}[SICOP]{% else %}{{ x }}{% endif %}</span>{% endif %}{% endmacro %}
+
+<header class="cabecera">
+  {% if logo %}<img src="{{ logo }}" alt="Hermatix">{% endif %}
+  <div>
+    <p class="marca">Reporte de cartel Hermatix · {{ d.fecha }}</p>
+    <h1>{{ d.titulo }}</h1>
+    <div class="sub">N.º SICOP {{ d.nro }} · {{ d.procedimiento }} · {{ d.institucion }}</div>
+    <span class="etiqueta-ia">Resumen generado con IA · verificar con el pliego</span>
+  </div>
+</header>
+
+<section class="kpis">
+  {% for nombre, valor in d.kpis %}<div class="kpi"><span>{{ nombre }}</span><strong>{{ valor }}</strong></div>{% endfor %}
+</section>
+<p class="origen">Estos 6 datos son de SICOP (los calcula la app desde la base, igual que el panel). El resto sale del
+  resumen con IA, con su cita [DOC n · pág. p] para comprobarlo.</p>
+
+<div class="recomendacion rec-{{ d.recomendacion_clave }}">
+  <span>Recomendación preliminar</span>
+  <strong>{{ d.recomendacion }}</strong>
+  <p>{{ d.justificacion }}</p>
+  <small>La decisión es del encargado.</small>
+</div>
+
+<h2>De qué trata</h2>
+<p>{{ d.de_que_trata }}</p>
+<p><strong>Encaje con Hermatix:</strong> {{ d.encaje }}</p>
+
+<h2>Qué piden</h2>
+{% if d.piden %}
+<table>
+  <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cant.</th><th>Especificaciones clave</th></tr></thead>
+  <tbody>
+  {% for i in d.piden %}
+  <tr><td>{{ i.linea }}</td><td>{{ i.bien }}</td><td>{{ i.cantidad }}</td>
+    <td>{% if i.specs %}<ul>{% for e in i.specs %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% if i.mas_specs %}<div class="mas">y {{ i.mas_specs }} más en el panel</div>{% endif %}{{ cita(i.cita) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if d.mas_piden %}<div class="mas">y {{ d.mas_piden }} más en el panel</div>{% endif %}
+{% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
+
+<h2>Garantías y condiciones del pliego</h2>
+<dl class="pliego">
+  {% for nombre, valor, c in d.kpi_pliego %}<div><dt>{{ nombre }}</dt><dd>{{ valor }}{{ cita(c) }}</dd></div>{% endfor %}
+</dl>
+
+<h2>Requerimientos ({{ d.total_reqs }} en total; primero los excluyentes)</h2>
+{% if d.reqs %}
+<table>
+  <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th></tr></thead>
+  <tbody>
+  {% for q in d.reqs %}<tr><td>{{ q.tipo }}</td><td>{{ q.requisito }}{{ cita(q.cita) }}</td><td>{% if q.excluyente %}<span class="exc">Sí</span>{% else %}No{% endif %}</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% if d.mas_reqs %}<div class="mas">y {{ d.mas_reqs }} más en el panel</div>{% endif %}
+{% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
+
+<div class="dos">
+  <div>
+    <h2>Plazos</h2>
+    <table><tbody>
+      {% for nombre, valor, c in d.plazos %}<tr><th>{{ nombre }}</th><td>{{ valor or d.NO }}{{ cita(c) }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% if d.mas_plazos %}<div class="mas">y {{ d.mas_plazos }} plazos más en el panel</div>{% endif %}
+  </div>
+  <div>
+    <h2>Criterios de evaluación</h2>
+    {% if d.criterios %}
+    <table><tbody>{% for c, peso, ci in d.criterios %}<tr><td>{{ c }}{{ cita(ci) }}</td><td>{{ peso }}</td></tr>{% endfor %}</tbody></table>
+    {% if d.mas_criterios %}<div class="mas">y {{ d.mas_criterios }} más en el panel</div>{% endif %}
+    {% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
+
+    <h2>Riesgos y dudas</h2>
+    {% if d.riesgos %}
+    <ul>{% for x, c in d.riesgos %}<li>{{ x }}{{ cita(c) }}</li>{% endfor %}</ul>
+    {% if d.mas_riesgos %}<div class="mas">y {{ d.mas_riesgos }} más en el panel</div>{% endif %}
+    {% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
+  </div>
+</div>
+
+<h2>Fuentes</h2>
+<p class="origen">Datos públicos de SICOP y documentos del cartel{% if d.fuentes %}: {{ d.fuentes | join(" · ") }}{% endif %}{% if d.mas_fuentes %} · y {{ d.mas_fuentes }} más{% endif %}.
+  Resumen #{{ d.resumen.id }} del {{ d.resumen.creado_en }} (modelo {{ d.resumen.modelo }}, prompt {{ d.resumen.prompt }}).
+  Es una orientación: la admisión de la oferta depende de la institución.</p>
+</body>
+</html>

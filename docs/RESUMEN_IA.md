@@ -272,7 +272,26 @@ versionado `config/prompts/explicacion_elegibilidad_v2.md`; migración 0033.
   requisito y su respuesta, la versión de la lista y el origen de la explicación. Se ve y se descarga como PDF
   desde el navegador (`/oportunidades/<nro>/asistente/resultados/<id>`, «Descargar» = `?imprimir=1`).
 
-## 9. Pendiente de la lección 1
+## 9. Reporte de cartel Hermatix en PDF (lección 4; 2026-11-04)
+
+Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`, migración 0036 (`ia_reports`).
+
+- **La IA alimenta, la app arma:** el diseño, el orden, los límites y los 6 KPI de SICOP (monto estimado por
+  moneda, líneas y unidades, cierre y días, estado, tipo de procedimiento, encaje de las reglas) los pone la app
+  desde la base, igual que el panel. El monto del resumen (`monto_estimado` del modelo) no se usa. Del resumen salen
+  solo los textos y los KPI del pliego, con su cita; «no encontrado» se ve así.
+- **Máximo 2 páginas:** límites por sección (8 filas de «Qué piden», 10 requerimientos con los excluyentes primero,
+  textos de hasta 200 caracteres) y «y N más en el panel». Si el PDF pasa de 2 páginas se rehace con límites más
+  cortos; si tampoco cabe, error y no se guarda. Probado con los 24 carteles reales con resumen (20 con los
+  límites normales, 4 con los cortos).
+- **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
+  partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
+- **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo
+  como `…_reportes.zip`). Si el resumen no cambió se reutiliza el último; nunca se borra ni se sobrescribe uno.
+- **Cómo se pide:** botón «Reporte PDF» en la fila del resumen del cartel, o `python -m app.cli ia reporte --nro N`
+  (`--nuevo` para generar otro aunque el resumen sea el mismo).
+
+## 10. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

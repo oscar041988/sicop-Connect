@@ -4,6 +4,20 @@
 
 ## Último resultado
 
+- **Reporte con IA · lección 4, Encargo 4 hecho (2026-11-04, plan aprobado por Ivania): Reporte de cartel
+  Hermatix en PDF, máximo 2 páginas.** `app/ai/reporte.py` + `templates/reporte_cartel.html`; PDF con el Chromium
+  de Playwright (sin librerías nuevas); KPI de SICOP calculados por la app (el monto del modelo no se usa); límites
+  por sección y reintento con límites cortos; migración **0036** (`ia_reports`, no se borra ni se modifica);
+  `REPORTS_DIR` (data/reportes) en el respaldo; botón «Reporte PDF» en la fila del resumen y `ia reporte --nro N`.
+  Los **24 carteles reales con resumen caben en 2 páginas** (probado solo leyendo la base). Misión de ayuda 25 (sin
+  capturas). Detalle: `docs/RESUMEN_IA.md` §9. Pruebas: `tests/test_reporte.py`.
+  918 pruebas (las 2 que fallaron en la primera corrida se arreglaron: `REPORTS_DIR` faltaba en la base de
+  ejemplo de la ayuda, y una prueba buscaba el formato viejo). Respaldo `sicop_20261104-150812` y `migrate` (0036)
+  hechos (panel cerrado): 37 resúmenes y 66 respuestas antes y después. **Pendiente · Ivania:** generar 3
+  reportes («Reporte PDF»), abrirlos e imprimir uno.
+  **Pendiente · Oscar:** aprobar el diseño y el logo (hoy el de `app/web/static/logo-hermatix.png`) y leer 3
+  reportes cronometrando (¿se entiende en 2 minutos?).
+
 - **Reunión de Ivania con Oscar (2026-11-04)** (hoja de decisiones preparada por Claude). Decidió:
   - **PR #5:** lo une hoy. En el servidor: respaldo, `migrate` (0033) y `ayuda capturas`.
   - **Perfil:** cargar ya la **parte A** (datos, no documentos) de `docs/PERFIL_LISTA_INICIAL.md`; los datos los

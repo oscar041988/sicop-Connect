@@ -89,13 +89,14 @@ def _respaldar_documentos(documentos: Path, destino: Path) -> dict:
 
 def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None,
               expedientes: Path | None = None, perfil: Path | None = None,
-              asistente: Path | None = None) -> Respaldo:
+              asistente: Path | None = None, reportes: Path | None = None) -> Respaldo:
     """Copia consistente de `origen` en `carpeta`, con su manifiesto. No sobrescribe nada.
 
     Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip; si `expedientes`
     (EXPEDIENTES_DIR, gestor de documentos paso 2) tiene archivos, también sicop_AAAAMMDD-HHMMSS_expedientes.zip; si
     `perfil` (PROFILE_DOCS_DIR, documentos confidenciales de Hermatix) tiene archivos, también …_perfil.zip; y si
-    `asistente` (ASSISTANT_DOCS_DIR, archivos de las respuestas del asistente) tiene archivos, …_asistente.zip."""
+    `asistente` (ASSISTANT_DOCS_DIR, archivos de las respuestas del asistente) tiene archivos, …_asistente.zip; y si
+    `reportes` (REPORTS_DIR, Reportes de cartel en PDF) tiene archivos, …_reportes.zip."""
     if not origen.is_file():
         raise RespaldoError(f"no existe la base {origen}")
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -143,6 +144,8 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | N
         datos["perfil"] = _respaldar_documentos(perfil, carpeta / f"{nombre}_perfil.zip")
     if asistente is not None and asistente.is_dir() and any(p.is_file() for p in asistente.rglob("*")):
         datos["asistente"] = _respaldar_documentos(asistente, carpeta / f"{nombre}_asistente.zip")
+    if reportes is not None and reportes.is_dir() and any(p.is_file() for p in reportes.rglob("*")):
+        datos["reportes"] = _respaldar_documentos(reportes, carpeta / f"{nombre}_reportes.zip")
     with open(manifiesto, "x", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=2)
         f.write("\n")

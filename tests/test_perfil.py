@@ -136,7 +136,7 @@ def test_0035_conserva_los_elementos_sus_versiones_y_las_referencias(tmp_path):
         conn.execute("INSERT INTO company_profile_versions (item_id, numero, cargado_por_nombre, created_at)"
                      " VALUES (1, '8', 'Ana', 't')")
         conn.commit()
-    assert apply_migrations(base) == ["0035_perfil_tipos_nuevos.sql"]
+    assert apply_migrations(base) == ["0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, tipo, titulo FROM company_profile_items").fetchall() == [
             (1, "experiencia", "Años de experiencia")]

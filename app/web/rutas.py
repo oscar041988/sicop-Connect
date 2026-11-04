@@ -26,6 +26,7 @@ from starlette.background import BackgroundTask
 from app.ai import asistente as ia_asistente
 from app.ai import expediente as ia_expediente
 from app.ai import explicacion as ia_explicacion
+from app.ai import reporte as ia_reporte
 from app.ai import resumen as ia_resumen
 from app.ai import verificacion
 from app.ayuda import pagina as ayuda
@@ -276,6 +277,23 @@ def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Res
         "d": datos, "res": vigente, "sicop": sicop, "IA": _TEXTOS_IA, "imprimir": imprimir,
         "citas_enlazadas": numerados is not None, "citar": lambda texto: citas.enlazar(texto, nro_sicop, numerados),
     })
+
+
+@router.get("/oportunidades/{nro_sicop}/reporte")
+def descargar_reporte(request: Request, nro_sicop: str) -> Response:
+    """Reporte de cartel Hermatix en PDF, máximo 2 páginas (Reporte con IA, lección 4). Lo genera si el resumen
+    cambió desde el último; si no, entrega el último. Nunca borra los anteriores."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    if not SOLO_DIGITOS.match(nro_sicop):
+        return _no_encontrado(request, "El Número SICOP solo lleva dígitos.")
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            r = ia_reporte.generar(conn, settings, nro_sicop, _quien(request), _ahora())
+        except ia_reporte.ReporteError as exc:
+            return _no_encontrado(request, str(exc))
+    return FileResponse(r.ruta, media_type="application/pdf", filename=r.ruta.name)
 
 
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)

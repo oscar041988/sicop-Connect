@@ -16,9 +16,11 @@ from typing import Sequence
 from app import __version__
 from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
 from app.database import MigrationError, apply_migrations, check_database, connect
+from app.historial import TERMINAL as QUIEN_TERMINAL
 from app.compras import Compra, detalle_compra
 from app.ai import cliente as ia_cliente
 from app.ai import expediente as ia_expediente
+from app.ai import reporte as ia_reporte
 from app.ai import resumen as ia_resumen
 from app.importers.carteles import import_carteles
 from app.importers import adjudicaciones, zip_pliegos
@@ -286,6 +288,29 @@ def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
         excluyente = "EXCLUYENTE · " if i.excluyente else ""
         print(f"  - {excluyente}{i.requisito[:90]} → {i.evidencia_texto} · mínimo: {i.minimo}")
     print(f"Revísala en el panel: /oportunidades/{nro_sicop}/verificacion")
+    return 0
+
+
+def ia_reporte_cmd(settings: Settings, nro_sicop: str, forzar: bool = False) -> int:
+    """Reporte con IA, lección 4: el Reporte de cartel Hermatix en PDF (máximo 2 páginas) del resumen vigente."""
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            r = ia_reporte.generar(conn, settings, nro_sicop, QUIEN_TERMINAL, datetime.now(HORA_CR),
+                                   forzar=forzar)
+        except ia_reporte.ReporteError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+    ya = " (ya existía para este resumen: no se generó otro)" if r.reutilizado else ""
+    print(f"Reporte del cartel {nro_sicop}: {r.paginas} página{'s' if r.paginas > 1 else ''} · resumen"
+          f" #{r.ia_summary_id} · SHA-256 {r.sha256[:16]}…{ya}")
+    print(f"Archivo: {r.ruta}")
     return 0
 
 
@@ -1186,7 +1211,8 @@ def ayuda_capturas_cmd(mision: str | None) -> int:
 def backup(settings: Settings, output: Path) -> int:
     try:
         r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir,
-                               settings.expedientes_dir, settings.profile_docs_dir, settings.assistant_docs_dir)
+                               settings.expedientes_dir, settings.profile_docs_dir, settings.assistant_docs_dir,
+                               settings.reports_dir)
     except respaldo.RespaldoError as exc:
         print(f"Error: {exc}. No se hizo el respaldo.", file=sys.stderr)
         return 1
@@ -1204,7 +1230,7 @@ def backup(settings: Settings, output: Path) -> int:
         exp = d["expedientes"]
         print(f"Expedientes: {output / exp['archivo']} · {exp['archivos']} archivos · {exp['bytes']} bytes"
               f" · SHA-256 {exp['sha256'][:16]}…")
-    for clave, titulo in (("perfil", "Perfil"), ("asistente", "Asistente")):
+    for clave, titulo in (("perfil", "Perfil"), ("asistente", "Asistente"), ("reportes", "Reportes")):
         if clave in d:
             x = d[clave]
             print(f"{titulo}: {output / x['archivo']} · {x['archivos']} archivos · {x['bytes']} bytes"
@@ -1291,6 +1317,9 @@ def build_parser() -> argparse.ArgumentParser:
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ir.add_argument("--prompt", metavar="VERSION",
                     help="Usar esta versión del prompt (v3…) solo para este cartel, sin cambiar IA_PROMPT_VERSION")
+    irp = ia_sub.add_parser("reporte", help="Reporte de cartel Hermatix en PDF, máximo 2 páginas (lección 4)")
+    irp.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
+    irp.add_argument("--nuevo", action="store_true", help="Generar otro aunque el resumen no haya cambiado")
     ic =ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
                                         " presupuesto diario (tarea de las 10:00)")
     ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
@@ -1373,6 +1402,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_probar_cmd(settings)
     if args.command == "ia" and args.ia_command == "verificar":
         return ia_verificar_cmd(settings, args.nro.strip())
+    if args.command == "ia" and args.ia_command == "reporte":
+        return ia_reporte_cmd(settings, args.nro.strip(), forzar=args.nuevo)
     if args.command == "ia" and args.ia_command == "resumir":
         return ia_resumir_cmd(settings, args.nro.strip(), prompt=args.prompt.strip() if args.prompt else None)
     if args.command == "ia" and args.ia_command == "cola":
