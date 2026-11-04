@@ -4,6 +4,22 @@
 
 ## Último resultado
 
+- **Asistente · lección 4, Encargo 4 hecho (2026-11-04, rama `desarrollo`, solo local): el resultado «¿podemos
+  participar?».** Plan aprobado por Ivania; un commit por paso. La app compara (sí/no, número contra su mínimo con
+  «al menos» / «máximo» leídos del texto, documento contra el cierre del cartel) y calcula uno de cuatro resultados;
+  lo que no puede comparar queda en «Revisar» y lo decide una persona («Cumple / No cumple», vale mientras no
+  cambie la respuesta). La IA solo explica (`app/ai/explicacion.py`, prompt `explicacion_elegibilidad_v1`): si
+  nombra otro resultado, falla o está apagada, queda la explicación de la app con el motivo. Migración **0033**
+  (`eligibility_item_reviews`, `eligibility_results`: no se borran ni se modifican). Sección «Resultado» al final
+  del asistente y constancia en `/oportunidades/<nro>/asistente/resultados/<id>` («Descargar» = PDF del
+  navegador). Ayuda: misión 24 (sin capturas todavía). Detalle: `docs/RESUMEN_IA.md` §8.
+  - Pruebas: `tests/test_elegibilidad.py` (los cuatro resultados, documento vencido al cierre, «máximo 5 días»,
+    revisar, la IA que contradice se descarta, la constancia con todas las respuestas, la 0033).
+  - **Pendiente · Ivania:** respaldo y `migrate` (0033) en la base real; probar los cuatro resultados en el panel;
+    con Oscar, evaluar 5 carteles reales y anotar cada diferencia con su criterio; descargar una constancia y ver
+    que se entiende sin abrir la app. Las reglas (sobre todo «archivo pendiente» y los «Revisar» excluyentes) se
+    ajustan con lo que diga Oscar.
+
 - **Asistente: «Lo tiene · archivo pendiente» (2026-11-04, pedido de Ivania, rama `desarrollo`, solo local).**
   Los documentos de Hermatix son delicados y no se suben hasta que el asistente esté listo; «Todavía no lo sé» no
   decía la verdad. Migración **0032** (`eligibility_answers.estado` acepta `archivo_pendiente`, solo documentos y

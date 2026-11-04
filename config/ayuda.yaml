@@ -16,6 +16,8 @@ pantallas:
     mision: 05-resumen-ia
   - ruta: /oportunidades/*/verificacion
     mision: 22-lista-verificacion
+  - ruta: /oportunidades/*/asistente/resultados/*
+    mision: 24-resultado
   - ruta: /oportunidades/*
     mision: 04-arriba-del-cartel
   - ruta: /oportunidades

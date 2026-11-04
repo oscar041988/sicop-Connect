@@ -244,7 +244,27 @@ Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/asistente.py`;
   olvida la cita, la app la agrega.
 - **No decide:** la IA solo redacta preguntas. Las respuestas las da una persona y la evaluación es de la lección 4.
 
-## 8. Pendiente de la lección 1
+## 8. Explicación del resultado de elegibilidad (lección 4; 2026-11-04)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Reglas: `app/elegibilidad.py`; IA: `app/ai/explicacion.py`, prompt
+versionado `config/prompts/explicacion_elegibilidad_v1.md`; migración 0033.
+
+- **La app compara, la IA explica.** El estado de cada requisito (cumple · no cumple · falta · revisar) y el
+  resultado global (puede participar · puede si completa · no cumple un excluyente · falta información) los calcula
+  la app: sí/no, número contra su mínimo («al menos» → ≥, «máximo» → ≤; si el texto no lo dice, revisar) y
+  documento contra el cierre del cartel. Lo que no se puede comparar lo decide una persona («Cumple / No cumple»),
+  atado a la respuesta que miró.
+- **Qué recibe la IA:** el resultado ya calculado y, por requisito, si es excluyente, su estado, el motivo y la
+  respuesta escrita. **Nunca** archivos, su texto ni sus nombres, ni las notas. Propósito `explicacion` en
+  `ia_usage`; cuenta para el presupuesto del día.
+- **No puede cambiar el resultado:** la app pone el titular y el aviso fijo. Si el texto de la IA nombra otro
+  resultado (`explicacion.contradice`), se descarta y queda la explicación de la app con el motivo; lo mismo con
+  `AI_MODE=none`, sin presupuesto o si falla.
+- **Constancia:** cada cálculo queda en `eligibility_results` (no se borra ni se modifica) con el detalle de cada
+  requisito y su respuesta, la versión de la lista y el origen de la explicación. Se ve y se descarga como PDF
+  desde el navegador (`/oportunidades/<nro>/asistente/resultados/<id>`, «Descargar» = `?imprimir=1`).
+
+## 9. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos
