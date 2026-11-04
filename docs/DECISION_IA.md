@@ -97,3 +97,11 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
 - **Quién usa el asistente y ve el perfil:** los dos niveles, Administrador y Encargado (Oscar, 2026-11-02, por
   Ivania).
 - El costo se suma al presupuesto diario de la sección 5.
+- **Decisiones de Oscar del 2026-11-04 (reunión con Ivania):**
+  - Documentos de Hermatix: **solo en el servidor**, cuando esté actualizado (no en la laptop). Mientras tanto,
+    «Lo tiene · archivo pendiente».
+  - Texto de esos documentos a la IA: **no**; `ASSISTANT_SEND_DOCUMENTS` sigue en `false`.
+  - Presupuesto diario: se deja en **1.00 USD** (`IA_MAX_DAILY_COST`).
+  - Resumen v3: **probarlo en 3 carteles** y comparar antes de activarlo para todos.
+  - Reglas del resultado (lección 4): **de acuerdo** con las dos (archivo pendiente → «si completan»; excluyente
+    en «Revisar» sin decidir → «Falta información»).
