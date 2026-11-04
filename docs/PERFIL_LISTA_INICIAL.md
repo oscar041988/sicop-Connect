@@ -1,63 +1,96 @@
-# Perfil de Hermatix: lista inicial (borrador para revisar con Oscar)
+# Perfil de Hermatix: lista para revisar con Oscar
 
-Asistente de elegibilidad, lección 1 (`docs/Guia_Asistente_Elegibilidad_SICOP.docx`). **Borrador del 2026-11-02**,
-armado por Ivania con Claude. Falta acordarlo con Oscar: él dice qué entra al perfil y quién entrega cada dato.
+Asistente de elegibilidad (`docs/Guia_Asistente_Elegibilidad_SICOP.docx`). **Versión en limpio del 2026-11-04**,
+armada por Ivania con Claude, sobre el borrador del 2026-11-02. Falta que Oscar la apruebe: él dice qué entra al
+perfil y quién entrega cada dato.
 
-## Cómo se armó
+## Para qué sirve el perfil
 
-- Fuente: los **183 requerimientos** que extrajeron los resúmenes con IA de los **15 carteles** que hoy tienen
-  resumen (información pública de SICOP): 70 legales, 69 técnicos, 29 financieros y 15 de experiencia.
-- No se leyó ningún documento de Hermatix.
-- «Carteles» = en cuántos de los 15 aparece. «Excluyente» = en cuántos de esos el pliego dice que, si no se cumple,
-  la oferta queda fuera. Son **conteos aproximados**: se buscaron palabras en el texto de cada requerimiento.
+El perfil guarda **una sola vez** lo que piden casi todos los carteles. Con el perfil cargado, el asistente casi no
+pregunta: muestra el dato guardado y basta con «Sí, es correcto». Sin perfil, las mismas preguntas se repiten en
+cada cartel, y eso es lo que hoy lo hace lento.
 
-## Lo que proponemos guardar en el perfil
+La lista está en dos partes:
 
-Tipo de respuesta: **número**, **documento**, **fecha** o **sí/no**. «Vence»: si el elemento tiene fecha de
-vencimiento y la app debe avisar antes.
+- **Parte A · Datos:** números, textos, fechas y sí/no. No son documentos delicados: **se pueden cargar ya**.
+- **Parte B · Documentos:** PDF o imagen. Son delicados: **se cargan al final**, cuando Oscar decida cómo se
+  protegen (hoy el asistente permite responder «Lo tiene · archivo pendiente» sin subirlos).
 
-| Tipo | Elemento | Carteles | Excluyente | Respuesta | Vence | ¿Va al perfil? (Oscar) | ¿Quién lo entrega? (Oscar) |
+## De dónde sale
+
+- Los **183 requerimientos** de los 15 carteles con resumen con IA (borrador del 2026-11-02). «Carteles» y
+  «Excluyente» son conteos aproximados de esa fuente.
+- Las **5 listas de verificación** revisadas por Ivania (2026-11-03 y 2026-11-04) y la lectura completa de dos
+  expedientes (`docs/revision_faltantes_20261104.md`): de ahí salen las filas marcadas **(nuevo)**, sin conteo.
+- No se leyó ningún documento de Hermatix: todo es información pública de SICOP.
+
+## Parte A · Datos (se pueden cargar ya)
+
+| Tipo | Dato | Carteles | Excluyente | Respuesta | Vence | ¿Va? (Oscar) | ¿Quién lo da? (Oscar) |
 |---|---|---|---|---|---|---|---|
-| Experiencia | Años de experiencia en GPS y flotas, con declaración jurada (piden 1, 5 o 10 años) | 4 | 4 | número + documento | no | | |
-| Experiencia | Constancias o cartas de clientes: servicios GPS a instituciones en los últimos 5 años, recibidos a satisfacción | 5 | 4 | documento por cliente (con fecha) | sí (antigüedad) | | |
-| Experiencia | Clientes activos con número de vehículos y última factura | 1 | 1 | documento | sí | | |
-| Personal | Lista y currículos de técnicos de instalación y mantenimiento (≥ 2 años) y profesionales en planilla (por ejemplo ingeniero en sistemas, técnico en autotrónica) | 3 | 3 | documento por persona | no | | |
-| Certificación | Carta del fabricante, integrador autorizado o certificado de marca de los equipos (alguna pide ≤ 6 meses) | 3 | 1 | documento | sí | | |
-| Certificación | Certificados de calidad o normas de los equipos (calidad, NDAA, EN 840) | 3 | 2 | documento | depende | | |
-| Permiso | Patente municipal vigente y constancia de estar al día | 8 | 5 | documento + fecha | sí | | |
-| Permiso | Permiso sanitario de funcionamiento (o constancia de que no se requiere) | 5 | 3 | documento + fecha | sí | | |
-| Póliza | Riesgos del trabajo del INS, acorde a la actividad | 7 | 2 | documento + fecha | sí | | |
-| Póliza | Responsabilidad civil (al adjudicatario) | 2 | 0 | documento + fecha | sí | | |
-| Póliza | Seguro de los equipos | 1 | 1 | documento + fecha | sí | | |
-| Legal | Al día con la CCSS (certificación) | 7 | 5 | sí/no + documento | sí (fecha de la consulta) | | |
-| Legal | Al día con FODESAF | 4 | 3 | sí/no + documento | sí | | |
-| Legal | Al día con Hacienda, con actividad económica afín al objeto | 5 | 4 | sí/no + documento | sí | | |
+| Experiencia | Años de experiencia en GPS y gestión de flotas (piden 1, 5 o 10) | 4 | 4 | número | no | | |
+| Experiencia | **(nuevo)** Años de experiencia en CCTV y redes (uno pide 10) | — | — | número | no | | |
+| Experiencia | **(nuevo)** Cantidad de proyectos terminados, por tipo (GPS, CCTV, centros de monitoreo) | — | — | número | no | | |
+| Legal | **(nuevo)** Años inscrita en Hacienda en la actividad (uno pide 10) | — | — | número | no | | |
 | Legal | Actividad comercial registrada afín al objeto | 4 | 3 | texto | no | | |
-| Legal | Declaración jurada de prohibiciones (art. 28 y 29 de la Ley General de Contratación Pública) | 6 | 3 | documento (plantilla) | no | | |
-| Legal | Declaración de beneficiarios finales y propiedad de las acciones | 6 | 3 | documento | sí (si cambia) | | |
-| Legal | Firma digital del representante legal (oferta firmada por quien tiene poder) | 4 | 2 | sí/no + fecha | sí (certificado) | | |
-| Financiero | Estados financieros u otros datos financieros | 0 | 0 | documento | sí | | |
+| Legal | **(nuevo)** Inscrita en SICOP y en el Registro de Proveedores; datos al día (no más de 24 meses) | — | — | sí/no + fecha | sí | | |
+| Legal | **(nuevo)** Citas de inscripción de la sociedad (tomo, folio, asiento) y plazo de la sociedad | — | — | texto + fecha | no | | |
+| Legal | Firma digital del representante legal: hasta cuándo vale el certificado | 4 | 2 | fecha | sí | | |
+| Personal | Cantidad de técnicos en planilla y años en el área | 3 | 3 | número | no | | |
+| Personal | **(nuevo)** Técnicos con carné de trabajo en alturas: cuántos | — | — | número | sí (carné) | | |
+| Capacidad | Soporte técnico: horario y tiempo de atención (por ejemplo 24/7, 24 horas) | 5 | 4 | texto | no | | |
+| Capacidad | Taller o centro de servicio: dirección, correo y teléfonos | 2 | — | texto | no | | |
+| Capacidad | Garantía técnica que ofrece Hermatix (meses) | 2 | — | número | no | | |
+| Capacidad | **(nuevo)** Marcas que vende Hermatix y si es distribuidor autorizado | — | — | texto | no | | |
+| Evaluación | **(nuevo)** Condición PYME (certificación del MEIC): sí/no y vencimiento | — | 0 (da puntos) | sí/no + fecha | sí | | |
+| Evaluación | **(nuevo)** ISO 14001, Bandera Azul u otro programa ambiental o de residuos | — | 0 (da puntos) | sí/no + fecha | sí | | |
+| Evaluación | **(nuevo)** Política de inclusión laboral de mayores de 45 años | — | 0 (da puntos) | sí/no | no | | |
 
-Notas:
-- **Financiero:** en estos 15 carteles no se pidieron estados financieros; se deja la fila por si Oscar sabe que
-  otros carteles los piden.
-- **Firma digital:** el certificado vence; conviene guardar hasta cuándo es válido.
+## Parte B · Documentos (al final)
+
+| Tipo | Documento | Carteles | Excluyente | Vence | ¿Va? (Oscar) | ¿Quién lo da? (Oscar) |
+|---|---|---|---|---|---|---|
+| Experiencia | Constancias o cartas de clientes (recibido a satisfacción, últimos 5 años) | 5 | 4 | sí (antigüedad) | | |
+| Experiencia | Clientes activos con número de vehículos y última factura | 1 | 1 | sí | | |
+| Experiencia | Declaración jurada de años de experiencia | 4 | 4 | no | | |
+| Personal | Currículos y títulos de técnicos y profesionales (y CFIA, si es ingeniero) | 3 | 3 | no | | |
+| Personal | **(nuevo)** Certificaciones de los técnicos (CCTV, cableado, redes, VMS) y carnés de alturas | — | — | sí | | |
+| Certificación | Carta del fabricante o certificado de marca (alguna pide no más de 1 o 6 meses) | 3 | 1 | sí | | |
+| Certificación | Certificados de calidad o normas de los equipos (NDAA, EN 840…) | 3 | 2 | depende | | |
+| Permiso | Patente municipal vigente y comprobante de pago | 8 | 5 | sí | | |
+| Permiso | Permiso sanitario de funcionamiento (o constancia de que no se requiere) | 5 | 3 | sí | | |
+| Póliza | Riesgos del trabajo del INS | 7 | 2 | sí | | |
+| Póliza | Responsabilidad civil (alguno la pide desde la oferta) | 2 | 0 | sí | | |
+| Póliza | Seguro de los equipos | 1 | 1 | sí | | |
+| Legal | Certificación de estar al día con la CCSS | 7 | 5 | sí (fecha de consulta) | | |
+| Legal | Al día con FODESAF | 4 | 3 | sí | | |
+| Legal | Al día con Hacienda | 5 | 4 | sí | | |
+| Legal | **(nuevo)** Certificación de personería jurídica (alguno pide no más de 1 mes) | — | — | sí | | |
+| Legal | Declaración jurada de prohibiciones (art. 28 y 29 LGCP) — plantilla | 6 | 3 | no | | |
+| Legal | Declaración de beneficiarios finales y propiedad de las acciones | 6 | 3 | sí (si cambia) | | |
+| Financiero | Estados financieros (ningún cartel de los 15 los pidió) | 0 | 0 | sí | | |
 
 ## Lo que NO va al perfil (cambia en cada oferta)
 
-| Requisito | Carteles | Por qué no |
-|---|---|---|
-| Estructura de precios y desglose de costos | 12 | Se arma para cada oferta |
-| Garantía de cumplimiento del adjudicatario | 6 | Depende del monto del cartel y solo si se gana |
-| Vigencia de la oferta | 2 | Se escribe en cada oferta |
-| Fichas técnicas, literatura del fabricante y muestras del producto | — | Dependen del equipo que se ofrezca |
+| Requisito | Por qué no |
+|---|---|
+| Estructura de precios, desglose de costos e índices | Se arma para cada oferta |
+| Garantía de cumplimiento y garantía colateral | Dependen del monto del cartel y solo si se gana |
+| Vigencia de la oferta y plazos de entrega | Se escriben en cada oferta |
+| Fichas técnicas, literatura, muestras y matriz de cumplimiento | Dependen del equipo que se ofrezca |
+| Cronograma, memoria de cálculo y planes de mantenimiento | Se preparan para cada proyecto |
 
 ## Para decidir con Oscar
 
-1. ¿Qué elementos de la tabla entran al perfil? (columna «¿Va al perfil?»)
-2. ¿Quién entrega cada uno: Oscar, el área administrativa u otra persona? (columna «¿Quién lo entrega?»)
-3. **Capacidades de la empresa** que también se repiten: soporte técnico (5 carteles, 4 excluyentes; por ejemplo
-   24/7 con atención en 24 horas), taller con dirección (2) y garantía técnica (2). ¿Van al perfil como un tipo
-   nuevo, «capacidad», o se dejan fuera?
-4. ¿Con cuánto tiempo de anticipación avisa la app que algo va a vencer? La guía dice 30 días.
-5. ¿Falta algo que Oscar sabe que piden otros carteles y no salió en estos 15?
+1. ¿Qué filas entran al perfil? (columna «¿Va?»)
+2. ¿Quién da cada dato o documento? (columna «¿Quién lo da?»)
+3. ¿Se cargan ya los datos de la **Parte A**, aunque los documentos esperen?
+4. ¿Las filas de **Capacidad** y **Evaluación** van como tipos nuevos del perfil? (hoy los tipos son experiencia,
+   certificación, permiso, personal, póliza, legal y financiero)
+5. ¿Con cuánta anticipación avisa la app que algo vence? La guía dice 30 días.
+6. **Para que el asistente no retrase** (comentario de Ivania, 2026-11-04): ¿pregunta primero solo los
+   excluyentes y deja el resto para cuando el cartel interese de verdad?
+7. ¿Falta algo que Oscar sabe que piden otros carteles?
+
+Cuando Oscar decida, se ajusta `config/perfil.yaml` (sugerencias y frases que proponen cada elemento): no hace falta
+tocar código.
