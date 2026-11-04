@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
-from app import asistente, avisos, destinatarios, expediente_archivos, panel, perfil, seguimiento, usuarios
+from app import asistente, avisos, destinatarios, elegibilidad, expediente_archivos, panel, perfil, seguimiento, usuarios
 from app.ai import resumen as ia_resumen
 from app.ai import verificacion
 from app.ayuda import CARPETA_EJEMPLO, PROJECT_ROOT
@@ -204,6 +204,7 @@ class Claves:
     email: str
     contrasena: str
     perfil: int = 0         # un elemento del perfil (la patente, con documento): /perfil/{perfil}
+    constancia: int = 0     # el resultado de elegibilidad del seguido: /oportunidades/{seguido}/asistente/resultados/…
 
 
 def leer_claves(carpeta: Path = CARPETA_EJEMPLO) -> Claves:
@@ -287,9 +288,11 @@ def _requisito(texto: str, tipo: str, evidencia: str, excluyente: bool, minimo: 
     return verificacion.Cambios(texto, tipo, evidencia, minimo, numero, "", unidad, excluyente)
 
 
-def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime, ana: Quien, luis: Quien) -> int:
+def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime, ana: Quien,
+               luis: Quien) -> tuple[int, int]:
     """Perfil (vigente, por vencer y pendiente), la lista del cartel principal (generada con la IA SIMULADA) y la
-    del seguido (con el asistente empezado y una respuesta). Devuelve el id de la patente del perfil."""
+    del seguido: asistente empezado con algunas respuestas (la experiencia queda por responder, para la misión 23) y
+    un resultado calculado sin IA (misión 24). Devuelve (id de la patente del perfil, id de la constancia)."""
     anos = perfil.crear(conn, "experiencia", "Años de experiencia en GPS y gestión de flotas", ana, ahora)
     perfil.nueva_version(conn, settings.profile_docs_dir, anos, perfil.Datos(
         valor="EJEMPLO: monitoreo GPS de flotas", numero="8", unidad="años"), None, 1024 * 1024, ana, ahora)
@@ -314,6 +317,7 @@ def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime,
         ("patente", _requisito(f"Aportar la patente municipal vigente. {p}3]", "legal", "documento", False)),
         ("tecnicos", _requisito(f"Indicar cuántos técnicos de soporte tiene la empresa. {p}4]", "tecnico",
                                 "numero", False, unidad="técnicos")),
+        ("soporte", _requisito(f"Indicar el horario del soporte técnico. {p}4]", "tecnico", "texto", False)),
         ("multa", _requisito(f"Multa / cláusula penal: 1 % por cada día de atraso en la entrega. {p}5]",
                              "financiero", "texto", False)),
         ("condicion", _requisito(f"Condición de la institución: pago a 30 días naturales. {p}5]", "financiero",
@@ -324,7 +328,12 @@ def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime,
     verificacion.elegir_perfil(conn, SEGUIDO, ids["patente"], patente, luis)
     asistente.empezar(conn, SEGUIDO, luis, ahora)
     asistente.responder(conn, settings, SEGUIDO, ids["sicop"], asistente.Entrada(valor_si_no="1"), None, luis, ahora)
-    return patente
+    asistente.responder(conn, settings, SEGUIDO, ids["patente"], asistente.Entrada(estado="archivo_pendiente"), None,
+                        luis, ahora)
+    asistente.responder(conn, settings, SEGUIDO, ids["soporte"],
+                        asistente.Entrada(valor_texto="EJEMPLO: de lunes a viernes, de 8 a. m. a 5 p. m."), None, luis,
+                        ahora)
+    return patente, elegibilidad.calcular(conn, SEGUIDO, luis, ahora)
 
 
 # --- Crear la base ----------------------------------------------------------------------------------------------
@@ -444,7 +453,7 @@ def crear(carpeta: Path = CARPETA_EJEMPLO, ahora: datetime | None = None) -> Cla
             **entorno(carpeta), "OPENAI_API_KEY": "clave-de-ejemplo-sin-uso", "IA_PRECIO_ENTRADA_USD": "1.00",
             "IA_PRECIO_SALIDA_USD": "5.00"}), PRINCIPAL, cliente=_OpenAIDeEjemplo(_resumen_de_ejemplo()),
             dormir=lambda s: None)
-        patente = _asistente(conn, settings, load_settings(env_file=None, environ={
+        patente, constancia = _asistente(conn, settings, load_settings(env_file=None, environ={
             **entorno(carpeta), "OPENAI_API_KEY": "clave-de-ejemplo-sin-uso", "IA_PRECIO_ENTRADA_USD": "1.00",
             "IA_PRECIO_SALIDA_USD": "5.00"}), ahora, ana, Quien(luis, ENCARGADO[1]))
 
@@ -462,7 +471,8 @@ def crear(carpeta: Path = CARPETA_EJEMPLO, ahora: datetime | None = None) -> Cla
 
         consulta, grabacion = _bitacora(conn, ahora)
     _golden(carpeta / "golden")
-    claves = Claves(PRINCIPAL, SEGUIDO, SIN_ENCARGADO, consulta, grabacion, ADMIN[0], CONTRASENA, patente)
+    claves = Claves(PRINCIPAL, SEGUIDO, SIN_ENCARGADO, consulta, grabacion, ADMIN[0], CONTRASENA, patente,
+                    constancia)
     (carpeta / "claves.json").write_text(json.dumps(asdict(claves), ensure_ascii=False, indent=2), encoding="utf-8")
     return claves
 

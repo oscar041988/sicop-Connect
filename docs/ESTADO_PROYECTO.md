@@ -22,6 +22,9 @@
   - Primera prueba real (Ivania, 2026-11-04, cartel 20261002824): «Falta información» (1 cumple, 10 falta, 1
     revisar excluyente), explicación de la IA coherente, 0,0035 USD. Única falla: la IA usaba las etiquetas
     internas «R1:», «R2:»… → prompt `explicacion_elegibilidad_v2` y la app las borra (`sin_referencias`).
+    Constancia: la columna «Estado» partía la etiqueta («Cu/mpl/e») → arreglado en `estilo.css`.
+  - Capturas de la misión 24 (2026-11-04): **8 de 8**, con la base de EJEMPLO (el seguido ahora trae un resultado
+    calculado sin IA: «Falta información», un «Revisar» y un archivo pendiente); misión 23 rehecha: 6 de 6.
   - **Pendiente · Ivania:** subir el ZIP del respaldo al Drive; probar los cuatro resultados en el panel;
     con Oscar, evaluar 5 carteles reales y anotar cada diferencia con su criterio; descargar una constancia y ver
     que se entiende sin abrir la app. Las reglas (sobre todo «archivo pendiente» y los «Revisar» excluyentes) se

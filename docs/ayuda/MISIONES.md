@@ -62,7 +62,7 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 | 21 | ¿Cómo veo y cargo el perfil de Hermatix? | Menú → Perfil → Elemento del perfil | `21-perfil.md` | Borrador (2026-11-03) |
 | 22 | ¿Cómo reviso la lista de verificación de un cartel? | Cartel → Lista de verificación | `22-lista-verificacion.md` | Borrador (2026-11-03) |
 | 23 | ¿Cómo respondo el asistente de elegibilidad? | Cartel: «Asistente de elegibilidad» | `23-asistente.md` | Borrador (2026-11-03) |
-| 24 | ¿Cómo sé si podemos participar? | Cartel: «Resultado» → constancia | `24-resultado.md` | Borrador (2026-11-04), sin capturas |
+| 24 | ¿Cómo sé si podemos participar? | Cartel: «Resultado» → constancia | `24-resultado.md` | Borrador (2026-11-04) |
 
 ## Dónde se ve la ayuda en la app
 

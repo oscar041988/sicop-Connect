@@ -15,7 +15,8 @@ from dataclasses import dataclass
 
 from app.ayuda.misiones import Marcador
 
-# Pantalla → dirección. {principal}, {seguido}, {sin_encargado}, {consulta} y {perfil} salen de claves.json.
+# Pantalla → dirección. {principal}, {seguido}, {sin_encargado}, {consulta}, {perfil} y {constancia} salen de
+# claves.json.
 PANTALLAS: dict[str, str] = {
     "Iniciar sesión": "/login",
     "Panel de carteles": "/oportunidades",
@@ -36,6 +37,8 @@ PANTALLAS: dict[str, str] = {
     "Elemento del perfil": "/perfil/{perfil}",
     "Lista de verificación": "/oportunidades/{principal}/verificacion",
     "Asistente": "/oportunidades/{seguido}",       # en seguimiento, con el asistente empezado
+    "Resultado": "/oportunidades/{seguido}",       # el mismo cartel, con un resultado ya calculado
+    "Constancia": "/oportunidades/{seguido}/asistente/resultados/{constancia}",
 }
 SIN_SESION = {"Iniciar sesión"}
 MENU = "header nav"
@@ -132,6 +135,11 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Asistente", "el avance"): Objetivo(selector=".asistente .avance"),
     ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),
     ("Asistente", "el dato del perfil"): Objetivo(selector=".perfil-dato"),
+    ("Resultado", "la sección «Resultado»"): Objetivo(selector="#resultado"),
+    ("Resultado", "el resultado"): Objetivo(selector=".resultado-eleg .resultado-titular"),
+    ("Resultado", "la tabla de requisitos"): Objetivo(selector=".resultado-eleg .tabla-resultado"),
+    ("Resultado", "«Cumple» y «No cumple»"): Objetivo(selector=".revisar-requisito"),
+    ("Constancia", "el detalle por requisito"): Objetivo(selector=".doc-resumen .tabla-resultado"),
     # Correo
     ("Correo", "el asunto"): Objetivo(selector=".asunto"),
     ("Correo", "el cuadro «Resumen con IA»"): Objetivo(selector="div", contiene="Resumen con IA · preliminar"),
