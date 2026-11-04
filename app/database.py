@@ -14,6 +14,10 @@ MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 
 # Nombre esperado: 0001_esquema_inicial.sql (4 dígitos, guion bajo, minúsculas).
 _MIGRATION_NAME = re.compile(r"^(\d{4})_[a-z0-9_]+\.sql$")
+# Una migración que reconstruye una tabla a la que otras apuntan lo pide con esta línea (procedimiento de 12 pasos de
+# la documentación de SQLite, «ALTER TABLE»): corre con las llaves foráneas apagadas y, ANTES de confirmar, se
+# revisan todas con PRAGMA foreign_key_check; si alguna quedó rota, no se aplica nada.
+SIN_LLAVES_FORANEAS = "-- migracion: sin llaves foraneas"
 
 
 class MigrationError(Exception):
@@ -96,9 +100,14 @@ def apply_migrations(path: Path, directory: Path = MIGRATIONS_DIR) -> list[str]:
         for migration in migrations:
             if migration.version in applied:
                 continue
+            sin_llaves = SIN_LLAVES_FORANEAS in migration.sql
+            if sin_llaves:
+                conn.execute("PRAGMA foreign_keys = OFF")   # solo fuera de una transacción tiene efecto
             try:
                 # Todo el archivo y su registro van en una sola transacción: o se aplica completo o nada.
                 conn.executescript("BEGIN;\n" + migration.sql)
+                if sin_llaves and (rotas := conn.execute("PRAGMA foreign_key_check").fetchall()):
+                    raise sqlite3.IntegrityError(f"quedarían {len(rotas)} llaves foráneas rotas (p. ej. {rotas[0]})")
                 conn.execute(
                     "INSERT INTO schema_migrations (version, name, checksum, applied_at) VALUES (?, ?, ?, ?)",
                     (migration.version, migration.name, migration.checksum,
@@ -109,6 +118,9 @@ def apply_migrations(path: Path, directory: Path = MIGRATIONS_DIR) -> list[str]:
                 if conn.in_transaction:
                     conn.execute("ROLLBACK")
                 raise MigrationError(f"Falló {migration.name}: {exc}") from exc
+            finally:
+                if sin_llaves:
+                    conn.execute("PRAGMA foreign_keys = ON")
             done.append(migration.name)
         return done
 

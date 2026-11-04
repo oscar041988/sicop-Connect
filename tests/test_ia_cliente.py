@@ -125,6 +125,7 @@ def test_respuesta_incompleta_se_anota(db):
 @pytest.mark.parametrize("exc, motivo", [
     (error(openai.AuthenticationError, 401, "invalid_api_key"), "AuthenticationError 401 · invalid_api_key"),
     (error(openai.RateLimitError, 429, "insufficient_quota"), "RateLimitError 429 · insufficient_quota"),
+    (error(openai.RateLimitError, 429, "credit_balance_exhausted"), "RateLimitError 429 · credit_balance_exhausted"),
     (error(openai.NotFoundError, 404, "model_not_found"), "NotFoundError 404 · model_not_found"),
     (error(openai.BadRequestError, 400), "BadRequestError 400"),
 ])

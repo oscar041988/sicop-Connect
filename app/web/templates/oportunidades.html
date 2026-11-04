@@ -16,7 +16,7 @@
 <details class="filtros-caja" {% if filtros.familia or filtros.institucion or filtros.plazo or filtros.tipo or filtros.prioridad != "candidatos" %}open{% endif %}>
   <summary>Más filtros</summary>
   <form class="filtros" method="get" action="/oportunidades">
-    <label>Prioridad
+    <label>{{ termino("Prioridad") }}
       <select name="prioridad">
         {% for valor in prioridades %}
         <option value="{{ valor }}" {% if filtros.prioridad == valor %}selected{% endif %}>
@@ -25,7 +25,7 @@
         {% endfor %}
       </select>
     </label>
-    <label>Familia
+    <label>{{ termino("Familia") }}
       <select name="familia">
         <option value="">Todas</option>
         {% for valor, texto in opciones.familias %}
@@ -41,7 +41,7 @@
         {% endfor %}
       </select>
     </label>
-    <label>Plazo
+    <label>{{ termino("Plazo") }}
       <select name="plazo">
         <option value="">Vigentes (sin vencidos)</option>
         {% for valor, texto in PLAZOS.items() %}
@@ -90,17 +90,17 @@
           {% elif f.decision == "ofertada" %}<span class="tag">Ofertada</span>
           {% elif f.decision == "no_se_oferta" %}<span class="tag g">No se oferta</span>{% endif %}
           {% set s = seguimientos.get(f.nro_sicop) %}
-          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }}</span>{% endif %}
+          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }} · {{ s.etapa_texto | lower }}</span>{% endif %}
         </div>
         <h3><a href="/oportunidades/{{ f.nro_sicop }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
         <div class="inst">{{ f.institucion | legible or "Sin datos de la institución" }}</div>
       </div>
-      <div class="score score-{{ f.encaje }}"><b>{{ ENCAJES[f.encaje] }}</b><span>prioridad</span></div>
+      <div class="score score-{{ f.encaje }}"><b>{{ ENCAJES[f.encaje] }}</b><span>{{ termino("Prioridad", "prioridad") }}</span></div>
     </div>
 
     <dl class="meta">
       <div><dt>Monto estimado</dt><dd>{% for moneda, m in f.estimado.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}Sin dato{% endfor %}</dd></div>
-      <div><dt>Cierre de ofertas</dt><dd>{{ f.fecha_cierre | fecha }}{% if f.plazo in ("abierto", "cierra_7_dias") %}<br><small>{{ regresiva(f.fecha_cierre) }}</small>{% endif %}</dd></div>
+      <div><dt>{{ termino("Cierre", "Cierre de ofertas") }}</dt><dd>{{ f.fecha_cierre | fecha }}{% if f.plazo in ("abierto", "cierra_7_dias") %}<br><small>{{ regresiva(f.fecha_cierre) }}</small>{% endif %}</dd></div>
       <div><dt>Modalidad</dt><dd>{{ f.tipo_procedimiento or "Sin dato" }}</dd></div>
     </dl>
 

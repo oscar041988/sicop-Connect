@@ -103,7 +103,8 @@ Construido y probado el 2026-10-28 **sin clave y sin llamar a OpenAI**: las prue
 
 Como máximo **2 reintentos** (3 intentos en total), con pausas de 2 s y 6 s, y solo ante errores **temporales**:
 límite de uso (429), error del servidor (5xx), tiempo agotado y conexión. **Nunca** ante clave inválida (401),
-permiso (403), petición mala (400), modelo no encontrado (404) ni falta de saldo (429 `insufficient_quota`).
+permiso (403), petición mala (400), modelo no encontrado (404) ni falta de saldo (429 `insufficient_quota` o
+`credit_balance_exhausted`).
 El SDK no reintenta por su cuenta (`max_retries=0`).
 
 ### Qué guarda `ia_usage` (migración 0023)
@@ -119,7 +120,178 @@ la clave. No se modifica ni se borra. Además se pide a OpenAI no guardar la res
 `python -m app.cli ia probar`: una llamada corta («Responde solo: OK»). Muestra modelo, tokens, duración, costo
 estimado y la respuesta, y la anota en `ia_usage`. Con `AI_MODE=none` dice «IA apagada» y no llama.
 
-## 4. Pendiente de la lección 1
+## 4. Resumen ejecutivo (lección 3)
+
+`python -m app.cli ia resumir --nro 20261002824` pide al modelo el resumen del cartel (`app/ai/resumen.py`), lo
+guarda en `ia_summaries` (migración 0026) y deja una copia para leer en `EXPORTS_DIR/resumen_<nro>_<fecha-hora>.txt`.
+Construido el 2026-10-29 con un OpenAI SIMULADO en las pruebas; los resúmenes reales los genera Ivania.
+
+### Prompt versionado
+
+- `config/prompts/resumen_cartel_v1.md`: el prompt del sistema de la guía, con el portafolio de las 9 familias de
+  `config/hermatix_rules.yaml` y un apartado de formato (fechas AAAA-MM-DD HH:MM, montos sin separador de miles)
+  para poder compararlos con SICOP.
+- `IA_PROMPT_VERSION` (por defecto `v1`) dice cuál se usa. Un cambio se guarda como `v2`, `v3`…; **nunca** se edita
+  una versión ya usada, porque los resúmenes guardados dicen con qué versión se hicieron.
+- **`v2` (2026-10-30), con el criterio de Hermatix dado por Ivania:** lo que decide es **qué piden**; todo cartel
+  alineado con los servicios vale la pena, sin importar monto, cantidad, garantías ni plazo de entrega (se negocian).
+  Hermatix tiene 14 años en funcionamiento (experiencia de la empresa de hasta 14 años: se cumple; lo que no se pueda
+  confirmar, como cantidad de contratos, es duda y no descarte). Marcas propias: Wialon y Howen; otra marca exigida →
+  riesgo y «revisar requisitos». Descartar solo si lo que piden no se alinea. La `v1` queda igual (sin criterio).
+  Se activa con `IA_PROMPT_VERSION=v2` en `.env`; entonces todos los carteles vuelven a la cola.
+- **`v3` (2026-11-03), tras revisar 3 carteles reales contra su pliego:** a las listas de verificación les faltaban
+  la garantía de cumplimiento (la v2 la mandaba solo a los indicadores) y las especificaciones técnicas (solo en
+  «qué piden»). La regla 5b define requerimiento como todo lo que la empresa debe presentar, cumplir o
+  comprometerse a hacer, y nombra lo que no puede faltar: garantías con % y plazo, plazos de entrega/instalación/
+  atención, vigencia de la oferta, muestras, subcontratación, declaraciones; especificaciones = un requerimiento
+  por cada especificación, como el pliego las numera, y ninguno se omite por fácil u obvio: el encargado ve todos y
+  decide (regla de Ivania, 2026-11-03; la v3 se ajustó antes de usarse). También las multas y cláusulas penales
+  («Multa / cláusula penal: …») y las condiciones de la institución («Condición de la institución: …»).
+  El texto de cada requisito es **copia literal del pliego** entre «…» (decisión de Ivania tras revisar el cartel
+  de cámaras: la IA lo decía igual pero con otras palabras); solo se corta con «…» lo que no es requisito.
+- **Lista de verificación `lista_verificacion_v2.md` (2026-11-03):** si el pliego pide presentar, aportar,
+  adjuntar, acreditar, certificar o declarar algo, la evidencia es «documento» (la v1 ponía de ejemplo de «sí o
+  no» estar al día con la CCSS, que el pliego pedía como documento). «Sí o no» queda solo para compromisos sin
+  papel. `VERSION = "v2"` en `app/ai/verificacion.py`; cada generación guarda la versión. Necesita subir `IA_MAX_OUTPUT_TOKENS`
+  (4000 no alcanza para más de 90 requisitos). La regla 8 aclara que garantías y plazos
+  van también en requerimientos, sin ser motivo para descartar. El criterio de Hermatix y el esquema no cambian.
+  **Probar sin activarla:** `python -m app.cli ia resumir --nro N --prompt v3` usa la v3 solo para ese cartel (no
+  toca `.env` ni la cola). Activarla para todos (`IA_PROMPT_VERSION=v3`) devuelve todos los carteles a la cola.
+
+### Salida estructurada
+
+Se le da al modelo un esquema (JSON Schema, modo estricto) y OpenAI obliga a que la respuesta lo cumpla. Campos:
+de qué trata · qué piden (línea, bien o servicio, cantidad, especificaciones, cita) · requerimientos (tipo técnico
+/ legal / financiero / experiencia, excluyente, cita) · indicadores del pliego (plazo de entrega, vigencia,
+garantías de participación y cumplimiento, peso del precio, nivel de riesgo) · plazos (cierre, apertura, otros) ·
+monto estimado · criterios de evaluación · encaje con Hermatix · riesgos y dudas · recomendación preliminar
+(dar seguimiento · revisar requisitos · descartar) y su justificación. Cada dato lleva su cita `[DOC n · pág. p]`
+o «SICOP»; lo que falte dice «no encontrado».
+
+### Comparación con SICOP
+
+Cierre y apertura (día, y la hora si el resumen la da), monto estimado de la ficha y cantidad de cada línea. Si
+alguno no coincide, el resumen queda **«revisar»** y la diferencia se guarda y se muestra. El monto y las fechas
+del resumen solo sirven para esa comparación: en el reporte (lección 4) los indicadores de SICOP los pone la app.
+
+### Estados y no repetir
+
+- `ok` · `revisar` · `fallido` (rechazo del modelo, respuesta incompleta, JSON inválido o error de OpenAI: sin
+  resumen, con su motivo; nunca se inventa uno).
+- Misma huella del expediente y misma versión del prompt con un resumen `ok` o `revisar` = **no se vuelve a
+  llamar** a OpenAI. Un `fallido` sí se vuelve a pedir. Nada se sobrescribe ni se borra.
+- La recomendación no toca revisiones, decisiones ni seguimientos.
+
+## 5. Cola automática y panel (lección 5, primera parte)
+
+Pedido de Ivania (2026-10-30): que los resúmenes no dependan de correr `ia resumir` a mano. Decisiones de Ivania,
+provisionales hasta que Oscar decida (`DECISION_IA.md` §5): **carteles Alta, Media y Baja enriquecidos** (Baja agregado el mismo día), presupuesto
+de **10 resúmenes y 1.00 USD al día**.
+
+- `python -m app.cli ia cola` (`app/ai/cola.py`) la corre la tarea de las 10:00, después del enriquecimiento. Cola,
+  presupuesto, fallos y cómo apagarla: `docs/OPERACION.md` §3.3. `ia cola --ver` la muestra sin llamar a OpenAI.
+- **Panel:** en la página de un cartel del panel, el bloque «Resumen ejecutivo · Generado por IA · verificar con
+  el pliego»: fecha, modelo, versión del prompt y estado; las diferencias con SICOP si quedó «revisar»; la
+  recomendación preliminar («la decisión es del encargado»); qué trata y el encaje; el resto (qué piden,
+  requerimientos con su cita, indicadores, plazos, criterios, riesgos) al abrir «Ver el resumen completo»; y el
+  historial de resúmenes. Todo el texto del modelo va escapado. Con `AI_MODE=none` no aparece.
+- **Falta de la lección 5:** ~~citas como enlaces~~ (hecho, 30/10); la casilla «coincido / no coincido» junto a la
+  decisión (**pospuesta por Ivania, 30/10**: Oscar quiere el resumen para leer rápido; los desacuerdos se reportan a
+  mano hasta que sean frecuentes); el reporte de 2 páginas (lección 4) en la misma cola; ~~la línea del resumen en el correo diario~~ (hecho, 30/10: ver abajo); la
+  vista de uso del día y del mes; el despliegue en el servidor.
+
+### Extracto en el correo diario (2026-10-30)
+
+Con `AI_MODE=openai`, cada cartel del correo de las 8:00 que ya tiene resumen trae un recuadro «Resumen con IA ·
+preliminar, verificar con el pliego»: la recomendación con su justificación, de qué trata (hasta 300 caracteres) y
+el enlace «Leer el resumen completo» (`/oportunidades/{nro}/resumen`). Decisión de Ivania: el correo sigue a las
+8:00 (Oscar); como los resúmenes se hacen después de las 10:00, un cartel nuevo casi siempre llega sin resumen y el
+correo dice «todavía no está… se ve en el panel». Con `AI_MODE=none` el correo no menciona el resumen.
+
+## 6. Lista de verificación (asistente de elegibilidad, lección 2; 2026-11-02)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/verificacion.py`; prompt versionado
+`config/prompts/lista_verificacion_v1.md`; pantalla `/oportunidades/{nro}/verificacion`; terminal
+`python -m app.cli ia verificar --nro N`.
+
+- **Se envía:** los requerimientos del último resumen ok o revisar, numerados (R1, R2…, con tipo, excluyente y
+  cita) y el **mismo expediente** del resumen (decisión de Ivania). Nada del perfil de Hermatix: lo comprueba una
+  prueba (`tests/test_verificacion.py`).
+- **La IA solo agrega** tipo de evidencia (número, sí o no, fecha, documento, texto), mínimo, unidad, citas y si un
+  requisito repite a otro. El requisito, su tipo y si es excluyente salen del resumen.
+- **Mínimos inventados:** un número o una fecha del mínimo que no aparece en el requerimiento ni en el expediente se
+  descarta y queda «no indicado» (los números escritos en palabras, «tres años», cuentan).
+- Un requerimiento que la IA no devuelva igual queda en la lista (texto, no indicado). Los repetidos se juntan con
+  todas sus citas.
+- **Volver a generar** no toca lo corregido, agregado o quitado por una persona (`eligibility_items`, migración
+  0030). Cada cambio queda en `audit_log`; cada generación en `eligibility_generations` y su costo en `ia_usage`
+  (propósito `verificacion`).
+- No llama a OpenAI sin resumen, con `AI_MODE=none` o si el costo del día ya llegó a `IA_MAX_DAILY_COST`.
+
+## 7. Preguntas del asistente de elegibilidad (lección 3; 2026-11-03)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/asistente.py`; prompt versionado
+`config/prompts/asistente_elegibilidad_v1.md` (el de la guía, adaptado a una pregunta por requisito).
+
+- **Cuándo:** una vez por cartel, al «Empezar el asistente», y con «Redactar con IA las preguntas que arma la app»
+  (requisitos agregados o corregidos después). En tandas de 30 requisitos para no pasar `IA_MAX_OUTPUT_TOKENS`.
+  Costo en `ia_usage` con propósito `asistente`.
+- **Se envía SOLO la lista de verificación:** requisito, tipo de respuesta, mínimo, excluyente y cita. Nunca el
+  perfil, las respuestas, los archivos ni su texto (lo comprueba `tests/test_asistente.py`). Las multas y
+  condiciones de la institución no se envían: no se preguntan.
+- **La app no depende de la IA:** con `AI_MODE=none`, sin presupuesto, si falla o si la respuesta no sirve, el
+  asistente usa las preguntas que arma la app con el requisito, su mínimo y su cita, y muestra el motivo. Si la IA
+  olvida la cita, la app la agrega.
+- **Revisión rápida (2026-11-04, decisión de Oscar; migración 0034):** el asistente pregunta primero solo los
+  excluyentes y muestra el resultado rápido (la app, sin guardar: «Queda fuera» · «Faltan excluyentes por
+  confirmar» · «Los excluyentes cumplen»). El resto se abre con «Seguir con los demás requisitos» (queda quién y
+  cuándo). La IA redacta igual todas las preguntas de una vez: no cambia lo que recibe ni el costo.
+- **No decide:** la IA solo redacta preguntas. Las respuestas las da una persona y la evaluación es de la lección 4.
+
+## 8. Explicación del resultado de elegibilidad (lección 4; 2026-11-04)
+
+Aprobado por Oscar en `docs/DECISION_IA.md` §7. Reglas: `app/elegibilidad.py`; IA: `app/ai/explicacion.py`, prompt
+versionado `config/prompts/explicacion_elegibilidad_v2.md`; migración 0033.
+
+- **v2 (2026-11-04):** en la primera constancia real (#1, cartel 20261002824) la IA empezó cada línea con «R1:»,
+  «R2:»…, las etiquetas internas de la lista que recibe. El v2 le pide nombrar el requisito con sus palabras y la
+  app las borra igual (`explicacion.sin_referencias`). El v1 queda como estaba; la constancia #1 no se modifica.
+
+- **La app compara, la IA explica.** El estado de cada requisito (cumple · no cumple · falta · revisar) y el
+  resultado global (puede participar · puede si completa · no cumple un excluyente · falta información) los calcula
+  la app: sí/no, número contra su mínimo («al menos» → ≥, «máximo» → ≤; si el texto no lo dice, revisar) y
+  documento contra el cierre del cartel. Lo que no se puede comparar lo decide una persona («Cumple / No cumple»),
+  atado a la respuesta que miró.
+- **Qué recibe la IA:** el resultado ya calculado y, por requisito, si es excluyente, su estado, el motivo y la
+  respuesta escrita. **Nunca** archivos, su texto ni sus nombres, ni las notas. Propósito `explicacion` en
+  `ia_usage`; cuenta para el presupuesto del día.
+- **No puede cambiar el resultado:** la app pone el titular y el aviso fijo. Si el texto de la IA nombra otro
+  resultado (`explicacion.contradice`), se descarta y queda la explicación de la app con el motivo; lo mismo con
+  `AI_MODE=none`, sin presupuesto o si falla.
+- **Constancia:** cada cálculo queda en `eligibility_results` (no se borra ni se modifica) con el detalle de cada
+  requisito y su respuesta, la versión de la lista y el origen de la explicación. Se ve y se descarga como PDF
+  desde el navegador (`/oportunidades/<nro>/asistente/resultados/<id>`, «Descargar» = `?imprimir=1`).
+
+## 9. Reporte de cartel Hermatix en PDF (lección 4; 2026-11-04)
+
+Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`, migración 0036 (`ia_reports`).
+
+- **La IA alimenta, la app arma:** el diseño, el orden, los límites y los 6 KPI de SICOP (monto estimado por
+  moneda, líneas y unidades, cierre y días, estado, tipo de procedimiento, encaje de las reglas) los pone la app
+  desde la base, igual que el panel. El monto del resumen (`monto_estimado` del modelo) no se usa. Del resumen salen
+  solo los textos y los KPI del pliego, con su cita; «no encontrado» se ve así.
+- **Máximo 2 páginas:** límites por sección (8 filas de «Qué piden», 10 requerimientos con los excluyentes primero,
+  textos de hasta 200 caracteres) y «y N más en el panel». Si el PDF pasa de 2 páginas se rehace con límites más
+  cortos; si tampoco cabe, error y no se guarda. Probado con los 24 carteles reales con resumen (20 con los
+  límites normales, 4 con los cortos).
+- **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
+  partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
+- **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo
+  como `…_reportes.zip`). Si el resumen no cambió se reutiliza el último; nunca se borra ni se sobrescribe uno.
+- **Cómo se pide:** botón «Reporte PDF» en la fila del resumen del cartel, o `python -m app.cli ia reporte --nro N`
+  (`--nuevo` para generar otro aunque el resumen sea el mismo).
+
+## 10. Pendiente de la lección 1
 
 - Ivania lee completos los 3 expedientes reales y ajusta el orden o el límite si hace falta.
 - Word y Excel (por ejemplo «Presupuesto detallado.xlsx», «Lista de insumos.xlsx») hoy no aportan texto; leerlos

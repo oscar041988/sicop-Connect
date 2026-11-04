@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block titulo %}Perfil de Hermatix{% endblock %}
+{% block contenido %}
+{# Asistente de elegibilidad, lección 1: datos y documentos de la empresa (app/perfil.py) #}
+<section>
+  <h1>Perfil de Hermatix</h1>
+  <p class="sub">Los datos y documentos de la empresa que piden los carteles, guardados una sola vez y con su
+    vencimiento. Son confidenciales: cada vez que alguien ve o descarga un documento, queda registrado.
+    {% if not es_admin %}Solo los administradores cargan o cambian los datos.{% endif %}</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% if avisos %}
+  <div class="aviso-perfil">
+    <strong>Revisar pronto:</strong>
+    <ul>
+      {% for e in avisos %}
+      <li><a href="/perfil/{{ e.id }}">{{ e.titulo }}</a>:
+        {% if e.estado == "vencido" %}venció el {{ e.vigente.vence_el | dia }}{% else %}vence el
+        {{ e.vigente.vence_el | dia }} (en {{ e.dias }} día{{ "s" if e.dias != 1 }}){% endif %}</li>
+      {% endfor %}
+    </ul>
+    <small>Se avisa {{ dias_aviso }} días antes de que venza.</small>
+  </div>
+  {% endif %}
+</section>
+
+{% for tipo, nombre in TIPOS.items() %}
+{% set lista = elementos | selectattr("tipo", "equalto", tipo) | list %}
+{% if lista or sugerencias.get(tipo) %}
+<section>
+  <h2>{{ nombre }}</h2>
+  {% if lista %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Elemento</th><th>Dato</th><th>Estado</th><th>Vence</th><th>Documento</th></tr></thead>
+    <tbody>
+      {% for e in lista %}
+      {% set v = e.vigente %}
+      <tr>
+        <td><a href="/perfil/{{ e.id }}">{{ e.titulo }}</a></td>
+        <td>{% if v and not v.pendiente %}{{ v.valor or "" }}{% if v.numero %}{{ " · " if v.valor }}{{ v.numero }}
+          {{ v.unidad or "" }}{% endif %}{% else %}—{% endif %}</td>
+        <td><span class="estado-perfil estado-{{ e.estado }}">{{ e.estado_texto }}</span></td>
+        <td>{{ v.vence_el | dia if v and v.vence_el and not v.pendiente else "—" }}</td>
+        <td class="botones">{% if v and v.tiene_archivo %}
+          {% if v.vista %}<a class="btn p" href="/perfil/{{ e.id }}/versiones/{{ v.id }}/ver" target="_blank" rel="noopener">Ver</a>{% endif %}
+          <a class="btn o" href="/perfil/{{ e.id }}/versiones/{{ v.id }}/archivo">Descargar</a>
+          {% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+  {% if sugerencias.get(tipo) %}
+  <div class="sugerencias-perfil">
+    <p class="sub">Sugeridos (borrador: falta que Oscar apruebe la lista). Se agregan como «pendiente».</p>
+    {% for s in sugerencias[tipo] %}
+    <form method="post" action="/perfil">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="tipo" value="{{ tipo }}">
+      <input type="hidden" name="titulo" value="{{ s }}">
+      <button type="submit" class="btn o">+ {{ s }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endfor %}
+
+{% if not elementos and not es_admin %}
+<p class="vacio">Todavía no hay elementos en el perfil. Los agrega un administrador.</p>
+{% endif %}
+
+{% if es_admin %}
+<section>
+  <h2>Agregar elemento</h2>
+  <form class="revision acceso" method="post" action="/perfil" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Tipo
+      <select name="tipo" required>
+        <option value="">—</option>
+        {% for t, n in TIPOS.items() %}
+        <option value="{{ t }}" {% if formulario.get("tipo") == t %}selected{% endif %}>{{ n }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Título
+      <input type="text" name="titulo" maxlength="150" required value="{{ formulario.get('titulo', '') }}"
+             placeholder="Por ejemplo: Póliza de riesgos del trabajo (INS)">
+    </label>
+    {% include "_perfil_campos.html" %}
+    <p class="sub">Si todavía no tienes el dato ni el documento, deja esos campos vacíos: queda «pendiente».</p>
+    <button type="submit">Agregar</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

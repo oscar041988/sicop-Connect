@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titulo %}{{ e.titulo }} · Perfil{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="/perfil">← Perfil de Hermatix</a></p>
+
+<section class="ficha">
+  <p class="sub">{{ e.tipo_texto }}</p>
+  <h1>{{ e.titulo }}</h1>
+  <p><span class="estado-perfil estado-{{ e.estado }}">{{ e.estado_texto }}</span>
+    {% if e.estado == "vencido" %}venció el {{ e.vigente.vence_el | dia }}
+    {% elif e.estado == "por_vencer" %}vence el {{ e.vigente.vence_el | dia }} (en {{ e.dias }} día{{ "s" if e.dias != 1 }})
+    {% endif %}</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% set v = e.vigente %}
+  {% if v and not v.pendiente %}
+  <dl class="datos">
+    <div><dt>Dato</dt><dd>{{ v.valor or "—" }}</dd></div>
+    <div><dt>Número</dt><dd>{% if v.numero %}{{ v.numero }} {{ v.unidad or "" }}{% else %}—{% endif %}</dd></div>
+    <div><dt>Vigencia</dt><dd>Desde {{ v.vigente_desde | dia }}<br>Vence {{ v.vence_el | dia if v.vence_el else "no vence" }}</dd></div>
+    <div><dt>Documento</dt><dd>{% if v.tiene_archivo %}{{ v.archivo_nombre }}<br>
+      {% if v.vista %}<a href="/perfil/{{ e.id }}/versiones/{{ v.id }}/ver" target="_blank" rel="noopener">Ver</a> · {% endif %}
+      <a href="/perfil/{{ e.id }}/versiones/{{ v.id }}/archivo">Descargar</a>{% else %}—{% endif %}</dd></div>
+  </dl>
+  {% if v.nota %}<p>{{ v.nota }}</p>{% endif %}
+  <p class="sub">Cargado por {{ v.cargado_por }} el {{ v.fecha | fecha }}.</p>
+  {% else %}
+  <p class="vacio">Pendiente: todavía no se cargó el dato ni el documento.{% if v and v.nota %} Nota: {{ v.nota }}{% endif %}</p>
+  {% endif %}
+</section>
+
+{% if es_admin %}
+<section>
+  <h2>{% if v and not v.pendiente %}Reemplazar o actualizar{% else %}Cargar los datos{% endif %}</h2>
+  <form class="revision acceso" method="post" action="/perfil/{{ e.id }}/version" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% include "_perfil_campos.html" %}
+    <p class="sub">La versión de ahora no se borra: queda en el historial.</p>
+    <button type="submit">Guardar</button>
+  </form>
+  <form class="form-nota" method="post" action="/perfil/{{ e.id }}/pendiente">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Nota (opcional)
+      <input type="text" name="nota" maxlength="1000" placeholder="Por ejemplo: la póliza se está renovando">
+    </label>
+    <button type="submit" class="btn o">Marcar pendiente</button>
+  </form>
+</section>
+{% endif %}
+
+<section>
+  <h2>Historial de versiones</h2>
+  {% if versiones %}
+  <ol class="historial">
+    {% for x in versiones %}
+    <li>{% if x.pendiente %}Pendiente{% else %}{{ x.valor or "" }}{% if x.numero %}{{ " · " if x.valor }}{{ x.numero }} {{ x.unidad or "" }}{% endif %}
+      {% if x.vence_el %}· vence {{ x.vence_el | dia }}{% endif %}{% endif %}
+      {% if x.tiene_archivo %}· <a href="/perfil/{{ e.id }}/versiones/{{ x.id }}/archivo">{{ x.archivo_nombre }}</a>{% endif %}
+      {% if x.nota %}· {{ x.nota }}{% endif %}
+      · {{ x.cargado_por }} · {{ x.fecha | fecha }}{% if loop.first %} <small>(vigente)</small>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin versiones todavía.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Quién vio o descargó los documentos</h2>
+  {% if accesos %}
+  <ol class="historial">
+    {% for a in accesos %}<li>{{ ACCIONES.get(a.accion, a.accion) }}: {{ a.detalle }} · {{ a.actor }} · {{ a.fecha | fecha }}</li>{% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Nadie ha visto ni descargado estos documentos todavía.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Cambios</h2>
+  {% if cambios %}
+  <ol class="historial">
+    {% for c in cambios %}<li>{{ ACCIONES.get(c.accion, c.accion) }}: {{ c.detalle }} · {{ c.actor }} · {{ c.fecha | fecha }}</li>{% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin cambios registrados.</p>
+  {% endif %}
+</section>
+{% endblock %}

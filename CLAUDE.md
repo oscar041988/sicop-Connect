@@ -11,7 +11,8 @@ Estado y siguiente tarea: docs/ESTADO\_PROYECTO.md.
 \## Stack
 
 Python 3.12+ · FastAPI · Jinja2 + HTML/CSS · SQLite · pytest. Sin API de IA, con una excepción: la API de
-OpenAI solo para el Reporte de cartel, con las reglas de docs/DECISION_IA.md (aceptado por Oscar el 2026-10-29).
+OpenAI solo para el Reporte de cartel y el asistente de elegibilidad, con las reglas de docs/DECISION_IA.md
+(aceptado por Oscar el 2026-10-29; asistente aprobado el 2026-11-02, §7).
 
 Desarrollo en Windows (PowerShell); producción Linux + systemd.
 

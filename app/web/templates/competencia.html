@@ -12,7 +12,7 @@
 <details class="filtros-caja" open>
   <summary>Periodo y prioridad</summary>
   <form class="filtros" method="get" action="/competencia">
-    <label>Adjudicado en firme desde
+    <label>{{ termino("Adjudicado", "Adjudicado en firme desde") }}
       <input type="date" name="desde" value="{{ filtro.desde or '' }}">
     </label>
     <label>Hasta

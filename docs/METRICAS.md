@@ -84,6 +84,25 @@ métrica que la guía considera más valiosa para Hermatix (sección 22).
 - Informe final escrito por Ivania (Google Docs).
 - Reto de comprensión: el de la semana 2 sigue pendiente con Oscar.
 
+## Semana 4 — enriquecimiento, reporte con IA y mejoras de Oscar (26 al 29/10)
+
+Igual que la semana 3: trabajo en local, fuera del orden de la guía; se registran las horas reales y lo que se hizo.
+El sábado 24 y el domingo 25 no se trabajó.
+
+### Horas reales por día
+
+| Día | Horas | Trabajo | Fuente |
+|---|---|---|---|
+| lun 26/10 | 7 h | mejoras de la exposición con Oscar (ayuda en «Cargar archivo», eliminar usuario, obtención en dos turnos y envío real en código); gestor de documentos paso 1A; los vencidos salen del panel; propuesta «telemetría»; 7 competidores con nombre; informe (secciones 6, 7 y 9); respaldos al Drive | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| mar 27/10 | 7 h | enriquecimiento lecciones 1 a 4 (exploración, fichas, documentos, cola y tarea de las 10:00, panel, reglas sobre los PDF), con 4 pruebas reales; PR #4 | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| mié 28/10 | 7 h | primera corrida automática del enriquecimiento (13 de 13); arreglo del ciclo que no corrió (despertar la computadora); reporte con IA lecciones 1 (expedientes leídos, 3 hallazgos) y 2 (cliente de OpenAI sin clave) | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| jue 29/10 | 7 h | `DECISION_IA.md` aceptado; primera prueba con OpenAI (401); botón «Ver» en los documentos; esquema del informe (6 y 9) al día; autoevaluaciones (enriquecimiento 1 a 4, IA 1); PR #4 | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| **Total** | **28 h** | | |
+
+### Uso de Claude
+
+No registrado.
+
 ## Métricas del mes (guía, sección 22) — preliminar al 23/10
 
 **Preliminar.** La lección 19 (29/10) calcula las métricas del mes con dos semanas de uso real en el servidor;
@@ -130,7 +149,8 @@ próximo ajuste de reglas.
 | 1 (06–09/10) | 25,5 h | % semanal al cierre: 24 % (09/10) | `docs/BITACORA.md` |
 | 2 (12–20/10) | 49 h | 33 % el 12/10; después, no registrado | sección «Semana 2» |
 | 3 (21–23/10) | 21 h | no registrado | sección «Semana 3» |
-| **Total** | **95,5 h** | incompleto | |
+| 4 (26–29/10) | 28 h | no registrado | sección «Semana 4» |
+| **Total** | **123,5 h** | incompleto | |
 
 Interacciones totales y veces que se agotó la ventana: **no registradas**. Comparación con la estimación del anexo
 A de la guía: pendiente para la lección 19.

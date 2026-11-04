@@ -1,7 +1,7 @@
 # Gestor de documentos
 
 > Mejora pedida por Oscar (nombre suyo: «Gestor de documentos»). Requerimientos contados por Ivania y ordenados
-> con Claude el 2026-10-26. **Estado: paso 1A hecho (2026-10-26, solo local, sin unir a `main`).** Se construye
+> con Claude el 2026-10-26. **Estado: los 5 pasos hechos (1A el 2026-10-26; 1B, 2 y 5 el 2026-10-29; 3 y 4 el 2026-10-30), solo local.** Se construye
 > poco a poco: cada paso se prueba y
 > se entrega por separado (en `desarrollo`, solo local, como todo desde el 21/10).
 
@@ -50,11 +50,11 @@ Lo demás se decidió el 2026-10-26 (tabla de arriba).
 | Paso | Qué agrega | Necesita |
 |---|---|---|
 | 1A | Botón «Dar seguimiento», marca «En seguimiento · <nombre>», página «Seguimiento», expediente con encargado e historial de quién lo tuvo; solo el administrador asigna | **Hecho** (2026-10-26) |
-| 1B | Correo al nuevo encargado, con el ciclo diario | Paso 1A |
-| 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | Paso 1 |
-| 3 | Notas con autor y fecha | Paso 1 |
-| 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | Pasos 2 y 3 |
-| 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | Paso 1A |
+| 1B | Correo al nuevo encargado, con el ciclo diario | **Hecho** (2026-10-29) |
+| 2 | Subir y bajar archivos (PDF, Word, Excel, ZIP; 10 MB) | **Hecho** (2026-10-29) |
+| 3 | Notas con autor y fecha | **Hecho** (2026-10-30) |
+| 4 | «Descargar expediente»: un ZIP con archivos, notas e historial (el traspaso) | **Hecho** (2026-10-30) |
+| 5 | Etapas del seguimiento: preparando · enviada · ganada · perdida | **Hecho** (2026-10-29) |
 
 El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las notas no tienen dónde colgarse.
 
@@ -71,6 +71,94 @@ El paso 1 va primero aunque se vea poco: sin expediente, los archivos y las nota
 - **Pruebas:** `tests/test_seguimiento.py` (10, datos SINTÉTICOS). La de acceso se comprobó con la regla rota a
   propósito: falla.
 - **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0015).
+
+### Paso 1B, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Al asignar o cambiar el encargado** queda un aviso «preparado» en la outbox (motivo `asignacion`, migración
+  `0024_aviso_encargado.sql`), en la misma transacción que la asignación. Va al correo del usuario encargado: no
+  tiene que estar en «Destinatarios». Clave de deduplicación: encargado | N.º SICOP | id de la asignación |
+  `asignacion`. Si el administrador se asigna a sí mismo, no se prepara.
+- **Sale con el ciclo diario** (`app/aviso_encargado.py`, paso nuevo de `run-cycle`), en dry-run o real según el
+  ciclo, aunque la fuente haya fallado (no depende de los datos del día). Un correo por encargado con todas sus
+  asignaciones: título, institución, cierre, quién lo asignó, quién lo tenía antes y el enlace al expediente.
+- **Solo lo vigente:** si el cartel cambió de encargado antes del envío o el usuario se desactivó, ese aviso no
+  sale (queda «preparado», no se borra). Un cartel ya cerrado sí sale: el expediente sigue sirviendo.
+- **No entra en el correo diario** de oportunidades. Si falla, aparece en «Avisos» como «Correo al nuevo
+  encargado» y se reintenta mientras la asignación siga vigente.
+- **Pruebas:** `tests/test_aviso_encargado.py` (11, datos SINTÉTICOS y envío SIMULADO), más la 0024 en las listas
+  de migraciones.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0024).
+
+### Paso 2, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Tabla** (migración `0027_expediente_archivos.sql`): `seguimiento_archivos`, una fila por archivo subido. No se
+  borra ni se modifica (triggers); el mismo archivo (misma huella) no entra dos veces en el mismo expediente.
+- **Lógica:** `app/expediente_archivos.py`. Tipos PDF, Word (`.docx`, `.doc`), Excel (`.xlsx`, `.xls`) y ZIP; se
+  comprueba el **contenido** (firma de los primeros bytes; un `.docx` / `.xlsx` tiene que traer sus piezas de Word /
+  Excel), no solo la extensión. Tamaño máximo `EXPEDIENTE_MAX_MB` (10), cortado al copiar y, si la petición lo
+  declara, antes de recibirla.
+- **En disco:** `EXPEDIENTES_DIR/<N.º SICOP>/<sha256>.<extensión>` (por defecto `data/expedientes`, fuera de Git).
+  El nombre que manda el navegador solo se muestra (sin carpetas ni caracteres de control); nunca es una ruta.
+- **Panel:** sección «Archivos» del expediente: subir, lista (nombre, tipo, tamaño, quién y cuándo), «Descargar» y
+  «Ver» para PDF, Excel y ZIP (el mismo visor de los documentos de SICOP; Word y `.xls` solo se descargan).
+  Suben, bajan y ven el encargado vigente y los administradores: en un traspaso, el encargado nuevo baja todo y el
+  anterior ya no. Cada subida va a `audit_log`.
+- **Respaldo:** `backup` guarda también `sicop_<fecha>_expedientes.zip` con la carpeta.
+- **Pruebas:** `tests/test_expediente_archivos.py` (21, archivos SINTÉTICOS). La de acceso se comprobó con la regla
+  rota a propósito: falla.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0027).
+- **Fuera de este paso:** quitar o archivar un archivo subido por error (hoy nada se borra).
+
+### Paso 3, cómo quedó (2026-10-30, pedido por Ivania)
+
+- **Tabla** (migración `0028_expediente_notas.sql`): `seguimiento_notas`, una fila por nota, con autor (el nombre
+  se copia) y fecha en hora de Costa Rica. No se borra ni se modifica (triggers): para corregir, otra nota. Hasta
+  2000 caracteres (como el comentario de una revisión); la base pone el mismo tope.
+- **Lógica:** `seguimiento.escribir_nota` y `seguimiento.notas_de` (de la más reciente a la más vieja). Se quitan
+  los espacios de los extremos y los saltos de línea se guardan como LF.
+- **Panel:** sección «Notas» del expediente: formulario y lista con autor y fecha; los saltos de línea se
+  respetan y el texto se muestra como texto (nunca como HTML). Si hay un error, el texto vuelve al formulario.
+  Escriben y leen el encargado vigente y los administradores: en un traspaso, el encargado nuevo lee todo y el
+  anterior ya no.
+- **Historial (`audit_log`):** «Escribió una nota…» con el número de la nota, **sin el texto**: el texto solo vive
+  en el expediente, con su regla de acceso (el historial es otro registro de la base y no la tiene).
+- **Pruebas:** 4 nuevas en `tests/test_seguimiento.py` (SINTÉTICO). La de acceso se comprobó con la regla rota a
+  propósito: falla.
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0028).
+
+### Paso 4, cómo quedó (2026-10-30, pedido por Ivania)
+
+- **Botón «Descargar todo el expediente (ZIP)»** en el expediente → `GET /seguimiento/<N.º>/descargar`. Lo usan
+  el encargado vigente y los administradores (la misma regla `puede_entrar`): en un traspaso, la persona nueva
+  baja todo y la anterior ya no. Sin migración ni dependencias nuevas.
+- **El ZIP** (`expediente_<N.º>_<aaaammdd-hhmm>.zip`, `app/expediente_descarga.py`) trae:
+  - `expediente.txt` (UTF-8): datos del cartel, encargado y etapa vigentes, historial de encargados, etapas, notas
+    y la lista de archivos con tipo, tamaño, quién lo subió, fecha y huella SHA-256 (para comprobar que llegaron
+    completos);
+  - `archivos/`: los archivos con el nombre que se ve en el panel; si dos se llaman igual, el segundo lleva « (2)».
+  - Un archivo que falta en disco no detiene la descarga: `expediente.txt` dice «FALTA EN DISCO».
+- **No van** los documentos de SICOP del cartel (se bajan desde la página del cartel; pueden pesar hasta 100 MB).
+- **Se arma en un archivo temporal**, no en memoria, y se borra después de enviarlo.
+- **Historial (`audit_log`):** «Descargó todo el expediente…» con cuántos archivos y notas llevaba. Solo se anotan
+  las descargas permitidas.
+- **Pruebas:** `tests/test_expediente_descarga.py` (6, SINTÉTICO) y la ruta en `test_anonimo_es_redirigido_al_login`.
+  La de acceso se comprobó con la regla rota a propósito: falla.
+
+### Paso 5, cómo quedó (2026-10-29, plan aprobado por Ivania)
+
+- **Tabla** (migración `0025_seguimiento_etapas.sql`): `seguimiento_etapas`. La etapa vigente es la última fila;
+  sin filas, el cartel está «preparando» (así empieza al darle seguimiento). No se borra ni se modifica (triggers);
+  la base solo acepta las cuatro etapas.
+- **Quién la cambia:** el encargado vigente y los administradores (la misma regla `puede_entrar`). Cualquier cambio
+  vale, también volver atrás, para corregir. Cada cambio va a `audit_log` («Cambió la etapa…: Preparando → Enviada»).
+- **Panel:** botones en la sección «Etapa» del expediente, con su historial; la etapa se ve en la marca del cartel y
+  del panel («En seguimiento · Ivania · enviada») y en la página «Seguimiento».
+- **Se suma a las decisiones:** no cambia «Ofertada» ni «No se oferta». En «enviada», si el cartel no está marcado
+  «Ofertada», el expediente lo sugiere con un enlace a la revisión; no se hace solo.
+- **Pruebas:** 5 nuevas en `tests/test_seguimiento.py` (SINTÉTICO).
+- **Para usarlo en una base existente:** respaldo y `python -m app.cli migrate` (aplica la 0025).
+- **Fuera de este paso (ideas):** aviso por correo al cambiar la etapa; ligar «ganada/perdida» con las
+  adjudicaciones de SICOP.
 
 ## Reglas que aplican (de `CLAUDE.md` y del resto del proyecto)
 

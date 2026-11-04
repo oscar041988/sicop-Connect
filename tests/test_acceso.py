@@ -44,7 +44,10 @@ def _rutas_post():
 @pytest.mark.parametrize("ruta", ["/", "/oportunidades", "/oportunidades?familia=gps_flotas",
                                   "/oportunidades/00000000001", "/cargar",
                                   "/oportunidades/00000000001/documentos/1/ver",
-                                  "/oportunidades/00000000001/documentos/1/ver/0"])
+                                  "/oportunidades/00000000001/documentos/1/ver/0",
+                                  "/seguimiento/00000000001/archivos/1", "/seguimiento/00000000001/archivos/1/ver",
+                                  "/seguimiento/00000000001/archivos/1/ver/0",
+                                  "/seguimiento/00000000001/descargar", "/oportunidades/00000000001/resumen"])
 def test_anonimo_es_redirigido_al_login(anonimo, ruta):
     respuesta = anonimo.get(ruta, follow_redirects=False)
 
@@ -68,6 +71,14 @@ def test_health_es_publico_y_sin_datos_sensibles(anonimo):
     assert respuesta.status_code == 200
     assert set(respuesta.json()) == {"app", "version", "environment", "database"}
     assert EMAIL not in respuesta.text and "sicop.db" not in respuesta.text
+
+
+def test_el_icono_de_la_pestana_es_publico(anonimo):
+    assert 'rel="icon"' in anonimo.get("/login").text
+    respuesta = anonimo.get("/static/favicon.svg", follow_redirects=False)
+
+    assert respuesta.status_code == 200
+    assert respuesta.headers["content-type"].startswith("image/svg+xml")
 
 
 @pytest.mark.parametrize("ruta", ["/docs", "/redoc", "/openapi.json"])
@@ -245,16 +256,34 @@ def test_en_produccion_la_cookie_es_secure_y_el_secreto_es_obligatorio(db):
 def test_todas_las_rutas_post_exigen_el_token():
     rutas = _rutas_post()
 
-    assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar",
+    assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar", "/ayuda/{nombre}/voto",
                              "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
-                             "/logout", "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
-                             "/oportunidades/{nro_sicop}/seguimiento", "/seguimiento/{nro_sicop}/encargado",
+                             "/logout", "/oportunidades/{nro_sicop}/asistente/ampliar",
+                             "/oportunidades/{nro_sicop}/asistente/empezar",
+                             "/oportunidades/{nro_sicop}/asistente/redactar",
+                             "/oportunidades/{nro_sicop}/asistente/resultado",
+                             "/oportunidades/{nro_sicop}/asistente/{item_id}/perfil",
+                             "/oportunidades/{nro_sicop}/asistente/{item_id}/responder",
+                             "/oportunidades/{nro_sicop}/asistente/{item_id}/revisar",
+                             "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
+                             "/oportunidades/{nro_sicop}/seguimiento",
+                             "/oportunidades/{nro_sicop}/verificacion/agregar",
+                             "/oportunidades/{nro_sicop}/verificacion/generar",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/corregir",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/perfil",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/quitar",
+                             "/oportunidades/{nro_sicop}/verificacion/{item_id}/volver",
+                             "/perfil", "/perfil/{item_id}/pendiente", "/perfil/{item_id}/version",
+                             "/seguimiento/{nro_sicop}/archivos",
+                             "/seguimiento/{nro_sicop}/encargado", "/seguimiento/{nro_sicop}/etapa",
+                             "/seguimiento/{nro_sicop}/notas",
                              "/usuarios", "/usuarios/{user_id}/contrasena", "/usuarios/{user_id}/eliminar",
                              "/usuarios/{user_id}/estado",
                              "/usuarios/{user_id}/nivel"]
     assert all(verificar_csrf in dependencias for dependencias in rutas.values())
     assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith(("/usuarios", "/destinatarios")))
+    assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith("/perfil"))
 
 
 @pytest.mark.parametrize("token", [None, "", "token-inventado"])

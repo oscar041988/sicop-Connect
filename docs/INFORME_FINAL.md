@@ -270,8 +270,8 @@ ejemplo: la huella del archivo frente a la huella del cartel; por qué el tempor
 - **(nuevo)** Pruebas: 667 passed (29/10, `desarrollo` = `b51b532`).
 
 **Datos para estimar horas** (`docs/METRICAS.md`): semana 2, 37,25 h estimadas · 49 h reales (+32 %); semana 3,
-21 h (7 h por día, sin desglose por tarea). Total del mes hasta el 23/10: 95,5 h. **Desde el 24/10 no hay horas
-anotadas:** anótalas antes de estimar. Uso de Claude casi sin registrar: dilo así en la estimación.
+21 h (7 h por día, sin desglose por tarea); **(nuevo)** semana 4 (26–29/10), 28 h (7 h por día). Total del mes
+hasta el 29/10: **123,5 h**. Uso de Claude casi sin registrar: dilo así en la estimación.
 
 **Escribe tú:** ordena los pendientes por valor para Hermatix y estima las horas de cada uno con los datos del
 mes (sección 7). Incluye las tres mejoras en curso: ¿cuál va primero y por qué? Este es el entregable E10: lo

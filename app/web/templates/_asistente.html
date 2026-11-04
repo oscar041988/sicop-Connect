@@ -1,0 +1,225 @@
+{# Asistente de elegibilidad (lección 3), dentro del detalle del cartel. Lo usan el encargado y los administradores. #}
+{% if seg %}
+<section id="asistente" class="asistente">
+  <h2>Asistente de elegibilidad</h2>
+  {% if not puede_entrar %}
+  <p class="sub">El asistente de este cartel lo usan {{ seg.encargado or "su encargado (todavía sin asignar)" }} y los
+    administradores.</p>
+  {% else %}
+  {% set a = asis %}
+  <p class="sub">Te pregunta, uno por uno, lo que pide el cartel: primero los requisitos excluyentes. No supone nada:
+    lo que no respondas queda pendiente. Se guarda al responder, así que puedes seguir otro día (o lo sigue otra
+    persona autorizada).</p>
+  {% if a.hecho %}<p class="hecho">{{ a.hecho }}</p>{% endif %}
+  {% if a.error %}<p class="error">{{ a.error }}</p>{% endif %}
+
+  {% if not a.pasos and not a.info %}
+  <p class="vacio">Este cartel todavía no tiene lista de verificación: el asistente pregunta sobre ella.
+    <a href="/oportunidades/{{ c.nro_sicop }}/verificacion">Ir a la lista de verificación</a>.</p>
+  {% elif not a.sesion %}
+  <form method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/empezar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit">Empezar el asistente</button>
+  </form>
+  <small class="sub">{% if a.ia %}La IA redacta las preguntas una sola vez: solo lee la lista de verificación, nunca el
+    perfil ni tus archivos.{% else %}La IA está apagada: las preguntas las arma la app.{% endif %}</small>
+  {% else %}
+  {% set av = a.avance %}
+  {% if not a.ampliada %}
+  <p class="avance"><span class="tag r">Revisión rápida</span> <strong>{{ av.respondidos }} de {{ av.total }}</strong>
+    excluyentes respondidos{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}{% if av.archivo_pendiente %} · {{ av.archivo_pendiente }}
+    {{ "archivo pendiente" if av.archivo_pendiente == 1 else "archivos pendientes" }}{% endif %}</p>
+  <p class="sub">Primero solo los requisitos excluyentes: si alguno no se cumple, Hermatix queda fuera. El resto se
+    pregunta si el cartel interesa.</p>
+  {% else %}
+  <p class="avance"><strong>{{ av.respondidos }} de {{ av.total }}</strong> respondidas · excluyentes
+    {{ av.excluyentes_respondidos }} de {{ av.excluyentes }}{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}{% if av.archivo_pendiente %} · {{ av.archivo_pendiente }}
+    {{ "archivo pendiente" if av.archivo_pendiente == 1 else "archivos pendientes" }}{% endif %}</p>
+  {% endif %}
+  <progress max="{{ av.total or 1 }}" value="{{ av.respondidos }}"></progress>
+
+  {% if a.actual %}
+  {% set p = a.actual %}
+  {% set f = a.formulario %}
+  {% set t = p.item.tipo_evidencia %}
+  <article class="tarjeta pregunta-asistente" id="pregunta">
+    <p>
+      {% if p.item.excluyente %}<span class="tag r">Excluyente</span>{% endif %}
+      <span class="tag">{{ EVIDENCIAS[t] }}</span>
+      {% if p.respuesta %}<span class="tag seg">Respuesta actual: {{ p.respuesta.resumen }}</span>{% endif %}
+    </p>
+    <p class="pregunta">{{ citar(p.pregunta) }}</p>
+    {% if p.perfil %}
+    {% set v = p.perfil.vigente %}
+    <div class="perfil-dato">
+      {% set partes = [] %}
+      {% if v.valor %}{% set _ = partes.append(v.valor) %}{% endif %}
+      {% if v.archivo_nombre %}{% set _ = partes.append(v.archivo_nombre) %}{% endif %}
+      {% if v.vence_el %}{% set _ = partes.append("vence " ~ (v.vence_el | dia)) %}{% endif %}
+      <p>En el perfil («{{ p.perfil.titulo }}»):
+        {% if v.numero %}<strong>{{ v.numero }} {{ v.unidad or "" }}</strong>{% if partes %} · {% endif %}{% endif %}{{ partes | join(" · ") }}.
+        ¿Sigue siendo correcto?</p>
+      <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ p.item.id }}/perfil">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Sí, es correcto</button>
+      </form>
+      <small class="sub">Si no es correcto, responde abajo.</small>
+    </div>
+    {% endif %}
+    <form class="revision" method="post" enctype="multipart/form-data"
+          action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ p.item.id }}/responder">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if t == "numero" %}
+      <label>Número{% if p.item.unidad %} ({{ p.item.unidad }}){% endif %}
+        <input type="text" name="valor_numero" inputmode="decimal" maxlength="30" required value="{{ f.valor_numero or '' }}"
+               placeholder="Solo el número, por ejemplo 8">
+      </label>
+      {% elif t == "fecha" %}
+      <label>Fecha <input type="date" name="valor_fecha" required value="{{ f.valor_fecha or '' }}"></label>
+      {% elif t == "si_no" %}
+      <fieldset class="si-no"><legend>Respuesta</legend>
+        <label class="casilla"><input type="radio" name="valor_si_no" value="1" required {% if f.valor_si_no == "1" %}checked{% endif %}> Sí</label>
+        <label class="casilla"><input type="radio" name="valor_si_no" value="0" {% if f.valor_si_no == "0" %}checked{% endif %}> No</label>
+      </fieldset>
+      {% elif t == "texto" %}
+      <label>Respuesta <textarea name="valor_texto" rows="3" maxlength="2000" required>{{ f.valor_texto or "" }}</textarea></label>
+      {% else %}
+      <label>Documento (PDF, PNG o JPG; máx. {{ a.limite_mb }} MB)
+        <input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg" required>
+      </label>
+      <label>¿Hasta qué fecha vence? (si vence)
+        <input type="date" name="vence_el" value="{{ f.vence_el or '' }}">
+      </label>
+      {% endif %}
+      <label>Nota (opcional)
+        <textarea name="nota" rows="2" maxlength="2000">{{ f.nota or "" }}</textarea>
+      </label>
+      {% if a.es_admin and p.item.perfil_item_id and t != "si_no" %}
+      <label class="casilla"><input type="checkbox" name="guardar_en_perfil" value="1"> Guardar también en el perfil
+        (para no repetirlo en el próximo cartel)</label>
+      {% endif %}
+      <div class="botones-asistente">
+        <button type="submit" name="estado" value="respondido">Guardar respuesta</button>
+        {% if t == "documento" %}<button type="submit" name="estado" value="archivo_pendiente" class="btn o" formnovalidate>Lo tiene · subo el archivo después</button>
+        <button type="submit" name="estado" value="no_lo_tiene" class="btn o" formnovalidate>Hermatix no lo tiene</button>{% endif %}
+        <button type="submit" name="estado" value="no_se" class="btn o" formnovalidate>Todavía no lo sé</button>
+        {% if p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}#asistente">Volver a la siguiente</a>{% endif %}
+      </div>
+    </form>
+  </article>
+  {% elif a.ampliada %}
+  <p class="hecho">Respondiste todas las preguntas. Puedes cambiar cualquier respuesta abajo.</p>
+  {% endif %}
+
+  {% if not a.ampliada %}
+  {% set rap = res_eleg.rapido %}
+  <div id="revision-rapida" class="revision-rapida {{ rap or 'pendiente' }}">
+    {% if rap %}<p class="resultado-titular rapido-{{ rap }}"><strong>{{ res_eleg.RAPIDOS[rap] }}</strong></p>
+    {% if rap == "fuera" %}<ul>{% for e in res_eleg.evaluaciones if e.item.excluyente and e.estado == "no_cumple" %}<li>{{ e.item.requisito }} — {{ e.motivo }}</li>{% endfor %}</ul>
+    <p class="sub">Calcula el resultado abajo para guardar la constancia.</p>{% endif %}
+    {% else %}<p class="sub">Cuando respondas los excluyentes, aquí sale el resultado rápido.</p>{% endif %}
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/ampliar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="{{ '' if rap == 'cumplen' else 'btn o' }}">Seguir con los demás requisitos</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if a.ia and a.faltan_ia %}
+  <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/redactar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn o">Redactar con IA las {{ a.faltan_ia }} preguntas que arma la app</button>
+  </form>
+  {% endif %}
+
+  {% set dadas = a.pasos | selectattr("respuesta") | list %}
+  {% if dadas %}
+  <details class="respuestas-asistente">
+    <summary>Respuestas dadas ({{ dadas | length }})</summary>
+    <ol class="historial">
+      {% for x in dadas %}
+      <li>{% if x.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ x.item.requisito }}
+        <br><strong>{{ x.respuesta.resumen }}</strong>
+        {% if x.respuesta.tiene_archivo %}· <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ x.respuesta.id }}/ver" target="_blank" rel="noopener">Ver</a>
+          · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ x.respuesta.id }}/archivo">Descargar</a>{% endif %}
+        <small class="sub">· {{ x.respuesta.respondido_por }}, {{ x.respuesta.creado_en | fecha }}</small>
+        · <a href="/oportunidades/{{ c.nro_sicop }}?pregunta={{ x.item.id }}#pregunta">Cambiar</a></li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+
+  {# Resultado (lección 4): la app compara; una persona decide los «Revisar»; cada cálculo queda como constancia. #}
+  {% set re = res_eleg %}
+  {% set ultima = re.constancias[0] if re.constancias else none %}
+  {% macro tag_estado(estado) %}<span class="tag {{ {'cumple': '', 'no_cumple': 'g', 'falta': 'w', 'revisar': 'r'}[estado] }}">{{ ELEG.estados[estado] }}</span>{% endmacro %}
+  {% if a.ampliada or res_eleg.rapido == "fuera" %}
+  <div id="resultado" class="resultado-eleg">
+    <h3>Resultado: ¿podemos participar?</h3>
+    {% if ultima %}
+    <p class="resultado-titular {{ ultima.resultado }}"><strong>{{ ultima.resultado_texto }}</strong>
+      <small class="sub">· calculado por {{ ultima.calculado_por }}, {{ ultima.creado_en | fecha }}</small></p>
+    <div class="resultado-explicacion">{% for linea in ultima.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
+    <p class="resultado-aviso">{{ ELEG.aviso }}</p>
+    <p><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}">Ver constancia</a>
+      · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}?imprimir=1" target="_blank" rel="noopener">Descargar</a></p>
+    {% if re.global != ultima.resultado %}
+    <p class="sub">Con las respuestas de ahora el resultado sería «{{ ELEG.resultados[re.global] }}»: vuelve a calcular.</p>
+    {% endif %}
+    {% else %}
+    <p class="sub">Todavía no se ha calculado. Con las respuestas de ahora sería «{{ ELEG.resultados[re.global] }}».</p>
+    {% endif %}
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/resultado">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Calcular el resultado</button>
+    </form>
+
+    <details class="respuestas-asistente" {% if re.conteo.revisar %}open{% endif %}>
+      <summary>Cómo va cada requisito: {{ re.conteo.cumple }} cumple · {{ re.conteo.no_cumple }} no cumple ·
+        {{ re.conteo.falta }} falta · {{ re.conteo.revisar }} revisar</summary>
+      <table class="tabla-resultado">
+        <thead><tr><th>Requisito</th><th>Estado</th><th>Respuesta</th><th>Por qué</th></tr></thead>
+        <tbody>
+        {% for e in re.evaluaciones %}
+        <tr>
+          <td>{% if e.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ e.item.requisito }}
+            {% for x in e.item.citas %} {{ citar(x) }}{% endfor %}</td>
+          <td>{{ tag_estado(e.estado) }}</td>
+          <td>{{ e.respuesta.resumen if e.respuesta else "—" }}</td>
+          <td>{{ e.motivo }}
+            {% if e.automatico == "revisar" and e.respuesta %}
+            <form class="revisar-requisito" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ e.item.id }}/revisar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="text" name="nota" maxlength="2000" placeholder="Nota (opcional)">
+              <button type="submit" name="cumple" value="1" class="btn o">Cumple</button>
+              <button type="submit" name="cumple" value="0" class="btn o">No cumple</button>
+            </form>
+            {% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% if re.constancias | length > 1 %}
+    <details class="respuestas-asistente">
+      <summary>Resultados anteriores ({{ re.constancias | length - 1 }})</summary>
+      <ul>{% for k in re.constancias[1:] %}<li><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ k.id }}">{{ k.resultado_texto }}</a>
+        <small class="sub">· {{ k.calculado_por }}, {{ k.creado_en | fecha }}</small></li>{% endfor %}</ul>
+    </details>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if a.info %}
+  <details class="respuestas-asistente">
+    <summary>Para tener en cuenta ({{ a.info | length }}): multas y condiciones de la institución</summary>
+    <p class="sub">No se preguntan: son obligaciones del contrato si Hermatix gana.</p>
+    <ul>
+      {% for i in a.info %}<li>{{ i.requisito }}{% for x in i.citas %} {{ citar(x) }}{% endfor %}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}

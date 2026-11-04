@@ -1,0 +1,44 @@
+# Ayuda dentro de la app (lección 3 de la ayuda). Los textos están en docs/ayuda/; aquí solo el mapa.
+
+# Misiones que solo ven los administradores (un encargado no puede abrir esas páginas).
+solo_admin:
+  - 13-usuarios
+  - 14-encargado
+  - 15-destinatarios
+  - 16-avisos
+  - 17-calidad
+  - 18-bitacora
+
+# Botón «?»: qué misión abre en cada pantalla. Se revisa en orden y gana la primera que coincide.
+# «*» reemplaza cualquier parte de la dirección (p. ej. el Número SICOP). Sin coincidencia, abre /ayuda.
+pantallas:
+  - ruta: /oportunidades/*/resumen
+    mision: 05-resumen-ia
+  - ruta: /oportunidades/*/verificacion
+    mision: 22-lista-verificacion
+  - ruta: /oportunidades/*/asistente/resultados/*
+    mision: 24-resultado
+  - ruta: /oportunidades/*
+    mision: 04-arriba-del-cartel
+  - ruta: /oportunidades
+    mision: 02-carteles-nuevos
+  - ruta: /seguimiento/*
+    mision: 10-expediente
+  - ruta: /seguimiento
+    mision: 09-seguimiento
+  - ruta: /competencia*
+    mision: 11-competencia
+  - ruta: /cargar
+    mision: 12-cargar-archivo
+  - ruta: /usuarios
+    mision: 13-usuarios
+  - ruta: /destinatarios
+    mision: 15-destinatarios
+  - ruta: /avisos
+    mision: 16-avisos
+  - ruta: /calidad
+    mision: 17-calidad
+  - ruta: /bitacora*
+    mision: 18-bitacora
+  - ruta: /perfil*
+    mision: 21-perfil

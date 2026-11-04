@@ -54,15 +54,15 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
 | Tema | Decisión | Lección |
 |---|---|---|
 | Presupuesto mensual de OpenAI (límite de gasto del proyecto) | **Sin límite**: Oscar lo dejó así a propósito (2026-10-29, por Ivania). **Choca con la regla 4**; el único freno será el presupuesto diario de la app (lección 5). Riesgo anotado | 2 |
-| Presupuesto diario en la app: resúmenes por día (`IA_MAX_SUMMARIES_PER_DAY`) y costo máximo (`IA_MAX_DAILY_COST`) | **[por decidir · Oscar]** | 5 |
+| Presupuesto diario en la app: resúmenes por día (`IA_MAX_SUMMARIES_PER_DAY`) y costo máximo (`IA_MAX_DAILY_COST`) | **Provisional (Ivania, 2026-10-30): 10 resúmenes y 1.00 USD al día**, hasta que Oscar decida. **[por decidir · Oscar]** | 5 |
 | Cuenta de la API a nombre de Hermatix y proyecto «SICOP CONNECT» | Proyecto creado por Oscar (2026-10-29, por Ivania) | 2 |
 | Quién genera y guarda la clave; entrega en persona | La generó Oscar y se la pasó a Ivania (2026-10-29); Ivania la escribe en su `.env`. Clave **con todos los permisos** y todos los modelos (Oscar) | 2 |
 | Modelo (`OPENAI_MODEL`), según calidad y precio de la documentación oficial de OpenAI | Oscar no fijó uno (2026-10-29): **lo elige Ivania** con la tabla de precios. **[por decidir · Ivania]** | 2 |
 | Qué datos se envían y cuáles nunca: confirmar la lista de `docs/RESUMEN_IA.md` §2 | **[por decidir · Oscar]** | 1 |
 | Datos de personas **dentro del texto de los PDF** (nombres, cargos, firmas, correos y teléfonos de funcionarios que publica la institución; aparecen en 13 de 15 carteles, `RESUMEN_IA.md` §2): ¿se envían porque son públicos, o se filtran los correos y teléfonos antes de enviar? | **Se envían** tal cual: son documentos públicos que la institución publica en SICOP. Decidió Ivania, 2026-10-28; Oscar aceptó el documento el 2026-10-29 | 1–2 |
 | Tamaño máximo del expediente (`IA_MAX_INPUT_TOKENS`; hoy 50 000 tokens) | **[por decidir · Oscar + Ivania]** | 1 |
-| Qué carteles reciben reporte (¿solo Alta y Media? ¿también Baja?) | **[por decidir · Oscar]** | 5 |
-| Criterio de Hermatix para el prompt: productos de interés, montos mínimos, requisitos que descartan una oferta | **[por decidir · Oscar]** | 3 |
+| Qué carteles reciben reporte (¿solo Alta y Media? ¿también Baja?) | **Ivania (2026-10-30): Alta, Media y Baja (todos los del panel) ya enriquecidos**, con plazo abierto, hasta que Oscar decida. **[por decidir · Oscar]** | 5 |
+| Criterio de Hermatix para el prompt: productos de interés, montos mínimos, requisitos que descartan una oferta | **Dado por Ivania (2026-10-30), prompt `v2`:** decide qué piden; monto, cantidad, garantías y plazo de entrega no importan (se negocian); 14 años de funcionamiento; marcas Wialon y Howen. Detalle en `RESUMEN_IA.md` §4 | 3 |
 | Diseño de las 2 páginas y logo oficial | Máximo 2 páginas, fácil para alguien nuevo (regla 9, Oscar). Diseño y logo: **[por decidir · Oscar]** | 4 |
 
 ### Privacidad (dato de la guía, a confirmar en la documentación vigente de OpenAI)
@@ -77,3 +77,31 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
 - [ ] Las filas de la sección 5 de las lecciones 1 y 2 están decididas antes de la lección 2. Faltan: modelo,
   límite de gasto (regla 4) y tamaño del expediente.
 - [x] `CLAUDE.md` actualizado: «Sin API de IA» → la excepción de este documento (2026-10-29).
+
+## 7. Ampliación: asistente de elegibilidad
+
+**APROBADO por Oscar el 2026-11-02 (comunicado por Ivania).** Guía: `docs/Guia_Asistente_Elegibilidad_SICOP.docx`.
+
+- **Qué se aprueba:** usar la API de OpenAI también en el asistente de elegibilidad: armar la lista de verificación
+  del cartel (lección 2), hacer las preguntas al encargado (lección 3) y explicar el resultado (lección 4).
+- **Cambia la regla 2 solo para el asistente:** además de la información pública de SICOP, se envían la lista de
+  verificación y las **respuestas escritas** del encargado (datos internos de Hermatix, como los años de
+  experiencia). Nunca contraseñas, usuarios ni datos personales.
+- **Documentos de Hermatix** (permisos, certificaciones, estados financieros): **no se envían** mientras
+  `ASSISTANT_SEND_DOCUMENTS=false`. Enviarlos o no: **[por decidir · Oscar]**. Hoy (lección 3, 2026-11-03) solo
+  existe el camino false: las preguntas del asistente se redactan con la lista de verificación y nada más; con
+  true la app avisa que ese camino falta y no guarda ni envía nada.
+- **Reglas del asistente** (las de la guía): nunca supone, lo que no está confirmado lo pregunta; los números y las
+  fechas los compara la app, no la IA; el resultado es una orientación y decide el encargado; los documentos de
+  Hermatix van fuera de Git, en el respaldo, con permisos y registro de cada acceso; pruebas siempre con IA simulada.
+- **Quién usa el asistente y ve el perfil:** los dos niveles, Administrador y Encargado (Oscar, 2026-11-02, por
+  Ivania).
+- El costo se suma al presupuesto diario de la sección 5.
+- **Decisiones de Oscar del 2026-11-04 (reunión con Ivania):**
+  - Documentos de Hermatix: **solo en el servidor**, cuando esté actualizado (no en la laptop). Mientras tanto,
+    «Lo tiene · archivo pendiente».
+  - Texto de esos documentos a la IA: **no**; `ASSISTANT_SEND_DOCUMENTS` sigue en `false`.
+  - Presupuesto diario: se deja en **1.00 USD** (`IA_MAX_DAILY_COST`).
+  - Resumen v3: **probarlo en 3 carteles** y comparar antes de activarlo para todos.
+  - Reglas del resultado (lección 4): **de acuerdo** con las dos (archivo pendiente → «si completan»; excluyente
+    en «Revisar» sin decidir → «Falta información»).

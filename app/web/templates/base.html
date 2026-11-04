@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}Panel de carteles{% endblock %} · Hermatix · Oportunidades SICOP</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='favicon.svg') }}">
   <!-- Fuente Manrope (como el prototipo de Hermatix); sin internet se usa la fuente del sistema -->
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='estilo.css') }}?v={{ version_estatico('estilo.css') }}">
@@ -18,10 +19,11 @@
       </a>
       {% if usuario %}
       <nav>
-        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "seguimiento", "usuarios", "destinatarios", "avisos", "calidad", "bitacora") %} aria-current="page"{% endif %}>Panel de carteles</a>
+        <a href="/oportunidades"{% if seccion not in ("cargar", "competencia", "seguimiento", "usuarios", "destinatarios", "avisos", "calidad", "bitacora", "ayuda", "perfil") %} aria-current="page"{% endif %}>Panel de carteles</a>
         <a href="/seguimiento"{% if seccion == "seguimiento" %} aria-current="page"{% endif %}>Seguimiento</a>
         <a href="/competencia"{% if seccion == "competencia" %} aria-current="page"{% endif %}>Competencia</a>
         <a href="/cargar"{% if seccion == "cargar" %} aria-current="page"{% endif %}>Cargar archivo</a>
+        <a href="/perfil"{% if seccion == "perfil" %} aria-current="page"{% endif %}>Perfil</a>
         {% if usuario.rol == "admin" %}
         {# Las páginas de administración van agrupadas: sueltas, el menú no cabía en una línea (sin JavaScript) #}
         <details class="menu-admin">
@@ -47,9 +49,15 @@
     {% if aviso %}<p class="aviso">{{ aviso }}</p>{% endif %}
     {% block contenido %}{% endblock %}
   </main>
+  {% if usuario and not request.url.path.startswith("/ayuda") %}
+  {# Ayuda en contexto: abre la misión de esta pantalla (mapa en config/ayuda.yaml) #}
+  <a class="boton-ayuda" href="{{ ayuda_para(request.url.path) }}" title="Ayuda de esta pantalla"
+     aria-label="Ayuda de esta pantalla">?</a>
+  {% endif %}
   <footer>
     Fuente: datos abiertos de SICOP. La prioridad indica encaje con el portafolio de Hermatix, no que se pueda participar.
     {% if version %}· Reglas {{ version }}{% endif %}
+    {% if usuario %}· <a href="/ayuda">¿Cómo se usa? (ayuda)</a>{% endif %}
   </footer>
 </body>
 </html>

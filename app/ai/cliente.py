@@ -5,11 +5,14 @@
 * Tiempo de espera IA_TIMEOUT_SECONDS. El SDK no reintenta solo (max_retries=0): esta capa reintenta como máximo 2
   veces y solo ante errores temporales (límite de uso 429, error del servidor 5xx, tiempo agotado, conexión).
   Nunca ante clave inválida (401), permiso (403), petición mala (400), modelo no encontrado (404) ni falta de
-  saldo (429 con código insufficient_quota): repetir no lo arregla y solo gastaría o demoraría.
+  saldo (429 con código insufficient_quota o credit_balance_exhausted): repetir no lo arregla y solo gastaría o
+  demoraría.
 * Cada llamada deja una fila en ia_usage (migración 0023), salga bien o mal, SIN el texto enviado, la respuesta ni
   la clave. El motivo de un fallo es el tipo de error y su código HTTP: el texto del error puede traer parte de la
   clave, por eso no se guarda ni se muestra.
 * store=False: se le pide a OpenAI que no guarde la respuesta en la cuenta.
+* Lección 3: con «formato» (un JSON Schema) se pide salida estructurada estricta. Si el modelo se niega a hacer la
+  tarea (rechazo), la llamada queda como fallo «rechazo del modelo»; el texto del rechazo no se guarda.
 
 Las firmas usadas (OpenAI(api_key, timeout, max_retries), responses.create(model, instructions, input,
 max_output_tokens, store), Response.status / usage / output_text, errores con status_code y code) se leyeron del
@@ -81,10 +84,15 @@ def costo_estimado(settings: Settings, entrada: int | None, salida: int | None) 
     return ((Decimal(entrada) * p_entrada + Decimal(salida) * p_salida) / MILLON).quantize(Decimal("0.000001"))
 
 
+# Un 429 con uno de estos códigos es falta de saldo, no un límite de uso pasajero. credit_balance_exhausted es el
+# que devolvió OpenAI en la primera llamada real (29/10, cuenta sin saldo).
+SIN_SALDO = ("insufficient_quota", "credit_balance_exhausted")
+
+
 def _es_temporal(exc: Exception) -> bool:
     import openai
     if isinstance(exc, openai.RateLimitError):
-        return getattr(exc, "code", None) != "insufficient_quota"
+        return getattr(exc, "code", None) not in SIN_SALDO
     return isinstance(exc, (openai.InternalServerError, openai.APIConnectionError))   # incluye APITimeoutError
 
 
@@ -111,9 +119,18 @@ def _registrar(conn: sqlite3.Connection, proposito: str, nro_sicop: str | None, 
              round(duracion, 2), intentos, resultado, motivo)).lastrowid
 
 
+def _rechazo(r) -> bool:
+    """True si alguna parte de la respuesta es un rechazo del modelo (tipo «refusal» del SDK)."""
+    for item in getattr(r, "output", None) or []:
+        for parte in getattr(item, "content", None) or []:
+            if getattr(parte, "type", None) == "refusal":
+                return True
+    return False
+
+
 def pedir(conn: sqlite3.Connection, settings: Settings, instrucciones: str, texto: str, proposito: str,
           nro_sicop: str | None = None, cliente=None, dormir: Callable[[float], None] = time.sleep,
-          reloj: Callable[[], float] = time.monotonic) -> Respuesta:
+          reloj: Callable[[], float] = time.monotonic, formato: dict | None = None) -> Respuesta:
     """Manda instrucciones + texto al modelo y devuelve su respuesta. Lanza IaApagada, IaConfiguracion o IaFallo.
 
     cliente, dormir y reloj solo se cambian en las pruebas (un OpenAI SIMULADO, sin esperas reales)."""
@@ -128,8 +145,9 @@ def pedir(conn: sqlite3.Connection, settings: Settings, instrucciones: str, text
     while True:
         intentos += 1
         try:
+            extra = {"text": {"format": formato}} if formato is not None else {}
             r = cliente.responses.create(model=modelo, instructions=instrucciones, input=texto,
-                                         max_output_tokens=settings.ia_max_output_tokens, store=False)
+                                         max_output_tokens=settings.ia_max_output_tokens, store=False, **extra)
             break
         except Exception as exc:  # noqa: BLE001 — cualquier error queda anotado antes de salir
             temporal = _es_temporal(exc)
@@ -151,6 +169,10 @@ def pedir(conn: sqlite3.Connection, settings: Settings, instrucciones: str, text
         uso = _registrar(conn, proposito, nro_sicop, modelo, entrada, salida, costo, duracion, intentos, "fallo",
                          "respuesta con estado failed")
         raise IaFallo("respuesta con estado failed", intentos, uso)
+    if _rechazo(r):
+        uso = _registrar(conn, proposito, nro_sicop, modelo, entrada, salida, costo, duracion, intentos, "fallo",
+                         "rechazo del modelo")
+        raise IaFallo("rechazo del modelo", intentos, uso)
     resultado, motivo = "ok", None
     if estado == "incomplete":
         razon = getattr(getattr(r, "incomplete_details", None), "reason", None)

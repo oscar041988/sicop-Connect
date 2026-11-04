@@ -1,11 +1,13 @@
 # Ciclo diario en Windows (local)
 
 Equivalente local de `deploy/systemd/sicop-cycle.timer` + `sicop-cycle.service`: una tarea del Programador de
-tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **siempre en dry-run** (prepara los
-avisos y la vista previa, no envía nada). Se usa mientras todo se desarrolla en local (decisión de Oscar,
-2026-10-21). La tarea la crea la persona que usa la computadora; el script no la activa solo.
+tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **con envío real** desde el 2026-10-30
+(decisión de Ivania; antes, siempre en dry-run). Envía solo si `.env` tiene `NOTIFICATIONS_ENABLED=true` y
+`NOTIFICATIONS_DRY_RUN=false`. Se usa mientras todo se desarrolla en local (decisión de Oscar, 2026-10-21).
+**Cuando Oscar active el ciclo del servidor, deshabilitar esta tarea**, o los destinatarios recibirán dos correos.
+La tarea la crea la persona que usa la computadora; el script no la activa solo.
 
-- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --dry-run` y agrega la salida,
+- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --send` y agrega la salida,
   con fecha y código de salida, a `data\logs\ciclo-AAAA-MM.log`.
 - Códigos de salida: `0` = ok · `1` = fallo (queda en `source_runs`) · `2` = ya había otro ciclo en curso.
 
@@ -138,6 +140,12 @@ Enable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"    # si se vuelve 
 en SICOP la cola del día (fichas y documentos), con la **ventana del navegador visible**, y deja el registro en
 `data\logs\enriquecimiento-AAAA-MM.log`. Códigos: `0` = ok · `1` = algún FALLO · `2` = CAPTCHA o bloqueo (se detuvo)
 u otra corrida en curso. Con `ENRICH_ENABLED=false` (por defecto) no consulta nada.
+
+**Después corre `ia cola`** (Reporte con IA, lección 5; decisión de Ivania, 2026-10-30): los resúmenes con IA de los
+carteles Alta, Media y Baja ya enriquecidos, con el presupuesto diario (`IA_MAX_SUMMARIES_PER_DAY`, `IA_MAX_DAILY_COST`).
+Corre aunque el enriquecimiento falle, y con `AI_MODE=none` no hace nada. Su salida va al mismo registro, en su
+propio bloque. Si el enriquecimiento salió bien, el código de la tarea es el de `ia cola` (`1` = algún resumen
+fallido o la cola se detuvo por la clave o el saldo). Detalle: `docs/OPERACION.md` §3.3.
 
 **Modo interactivo:** para que se vea la ventana, la tarea tiene que ser «**Ejecutar solo cuando el usuario haya
 iniciado sesión**». Si se elige «Ejecutar tanto si el usuario inició sesión como si no», el navegador corre

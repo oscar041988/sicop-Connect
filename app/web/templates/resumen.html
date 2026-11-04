@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{# Reporte con IA, lección 5: el resumen como documento («Ver»); «Descargar» es esta misma página con ?imprimir=1 y el
+   navegador la guarda como PDF. Todo el texto viene del modelo: siempre escapado. Los datos oficiales (monto,
+   cierre, apertura) son los de SICOP, que pone la app, nunca los del resumen. #}
+{% set c = d.compra %}
+{% set r = res.datos %}
+{% macro cita(x) %}{% if x and x != IA.NO %}<span class="cita">{% if x == "SICOP" %}[SICOP]{% else %}{{ citar(x) }}{% endif %}</span>{% endif %}{% endmacro %}
+{% block titulo %}Resumen {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+<div class="doc-acciones no-imprimir">
+  <a href="/oportunidades/{{ c.nro_sicop }}">← Volver al cartel</a>
+  <button type="button" class="btn p" onclick="window.print()">Descargar PDF</button>
+  <small class="sub">En la ventana de imprimir, elige «Guardar como PDF».</small>
+</div>
+
+<article class="doc-resumen">
+  <div class="doc-cabecera">
+    <p class="doc-marca">Hermatix · SICOP Connect · Resumen ejecutivo del cartel</p>
+    <h1>{{ c.descripcion | titulo | legible or "(sin título)" }}</h1>
+    <p class="doc-institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
+    <p class="etiqueta-ia">Generado por IA · verificar con el pliego</p>
+  </div>
+
+  <dl class="doc-datos">
+    <div><dt>Número SICOP</dt><dd>{{ c.nro_sicop }}</dd></div>
+    <div><dt>Cierre de recepción</dt><dd>{{ (sicop.cierre if sicop and sicop.cierre else c.fecha_cierre_recepcion) | fecha }}</dd></div>
+    <div><dt>Apertura de ofertas</dt><dd>{{ sicop.apertura | fecha if sicop and sicop.apertura else "—" }}</dd></div>
+    <div><dt>Monto estimado</dt><dd>{% if sicop and sicop.monto is not none %}{{ monto(sicop.monto, sicop.moneda) }}{% else %}{% for moneda, m in c.estimado_por_moneda.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}{% endif %}</dd></div>
+  </dl>
+  <p class="doc-nota">Número, fechas y monto: datos oficiales de SICOP. El resto: resumen hecho por IA a partir de los
+    documentos del cartel.</p>
+
+  {% if res.diferencias %}
+  <div class="doc-alerta"><strong>Revisar: el resumen no coincide con SICOP</strong>
+    <ul>{% for x in res.diferencias %}<li>{{ x.dato }}: el resumen dice «{{ x.resumen }}», SICOP dice «{{ x.sicop }}»</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if not citas_enlazadas %}
+  <div class="doc-alerta no-imprimir">Los documentos del cartel cambiaron después de este resumen: las citas pueden no
+    coincidir y no se enlazan. La cola automática hace un resumen nuevo.</div>
+  {% endif %}
+
+  <div class="doc-recomendacion rec-{{ r.recomendacion }}">
+    <span>Recomendación preliminar</span>
+    <strong>{{ IA.recomendaciones.get(r.recomendacion, IA.NO) }}</strong>
+    <p>{{ r.justificacion }}</p>
+    <small>La decisión es del encargado.</small>
+  </div>
+
+  <h2>De qué trata</h2>
+  <p>{{ r.de_que_trata }}</p>
+
+  <h2>Encaje con Hermatix</h2>
+  <p><strong>{{ r.encaje_hermatix.producto }}</strong> <span class="sub">({{ r.encaje_hermatix.familia }})</span><br>
+    {{ r.encaje_hermatix.por_que }}</p>
+
+  <h2>Qué piden</h2>
+  {% if r.que_piden %}
+  <table class="doc-tabla">
+    <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cantidad</th><th>Especificaciones clave</th></tr></thead>
+    <tbody>
+      {% for i in r.que_piden %}
+      <tr><td>{{ i.linea }}</td><td>{{ i.bien_o_servicio }}</td><td>{{ i.cantidad }}</td>
+        <td>{% if i.especificaciones_clave %}<ul>{% for e in i.especificaciones_clave %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{{ cita(i.cita) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
+
+  <h2>Requerimientos</h2>
+  {% if r.requerimientos %}
+  <table class="doc-tabla">
+    <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th></tr></thead>
+    <tbody>
+      {% for q in r.requerimientos %}
+      <tr><td>{{ q.tipo | capitalize }}</td><td>{{ q.requisito }} {{ cita(q.cita) }}</td>
+        <td>{% if q.excluyente %}<strong class="excluyente">Sí</strong>{% else %}No{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
+
+  <h2>Indicadores del pliego</h2>
+  {% set k = r.kpi_pliego %}
+  <dl class="doc-datos doc-indicadores">
+    {% for clave, nombre in [("plazo_entrega", "Plazo de entrega"), ("vigencia_contrato", "Vigencia del contrato"),
+                             ("garantia_participacion_pct", "Garantía de participación"),
+                             ("garantia_cumplimiento_pct", "Garantía de cumplimiento"),
+                             ("peso_precio_pct", "Peso del precio"), ("nivel_riesgo", "Nivel de riesgo")] %}
+    <div><dt>{{ nombre }}</dt><dd>{{ k[clave].valor }} {{ cita(k[clave].cita) }}</dd></div>
+    {% endfor %}
+  </dl>
+
+  <h2>Plazos</h2>
+  <table class="doc-tabla">
+    <tbody>
+      <tr><th>Cierre de recepción</th><td>{{ r.plazos.cierre_recepcion.valor }} {{ cita(r.plazos.cierre_recepcion.cita) }}</td></tr>
+      <tr><th>Apertura de ofertas</th><td>{{ r.plazos.apertura_ofertas.valor }} {{ cita(r.plazos.apertura_ofertas.cita) }}</td></tr>
+      {% for o in r.plazos.otros %}<tr><th>{{ o.plazo }}</th><td>{{ o.valor }} {{ cita(o.cita) }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Criterios de evaluación</h2>
+  {% if r.criterios_de_evaluacion %}
+  <table class="doc-tabla">
+    <thead><tr><th>Criterio</th><th>Peso</th></tr></thead>
+    <tbody>{% for x in r.criterios_de_evaluacion %}<tr><td>{{ x.criterio }} {{ cita(x.cita) }}</td><td>{{ x.peso }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
+
+  <h2>Riesgos y dudas</h2>
+  {% if r.riesgos_y_dudas %}
+  <ul class="doc-lista">{% for x in r.riesgos_y_dudas %}<li>{{ x.riesgo }} {{ cita(x.cita) }}</li>{% endfor %}</ul>
+  {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
+
+  <div class="doc-pie">
+    Generado por IA el {{ res.creado_en | fecha }} · modelo {{ res.modelo }} · prompt {{ res.prompt_version }}
+    · estado {{ IA.estados[res.estado] }}. No es un dato oficial de SICOP: cada cita [DOC n · pág. p] indica el
+    documento y la página donde comprobarlo.
+  </div>
+</article>
+{% if imprimir %}<script>window.addEventListener("load", function () { window.print(); });</script>{% endif %}
+{% endblock %}
