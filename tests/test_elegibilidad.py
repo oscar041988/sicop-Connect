@@ -15,7 +15,12 @@ import pytest
 from app import asistente, elegibilidad
 from app.ai import verificacion
 from app.database import MIGRATIONS_DIR, apply_migrations, connect
-from tests.test_asistente import AHORA, ANA, LUIS, NRO, PDF, _empezar, _responder, lista  # noqa: F401 (fixture)
+import re
+
+from app import seguimiento
+from app.historial import Quien
+from tests.test_asistente import (AHORA, ANA, LUIS, NRO, PDF, _empezar, _post, _responder,  # noqa: F401 (fixtures)
+                                  lista, web)
 from tests.test_panel import db  # noqa: F401 (fixture)
 
 CIERRE = date(2026, 11, 20)
@@ -209,3 +214,36 @@ def test_0033_se_aplica_sobre_una_base_con_respuestas(tmp_path):
         assert conn.execute("SELECT count(*) FROM eligibility_answers").fetchone() == (1,)
         assert elegibilidad.calcular(conn, NRO, ANA, AHORA) == 1
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+# --- En la página del cartel (el «web» de tests/test_asistente.py: Oscar admin, Ana encargada de otro) --------
+
+def test_calcular_revisar_y_descargar_la_constancia_en_la_pagina(web):
+    db_path, ids, _, c, u = web
+    with closing(connect(db_path)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    oscar = c["oscar"]
+    _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")
+    for item, datos in ((ids["sicop"], {"valor_si_no": "1"}), (ids["anos"], {"valor_numero": "8"}),
+                        (ids["patente"], {"estado": "archivo_pendiente"}),
+                        (ids["cierre"], {"valor_fecha": "2026-12-01"}), (ids["soporte"], {"valor_texto": "24/7"})):
+        assert _post(oscar, f"/oportunidades/{NRO}/asistente/{item}/responder", datos).status_code == 303
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "Todavía no se ha calculado" in pagina and "Calcular el resultado" in pagina
+    assert pagina.count('class="revisar-requisito"') == 2                  # la fecha y el texto
+    r = _post(oscar, f"/oportunidades/{NRO}/asistente/resultado")
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}#resultado"
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert "Pueden participar si completan lo que falta" in pagina and elegibilidad.AVISO in pagina
+    assert "&lt;script&gt;" in pagina and "<script>alert(1)" not in pagina   # todo escapado
+    r = _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/revisar", {"cumple": "2"})
+    assert r.status_code == 400 and "Elige «Cumple» o «No cumple»" in r.text
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/revisar", {"cumple": "1", "nota": "ok"})
+    rid = re.search(r'/asistente/resultados/(\d+)"', oscar.get(f"/oportunidades/{NRO}").text).group(1)
+    constancia = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente/resultados/{rid}").text.split())
+    assert "Constancia del resultado de elegibilidad" in constancia and elegibilidad.AVISO in constancia
+    assert "8 años" in constancia and "Lo tiene · archivo pendiente" in constancia
+    assert 'addEventListener("load"' not in constancia                    # «Ver» no abre la ventana de imprimir
+    assert 'addEventListener("load"' in oscar.get(f"/oportunidades/{NRO}/asistente/resultados/{rid}?imprimir=1").text
+    assert c["ana"].get(f"/oportunidades/{NRO}/asistente/resultados/{rid}").status_code == 403
+    assert oscar.get(f"/oportunidades/{NRO}/asistente/resultados/999").status_code == 404

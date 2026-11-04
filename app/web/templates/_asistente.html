@@ -127,6 +127,65 @@
   </details>
   {% endif %}
 
+  {# Resultado (lección 4): la app compara; una persona decide los «Revisar»; cada cálculo queda como constancia. #}
+  {% set re = res_eleg %}
+  {% set ultima = re.constancias[0] if re.constancias else none %}
+  {% macro tag_estado(estado) %}<span class="tag {{ {'cumple': '', 'no_cumple': 'g', 'falta': 'w', 'revisar': 'r'}[estado] }}">{{ ELEG.estados[estado] }}</span>{% endmacro %}
+  <div id="resultado" class="resultado-eleg">
+    <h3>Resultado: ¿podemos participar?</h3>
+    {% if ultima %}
+    <p class="resultado-titular {{ ultima.resultado }}"><strong>{{ ultima.resultado_texto }}</strong>
+      <small class="sub">· calculado por {{ ultima.calculado_por }}, {{ ultima.creado_en | fecha }}</small></p>
+    <div class="resultado-explicacion">{% for linea in ultima.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
+    <p class="resultado-aviso">{{ ELEG.aviso }}</p>
+    <p><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}">Ver constancia</a>
+      · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}?imprimir=1" target="_blank" rel="noopener">Descargar</a></p>
+    {% if re.global != ultima.resultado %}
+    <p class="sub">Con las respuestas de ahora el resultado sería «{{ ELEG.resultados[re.global] }}»: vuelve a calcular.</p>
+    {% endif %}
+    {% else %}
+    <p class="sub">Todavía no se ha calculado. Con las respuestas de ahora sería «{{ ELEG.resultados[re.global] }}».</p>
+    {% endif %}
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/resultado">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Calcular el resultado</button>
+    </form>
+
+    <details class="respuestas-asistente" {% if re.conteo.revisar %}open{% endif %}>
+      <summary>Cómo va cada requisito: {{ re.conteo.cumple }} cumple · {{ re.conteo.no_cumple }} no cumple ·
+        {{ re.conteo.falta }} falta · {{ re.conteo.revisar }} revisar</summary>
+      <table class="tabla-resultado">
+        <thead><tr><th>Requisito</th><th>Estado</th><th>Respuesta</th><th>Por qué</th></tr></thead>
+        <tbody>
+        {% for e in re.evaluaciones %}
+        <tr>
+          <td>{% if e.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ e.item.requisito }}
+            {% for x in e.item.citas %} {{ citar(x) }}{% endfor %}</td>
+          <td>{{ tag_estado(e.estado) }}</td>
+          <td>{{ e.respuesta.resumen if e.respuesta else "—" }}</td>
+          <td>{{ e.motivo }}
+            {% if e.automatico == "revisar" and e.respuesta %}
+            <form class="revisar-requisito" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ e.item.id }}/revisar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="text" name="nota" maxlength="2000" placeholder="Nota (opcional)">
+              <button type="submit" name="cumple" value="1" class="btn o">Cumple</button>
+              <button type="submit" name="cumple" value="0" class="btn o">No cumple</button>
+            </form>
+            {% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% if re.constancias | length > 1 %}
+    <details class="respuestas-asistente">
+      <summary>Resultados anteriores ({{ re.constancias | length - 1 }})</summary>
+      <ul>{% for k in re.constancias[1:] %}<li><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ k.id }}">{{ k.resultado_texto }}</a>
+        <small class="sub">· {{ k.calculado_por }}, {{ k.creado_en | fecha }}</small></li>{% endfor %}</ul>
+    </details>
+    {% endif %}
+  </div>
+
   {% if a.info %}
   <details class="respuestas-asistente">
     <summary>Para tener en cuenta ({{ a.info | length }}): multas y condiciones de la institución</summary>

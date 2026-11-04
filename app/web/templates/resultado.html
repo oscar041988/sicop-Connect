@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{# Resultado de elegibilidad (lección 4): la constancia guardada como documento («Ver»). «Descargar» es esta misma
+   página con ?imprimir=1 y el navegador la guarda como PDF (sin librerías nuevas). Muestra lo que se guardó en ese
+   momento (eligibility_results), no las respuestas de hoy. Todo el texto va escapado. #}
+{% set c = d.compra %}
+{% macro tag_estado(estado) %}<span class="tag {{ {'cumple': '', 'no_cumple': 'g', 'falta': 'w', 'revisar': 'r'}[estado] }}">{{ ELEG.estados[estado] }}</span>{% endmacro %}
+{% block titulo %}Resultado {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+<div class="doc-acciones no-imprimir">
+  <a href="/oportunidades/{{ c.nro_sicop }}#resultado">← Volver al cartel</a>
+  <button type="button" class="btn p" onclick="window.print()">Descargar PDF</button>
+  <small class="sub">En la ventana de imprimir, elige «Guardar como PDF».</small>
+</div>
+
+<article class="doc-resumen">
+  <div class="doc-cabecera">
+    <p class="doc-marca">Hermatix · SICOP Connect · Constancia del resultado de elegibilidad</p>
+    <h1>{{ c.descripcion | titulo | legible or "(sin título)" }}</h1>
+    <p class="doc-institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
+  </div>
+
+  <dl class="doc-datos">
+    <div><dt>Número SICOP</dt><dd>{{ c.nro_sicop }}</dd></div>
+    <div><dt>Cierre usado</dt><dd>{{ k.cierre | dia if k.cierre else "—" }}</dd></div>
+    <div><dt>Calculado por</dt><dd>{{ k.calculado_por }}</dd></div>
+    <div><dt>Fecha</dt><dd>{{ k.creado_en | fecha }}</dd></div>
+  </dl>
+
+  <p class="resultado-titular {{ k.resultado }}"><strong>{{ k.resultado_texto }}</strong></p>
+  <div class="resultado-explicacion">{% for linea in k.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
+  <p class="doc-nota">Explicación {{ "redactada con IA a partir del resultado que calculó la app" if k.explicacion_origen == "ia" else "armada por la app" }}{% if k.explicacion_motivo %} ({{ k.explicacion_motivo }}){% endif %}.
+    El resultado lo calcula la app con las reglas de comparación, nunca la IA.</p>
+  <p class="resultado-aviso">{{ ELEG.aviso }}</p>
+
+  <h2>Detalle por requisito</h2>
+  <table class="tabla-resultado">
+    <thead><tr><th>Requisito</th><th>Estado</th><th>Respuesta</th><th>Por qué</th></tr></thead>
+    <tbody>
+    {% for x in k.detalle %}
+    <tr>
+      <td>{% if x.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ x.requisito }}
+        {% for cita in x.citas %} {{ citar(cita) }}{% endfor %}
+        <br><small class="sub">Qué lo demuestra: {{ x.evidencia }} · mínimo: {{ x.minimo }}</small></td>
+      <td>{{ tag_estado(x.estado) }}</td>
+      <td>{{ x.respuesta or "—" }}{% if x.nota %}<br><small class="sub">Nota: {{ x.nota }}</small>{% endif %}
+        {% if x.respondido_por %}<br><small class="sub">{{ x.respondido_por }}, {{ x.respondido_en | fecha }}</small>{% endif %}</td>
+      <td>{{ x.motivo }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="doc-nota">Versión de la lista: generación #{{ k.lista_generacion_id or "—" }} · huella {{ k.lista_huella[:12] }}.
+    Constancia #{{ k.id }}: no se borra ni se modifica.</p>
+</article>
+{% if imprimir %}<script>window.addEventListener("load", function () { window.print(); });</script>{% endif %}
+{% endblock %}

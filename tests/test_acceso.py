@@ -261,8 +261,10 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/asistente/empezar",
                              "/oportunidades/{nro_sicop}/asistente/redactar",
+                             "/oportunidades/{nro_sicop}/asistente/resultado",
                              "/oportunidades/{nro_sicop}/asistente/{item_id}/perfil",
                              "/oportunidades/{nro_sicop}/asistente/{item_id}/responder",
+                             "/oportunidades/{nro_sicop}/asistente/{item_id}/revisar",
                              "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
                              "/oportunidades/{nro_sicop}/seguimiento",
                              "/oportunidades/{nro_sicop}/verificacion/agregar",

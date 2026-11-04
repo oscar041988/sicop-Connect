@@ -35,7 +35,8 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (asistente, aviso_encargado, avisos, calidad, competencia, destinatarios, expediente_archivos,
+from app import (asistente, aviso_encargado, avisos, calidad, competencia, destinatarios, elegibilidad,
+                 expediente_archivos,
                  expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
@@ -338,8 +339,16 @@ def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime,
     settings = load_settings()
     pasos = asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date())
     actual = next((p for p in pasos if p.item.id == ver_item), None) or asistente.siguiente(pasos)
+    sesion = asistente.sesion(conn, nro_sicop)
+    # Resultado (lección 4): cómo va cada requisito con las respuestas de hoy y las constancias ya calculadas.
+    evaluaciones = elegibilidad.evaluar(pasos, elegibilidad.cierre_de(conn, nro_sicop),
+                                        elegibilidad.revisiones(conn, sesion.id)) if sesion else []
     return {
-        "asis": {"sesion": asistente.sesion(conn, nro_sicop), "pasos": pasos, "actual": actual,
+        "res_eleg": {"evaluaciones": evaluaciones, "global": elegibilidad.resultado_global(evaluaciones),
+                     "constancias": elegibilidad.constancias(conn, nro_sicop) if sesion else [],
+                     "conteo": {k: sum(e.estado == k for e in evaluaciones) for k in elegibilidad.ESTADOS}},
+        "ELEG": {"resultados": elegibilidad.RESULTADOS, "estados": elegibilidad.ESTADOS, "aviso": elegibilidad.AVISO},
+        "asis": {"sesion": sesion, "pasos": pasos, "actual": actual,
                  "avance": asistente.avance(pasos), "info": asistente.informativos(conn, nro_sicop),
                  "es_admin": seguridad.es_admin(request), "limite_mb": settings.assistant_doc_max_mb,
                  "ia": _ia_encendida(), "faltan_ia": sum(p.origen == "app" for p in pasos),
@@ -447,6 +456,68 @@ def confirmar_perfil_asistente(request: Request, nro_sicop: str, item_id: int) -
             return _render_detalle(request, conn, nro_sicop, status_code=400, ver_item=item_id,
                                    error_asistente=str(exc))
     return _volver_asistente(request, nro_sicop, "Dato del perfil confirmado.")
+
+
+# --- Resultado de elegibilidad (lección 4): la app compara, una persona decide los «revisar» --------------------
+
+def _volver_resultado(request: Request, nro_sicop: str, mensaje: str) -> Response:
+    request.session["hecho_asistente"] = mensaje
+    return RedirectResponse(f"/oportunidades/{nro_sicop}#resultado", status_code=303)
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/{item_id}/revisar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def revisar_requisito(request: Request, nro_sicop: str, item_id: int, cumple: str = Form(""),
+                      nota: str = Form("")) -> Response:
+    """Una persona decide un requisito que la app no puede comparar sola (queda atado a su respuesta)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            if cumple not in ("1", "0"):
+                raise elegibilidad.ResultadoInvalido("Elige «Cumple» o «No cumple».")
+            elegibilidad.revisar(conn, nro_sicop, item_id, cumple == "1", nota, _quien(request), _ahora())
+        except elegibilidad.ResultadoInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+    return _volver_resultado(request, nro_sicop, "Revisión guardada. Calcula el resultado para dejar la constancia.")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/resultado", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def calcular_resultado(request: Request, nro_sicop: str) -> Response:
+    """Calcula el resultado con las respuestas de hoy y lo guarda como constancia."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            constancia_id = elegibilidad.calcular(conn, nro_sicop, _quien(request), _ahora())
+        except elegibilidad.ResultadoInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+        c = elegibilidad.constancia(conn, nro_sicop, constancia_id)
+    return _volver_resultado(request, nro_sicop, f"Resultado calculado: {c.resultado_texto}.")
+
+
+@router.get("/oportunidades/{nro_sicop}/asistente/resultados/{constancia_id}", response_class=HTMLResponse)
+def ver_constancia(request: Request, nro_sicop: str, constancia_id: int, imprimir: bool = False) -> Response:
+    """La constancia como documento («Ver»); con ?imprimir=1 («Descargar») el navegador la guarda como PDF."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        c = elegibilidad.constancia(conn, nro_sicop, constancia_id)
+        if c is None:
+            return _no_encontrado(request, "Esa constancia no es de este cartel.")
+        datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
+        citar = _citador(conn, nro_sicop, load_settings())
+    return PLANTILLAS.TemplateResponse(request, "resultado.html", {
+        "d": datos, "k": c, "imprimir": imprimir, "citar": citar,
+        "ELEG": {"resultados": elegibilidad.RESULTADOS, "estados": elegibilidad.ESTADOS, "aviso": elegibilidad.AVISO},
+    })
 
 
 def _documento_asistente(request: Request, nro_sicop: str, respuesta_id: int, accion: str):

@@ -460,3 +460,15 @@ form.en-linea { display: inline; margin-left: 8px; }
 .respuestas-asistente { margin-top: 14px; }
 .respuestas-asistente li { margin-bottom: 8px; overflow-wrap: anywhere; }
 .asistente .revision label.casilla { flex-direction: row; align-items: center; gap: 8px; }
+
+/* Resultado de elegibilidad (lección 4): titular, explicación, aviso fijo y tabla por requisito */
+.resultado-eleg { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 12px; }
+.resultado-titular { font-size: 1.15rem; padding: 10px 14px; border-radius: 12px; background: var(--g1); color: var(--g7); }
+.resultado-titular.puede_si_completa, .resultado-titular.falta_informacion { background: var(--warn-bg); color: var(--warn); }
+.resultado-titular.no_cumple_excluyente { background: var(--no-bg); color: var(--no); }
+.resultado-explicacion p { margin: 0 0 6px; overflow-wrap: anywhere; }
+.resultado-aviso { font-size: .9rem; color: var(--mut); font-style: italic; }
+.tabla-resultado { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.tabla-resultado th, .tabla-resultado td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.revisar-requisito { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.revisar-requisito input[type="text"] { flex: 1 1 160px; }
