@@ -25,6 +25,7 @@ from starlette.background import BackgroundTask
 
 from app.ai import asistente as ia_asistente
 from app.ai import expediente as ia_expediente
+from app.ai import explicacion as ia_explicacion
 from app.ai import resumen as ia_resumen
 from app.ai import verificacion
 from app.ayuda import pagina as ayuda
@@ -487,18 +488,21 @@ def revisar_requisito(request: Request, nro_sicop: str, item_id: int, cumple: st
 @router.post("/oportunidades/{nro_sicop}/asistente/resultado", response_class=HTMLResponse,
              dependencies=[Depends(verificar_csrf)])
 def calcular_resultado(request: Request, nro_sicop: str) -> Response:
-    """Calcula el resultado con las respuestas de hoy y lo guarda como constancia."""
+    """Calcula el resultado con las respuestas de hoy (la app), lo explica (la IA, si se puede) y guarda la
+    constancia."""
     if (error := _base_no_lista(request)) is not None:
         return error
-    with closing(connect(load_settings().database_path)) as conn:
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
         if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
             return negado
         try:
-            constancia_id = elegibilidad.calcular(conn, nro_sicop, _quien(request), _ahora())
+            constancia_id = ia_explicacion.calcular(conn, settings, nro_sicop, _quien(request), _ahora())
         except elegibilidad.ResultadoInvalido as exc:
             return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         c = elegibilidad.constancia(conn, nro_sicop, constancia_id)
-    return _volver_resultado(request, nro_sicop, f"Resultado calculado: {c.resultado_texto}.")
+    sin_ia = f" Explicación de la app: {c.explicacion_motivo}." if c.explicacion_motivo else ""
+    return _volver_resultado(request, nro_sicop, f"Resultado calculado: {c.resultado_texto}.{sin_ia}")
 
 
 @router.get("/oportunidades/{nro_sicop}/asistente/resultados/{constancia_id}", response_class=HTMLResponse)

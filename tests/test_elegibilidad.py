@@ -4,22 +4,23 @@ Requisitos y respuestas INVENTADOS: primero en memoria (sin base ni IA), despué
 tests/test_asistente.py. Nunca se llama a OpenAI.
 """
 
+import json
+import re
 import shutil
 import sqlite3
 from contextlib import closing
 from datetime import date
 from itertools import count
+from types import SimpleNamespace
 
 import pytest
 
-from app import asistente, elegibilidad
+from app import asistente, elegibilidad, seguimiento
+from app.ai import explicacion as ia_explicacion
 from app.ai import verificacion
 from app.database import MIGRATIONS_DIR, apply_migrations, connect
-import re
-
-from app import seguimiento
 from app.historial import Quien
-from tests.test_asistente import (AHORA, ANA, LUIS, NRO, PDF, _empezar, _post, _responder,  # noqa: F401 (fixtures)
+from tests.test_asistente import (AHORA, ANA, LUIS, NRO, PDF, _con_ia, _empezar, _post, _responder,  # noqa: F401
                                   lista, web)
 from tests.test_panel import db  # noqa: F401 (fixture)
 
@@ -247,3 +248,83 @@ def test_calcular_revisar_y_descargar_la_constancia_en_la_pagina(web):
     assert 'addEventListener("load"' in oscar.get(f"/oportunidades/{NRO}/asistente/resultados/{rid}?imprimir=1").text
     assert c["ana"].get(f"/oportunidades/{NRO}/asistente/resultados/{rid}").status_code == 403
     assert oscar.get(f"/oportunidades/{NRO}/asistente/resultados/999").status_code == 404
+
+
+# --- Explicación con IA (OpenAI SIMULADO): explica el resultado de la app, nunca lo cambia ----------------------
+
+class OpenAIExplica:
+    """Imita client.responses.create con una explicación fija; anota lo que se le mandó."""
+
+    def __init__(self, explicacion, que_falta=(), falla=False):
+        self.llamadas, self.falla = [], falla
+        self.datos = {"explicacion": explicacion, "que_falta": list(que_falta)}
+        self.responses = SimpleNamespace(create=self._crear)
+
+    def _crear(self, **kwargs):
+        self.llamadas.append(kwargs)
+        if self.falla:
+            raise RuntimeError("simulado")
+        return SimpleNamespace(status="completed", output_text=json.dumps(self.datos), output=[],
+                               model="modelo-simulado", usage=SimpleNamespace(input_tokens=400, output_tokens=80),
+                               incomplete_details=None)
+
+
+def _calcular_con(db_path, settings, simulado):
+    with closing(connect(db_path)) as conn:
+        cid = ia_explicacion.calcular(conn, settings, NRO, ANA, AHORA, cliente=simulado, dormir=lambda s: None)
+        return elegibilidad.constancia(conn, NRO, cid)
+
+
+def _con_respuestas(lista_fixture):
+    db_path, ids, settings = lista_fixture
+    _empezar(db_path)
+    _responder(db_path, settings, ids["sicop"], valor_si_no="1")
+    _responder(db_path, settings, ids["anos"], valor_numero="8", nota="NOTA-INTERNA")
+    _responder(db_path, settings, ids["patente"], archivo=PDF)
+    _responder(db_path, settings, ids["cierre"], estado="no_se")
+    return db_path, ids, settings
+
+
+@pytest.mark.parametrize("texto, resultado, contradice", [
+    ("Sí, pueden participar.", "falta_informacion", True),
+    ("Falta información sobre el soporte.", "puede_participar", True),
+    ("Sí, pueden participar si completan la patente.", "puede_si_completa", False),
+    ("Hermatix cumple el excluyente y falta subir un archivo.", "puede_si_completa", False),
+    ("No cumplen un requisito excluyente: la patente.", "no_cumple_excluyente", False)])
+def test_contradice_detecta_otro_resultado(texto, resultado, contradice):
+    assert ia_explicacion.contradice(texto, resultado) is contradice
+
+
+def test_la_ia_explica_sin_recibir_archivos_ni_notas(lista):
+    db_path, ids, settings = _con_respuestas(lista)
+    simulado = OpenAIExplica("Falta responder la fecha de inicio; lo demás cumple.", ["Responder la fecha."])
+    c = _calcular_con(db_path, _con_ia(settings), simulado)
+    assert c.resultado == "falta_informacion" and c.explicacion_origen == "ia" and c.explicacion_motivo is None
+    assert c.explicacion == "Falta responder la fecha de inicio; lo demás cumple.\n- Responder la fecha."
+    enviado = simulado.llamadas[0]["input"] + simulado.llamadas[0]["instructions"]
+    assert "RESULTADO (calculado por la app; no se cambia): Falta información" in enviado
+    assert "permiso.pdf" not in enviado and "TEXTO-UNICO-DEL-ARCHIVO" not in enviado and "NOTA-INTERNA" not in enviado
+    assert "documento entregado" in enviado and "Multa" not in enviado and "El resultado NO se cambia" in enviado
+    with closing(connect(db_path)) as conn:
+        assert {p for (p,) in conn.execute("SELECT proposito FROM ia_usage")} == {"explicacion"}
+
+
+def test_si_la_ia_contradice_el_resultado_queda_la_explicacion_de_la_app(lista):
+    db_path, _, settings = _con_respuestas(lista)
+    c = _calcular_con(db_path, _con_ia(settings), OpenAIExplica("Sí, pueden participar sin problema."))
+    assert c.resultado == "falta_informacion" and c.explicacion_origen == "app"
+    assert "no coincidía con el resultado calculado" in c.explicacion_motivo
+    assert c.explicacion.startswith("Falta información. Esto es lo que falta")
+
+
+@pytest.mark.parametrize("caso", ["ia_apagada", "sin_presupuesto", "fallo"])
+def test_sin_ia_la_constancia_lleva_la_explicacion_de_la_app(lista, caso):
+    db_path, _, settings = _con_respuestas(lista)
+    usar = {"ia_apagada": settings, "sin_presupuesto": _con_ia(settings, IA_MAX_DAILY_COST="0"),
+            "fallo": _con_ia(settings)}[caso]
+    simulado = OpenAIExplica("x", falla=caso == "fallo")
+    c = _calcular_con(db_path, usar, simulado)
+    assert c.explicacion_origen == "app" and c.resultado == "falta_informacion"
+    assert {"ia_apagada": "apagada", "sin_presupuesto": "presupuesto", "fallo": "OpenAI no respondió"}[caso] in \
+        c.explicacion_motivo
+    assert (len(simulado.llamadas) > 0) is (caso == "fallo")
