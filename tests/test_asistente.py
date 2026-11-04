@@ -7,6 +7,7 @@ Nunca se llama a OpenAI.
 import io
 import json
 import re
+import shutil
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
@@ -20,7 +21,7 @@ from app.ai import asistente as ia_asistente
 from app.ai import verificacion
 from app.archivos import ArchivoInvalido
 from app.config import load_settings
-from app.database import connect
+from app.database import MIGRATIONS_DIR, apply_migrations, connect
 from app.historial import Quien
 from app.main import app
 from tests.test_panel import CONTRASENA, db, iniciar_sesion, token_csrf  # noqa: F401 (db es una fixture)
@@ -170,7 +171,40 @@ def test_cada_tipo_pide_su_dato_exacto(lista):
     assert pasos[ids["sicop"]].respuesta.resumen == "Sí"
     assert pasos[ids["cierre"]].respuesta.resumen == "Todavía no lo sé"
     assert asistente.avance(list(pasos.values())) == {"total": 5, "respondidos": 3, "excluyentes": 2,
-                                                       "excluyentes_respondidos": 2, "no_se": 1}
+                                                       "excluyentes_respondidos": 2, "no_se": 1,
+                                                       "archivo_pendiente": 0}
+
+
+def test_lo_tiene_archivo_pendiente_se_guarda_sin_archivo_y_se_completa_despues(lista):
+    """Los documentos de Hermatix no se suben todavía (2026-11-04): «Lo tiene» sin archivo, y el archivo después."""
+    db, ids, settings = lista
+    _empezar(db)
+    with pytest.raises(asistente.AsistenteInvalido, match="«Lo tiene · archivo pendiente» es solo para documentos"):
+        _responder(db, settings, ids["anos"], estado="archivo_pendiente")
+    with closing(connect(db)) as conn:
+        patente = perfil.crear(conn, "permiso", "Patente municipal", ANA, AHORA)
+        verificacion.elegir_perfil(conn, NRO, ids["patente"], patente, ANA)
+    with pytest.raises(asistente.AsistenteInvalido, match="no se puede guardar en el perfil"):
+        _responder(db, settings, ids["patente"], estado="archivo_pendiente", guardar=True)
+    _responder(db, settings, ids["patente"], estado="archivo_pendiente", vence_el="2027-01-15", nota="en el archivo")
+    paso = next(p for p in _pasos(db) if p.item.id == ids["patente"])
+    assert paso.respuesta.resumen == "Lo tiene · archivo pendiente · vence 15/01/2027"
+    assert not paso.respuesta.tiene_archivo and paso.respuesta.nota == "en el archivo"
+    assert not settings.assistant_docs_dir.exists()                       # no se guardó ningún archivo
+    assert asistente.avance(_pasos(db))["archivo_pendiente"] == 1
+    _responder(db, settings, ids["patente"], archivo=PDF, vence_el="2027-01-15")       # después, con «Cambiar»
+    pasos = _pasos(db)
+    assert next(p for p in pasos if p.item.id == ids["patente"]).respuesta.resumen == "permiso.pdf · vence 15/01/2027"
+    assert asistente.avance(pasos)["archivo_pendiente"] == 0
+    with closing(connect(db)) as conn:
+        s = asistente.sesion(conn, NRO)
+        assert [r.estado for r in asistente.historial_de(conn, s.id, ids["patente"])] == ["respondido",
+                                                                                         "archivo_pendiente"]
+        with pytest.raises(sqlite3.IntegrityError, match="CHECK"):               # la base tampoco lo acepta con archivo
+            conn.execute("INSERT INTO eligibility_answers (session_id, item_id, requisito, pregunta, tipo_evidencia,"
+                         " estado, fuente, archivo_sha256, archivo_ruta, respondido_por_nombre, creado_en) VALUES"
+                         " (?, ?, 'r', 'p', 'documento', 'archivo_pendiente', 'usuario', ?, 'x/y.pdf', 'Ana', 't')",
+                         (s.id, ids["patente"], "a" * 64))
 
 
 def test_documento_validado_y_fuera_de_git(lista):
@@ -376,6 +410,23 @@ def test_responder_pausar_y_que_otra_persona_siga(web):
     assert "Respuesta actual: Sí" in cambiar
 
 
+def test_en_la_pagina_lo_tiene_sin_subir_el_archivo(web):
+    db, ids, _, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    _post(c["oscar"], f"/oportunidades/{NRO}/asistente/empezar")
+    pregunta = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
+    assert 'value="archivo_pendiente"' in pregunta and "Lo tiene · subo el archivo después" in pregunta
+    sicop = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['sicop']}").text
+    assert 'value="archivo_pendiente"' not in sicop                        # solo en los documentos
+    r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder",
+              {"estado": "archivo_pendiente", "vence_el": "2027-01-15"})
+    assert r.status_code == 303
+    pagina = " ".join(c["oscar"].get(f"/oportunidades/{NRO}").text.split())
+    assert "1 de 5</strong> respondidas" in pagina and "1 archivo pendiente" in pagina
+    assert "Lo tiene · archivo pendiente · vence 15/01/2027" in pagina
+
+
 def test_quien_no_es_el_encargado_no_ve_ni_responde(web):
     db, ids, settings, c, u = web
     with closing(connect(db)) as conn:
@@ -409,3 +460,34 @@ def test_guardar_en_el_perfil_es_solo_de_administradores_y_todo_sale_escapado(we
     assert "<script>alert(1)</script>" not in pagina and "&lt;script&gt;alert(1)&lt;/script&gt;" in pagina
     assert "Guardar también en el perfil" not in pagina                     # «soporte» no tiene elemento del perfil
     assert "Guardar también en el perfil" in c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
+
+
+# --- Migración 0032 -----------------------------------------------------------------------------------------------
+
+def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
+    hasta_0031 = tmp_path / "hasta_0031"
+    hasta_0031.mkdir()
+    for archivo in MIGRATIONS_DIR.glob("*.sql"):
+        if archivo.name < "0032":
+            shutil.copy(archivo, hasta_0031)
+    base = tmp_path / "sicop.db"
+    apply_migrations(base, hasta_0031)
+    settings = load_settings(env_file=None, environ={"DATABASE_PATH": str(base),
+                                                     "ASSISTANT_DOCS_DIR": str(tmp_path / "asistente")})
+    with closing(connect(base)) as conn:
+        conn.execute("INSERT INTO tenders (nro_sicop, descripcion, content_hash, first_seen, last_seen)"
+                     " VALUES (?, 'x', 'h', 't', 't')", (NRO,))
+        conn.commit()
+        item = verificacion.agregar(conn, NRO, _req("Ofertar por SICOP. [DOC 1 · pág. 1]"), ANA)
+        asistente.empezar(conn, NRO, ANA, AHORA)
+        antes = asistente.responder(conn, settings, NRO, item, asistente.Entrada(valor_si_no="1"), None, ANA, AHORA)
+    assert apply_migrations(base) == ["0032_archivo_pendiente.sql"]
+    with closing(connect(base)) as conn:
+        assert conn.execute("SELECT id, estado, valor_si_no FROM eligibility_answers").fetchall() == [
+            (antes, "respondido", 1)]
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+        with pytest.raises(sqlite3.IntegrityError, match="no se borran"):
+            conn.execute("DELETE FROM eligibility_answers")
+        with pytest.raises(sqlite3.IntegrityError, match="no se modifican"):
+            conn.execute("UPDATE eligibility_answers SET nota = 'x'")
+    assert apply_migrations(base) == []

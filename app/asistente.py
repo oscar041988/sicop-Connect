@@ -9,6 +9,8 @@
   (confirmar_perfil); si venció, está pendiente o no existe, se pregunta.
 * Las respuestas no se borran ni se modifican (triggers): cambiar una agrega otra y vale la última. La conversación
   se pausa sola y otra persona autorizada la retoma (quién puede entrar lo revisa la ruta: seguimiento.puede_entrar).
+* «Lo tiene · archivo pendiente» (migración 0032, solo documentos): Hermatix tiene el documento pero todavía no se
+  sube (son delicados); se completa después con «Cambiar». El avance lo cuenta aparte.
 * Archivos: PDF/PNG/JPG validados igual que en el perfil, en ASSISTANT_DOCS_DIR/<nro_sicop>/, fuera de Git; cada
   vista o descarga queda en audit_log. Con ASSISTANT_SEND_DOCUMENTS=false su texto nunca sale de la app (la IA no
   recibe archivos en ningún caso: con true se avisa que ese camino falta, decisión pendiente de Oscar).
@@ -32,7 +34,9 @@ from app.historial import Quien
 from app.importers.comun import HORA_CR
 
 INFORMATIVOS = ("multa clausula penal", "condicion de la institucion")    # normalizados (sin «/», tildes ni «:»)
-ESTADOS = {"respondido": "Respondido", "no_lo_tiene": "Hermatix no lo tiene", "no_se": "Todavía no lo sé"}
+ESTADOS = {"respondido": "Respondido", "archivo_pendiente": "Lo tiene · archivo pendiente",
+           "no_lo_tiene": "Hermatix no lo tiene", "no_se": "Todavía no lo sé"}
+SOLO_DOCUMENTO = ("archivo_pendiente", "no_lo_tiene")        # respuestas que solo tienen sentido para un documento
 PERFIL_USABLE = ("vigente", "por_vencer")
 LARGO_TEXTO = 2000
 
@@ -83,6 +87,8 @@ class Respuesta:
     @property
     def resumen(self) -> str:
         """La respuesta en palabras: «8 años», «Sí», «permiso.pdf · vence 15/01/2027»."""
+        if self.estado == "archivo_pendiente":
+            return " · ".join([self.estado_texto] + ([f"vence {perfil.dia(self.vence_el)}"] if self.vence_el else []))
         if self.estado != "respondido":
             return self.estado_texto
         partes = []
@@ -220,7 +226,9 @@ def avance(pasos: list[Paso]) -> dict[str, int]:
     excluyentes = [p for p in pasos if p.item.excluyente]
     return {"total": len(pasos), "respondidos": sum(p.respuesta is not None for p in pasos),
             "excluyentes": len(excluyentes), "excluyentes_respondidos": sum(p.respuesta is not None for p in excluyentes),
-            "no_se": sum(p.respuesta is not None and p.respuesta.estado == "no_se" for p in pasos)}
+            "no_se": sum(p.respuesta is not None and p.respuesta.estado == "no_se" for p in pasos),
+            "archivo_pendiente": sum(p.respuesta is not None and p.respuesta.estado == "archivo_pendiente"
+                                     for p in pasos)}
 
 
 def paso_de(pasos: list[Paso], item_id: int) -> Paso:
@@ -278,8 +286,10 @@ def _valores(item: verificacion.Item, e: Entrada) -> dict:
     nota = e.nota.strip()[:LARGO_TEXTO] or None
     vacio = {"valor_texto": None, "valor_numero": None, "valor_fecha": None, "valor_si_no": None, "unidad": None,
              "vence_el": None, "nota": nota}
-    if e.estado == "no_lo_tiene" and item.tipo_evidencia != "documento":
-        raise AsistenteInvalido("«Hermatix no lo tiene» es solo para documentos.")
+    if e.estado in SOLO_DOCUMENTO and item.tipo_evidencia != "documento":
+        raise AsistenteInvalido(f"«{ESTADOS[e.estado]}» es solo para documentos.")
+    if e.estado == "archivo_pendiente":                  # sin archivo todavía: la fecha de vencimiento sí sirve
+        return {**vacio, "vence_el": _fecha(e.vence_el, "Vence el")}
     if e.estado != "respondido":
         return vacio
     t = item.tipo_evidencia
@@ -337,8 +347,9 @@ def responder(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, item
         raise AsistenteInvalido("ASSISTANT_SEND_DOCUMENTS=true todavía no está construido (falta la decisión de"
                                 " Oscar): ponlo en false. No se guardó ni se envió nada.")
     if es_documento and archivo is None:
-        raise AsistenteInvalido("Sube el documento (PDF, PNG o JPG). Si todavía no lo tienes, elige «Todavía no lo"
-                                " sé» o «Hermatix no lo tiene».")
+        raise AsistenteInvalido("Sube el documento (PDF, PNG o JPG). Si Hermatix lo tiene pero lo subes después,"
+                                " elige «Lo tiene · subo el archivo después»; si no, «Todavía no lo sé» o «Hermatix"
+                                " no lo tiene».")
     if guardar_en_perfil and (paso.item.perfil_item_id is None or entrada.estado != "respondido"
                               or paso.item.tipo_evidencia == "si_no"):
         raise AsistenteInvalido("Esta respuesta no se puede guardar en el perfil: el requisito no tiene un elemento"

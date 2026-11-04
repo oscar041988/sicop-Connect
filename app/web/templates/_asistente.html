@@ -26,7 +26,8 @@
   {% else %}
   {% set av = a.avance %}
   <p class="avance"><strong>{{ av.respondidos }} de {{ av.total }}</strong> respondidas · excluyentes
-    {{ av.excluyentes_respondidos }} de {{ av.excluyentes }}{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}</p>
+    {{ av.excluyentes_respondidos }} de {{ av.excluyentes }}{% if av.no_se %} · {{ av.no_se }} «Todavía no lo sé»{% endif %}{% if av.archivo_pendiente %} · {{ av.archivo_pendiente }}
+    {{ "archivo pendiente" if av.archivo_pendiente == 1 else "archivos pendientes" }}{% endif %}</p>
   <progress max="{{ av.total or 1 }}" value="{{ av.respondidos }}"></progress>
 
   {% if a.actual %}
@@ -91,7 +92,8 @@
       {% endif %}
       <div class="botones-asistente">
         <button type="submit" name="estado" value="respondido">Guardar respuesta</button>
-        {% if t == "documento" %}<button type="submit" name="estado" value="no_lo_tiene" class="btn o" formnovalidate>Hermatix no lo tiene</button>{% endif %}
+        {% if t == "documento" %}<button type="submit" name="estado" value="archivo_pendiente" class="btn o" formnovalidate>Lo tiene · subo el archivo después</button>
+        <button type="submit" name="estado" value="no_lo_tiene" class="btn o" formnovalidate>Hermatix no lo tiene</button>{% endif %}
         <button type="submit" name="estado" value="no_se" class="btn o" formnovalidate>Todavía no lo sé</button>
         {% if p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}#asistente">Volver a la siguiente</a>{% endif %}
       </div>

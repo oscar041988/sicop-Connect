@@ -46,6 +46,9 @@ Lo usan su encargado y los administradores.
 10. Haz clic en «Todavía no lo sé» si tienes que averiguarlo.
     La pregunta queda pendiente y pasa a la siguiente.
 11. Haz clic en «Hermatix no lo tiene» si es un documento que no hay.
+    - Si Hermatix sí lo tiene pero todavía no quieres subirlo, haz clic en «Lo tiene · subo el archivo después».
+      Puedes escribir hasta cuándo vence. Queda como «archivo pendiente».
+    - Para subirlo después, usa «Cambiar» (paso 15).
 
 ### Seguir otro día
 

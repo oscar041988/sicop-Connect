@@ -4,6 +4,19 @@
 
 ## Último resultado
 
+- **Asistente: «Lo tiene · archivo pendiente» (2026-11-04, pedido de Ivania, rama `desarrollo`, solo local).**
+  Los documentos de Hermatix son delicados y no se suben hasta que el asistente esté listo; «Todavía no lo sé» no
+  decía la verdad. Migración **0032** (`eligibility_answers.estado` acepta `archivo_pendiente`, solo documentos y
+  sin archivo; la tabla se reconstruye con sus ids y sus triggers). Botón «Lo tiene · subo el archivo después»,
+  avance «N archivos pendientes»; se completa después con «Cambiar». No va al perfil sin archivo. Misión 23 de la
+  ayuda actualizada. Pruebas nuevas en `tests/test_asistente.py` (incluida la de la migración).
+  866 passed. ~~Pendiente · Ivania: respaldo y `migrate`~~ **hecho (Claude a pedido de Ivania, 2026-11-04, panel
+  cerrado):** respaldo `C:\Users\User\respaldos-sicop\sicop_20261104-101915` (esquema 0031, integridad ok, con los
+  ZIP de documentos, expedientes, perfil y asistente); `migrate` aplicó la 0032; `doctor`: esquema 0032;
+  `eligibility_answers` 56 filas y último id 56 antes y después, `foreign_key_check` vacío, índice y triggers
+  presentes. **Pendiente · Ivania:** subir el ZIP del respaldo al Drive; volver a responder con el botón nuevo las 5
+  preguntas de documento de 20261002824 que quedaron en «Todavía no lo sé».
+
 - **Asistente de elegibilidad · lección 1, antes del Encargo 1 (2026-11-02).** Guía nueva:
   `docs/Guia_Asistente_Elegibilidad_SICOP.docx`. Oscar aprobó usar la IA también en el asistente y que lo usen los
   dos niveles (Administrador y Encargado): registrado en `docs/DECISION_IA.md` §7 y en `CLAUDE.md`. Enviar
@@ -51,6 +64,16 @@
     - 20261003242 (etiquetas RFID): 13 requisitos, 1 corregido (garantías de 12 y 24 meses de los anaqueles:
       pág. 2, punto 1.7.17 → 12 meses; pág. 10, punto 9 → 24 meses; Ivania lo vio en el pliego y se mantiene);
       solo 1 excluyente (contraste con los otros dos).
+    - Carteles 4 y 5 (Ivania, 2026-11-04, IA encendida): 20261001813 (cámaras de seguridad ciudadana, Liberia,
+      Baja): 9 requisitos; 20261003291 (equipos de media tensión, aeropuerto de Liberia, Baja, resumen
+      «descartar»): 17 requisitos, 13 excluyentes. En los dos: todos en el pliego, nada sobra, excluyentes con
+      sentido y «Qué lo demuestra» correcto. **5 de 5 hechos.**
+      Revisión de faltantes (Claude leyó los dos expedientes, 2026-11-04): `docs/revision_faltantes_20261104.md`,
+      sin agregar nada a la base. En 20261001813 falta toda la admisibilidad (10 años, 10 proyectos, 2 centros de
+      monitoreo, técnicos certificados, carné de alturas…), los requisitos legales y ~450 códigos técnicos; en
+      20261003291, otra vez la garantía de cumplimiento (5 %) y además la colateral (100 %). Mismo patrón que en
+      los 3 primeros → revisar el prompt del resumen (v3). **Pendiente · Ivania:** comprobar en el PDF y decidir
+      si se agregan.
     - Falta comprobar: si faltan requisitos (Ivania aún no conoce bien el proceso: buscar las secciones típicas
       del pliego y que Oscar revise uno); que la IA marca casi todo como excluyente en dos carteles (15 de 16,
       11 de 12; viene del resumen) y en otro solo 1 de 13.
