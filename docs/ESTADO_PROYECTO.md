@@ -10,8 +10,10 @@
   modifica). En `/ayuda`, solo los administradores ven «Cómo les fue con la ayuda», con las misiones de más «no»
   primero. (2) `tests/test_ayuda_viva.py` falla si una misión dice «clic en «X»» o «pulsa «X»» y X ya no está en la
   app. Hoy pasan todas. (3) `docs/OPERACION.md` §8 «Mantener la ayuda al día», con la pregunta «¿Este cambio afecta
-  alguna misión de la ayuda?», más una nota en `docs/ayuda/ESTILO.md`. **Pendiente · Ivania:** respaldo y `migrate`
-  (0037), votar una misión y ver la tabla en `/ayuda`. **En el servidor**, con el PR: `migrate` hasta 0037.
+  alguna misión de la ayuda?», más una nota en `docs/ayuda/ESTILO.md`. 925 pruebas. Respaldo
+  `sicop_20261104-154209` (esquema 0036, integridad ok) y `migrate` (0037) hechos con el panel cerrado: revisiones
+  6, resúmenes 37, respuestas 66, perfil 3 y resultados 3, iguales antes y después; `ayuda_votos` vacía.
+  **Pendiente · Ivania:** votar una misión y ver la tabla en `/ayuda`. **En el servidor**, con el PR: `migrate` hasta 0037.
 
 - **Reporte con IA · lección 4, Encargo 4 hecho (2026-11-04, plan aprobado por Ivania): Reporte de cartel
   Hermatix en PDF, máximo 2 páginas.** `app/ai/reporte.py` + `templates/reporte_cartel.html`; PDF con el Chromium
