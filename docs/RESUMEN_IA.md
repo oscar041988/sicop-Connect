@@ -247,7 +247,11 @@ Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/asistente.py`;
 ## 8. Explicación del resultado de elegibilidad (lección 4; 2026-11-04)
 
 Aprobado por Oscar en `docs/DECISION_IA.md` §7. Reglas: `app/elegibilidad.py`; IA: `app/ai/explicacion.py`, prompt
-versionado `config/prompts/explicacion_elegibilidad_v1.md`; migración 0033.
+versionado `config/prompts/explicacion_elegibilidad_v2.md`; migración 0033.
+
+- **v2 (2026-11-04):** en la primera constancia real (#1, cartel 20261002824) la IA empezó cada línea con «R1:»,
+  «R2:»…, las etiquetas internas de la lista que recibe. El v2 le pide nombrar el requisito con sus palabras y la
+  app las borra igual (`explicacion.sin_referencias`). El v1 queda como estaba; la constancia #1 no se modifica.
 
 - **La app compara, la IA explica.** El estado de cada requisito (cumple · no cumple · falta · revisar) y el
   resultado global (puede participar · puede si completa · no cumple un excluyente · falta información) los calcula

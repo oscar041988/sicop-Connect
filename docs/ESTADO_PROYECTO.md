@@ -15,7 +15,14 @@
   navegador). Ayuda: misión 24 (sin capturas todavía). Detalle: `docs/RESUMEN_IA.md` §8.
   - Pruebas: `tests/test_elegibilidad.py` (los cuatro resultados, documento vencido al cierre, «máximo 5 días»,
     revisar, la IA que contradice se descarta, la constancia con todas las respuestas, la 0033).
-  - **Pendiente · Ivania:** respaldo y `migrate` (0033) en la base real; probar los cuatro resultados en el panel;
+  - 896 passed. ~~Respaldo y `migrate` (0033)~~ **hecho (Claude a pedido de Ivania, 2026-11-04, panel cerrado):**
+    respaldo `sicop_20261104-111251` (esquema 0032, integridad ok, con sus ZIP); `migrate` aplicó la 0033;
+    `doctor`: esquema 0033; 56 respuestas antes y después, tablas nuevas vacías, triggers presentes,
+    `foreign_key_check` vacío.
+  - Primera prueba real (Ivania, 2026-11-04, cartel 20261002824): «Falta información» (1 cumple, 10 falta, 1
+    revisar excluyente), explicación de la IA coherente, 0,0035 USD. Única falla: la IA usaba las etiquetas
+    internas «R1:», «R2:»… → prompt `explicacion_elegibilidad_v2` y la app las borra (`sin_referencias`).
+  - **Pendiente · Ivania:** subir el ZIP del respaldo al Drive; probar los cuatro resultados en el panel;
     con Oscar, evaluar 5 carteles reales y anotar cada diferencia con su criterio; descargar una constancia y ver
     que se entiende sin abrir la app. Las reglas (sobre todo «archivo pendiente» y los «Revisar» excluyentes) se
     ajustan con lo que diga Oscar.

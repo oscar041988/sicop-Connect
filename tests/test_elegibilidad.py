@@ -328,3 +328,23 @@ def test_sin_ia_la_constancia_lleva_la_explicacion_de_la_app(lista, caso):
     assert {"ia_apagada": "apagada", "sin_presupuesto": "presupuesto", "fallo": "OpenAI no respondió"}[caso] in \
         c.explicacion_motivo
     assert (len(simulado.llamadas) > 0) is (caso == "fallo")
+
+
+@pytest.mark.parametrize("texto, limpio", [
+    ("R4: Confirmar la experiencia.", "Confirmar la experiencia."),
+    ("R12 · Presentar la oferta en español.", "Presentar la oferta en español."),
+    ("Subir la patente (R2).", "Subir la patente."),
+    ("Revisar las marcas (R3, R5) del pliego.", "Revisar las marcas del pliego."),
+    ("La línea 10 pide 24 meses.", "La línea 10 pide 24 meses.")])
+def test_sin_referencias_quita_las_etiquetas_internas(texto, limpio):
+    assert ia_explicacion.sin_referencias(texto) == limpio
+
+
+def test_la_constancia_no_trae_las_etiquetas_r(lista):
+    db_path, _, settings = _con_respuestas(lista)
+    simulado = OpenAIExplica("Falta responder la fecha (R4).", ["R4: Responder la fecha de inicio.",
+                                                                "R5 · Revisar el horario de soporte."])
+    c = _calcular_con(db_path, _con_ia(settings), simulado)
+    assert c.explicacion_origen == "ia"
+    assert c.explicacion == "Falta responder la fecha.\n- Responder la fecha de inicio.\n- Revisar el horario de soporte."
+    assert "No uses las etiquetas R1, R2" in simulado.llamadas[0]["instructions"]

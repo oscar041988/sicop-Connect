@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
@@ -26,7 +27,7 @@ from app.config import Settings
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v1"
+VERSION = "v2"          # v2 (2026-11-04): sin las etiquetas internas R1, R2… (constancia #1)
 
 ESQUEMA = _objeto(
     explicacion=_texto("Dos a cuatro oraciones que explican el resultado ya calculado, sin cambiarlo"),
@@ -76,6 +77,15 @@ def texto_para_ia(resultado: str, evaluaciones: list[elegibilidad.Evaluacion]) -
     return "\n".join(lineas)
 
 
+# «R4: …», «R4 · …», «R4 - …» al inicio y «(R2)» en cualquier parte: las etiquetas internas de texto_para_ia.
+_REFERENCIA = re.compile(r"^\s*R\d+\s*[:·.\-–—]\s*|\s*\(R\d+(?:\s*,\s*R\d+)*\)")
+
+
+def sin_referencias(texto: str) -> str:
+    """Quita las etiquetas internas R1, R2… que la IA a veces copia de la lista: la persona no las ve."""
+    return " ".join(_REFERENCIA.sub("", texto).split())
+
+
 def contradice(texto: str, resultado: str) -> bool:
     """True si el texto nombra el titular de otro resultado («Sí, pueden participar» cuando falta información…)."""
     normal = f" {verificacion.normalizar_texto(texto)} "
@@ -108,11 +118,11 @@ def explicar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, resul
         datos = normalizar(json.loads(r.texto), ESQUEMA) if r.resultado == "ok" else None
     except ValueError:
         datos = None
-    explicacion = " ".join(str((datos or {}).get("explicacion", "")).split())
+    explicacion = sin_referencias(str((datos or {}).get("explicacion", "")))
     if not explicacion:
         return Explicacion(de_la_app, "app", f"la respuesta de la IA no sirvió ({r.motivo or 'no es JSON válido'})",
                            r.uso_id)
-    faltan = [" ".join(str(x).split()) for x in datos.get("que_falta", []) if str(x).strip()]
+    faltan = [x for x in (sin_referencias(str(y)) for y in datos.get("que_falta", [])) if x]
     texto = "\n".join([explicacion, *(f"- {x}" for x in faltan)])
     if contradice(texto, resultado):
         return Explicacion(de_la_app, "app", "la explicación de la IA no coincidía con el resultado calculado: se"
