@@ -27,6 +27,11 @@
     elementos, 4 versiones y 4 requisitos con elemento del perfil antes y después; `foreign_key_check` vacío.
     **Pendiente · encargados y administradores:** cargar los datos en `/perfil`. **Pendiente · Ivania:** el
     elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo (no se borra).
+  - **Prueba del resumen v3 en 3 carteles (Claude, 2026-11-04):** `docs/comparacion_resumen_v3_20261104.md`. El v3
+    y un v4 más corto fallaron (respuesta incompleta con 8000 tokens; con 16000, la IA tardó más de 120 s). Un **v5**
+    (el v2 + garantías, plazos y vigencia de la oferta) funcionó en los 3: 19/29/23 requerimientos contra 16/12/13
+    del v2, mismo costo. **Pendiente · Ivania:** volver `IA_MAX_OUTPUT_TOKENS` a 4000 (o borrar la línea) y llevar a
+    Oscar la recomendación de activar el v5.
   - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
     de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
 
