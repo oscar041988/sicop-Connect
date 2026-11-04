@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}Panel de carteles{% endblock %} · Hermatix · Oportunidades SICOP</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='favicon.svg') }}">
   <!-- Fuente Manrope (como el prototipo de Hermatix); sin internet se usa la fuente del sistema -->
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='estilo.css') }}?v={{ version_estatico('estilo.css') }}">

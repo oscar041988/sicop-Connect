@@ -73,6 +73,14 @@ def test_health_es_publico_y_sin_datos_sensibles(anonimo):
     assert EMAIL not in respuesta.text and "sicop.db" not in respuesta.text
 
 
+def test_el_icono_de_la_pestana_es_publico(anonimo):
+    assert 'rel="icon"' in anonimo.get("/login").text
+    respuesta = anonimo.get("/static/favicon.svg", follow_redirects=False)
+
+    assert respuesta.status_code == 200
+    assert respuesta.headers["content-type"].startswith("image/svg+xml")
+
+
 @pytest.mark.parametrize("ruta", ["/docs", "/redoc", "/openapi.json"])
 def test_la_documentacion_automatica_no_se_publica(anonimo, ruta):
     assert anonimo.get(ruta, follow_redirects=False).status_code in {303, 404}
