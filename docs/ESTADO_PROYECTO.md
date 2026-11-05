@@ -4,6 +4,27 @@
 
 ## Último resultado
 
+- **«¿Cumple?» en el resumen y el Reporte PDF (2026-11-05, pedido de Ivania; opciones elegidas por ella).**
+  Columna nueva en «Qué piden» y en «Requerimientos», en la página del resumen («Ver») y en el reporte.
+  Requerimientos: el estado del asistente de elegibilidad de hoy (Cumple / No cumple / Falta / Revisar;
+  «Informativo» si no se pregunta; «Sin evaluar» sin asistente o si el requisito no está en la lista).
+  Qué piden: lo marca el encargado o un administrador («Marcar»: Cumple / No cumple / Revisar + nota); ruta
+  `POST /oportunidades/{nro}/resumen/cumple`. `app/cumplimiento.py` y migración **0038**
+  (`resumen_lineas_cumple`, no se borra ni se modifica; `ia_reports.cumple_huella`: el reporte se rehace si
+  cambia un estado). Para que los 24 reportes reales sigan en 2 páginas: columna angosta y `LIMITES_CORTOS`
+  de requerimientos 8 → 7 (probado en una copia de la base). También en el reporte: el título casi todo en
+  mayúsculas sale todo en mayúsculas (`20261002824` venía «cOMPRA DE CAMARAS…» desde SICOP) y los datos de
+  «Garantías y condiciones» hasta 200 caracteres (el plazo de entrega de ese cartel ya sale completo).
+  Misiones 05 y 25 actualizadas. Pruebas: `tests/test_cumplimiento.py` (6) y 4 en `tests/test_reporte.py`.
+  Corrida completa: 922 passed, 9 failed (listas de migraciones y rutas escritas a mano, sin la 0038);
+  corregidas y vueltas a correr con los archivos relacionados: 245 passed.
+  ~~Respaldo y `migrate` (0038)~~ **hecho (Claude a pedido de Ivania, 2026-11-05, panel cerrado):** respaldo
+  `sicop_20261105-090500` (esquema 0037, integridad ok); `doctor`: 0038. Revisiones 7, resúmenes 37, reportes 3,
+  respuestas 66, constancias 3, perfil 3 y votos 1, iguales antes y después; `integrity_check` ok y
+  `foreign_key_check` vacío. `AI_MODE=openai` (lo cambió Ivania). ~~Subir el respaldo al Drive~~ **hecho (Claude, 05/11):**
+  `G:\Mi unidad\sicop-respaldos\sicop_20261105-090500` (7 archivos, ≈477 MB; tamaños iguales y huella del `.db`
+  igual al manifiesto). **Pendiente · Ivania:** probar «Marcar» y el reporte. **En el servidor**, con el PR: `migrate` hasta 0038.
+
 - **Página de ayuda · lección 4, ayuda viva, hecha (2026-11-04, plan aprobado por Ivania).** (1) Al final de cada
   misión, «¿Te sirvió esta ayuda?» (Sí / No y un comentario opcional de hasta 500 caracteres). Ruta
   `POST /ayuda/{nombre}/voto`, `app/ayuda/votos.py` y migración **0037** (`ayuda_votos`, no se borra ni se
@@ -13,7 +34,8 @@
   alguna misión de la ayuda?», más una nota en `docs/ayuda/ESTILO.md`. 925 pruebas. Respaldo
   `sicop_20261104-154209` (esquema 0036, integridad ok) y `migrate` (0037) hechos con el panel cerrado: revisiones
   6, resúmenes 37, respuestas 66, perfil 3 y resultados 3, iguales antes y después; `ayuda_votos` vacía.
-  **Pendiente · Ivania:** votar una misión y ver la tabla en `/ayuda`. **En el servidor**, con el PR: `migrate` hasta 0037.
+  ~~Pendiente · Ivania: votar una misión y ver la tabla en `/ayuda`~~ **probado por Ivania (2026-11-05): voto
+  «Sí» en `01-entrar` con comentario «Prueba de Ivania 05/11», guardado en `ayuda_votos` (id 1).** **En el servidor**, con el PR: `migrate` hasta 0037.
 
 - **Reporte con IA · lección 4, Encargo 4 hecho (2026-11-04, plan aprobado por Ivania): Reporte de cartel
   Hermatix en PDF, máximo 2 páginas.** `app/ai/reporte.py` + `templates/reporte_cartel.html`; PDF con el Chromium
