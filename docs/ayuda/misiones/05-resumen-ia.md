@@ -25,9 +25,13 @@
 7. Lee «Encaje con Hermatix». Dice qué tanto se parece a lo que vendemos.
 8. Lee «Qué piden». Hay una fila por cada cosa que compran.
    [captura: Resumen · resaltar «Qué piden»]
+   La columna «¿Cumple?» dice si Hermatix tiene eso. Lo marca el encargado del cartel.
+   Si eres el encargado, haz clic en «Marcar», escribe una nota si quieres y elige «Cumple», «No cumple» o «Revisar».
 9. Lee «Requerimientos». Mira la columna «Excluyente».
    [captura: Resumen · resaltar la columna «Excluyente»]
    Si dice «Sí», es obligatorio. Si no se cumple, la oferta queda fuera.
+   Su columna «¿Cumple?» sale de las respuestas del asistente (misión 23). Si dice «Sin evaluar», todavía no se
+   respondió.
 10. Lee «Indicadores del pliego», «Plazos» y «Criterios de evaluación».
 11. Lee «Riesgos y dudas», al final. Son cosas que conviene confirmar.
 12. Haz clic en una cita, como [DOC 1 · pág. 3].
@@ -57,6 +61,9 @@ Ese cartel no tiene resumen. Sigue con la misión 6 y lee los documentos.
 
 **¿Y si arriba del resumen sale «Revisar»?**
 El resumen no coincide con SICOP en algún dato. Vale siempre lo que dice SICOP.
+
+**¿Y si no veo «Marcar» en «¿Cumple?»?**
+Solo marcan el encargado del cartel y los administradores. El cartel tiene que estar en seguimiento.
 
 **¿Y si la cita no es un enlace?**
 Los documentos cambiaron después del resumen. Busca el dato tú en los documentos.

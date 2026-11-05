@@ -266,6 +266,7 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/oportunidades/{nro_sicop}/asistente/{item_id}/perfil",
                              "/oportunidades/{nro_sicop}/asistente/{item_id}/responder",
                              "/oportunidades/{nro_sicop}/asistente/{item_id}/revisar",
+                             "/oportunidades/{nro_sicop}/resumen/cumple",
                              "/oportunidades/{nro_sicop}/revision",  # una ruta nueva se agrega aquí
                              "/oportunidades/{nro_sicop}/seguimiento",
                              "/oportunidades/{nro_sicop}/verificacion/agregar",

@@ -49,9 +49,15 @@
   tr, .kpi, .pliego div, li { break-inside: avoid; }
   h2 { break-after: avoid; }
   .vacio { color: var(--mut); }
+  .cumple { font-weight: 700; white-space: nowrap; color: var(--mut); }
+  .cumple-cumple { color: var(--verde); }
+  .cumple-no_cumple { color: var(--no); }
+  .cumple-falta, .cumple-revisar { color: var(--aviso); }
+  th.col-cumple, td.col-cumple { width: 1%; white-space: nowrap; font-size: 8pt; }
 </style>
 </head>
 <body>
+{% macro cumple(e) %}<span class="cumple cumple-{{ e.clave }}">{{ e.texto }}</span>{% endmacro %}
 {% macro cita(x) %}{% if x and x != d.NO %} <span class="cita">{% if x == "SICOP" %}[SICOP]{% else %}{{ x }}{% endif %}</span>{% endif %}{% endmacro %}
 
 <header class="cabecera">
@@ -84,11 +90,12 @@
 <h2>Qué piden</h2>
 {% if d.piden %}
 <table>
-  <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cant.</th><th>Especificaciones clave</th></tr></thead>
+  <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cant.</th><th>Especificaciones clave</th><th class="col-cumple">¿Cumple?</th></tr></thead>
   <tbody>
   {% for i in d.piden %}
   <tr><td>{{ i.linea }}</td><td>{{ i.bien }}</td><td>{{ i.cantidad }}</td>
-    <td>{% if i.specs %}<ul>{% for e in i.specs %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% if i.mas_specs %}<div class="mas">y {{ i.mas_specs }} más en el panel</div>{% endif %}{{ cita(i.cita) }}</td></tr>
+    <td>{% if i.specs %}<ul>{% for e in i.specs %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% if i.mas_specs %}<div class="mas">y {{ i.mas_specs }} más en el panel</div>{% endif %}{{ cita(i.cita) }}</td>
+    <td class="col-cumple">{{ cumple(i.cumple) }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
@@ -103,12 +110,13 @@
 <h2>Requerimientos ({{ d.total_reqs }} en total; primero los excluyentes)</h2>
 {% if d.reqs %}
 <table>
-  <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th></tr></thead>
+  <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th><th class="col-cumple">¿Cumple?</th></tr></thead>
   <tbody>
-  {% for q in d.reqs %}<tr><td>{{ q.tipo }}</td><td>{{ q.requisito }}{{ cita(q.cita) }}</td><td>{% if q.excluyente %}<span class="exc">Sí</span>{% else %}No{% endif %}</td></tr>{% endfor %}
+  {% for q in d.reqs %}<tr><td>{{ q.tipo }}</td><td>{{ q.requisito }}{{ cita(q.cita) }}</td><td>{% if q.excluyente %}<span class="exc">Sí</span>{% else %}No{% endif %}</td><td class="col-cumple">{{ cumple(q.cumple) }}</td></tr>{% endfor %}
   </tbody>
 </table>
-{% if d.mas_reqs %}<div class="mas">y {{ d.mas_reqs }} más en el panel</div>{% endif %}
+{% if d.mas_reqs %}<div class="mas">y {{ d.mas_reqs }} más en el panel.</div>{% endif %}
+<div class="mas">«¿Cumple?»: requerimientos según el asistente al {{ d.fecha }}; «Qué piden», lo marcó el encargado.</div>
 {% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
 
 <div class="dos">

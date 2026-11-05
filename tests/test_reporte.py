@@ -164,3 +164,12 @@ def test_en_el_panel_reporte_pdf_descarga_el_archivo(base):
     assert r.content.startswith(b"%PDF") and 1 <= reporte.contar_paginas(r.content) <= 2
     assert re.search(r'filename="reporte_00000000001_\d{8}-\d{6}\.pdf"', r.headers["content-disposition"])
     assert cliente.get("/oportunidades/00000000002/reporte").status_code == 404     # sin resumen
+
+
+@pytest.mark.parametrize("descripcion, esperado", [
+    ("cOMPRA\xa0DE\xa0CAMARAS\xa0Y\xa0ACCESORIOS", "COMPRA\xa0DE\xa0CAMARAS\xa0Y\xa0ACCESORIOS"),  # mayúsculas invertidas
+    ("COMPRA DE GPS", "COMPRA DE GPS"),
+    ("Compra de monitoreo GPS para la CCSS", "Compra de monitoreo GPS para la CCSS"),          # bien escrito: igual
+    (None, "(sin título)")])
+def test_el_titulo_casi_todo_en_mayusculas_sale_todo_en_mayusculas(descripcion, esperado):
+    assert reporte.titulo(descripcion) == esperado

@@ -38,7 +38,7 @@ from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
-from app import (asistente, aviso_encargado, avisos, calidad, competencia, destinatarios, elegibilidad,
+from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
                  expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen,
                  seguimiento, usuarios, visor)
@@ -274,10 +274,40 @@ def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Res
         numerados = ia_expediente.numeracion(conn, nro_sicop) \
             if actual is not None and actual.huella == vigente.huella else None
         sicop = fichas_panel.informacion(conn, nro_sicop)
+        # «¿Cumple?» (2026-11-05): requerimientos según el asistente; «Qué piden», lo que marca el encargado.
+        seg = seguimiento.estado(conn, nro_sicop)
+        est_reqs = cumplimiento.de_requerimientos(conn, nro_sicop, _ahora().astimezone(HORA_CR).date())
+        est_lineas = cumplimiento.de_lineas(conn, nro_sicop)
     return PLANTILLAS.TemplateResponse(request, "resumen.html", {
         "d": datos, "res": vigente, "sicop": sicop, "IA": _TEXTOS_IA, "imprimir": imprimir,
         "citas_enlazadas": numerados is not None, "citar": lambda texto: citas.enlazar(texto, nro_sicop, numerados),
+        "cumple_req": lambda q: cumplimiento.requerimiento(est_reqs, q),
+        "cumple_linea": lambda i: cumplimiento.linea(est_lineas, i), "clave_linea": cumplimiento.clave_linea,
+        "ESTADOS_LINEA": cumplimiento.ESTADOS_LINEA, "con_asistente": bool(est_reqs), "seg": seg,
+        "puede_marcar": seg is not None and seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
+        "hecho": request.session.pop("hecho_cumple", None), "error": request.session.pop("error_cumple", None),
     })
+
+
+@router.post("/oportunidades/{nro_sicop}/resumen/cumple", dependencies=[Depends(verificar_csrf)])
+def marcar_cumple(request: Request, nro_sicop: str, clave: str = Form(""), estado: str = Form(""),
+                  nota: str = Form("")) -> Response:
+    """«¿Cumple?» de una fila de «Qué piden»: la marca el encargado del cartel o un administrador (la regla del
+    expediente). Nunca borra la marca anterior: vale la última."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (prohibido := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return prohibido
+        vigente = next((r for r in ia_resumen.del_cartel(conn, nro_sicop) if r.datos), None)
+        if vigente is None:
+            return _no_encontrado(request, f"El cartel {nro_sicop} todavía no tiene resumen.")
+        try:
+            cumplimiento.marcar(conn, nro_sicop, vigente.datos, clave, estado, nota, _quien(request), _ahora())
+            request.session["hecho_cumple"] = f"Guardado: {cumplimiento.ESTADOS_LINEA[estado]}."
+        except cumplimiento.MarcaInvalida as exc:
+            request.session["error_cumple"] = str(exc)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/resumen#que-piden", status_code=303)
 
 
 @router.get("/oportunidades/{nro_sicop}/reporte")

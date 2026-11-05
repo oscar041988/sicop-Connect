@@ -4,6 +4,7 @@
    cierre, apertura) son los de SICOP, que pone la app, nunca los del resumen. #}
 {% set c = d.compra %}
 {% set r = res.datos %}
+{% macro cumple(e) %}<span class="cumple cumple-{{ e.clave }}"{% if e.detalle %} title="{{ e.detalle }}"{% endif %}>{{ e.texto }}</span>{% endmacro %}
 {% macro cita(x) %}{% if x and x != IA.NO %}<span class="cita">{% if x == "SICOP" %}[SICOP]{% else %}{{ citar(x) }}{% endif %}</span>{% endif %}{% endmacro %}
 {% block titulo %}Resumen {{ c.nro_sicop }}{% endblock %}
 {% block contenido %}
@@ -54,30 +55,52 @@
   <p><strong>{{ r.encaje_hermatix.producto }}</strong> <span class="sub">({{ r.encaje_hermatix.familia }})</span><br>
     {{ r.encaje_hermatix.por_que }}</p>
 
-  <h2>Qué piden</h2>
+  <h2 id="que-piden">Qué piden</h2>
+  {% if hecho %}<p class="hecho no-imprimir">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error no-imprimir">{{ error }}</p>{% endif %}
   {% if r.que_piden %}
   <table class="doc-tabla">
-    <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cantidad</th><th>Especificaciones clave</th></tr></thead>
+    <thead><tr><th>Línea</th><th>Bien o servicio</th><th>Cantidad</th><th>Especificaciones clave</th><th>¿Cumple?</th></tr></thead>
     <tbody>
       {% for i in r.que_piden %}
+      {% set e = cumple_linea(i) %}
       <tr><td>{{ i.linea }}</td><td>{{ i.bien_o_servicio }}</td><td>{{ i.cantidad }}</td>
-        <td>{% if i.especificaciones_clave %}<ul>{% for e in i.especificaciones_clave %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{{ cita(i.cita) }}</td></tr>
+        <td>{% if i.especificaciones_clave %}<ul>{% for x in i.especificaciones_clave %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ cita(i.cita) }}</td>
+        <td>{{ cumple(e) }}{% if e.detalle %}<br><small class="sub">{{ e.detalle }}</small>{% endif %}
+          {% if puede_marcar and not imprimir %}
+          <details class="marcar-cumple no-imprimir"><summary>Marcar</summary>
+            <form method="post" action="/oportunidades/{{ c.nro_sicop }}/resumen/cumple">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="hidden" name="clave" value="{{ clave_linea(i) }}">
+              <label for="nota-{{ loop.index }}">Nota (opcional)</label>
+              <textarea id="nota-{{ loop.index }}" name="nota" maxlength="500" rows="2"></textarea>
+              {% for k, texto in ESTADOS_LINEA.items() %}<button type="submit" name="estado" value="{{ k }}">{{ texto }}</button> {% endfor %}
+            </form>
+          </details>
+          {% endif %}</td></tr>
       {% endfor %}
     </tbody>
   </table>
+  <p class="sub">«¿Cumple?» lo marca el encargado del cartel o un administrador.{% if not seg %} Para marcarlo, primero
+    «Dar seguimiento» al cartel.{% endif %}</p>
   {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
 
   <h2>Requerimientos</h2>
   {% if r.requerimientos %}
   <table class="doc-tabla">
-    <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th></tr></thead>
+    <thead><tr><th>Tipo</th><th>Requisito</th><th>Excluyente</th><th>¿Cumple?</th></tr></thead>
     <tbody>
       {% for q in r.requerimientos %}
+      {% set e = cumple_req(q) %}
       <tr><td>{{ q.tipo | capitalize }}</td><td>{{ q.requisito }} {{ cita(q.cita) }}</td>
-        <td>{% if q.excluyente %}<strong class="excluyente">Sí</strong>{% else %}No{% endif %}</td></tr>
+        <td>{% if q.excluyente %}<strong class="excluyente">Sí</strong>{% else %}No{% endif %}</td>
+        <td>{{ cumple(e) }}{% if e.detalle %}<br><small class="sub">{{ e.detalle }}</small>{% endif %}</td></tr>
       {% endfor %}
     </tbody>
   </table>
+  <p class="sub">«¿Cumple?» sale del asistente de elegibilidad, con las respuestas de hoy.{% if not con_asistente %}
+    Este cartel todavía no tiene el asistente empezado: por eso dice «Sin evaluar».{% endif %} Es una orientación; la
+    decisión es del encargado.</p>
   {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
 
   <h2>Indicadores del pliego</h2>

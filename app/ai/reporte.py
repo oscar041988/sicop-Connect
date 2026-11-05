@@ -9,7 +9,9 @@
   error: nunca se guarda un reporte de 3 páginas.
 * PDF con el Chromium de Playwright (page.pdf), que la app ya usa: sin librerías nuevas. El archivo queda en
   REPORTS_DIR/<nro>/ (fuera de Git, en el respaldo) y su registro en ia_reports (migración 0036): un reporte nuevo
-  nunca borra el anterior, y si el resumen no cambió se reutiliza el último.
+  nunca borra el anterior, y si no cambiaron el resumen ni los estados «¿Cumple?» se reutiliza el último.
+* «¿Cumple?» (migración 0038, app/cumplimiento.py): en «Qué piden», lo que marcó una persona; en «Requerimientos»,
+  el estado del asistente de elegibilidad.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from app import fichas_panel, historial, panel
+from app import cumplimiento, fichas_panel, historial, panel
 from app.ai import expediente as ia_expediente
 from app.ai import resumen as ia_resumen
 from app.config import PROJECT_ROOT, Settings
@@ -43,7 +45,7 @@ ENCAJES = ("alta", "media", "baja", "ninguno")
 # Máximos por sección: el primer juego y, si el PDF pasa de 2 páginas, uno más corto.
 LIMITES = {"que_piden": 8, "especificaciones": 3, "requerimientos": 10, "criterios": 5, "riesgos": 3,
            "otros_plazos": 4, "fuentes": 6, "caracteres": 200}
-LIMITES_CORTOS = {"que_piden": 6, "especificaciones": 2, "requerimientos": 8, "criterios": 4, "riesgos": 3,
+LIMITES_CORTOS = {"que_piden": 6, "especificaciones": 2, "requerimientos": 7, "criterios": 4, "riesgos": 3,
                   "otros_plazos": 3, "fuentes": 4, "caracteres": 140}
 TIPOS = {"legal": "Legal", "tecnico": "Técnico", "técnico": "Técnico", "financiero": "Financiero",
          "experiencia": "Experiencia"}
@@ -65,6 +67,7 @@ class Reporte:
     sha256: str
     paginas: int
     creado_en: str
+    cumple_huella: str | None = None     # los estados «¿Cumple?» con que se hizo (migración 0038)
     reutilizado: bool = False
 
 
@@ -79,6 +82,14 @@ def _limitar(lista: list, maximo: int) -> tuple[list, int]:
     """(los primeros `maximo`, cuántos quedan fuera)."""
     lista = list(lista or [])
     return lista[:maximo], max(0, len(lista) - maximo)
+
+
+def titulo(descripcion: str | None) -> str:
+    """El título de SICOP casi todo en mayúsculas sale todo en mayúsculas («cOMPRA DE CAMARAS», con las mayúsculas
+    invertidas en SICOP → «COMPRA DE CAMARAS»; pedido de Ivania, 2026-11-05). Los demás, como vienen."""
+    if not descripcion:
+        return "(sin título)"
+    return descripcion.upper() if panel._casi_todo_mayusculas(descripcion) else descripcion
 
 
 def _unidades(lineas) -> str:
@@ -127,6 +138,12 @@ def _resumen(conn: sqlite3.Connection, nro_sicop: str) -> ia_resumen.Resultado:
     return res
 
 
+def estados(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime) -> tuple[dict, dict]:
+    """«¿Cumple?»: (requerimientos según el asistente de hoy, filas de «Qué piden» según lo que marcó una persona)."""
+    return (cumplimiento.de_requerimientos(conn, nro_sicop, ahora.astimezone(HORA_CR).date()),
+            cumplimiento.de_lineas(conn, nro_sicop))
+
+
 def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: dict | None = None) -> dict:
     """Todo lo que va en el reporte, ya recortado a sus máximos."""
     lim = limites or LIMITES
@@ -135,13 +152,14 @@ def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: di
     compra = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), ahora).compra
     res = _resumen(conn, nro_sicop)
     r = res.datos
+    est_reqs, est_lineas = estados(conn, nro_sicop, ahora)
     que_piden, mas_piden = _limitar(r.get("que_piden"), lim["que_piden"])
     piden = []
     for i in que_piden:
         specs, mas_specs = _limitar(i.get("especificaciones_clave"), lim["especificaciones"])
         piden.append({"linea": _corto(i.get("linea"), 12), "bien": _corto(i.get("bien_o_servicio"), n),
                       "cantidad": _corto(i.get("cantidad"), 12), "specs": [_corto(e, n // 2) for e in specs],
-                      "mas_specs": mas_specs, "cita": i.get("cita")})
+                      "mas_specs": mas_specs, "cita": i.get("cita"), "cumple": cumplimiento.linea(est_lineas, i)})
     todos = sorted(r.get("requerimientos") or [], key=lambda q: not q.get("excluyente"))   # excluyentes primero
     reqs, mas_reqs = _limitar(todos, lim["requerimientos"])
     criterios, mas_criterios = _limitar(r.get("criterios_de_evaluacion"), lim["criterios"])
@@ -153,9 +171,9 @@ def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: di
     encaje = r.get("encaje_hermatix") or {}
     return {
         "nro": nro_sicop, "procedimiento": compra.nro_procedimiento or NO,
-        "titulo": _corto(compra.descripcion or "(sin título)", 160), "institucion": compra.institucion or NO,
+        "titulo": _corto(titulo(compra.descripcion), 160), "institucion": compra.institucion or NO,
         "fecha": panel.fecha_cr(ahora.isoformat()), "kpis": kpis,
-        "kpi_pliego": [(nombre, _corto((kpi.get(clave) or {}).get("valor"), n // 2), (kpi.get(clave) or {}).get("cita"))
+        "kpi_pliego": [(nombre, _corto((kpi.get(clave) or {}).get("valor"), n), (kpi.get(clave) or {}).get("cita"))
                        for clave, nombre in KPI_PLIEGO],
         "de_que_trata": _corto(r.get("de_que_trata"), n * 2),
         "recomendacion": ia_resumen.RECOMENDACIONES.get(r.get("recomendacion"), NO),
@@ -163,7 +181,8 @@ def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: di
         "encaje": f"{_corto(encaje.get('producto'), 60)} — {_corto(encaje.get('por_que'), n)}",
         "piden": piden, "mas_piden": mas_piden,
         "reqs": [{"tipo": TIPOS.get(str(q.get("tipo")).lower(), _corto(q.get("tipo"), 20).capitalize()), "requisito": _corto(q.get("requisito"), n),
-                  "excluyente": bool(q.get("excluyente")), "cita": q.get("cita")} for q in reqs],
+                  "excluyente": bool(q.get("excluyente")), "cita": q.get("cita"),
+                  "cumple": cumplimiento.requerimiento(est_reqs, q)} for q in reqs],
         "mas_reqs": mas_reqs, "total_reqs": len(todos),
         "plazos": [("Cierre de recepción", (plazos.get("cierre_recepcion") or {}).get("valor"),
                     (plazos.get("cierre_recepcion") or {}).get("cita")),
@@ -224,7 +243,7 @@ def contar_paginas(contenido: bytes) -> int:
 
 # --- Guardar y reutilizar -----------------------------------------------------------------------------------------
 
-_COLUMNAS = "id, nro_sicop, ia_summary_id, ruta, sha256, paginas, creado_en"
+_COLUMNAS = "id, nro_sicop, ia_summary_id, ruta, sha256, paginas, creado_en, cumple_huella"
 
 
 def ultimo(conn: sqlite3.Connection, settings: Settings, nro_sicop: str) -> Reporte | None:
@@ -237,10 +256,13 @@ def ultimo(conn: sqlite3.Connection, settings: Settings, nro_sicop: str) -> Repo
 
 def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
             forzar: bool = False) -> Reporte:
-    """El reporte del resumen vigente: reutiliza el último si el resumen no cambió (y el archivo sigue ahí)."""
+    """El reporte del resumen vigente: reutiliza el último si no cambiaron ni el resumen ni los estados «¿Cumple?»
+    (y el archivo sigue ahí)."""
     res = _resumen(conn, nro_sicop)
+    cumple_huella = cumplimiento.huella(*estados(conn, nro_sicop, ahora))
     anterior = ultimo(conn, settings, nro_sicop)
-    if not forzar and anterior and anterior.ia_summary_id == res.id and anterior.ruta.is_file():
+    if (not forzar and anterior and anterior.ia_summary_id == res.id and anterior.cumple_huella == cumple_huella
+            and anterior.ruta.is_file()):
         return Reporte(**{**anterior.__dict__, "reutilizado": True})
     for limites in (LIMITES, LIMITES_CORTOS):
         contenido = pdf(html(datos(conn, nro_sicop, ahora, limites)), nro_sicop)
@@ -264,8 +286,9 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
     with transaccion(conn):
         reporte_id = conn.execute(
             "INSERT INTO ia_reports (nro_sicop, ia_summary_id, ruta, sha256, paginas, creado_por, creado_por_nombre,"
-            " creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " creado_en, cumple_huella) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (nro_sicop, res.id, relativa, huella, paginas, quien.user_id, quien.nombre,
-             momento.isoformat(timespec="seconds"))).lastrowid
+             momento.isoformat(timespec="seconds"), cumple_huella)).lastrowid
         historial.registrar(conn, quien, "generar_reporte", f"{nro_sicop}: {paginas} páginas")
-    return Reporte(reporte_id, nro_sicop, res.id, destino, huella, paginas, momento.isoformat(timespec="seconds"))
+    return Reporte(reporte_id, nro_sicop, res.id, destino, huella, paginas, momento.isoformat(timespec="seconds"),
+                   cumple_huella)

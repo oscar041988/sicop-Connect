@@ -47,6 +47,7 @@ ACCIONES = {
     "ampliar_asistente": "Abrió el resto de las preguntas del asistente (después de los excluyentes)",
     "revisar_resultado": "Decidió si un requisito cumple en el resultado de elegibilidad",
     "calcular_resultado": "Calculó el resultado de elegibilidad de un cartel",
+    "marcar_cumple_linea": "Marcó si Hermatix cumple una fila de «Qué piden» del resumen",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")

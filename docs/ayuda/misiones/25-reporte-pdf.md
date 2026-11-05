@@ -19,6 +19,8 @@ máximo 2 páginas con la identidad de Hermatix.
 5. Lee la recomendación preliminar. La decisión es tuya.
 6. Mira «Qué piden» y «Garantías y condiciones del pliego».
 7. En la segunda página están los requerimientos, primero los excluyentes.
+   - «¿Cumple?»: en «Qué piden», lo marcó el encargado; en los requerimientos, sale del asistente.
+     «Sin evaluar» quiere decir que nadie lo ha revisado todavía.
    - «y N más en el panel»: el reporte muestra los más importantes; el resto está en el cartel.
    - Cada cita [DOC n · pág. p] dice dónde comprobarlo en el pliego.
 
@@ -33,6 +35,6 @@ El cartel todavía no tiene resumen con IA. La cola de las 10:00 lo hace cuando 
 El pliego no trae ese dato. No es un error: la IA no inventa lo que no está.
 
 **¿Y si el reporte tiene datos viejos?**
-Se hace de nuevo cuando hay un resumen nuevo del cartel. Los reportes anteriores no se borran.
+Se hace de nuevo cuando hay un resumen nuevo o cambia algún «¿Cumple?». Los reportes anteriores no se borran.
 
 **Sigue con:** [Volver al inicio de la ayuda](../MISIONES.md)
