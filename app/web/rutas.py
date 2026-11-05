@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from app.ai import asistente as ia_asistente
 from app.ai import expediente as ia_expediente
@@ -182,10 +183,11 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
         sin_evaluar = panel.importado_sin_evaluar(conn)
         seguimientos = seguimiento.de_carteles(conn, [f.nro_sicop for f in resultado.filas])
+        avisos_perfil = perfil.avisos(perfil.listar(conn))       # asistente, lección 5: vencidos o por vencer
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
-        "seguimientos": seguimientos,
+        "seguimientos": seguimientos, "avisos_perfil": avisos_perfil,
         "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
@@ -230,6 +232,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
     puede = seguimiento.puede_entrar(seguridad.usuario_actual(request), seg)
     ia_visible = _ia_encendida()
     resumenes = ia_resumen.del_cartel(conn, nro_sicop) if ia_visible else []
+    asistente_activo = _asistente_encendido()
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
         "seg": seg, "puede_entrar": puede,
@@ -242,7 +245,10 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         # Reporte con IA (lección 5): la fila del resumen («Ver» y «Descargar»). Con AI_MODE=none no se muestra.
         "ia_visible": ia_visible, "resumenes": resumenes, "IA": _TEXTOS_IA,
         # Asistente de elegibilidad (lección 3): solo para quien entra al expediente (seguimiento.puede_entrar).
-        **(_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra) if seg and puede else {}),
+        # Con ASSISTANT_ENABLED=false (lección 5) no se muestra ni se calcula nada del asistente.
+        "asistente_activo": asistente_activo,
+        **(_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra)
+           if asistente_activo and seg and puede else {}),
     }, status_code=status_code)
 
 
@@ -254,6 +260,26 @@ def _ia_encendida() -> bool:
         return load_settings().ai_mode == "openai"
     except ValueError:   # AI_MODE mal escrito: el panel sigue funcionando, sin el bloque de la IA
         return False
+
+
+def _asistente_encendido() -> bool:
+    """ASSISTANT_ENABLED (asistente, lección 5): apagado, el asistente y su lista no se ven ni responden."""
+    try:
+        return load_settings().assistant_enabled
+    except ValueError:
+        return False
+
+
+_RUTA_ASISTENTE = re.compile(r"^/oportunidades/\d+/(asistente|verificacion)(/|$)")
+
+
+async def cerrar_asistente_apagado(request: Request, call_next) -> Response:
+    """Middleware: con ASSISTANT_ENABLED=false, todas las direcciones del asistente y de su lista dan «no
+    encontrado» (un solo lugar en vez de una condición en cada ruta). No borra nada."""
+    if _RUTA_ASISTENTE.match(request.url.path) and not await run_in_threadpool(_asistente_encendido):
+        return PLANTILLAS.TemplateResponse(request, "error.html", {
+            "mensaje": "El asistente de elegibilidad está apagado (ASSISTANT_ENABLED=false)."}, status_code=404)
+    return await call_next(request)
 
 
 @router.get("/oportunidades/{nro_sicop}/resumen", response_class=HTMLResponse)
@@ -284,6 +310,7 @@ def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Res
         "cumple_req": lambda q: cumplimiento.requerimiento(est_reqs, q),
         "cumple_linea": lambda i: cumplimiento.linea(est_reqs, est_lineas, i), "clave_linea": cumplimiento.clave_linea,
         "ESTADOS_LINEA": cumplimiento.ESTADOS_LINEA, "con_asistente": bool(est_reqs), "seg": seg,
+        "asistente_activo": _asistente_encendido(),
         "puede_marcar": seg is not None and seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
         "hecho": request.session.pop("hecho_cumple", None), "error": request.session.pop("error_cumple", None),
     })
@@ -1368,6 +1395,20 @@ def pagina_bitacora(request: Request, por_revisar: str = "") -> Response:
         "seccion": "bitacora", **datos, "solo_por_revisar": por_revisar == "1", "hecho": request.session.pop("hecho", None),
         "activado": settings.enrich_enabled, "maximo": settings.enrich_max_per_day,
         "dias": settings.recordings_keep_days, "RESULTADOS": fichas_panel.RESULTADOS, "CORRIDAS": fichas_panel.CORRIDAS,
+    })
+
+
+@router.get("/asistente/registro", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
+def registro_asistente(request: Request) -> Response:
+    """Registro del asistente (lección 5): quién hizo qué y cuándo con la lista, las respuestas, los documentos, el
+    resultado y el perfil. Solo administradores. Sale de audit_log (no se borra ni se modifica)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        eventos = historial.ultimos(conn, historial.REGISTRO_ASISTENTE, limite=300)
+    return PLANTILLAS.TemplateResponse(request, "registro_asistente.html", {
+        "seccion": "registro_asistente", "eventos": eventos, "acciones": historial.ACCIONES,
+        "activo": _asistente_encendido(), "limite": 300,
     })
 
 

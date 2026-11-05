@@ -65,6 +65,7 @@ DEFAULTS: dict[str, str] = {
     "ASSISTANT_DOCS_DIR": "data/asistente",
     "ASSISTANT_DOC_MAX_MB": "10",
     "REPORTS_DIR": "data/reportes",
+    "ASSISTANT_ENABLED": "false",
     "ASSISTANT_SEND_DOCUMENTS": "false",
     "ENRICH_ENABLED": "false",
     "ENRICH_MAX_PER_DAY": "20",
@@ -345,6 +346,12 @@ class Settings:
     def assistant_doc_max_mb(self) -> int:
         """Tamaño máximo de UN archivo del asistente (ASSISTANT_DOC_MAX_MB; 10)."""
         return self._entero("ASSISTANT_DOC_MAX_MB", 1, 500, "MB")
+
+    @property
+    def assistant_enabled(self) -> bool:
+        """ASSISTANT_ENABLED (false): el asistente de elegibilidad y su lista de verificación se ven en el panel.
+        Apagado no borra nada (asistente, lección 5: se activa a propósito, con Oscar)."""
+        return _as_bool(self.get("ASSISTANT_ENABLED"))
 
     @property
     def assistant_send_documents(self) -> bool:

@@ -189,6 +189,7 @@ def entorno(carpeta: Path = CARPETA_EJEMPLO) -> dict[str, str]:
         "AI_MODE": "openai", "OPENAI_API_KEY": "", "OPENAI_MODEL": "modelo-de-ejemplo",
         "NOTIFICATIONS_ENABLED": "false", "NOTIFICATIONS_DRY_RUN": "true", "SCHEDULER_ENABLED": "false",
         "ENRICH_ENABLED": "false", "SOURCE_MODE": "manual", "MAIL_PROVIDER": "unconfigured",
+        "ASSISTANT_ENABLED": "true",      # las misiones del asistente lo muestran (viene apagado por defecto)
     })
     return valores
 

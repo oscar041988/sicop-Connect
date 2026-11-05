@@ -61,6 +61,9 @@ DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "
 DE_ASISTENTE = ("empezar_asistente", "redactar_preguntas_asistente", "responder_asistente",
                 "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente",
                 "ampliar_asistente", "revisar_resultado", "calcular_resultado")
+# Registro del asistente (lección 5, solo administradores): lista, preguntas, respuestas, documentos, resultado,
+# «¿Cumple?» del resumen y el perfil con sus accesos.
+REGISTRO_ASISTENTE = DE_VERIFICACION + DE_ASISTENTE + ("marcar_cumple_linea",) + DE_PERFIL + ACCESOS_PERFIL
 
 
 @dataclass(frozen=True)

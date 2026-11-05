@@ -88,6 +88,9 @@ Lo usan su encargado y los administradores.
 
 ## ¿Y si…?
 
+**¿Y si no veo el asistente ni el botón «Lista de verificación para el asistente»?**
+El asistente está apagado. Pídele a un administrador que lo encienda.
+
 **¿Y si no veo «Empezar el asistente»?**
 Puede faltar la lista de verificación. Hay un enlace para ir a ella. También puede ser que no seas el encargado.
 

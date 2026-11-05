@@ -320,6 +320,34 @@ para que revise el proyecto en OpenAI. El registro: `data\logs\enriquecimiento-A
 **Cambiar de modelo o de versión del prompt:** `OPENAI_MODEL` (y sus precios) o `IA_PROMPT_VERSION` en `.env`. Con
 una versión nueva del prompt, todos los carteles vuelven a la cola (a 10 por día).
 
+### 3.4 Asistente de elegibilidad (lección 5 de su guía)
+
+El asistente pregunta, cartel por cartel, si Hermatix cumple lo que pide el pliego y calcula «¿podemos
+participar?». Lo usan el encargado del cartel y los administradores. Maneja documentos internos de Hermatix: por
+eso se enciende a propósito y todo queda registrado.
+
+**Encender o apagar:** `ASSISTANT_ENABLED=true` o `false` en `.env` (viene en `false`). No hace falta reiniciar: el
+panel lo lee en cada clic. Apagado, en el cartel no aparecen el asistente ni el botón «Lista de verificación para el
+asistente», y sus direcciones dicen «no encontrado». **No se borra nada**: al encenderlo, todo sigue donde estaba.
+El perfil (`/perfil`) funciona igual con el asistente apagado.
+
+**Sin IA (`AI_MODE=none`):** el asistente sigue funcionando como formulario. Las preguntas las arma la app y el
+resultado lo calcula la app; solo falta la explicación redactada por la IA. Con la IA encendida, sus preguntas y su
+explicación cuentan en el presupuesto del día (`IA_MAX_DAILY_COST`, sección 3.3).
+
+**Documentos de Hermatix:** `ASSISTANT_SEND_DOCUMENTS=false`. Oscar decidió el 04/11 que su texto **no** va a la IA
+(`DECISION_IA.md` §7). Los archivos se guardan en `PROFILE_DOCS_DIR` (perfil) y `ASSISTANT_DOCS_DIR` (respuestas),
+fuera de Git, y entran en el respaldo (`backup` crea `…_perfil.zip` y `…_asistente.zip`, sección 6.1).
+
+**Revisar el registro:** menú **Administración → Registro del asistente** (solo administradores). Muestra quién
+generó o corrigió la lista, respondió, vio o descargó un documento, calculó el resultado, marcó «¿Cumple?» o cambió
+el perfil, y cuándo. Nada de eso se borra.
+
+**Renovar un documento vencido del perfil:** el panel de carteles avisa arriba cuando hay elementos vencidos o que
+vencen en 30 días o menos («Perfil de Hermatix: …»; el detalle está en `/perfil`). Un administrador entra al
+elemento, hace clic en «Reemplazar o actualizar» y carga la versión nueva con su fecha de vencimiento. La anterior
+queda en el historial.
+
 ## 4. Enviar avisos
 
 ### 4.1 Qué se avisa

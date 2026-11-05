@@ -99,7 +99,8 @@
       {% endfor %}
     </tbody>
   </table>
-  <p class="sub">«¿Cumple?» sale del asistente de elegibilidad, con las respuestas de hoy.{% if not con_asistente %}
+  <p class="sub">«¿Cumple?» sale del asistente de elegibilidad, con las respuestas de hoy.{% if not asistente_activo %}
+    El asistente está apagado: por eso dice «Sin evaluar».{% elif not con_asistente %}
     Este cartel todavía no tiene el asistente empezado: por eso dice «Sin evaluar».{% endif %} Es una orientación; la
     decisión es del encargado.</p>
   {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
