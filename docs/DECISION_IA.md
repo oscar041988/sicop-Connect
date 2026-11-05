@@ -107,3 +107,15 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
     Ivania el 2026-11-05** (`IA_PROMPT_VERSION=v5`), provisional hasta que Oscar lo confirme.
   - Reglas del resultado (lección 4): **de acuerdo** con las dos (archivo pendiente → «si completan»; excluyente
     en «Revisar» sin decidir → «Falta información»).
+
+## 8. Ampliación: cambio a la API de Anthropic (aprobado por Oscar, 2026-11-05, comunicado por Ivania)
+
+- **Aprobado:** usar la API de Anthropic (Claude) en lugar de la de OpenAI para el resumen, la lista de
+  verificación, las preguntas del asistente y la explicación del resultado. Valen las mismas reglas de las
+  secciones 4 y 7 (qué se envía y qué nunca, presupuesto diario, la app calcula y la IA solo explica).
+- **Transición:** primero se termina el saldo ya comprado en OpenAI. La app tendrá las dos opciones y se elige con
+  `AI_MODE` (`openai` · `anthropic` · `none`); el cambio es una línea del `.env`, sin tocar código.
+- **Al cerrar OpenAI (Oscar):** apagar la recarga automática si existe, revocar la clave de la app y revisar si el
+  saldo vence.
+- **[por decidir · Oscar]:** el modelo de Anthropic y sus precios (se comparan en 3 carteles antes de cambiar), y la
+  fecha del cambio.
