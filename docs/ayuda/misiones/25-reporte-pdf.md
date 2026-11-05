@@ -19,7 +19,7 @@ máximo 2 páginas con la identidad de Hermatix.
 5. Lee la recomendación preliminar. La decisión es tuya.
 6. Mira «Qué piden» y «Garantías y condiciones del pliego».
 7. En la segunda página están los requerimientos, primero los excluyentes.
-   - «¿Cumple?»: en «Qué piden», lo marcó el encargado; en los requerimientos, sale del asistente.
+   - «¿Cumple?»: sale de lo que se respondió en el asistente. En «Qué piden» también vale «Marcar», si es más reciente.
      «Sin evaluar» quiere decir que nadie lo ha revisado todavía.
    - «y N más en el panel»: el reporte muestra los más importantes; el resto está en el cartel.
    - Cada cita [DOC n · pág. p] dice dónde comprobarlo en el pliego.

@@ -189,7 +189,7 @@ def pregunta_de_la_app(item: verificacion.Item) -> str:
     preguntas = {
         "numero": f"¿Cuántos {item.unidad} tiene Hermatix?" if item.unidad else "¿Qué número tiene Hermatix?",
         "fecha": "¿Qué fecha corresponde en el caso de Hermatix?",
-        "si_no": "¿Hermatix cumple con esto?",
+        "si_no": "¿Hermatix lo puede ofrecer?" if verificacion.es_fila(item) else "¿Hermatix cumple con esto?",
         "documento": "¿Hermatix tiene este documento? Súbelo (PDF, PNG o JPG) y escribe hasta qué fecha vence.",
         "texto": "¿Cómo cumple Hermatix con esto? Escríbelo con tus palabras.",
     }
@@ -262,6 +262,7 @@ def empezar(conn: sqlite3.Connection, nro_sicop: str, quien: Quien, ahora: datet
     """Abre la conversación del cartel (si ya existe, la devuelve: se retoma, no se duplica)."""
     if not verificacion.listar(conn, nro_sicop):
         raise AsistenteInvalido("Este cartel todavía no tiene lista de verificación: genérala primero.")
+    verificacion.sincronizar_filas(conn, nro_sicop)          # las filas de «Qué piden» también se preguntan
     with transaccion(conn):
         cursor = conn.execute("INSERT OR IGNORE INTO eligibility_sessions (nro_sicop, iniciada_por, iniciada_por_nombre,"
                               " creado_en) VALUES (?, ?, ?, ?)", (nro_sicop, quien.user_id, quien.nombre, _momento(ahora)))
@@ -275,6 +276,7 @@ def ampliar(conn: sqlite3.Connection, nro_sicop: str, quien: Quien, ahora: datet
     actual = sesion(conn, nro_sicop)
     if actual is None:
         raise AsistenteInvalido("El asistente de este cartel no se ha empezado.")
+    verificacion.sincronizar_filas(conn, nro_sicop)
     if actual.ampliada_en is None:
         with transaccion(conn):
             conn.execute("UPDATE eligibility_sessions SET ampliada_en = ?, ampliada_por_nombre = ? WHERE id = ?"

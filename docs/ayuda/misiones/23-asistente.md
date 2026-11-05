@@ -60,6 +60,8 @@ Lo usan su encargado y los administradores.
   - «Los excluyentes cumplen: vale la pena seguir».
 - Si el cartel interesa, haz clic en «Seguir con los demás requisitos».
   El asistente pregunta el resto. Lo que ya respondiste se conserva.
+  También pregunta cada cosa que compran («Qué piden»): «¿Hermatix lo puede ofrecer?».
+  Tus respuestas llenan solas la columna «¿Cumple?» del resumen y del Reporte PDF.
 
 ### Seguir otro día
 

@@ -7,10 +7,11 @@ Nunca se llama a OpenAI (la página del resumen solo necesita AI_MODE=openai par
 import json
 import sqlite3
 from contextlib import closing
+from datetime import timedelta
 
 import pytest
 
-from app import cumplimiento, seguimiento
+from app import asistente, cumplimiento, seguimiento
 from app.ai import reporte, verificacion
 from app.config import load_settings
 from app.database import connect
@@ -30,12 +31,12 @@ def _requisitos(db_path):
         return {i.id: i.requisito for i in verificacion.listar(conn, NRO)}
 
 
-def _guardar_resumen(db_path, ids, extra=None):
+def _guardar_resumen(db_path, ids, extra=None, que_piden=LINEAS):
     textos = _requisitos(db_path)
     reqs = [{"requisito": textos[ids[k]], "tipo": "legal", "excluyente": k in ("sicop", "anos"),
              "cita": "[DOC 1 · pág. 1]"} for k in ("sicop", "anos", "patente", "cond")]
     reqs += extra or []
-    datos = {**_resumen(), "que_piden": LINEAS, "requerimientos": reqs}
+    datos = {**_resumen(), "que_piden": que_piden, "requerimientos": reqs}
     with closing(connect(db_path)) as conn:
         conn.execute("INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, resumen_json, estado,"
                      " creado_en) VALUES (?, 'v2', 'modelo-simulado', ?, ?, 'ok', '2026-11-03T09:00:00-06:00')",
@@ -52,7 +53,7 @@ def test_sin_asistente_todo_queda_sin_evaluar(lista):
         lineas = cumplimiento.de_lineas(conn, NRO)
     assert reqs == {} and lineas == {}
     assert {cumplimiento.requerimiento(reqs, q).texto for q in datos["requerimientos"]} == {"Sin evaluar"}
-    assert cumplimiento.linea(lineas, LINEAS[0]).texto == "Sin evaluar"
+    assert cumplimiento.linea(reqs, lineas, LINEAS[0]).texto == "Sin evaluar"
 
 
 def test_requerimientos_con_el_estado_del_asistente(lista):
@@ -76,9 +77,9 @@ def test_marcar_una_linea_guarda_historial_y_vale_la_ultima(lista):
     with closing(connect(db_path)) as conn:
         cumplimiento.marcar(conn, NRO, datos, clave, "revisar", "falta la ficha", ANA, AHORA)
         cumplimiento.marcar(conn, NRO, datos, clave, "cumple", "", Quien(None, "Luis Sintético"), AHORA)
-        e = cumplimiento.linea(cumplimiento.de_lineas(conn, NRO), LINEAS[0])
+        e = cumplimiento.linea({}, cumplimiento.de_lineas(conn, NRO), LINEAS[0])
         assert (e.texto, e.detalle) == ("Cumple", "Marcado por Luis Sintético el 03/11/2026.")
-        assert cumplimiento.linea(cumplimiento.de_lineas(conn, NRO), LINEAS[1]).texto == "Sin evaluar"
+        assert cumplimiento.linea({}, cumplimiento.de_lineas(conn, NRO), LINEAS[1]).texto == "Sin evaluar"
         for estado, clave_mala, msj in (("talvez", clave, "Elige"), ("cumple", "otra-fila", "ya no está")):
             with pytest.raises(cumplimiento.MarcaInvalida, match=msj):
                 cumplimiento.marcar(conn, NRO, datos, clave_mala, estado, "", ANA, AHORA)
@@ -142,3 +143,69 @@ def test_pagina_del_resumen_muestra_las_columnas_y_solo_el_encargado_marca(web, 
     assert "Marcar</summary>" not in c["ivania"].get(f"{ruta}?imprimir=1").text      # al imprimir, sin formulario
     r = _post(c["ivania"], f"{ruta}/cumple", {"clave": clave, "estado": "quizas"})
     assert "Elige «Cumple», «No cumple» o «Revisar»." in c["ivania"].get(ruta).text
+
+
+# --- Filas de «Qué piden» como preguntas del asistente -------------------------------------------------------------
+
+def _filas(db_path):
+    with closing(connect(db_path)) as conn:
+        return {i.clave: i for i in verificacion.listar(conn, NRO) if verificacion.es_fila(i)}
+
+
+def test_las_filas_de_que_piden_entran_al_asistente_sin_duplicarse(lista):
+    db_path, ids, _ = lista
+    _guardar_resumen(db_path, ids)
+    _empezar(db_path)
+    filas = _filas(db_path)
+    assert len(filas) == 2
+    fila = filas[verificacion.PREFIJO_FILA + cumplimiento.clave_linea(LINEAS[0])]
+    assert (fila.requisito, fila.tipo_evidencia, fila.excluyente) == (
+        "Qué piden · Línea 1: Rastreador GPS SINTÉTICO (50) — Batería de 8 h", "si_no", False)
+    with closing(connect(db_path)) as conn:
+        paso = next(p for p in asistente.recorrido(conn, NRO, AHORA.date()) if p.item.id == fila.id)
+        assert paso.pregunta.endswith("[DOC 1 · pág. 3] ¿Hermatix lo puede ofrecer?")
+        antes = conn.total_changes
+        assert verificacion.sincronizar_filas(conn, NRO) == 0 and conn.total_changes == antes   # nada cambió: no escribe
+        # Una persona quita la fila 1; llega un resumen nuevo sin la fila 2: la 1 sigue quitada y la 2 se retira.
+        verificacion.quitar(conn, NRO, fila.id, ANA)
+    _guardar_resumen(db_path, ids, que_piden=LINEAS[:1])
+    with closing(connect(db_path)) as conn:
+        verificacion.sincronizar_filas(conn, NRO)
+    assert _filas(db_path) == {}
+
+
+def test_vale_lo_mas_reciente_entre_el_asistente_y_la_marca(lista):
+    db_path, ids, settings = lista
+    datos = _guardar_resumen(db_path, ids)
+    _empezar(db_path)
+    clave = cumplimiento.clave_linea(LINEAS[0])
+    fila = _filas(db_path)[verificacion.PREFIJO_FILA + clave]
+
+    def estado():
+        with closing(connect(db_path)) as conn:
+            return cumplimiento.linea(cumplimiento.de_requerimientos(conn, NRO, AHORA.date()),
+                                      cumplimiento.de_lineas(conn, NRO), LINEAS[0])
+
+    assert estado().texto == "Falta"                                         # sin responder ni marcar
+    _responder(db_path, settings, fila.id, valor_si_no="1")                  # 15:00 · asistente: Sí
+    assert (estado().texto, estado().detalle) == ("Cumple", "Asistente: Respondió «Sí».")
+    with closing(connect(db_path)) as conn:                                   # 16:00 · marca: No cumple
+        cumplimiento.marcar(conn, NRO, datos, clave, "no_cumple", "otra batería", ANA, AHORA + timedelta(hours=1))
+    assert estado().texto == "No cumple" and "otra batería" in estado().detalle
+    with closing(connect(db_path)) as conn:                                   # 17:00 · asistente otra vez: Sí
+        asistente.responder(conn, settings, NRO, fila.id, asistente.Entrada(valor_si_no="1"), None, ANA,
+                            AHORA + timedelta(hours=2))
+    assert estado().texto == "Cumple"
+    with closing(connect(db_path)) as conn:                                   # el reporte lo lleva
+        assert reporte.datos(conn, NRO, AHORA)["piden"][0]["cumple"].texto == "Cumple"
+
+
+def test_marca_sin_respuesta_del_asistente_gana(lista):
+    db_path, ids, _ = lista
+    datos = _guardar_resumen(db_path, ids)
+    _empezar(db_path)
+    with closing(connect(db_path)) as conn:
+        cumplimiento.marcar(conn, NRO, datos, cumplimiento.clave_linea(LINEAS[1]), "revisar", "", ANA, AHORA)
+        e = cumplimiento.linea(cumplimiento.de_requerimientos(conn, NRO, AHORA.date()),
+                               cumplimiento.de_lineas(conn, NRO), LINEAS[1])
+    assert e.texto == "Revisar"

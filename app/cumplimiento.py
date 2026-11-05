@@ -4,8 +4,9 @@
   Cumple · No cumple · Falta · Revisar. Cada requerimiento del resumen se une con su requisito de la lista de
   verificación por «clave» (su texto normalizado, la misma de app/ai/verificacion.py). Sin asistente empezado, o si
   el requisito ya no está en la lista: «Sin evaluar». Los informativos (plazos, lugar…) no se preguntan: «Informativo».
-* Qué piden: nada en la app compara bienes y especificaciones con lo que ofrece Hermatix, así que lo marca una
-  persona (el encargado o un administrador): Cumple · No cumple · Revisar, con una nota. Vale la última marca.
+* Qué piden: cada fila también es una pregunta del asistente («¿Hermatix lo puede ofrecer?», app/ai/verificacion.py),
+  y además una persona (el encargado o un administrador) la puede marcar a mano: Cumple · No cumple · Revisar, con
+  una nota. Vale lo más reciente: la respuesta del asistente o la marca (decisión de Ivania, 2026-11-05).
 * La app no decide nada: muestra lo que dicen el asistente y las personas (regla: todo requisito se presenta).
 """
 
@@ -38,14 +39,18 @@ class Estado:
     clave: str                 # cumple · no_cumple · falta · revisar · sin_evaluar · informativo (para el color)
     texto: str
     detalle: str = ""          # el motivo del asistente, o quién marcó y su nota
+    en: str = ""               # cuándo (respuesta, revisión o marca), para quedarse con lo más reciente
 
 
 SIN = Estado("sin_evaluar", SIN_EVALUAR)
 
 
-def clave_linea(linea: dict) -> str:
-    """Una fila de «Qué piden»: su número de línea y su bien o servicio, normalizados."""
-    return verificacion.clave_de(f"{linea.get('linea') or ''} {linea.get('bien_o_servicio') or ''}")
+clave_linea = verificacion.clave_linea
+
+
+def _del_asistente(e: elegibilidad.Evaluacion) -> Estado:
+    en = (e.revision.en if e.revision else "") or (e.respuesta.creado_en if e.respuesta else "")
+    return Estado(e.estado, e.estado_texto, e.motivo, en)
 
 
 def de_requerimientos(conn: sqlite3.Connection, nro_sicop: str, dia: date) -> dict[str, Estado]:
@@ -55,7 +60,7 @@ def de_requerimientos(conn: sqlite3.Connection, nro_sicop: str, dia: date) -> di
     evaluaciones, _ = elegibilidad.evaluacion_actual(conn, nro_sicop, dia)
     pares = [(i, Estado("informativo", INFORMATIVO, "No se pregunta: es un dato del pliego."))
              for i in asistente.informativos(conn, nro_sicop)]
-    pares += [(e.item, Estado(e.estado, e.estado_texto, e.motivo)) for e in evaluaciones]
+    pares += [(e.item, _del_asistente(e)) for e in evaluaciones]
     # Por su clave (la del resumen del que salió) y por su texto actual (los agregados a mano tienen otra clave).
     estados = {verificacion.clave_de(i.requisito): e for i, e in pares}
     estados.update({i.clave: e for i, e in pares})
@@ -69,7 +74,8 @@ def de_lineas(conn: sqlite3.Connection, nro_sicop: str) -> dict[str, Estado]:
         " WHERE id IN (SELECT MAX(id) FROM resumen_lineas_cumple WHERE nro_sicop = ? GROUP BY clave)",
         (nro_sicop,)).fetchall()
     return {clave: Estado(estado, ESTADOS_LINEA[estado],
-                          f"Marcado por {por} el {creado[8:10]}/{creado[5:7]}/{creado[:4]}" + (f": {nota}" if nota else "."))
+                          f"Marcado por {por} el {creado[8:10]}/{creado[5:7]}/{creado[:4]}" + (f": {nota}" if nota else "."),
+                          creado)
             for clave, estado, nota, por, creado in filas}
 
 
@@ -77,8 +83,17 @@ def requerimiento(estados: dict[str, Estado], q: dict) -> Estado:
     return estados.get(verificacion.clave_de(str(q.get("requisito") or "")), SIN)
 
 
-def linea(estados: dict[str, Estado], i: dict) -> Estado:
-    return estados.get(clave_linea(i), SIN)
+def linea(reqs: dict[str, Estado], lineas: dict[str, Estado], i: dict) -> Estado:
+    """Lo más reciente entre la respuesta del asistente a esa fila y la marca de una persona."""
+    del_asistente = reqs.get(verificacion.PREFIJO_FILA + clave_linea(i))
+    marca = lineas.get(clave_linea(i))
+    if del_asistente is not None and del_asistente.en:
+        del_asistente = Estado(del_asistente.clave, del_asistente.texto, f"Asistente: {del_asistente.detalle}",
+                               del_asistente.en)
+    candidatos = [e for e in (del_asistente, marca) if e is not None]
+    if not candidatos:
+        return SIN
+    return max(candidatos, key=lambda e: e.en)        # sin fecha (sin responder) pierde ante una marca
 
 
 def huella(reqs: dict[str, Estado], lineas: dict[str, Estado]) -> str:

@@ -81,7 +81,8 @@
       {% endfor %}
     </tbody>
   </table>
-  <p class="sub">«¿Cumple?» lo marca el encargado del cartel o un administrador.{% if not seg %} Para marcarlo, primero
+  <p class="sub">«¿Cumple?» sale de la respuesta del asistente («¿Hermatix lo puede ofrecer?») o de «Marcar» (el
+    encargado del cartel o un administrador): vale lo más reciente.{% if not seg %} Para responder o marcar, primero
     «Dar seguimiento» al cartel.{% endif %}</p>
   {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
 

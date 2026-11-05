@@ -120,6 +120,76 @@ def clave_de(requisito: str) -> str:
     return normalizar_texto(requisito)[:300] or "sin-texto"
 
 
+# --- Filas de «Qué piden» como preguntas del asistente (pedido de Ivania, 2026-11-05) -----------------------------
+# Una pregunta de sí o no por fila del último resumen («¿Hermatix lo puede ofrecer?»), no excluyente. Se reconocen
+# por su clave (PREFIJO_FILA + la fila normalizada); la app las pone y las retira, sin IA, igual que la lista: lo
+# que corrigió o quitó una persona no se toca.
+
+PREFIJO_FILA = "que-piden:"
+
+
+def clave_linea(linea: dict) -> str:
+    """Una fila de «Qué piden»: su número de línea y su bien o servicio, normalizados."""
+    return clave_de(f"{linea.get('linea') or ''} {linea.get('bien_o_servicio') or ''}")
+
+
+def es_fila(item: Item) -> bool:
+    return item.clave.startswith(PREFIJO_FILA)
+
+
+def texto_fila(linea: dict) -> str:
+    texto = f"Qué piden · Línea {linea.get('linea') or '—'}: {str(linea.get('bien_o_servicio') or '').strip()}"
+    if str(linea.get("cantidad") or "").strip():
+        texto += f" ({str(linea['cantidad']).strip()})"
+    specs = [str(e).strip() for e in linea.get("especificaciones_clave") or [] if str(e).strip()]
+    return texto + (f" — {'; '.join(specs)}" if specs else "")
+
+
+def _filas_del_resumen(conn: sqlite3.Connection, nro_sicop: str) -> list[dict]:
+    fila = conn.execute("SELECT resumen_json FROM ia_summaries WHERE nro_sicop = ? AND estado IN ('ok', 'revisar')"
+                        " AND resumen_json IS NOT NULL ORDER BY id DESC LIMIT 1", (nro_sicop,)).fetchone()
+    filas = (json.loads(fila[0]).get("que_piden") or []) if fila else []
+    return [f for f in filas if isinstance(f, dict) and str(f.get("bien_o_servicio") or "").strip()]
+
+
+def _aplicar_filas(conn: sqlite3.Connection, nro_sicop: str) -> int:
+    """Pone en la lista las filas del último resumen (dentro de una transacción). Devuelve cuántas agregó."""
+    existentes = {f[0]: f[1:] for f in conn.execute(
+        "SELECT clave, id, editado, activo, orden, requisito, citas FROM eligibility_items"
+        " WHERE nro_sicop = ? AND clave LIKE ?",
+        (nro_sicop, PREFIJO_FILA + "%"))}
+    nuevas, agregadas = set(), 0
+    for n, linea in enumerate(_filas_del_resumen(conn, nro_sicop), start=1):
+        clave = PREFIJO_FILA + clave_linea(linea)
+        if clave in nuevas:
+            continue
+        nuevas.add(clave)
+        citas = json.dumps([c for c in [_valor(linea.get("cita"))] if c], ensure_ascii=False)
+        previo = existentes.get(clave)
+        if previo is None:
+            conn.execute(
+                "INSERT INTO eligibility_items (nro_sicop, orden, clave, requisito, tipo, tipo_evidencia, minimo,"
+                " excluyente, citas, origen, creado_en) VALUES (?, ?, ?, ?, 'tecnico', 'si_no', ?, 0, ?, 'ia', ?)",
+                (nro_sicop, 1000 + n, clave, texto_fila(linea), NO_INDICADO, citas, _ahora()))
+            agregadas += 1
+        elif not previo[1] and previo[2:] != (1, 1000 + n, texto_fila(linea), citas):   # sin tocar: al día
+            conn.execute("UPDATE eligibility_items SET orden = ?, requisito = ?, citas = ?, activo = 1 WHERE id = ?",
+                         (1000 + n, texto_fila(linea), citas, previo[0]))
+    for clave, (item_id, editado, activo, *_) in existentes.items():
+        if clave not in nuevas and not editado and activo:            # ya no está en el resumen: se retira
+            conn.execute("UPDATE eligibility_items SET activo = 0 WHERE id = ?", (item_id,))
+    return agregadas
+
+
+def sincronizar_filas(conn: sqlite3.Connection, nro_sicop: str) -> int:
+    """Las filas de «Qué piden» del último resumen, como preguntas de la lista. Repetible: si no cambió nada, no
+    escribe nada."""
+    if not conn.execute("SELECT 1 FROM eligibility_items WHERE nro_sicop = ? LIMIT 1", (nro_sicop,)).fetchone():
+        return 0                                   # sin lista generada todavía: las filas llegan con ella
+    with transaccion(conn):
+        return _aplicar_filas(conn, nro_sicop)
+
+
 _ITEM = ("SELECT i.id, i.orden, i.clave, i.requisito, i.tipo, i.tipo_evidencia, i.minimo, i.minimo_numero,"
          " i.minimo_fecha, i.unidad, i.excluyente, i.citas, i.perfil_item_id, p.titulo, i.perfil_confirmado, i.origen,"
          " i.editado, i.activo, i.editado_por_nombre, i.editado_en FROM eligibility_items i"
@@ -346,6 +416,7 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
         generacion = _guardar_generacion(conn, nro_sicop, resumen_id, r.uso_id, exp.huella, r.modelo, "ok", None,
                                          len(items), quien)
         _aplicar(conn, nro_sicop, items, generacion, claves)
+        _aplicar_filas(conn, nro_sicop)
         historial.registrar(conn, quien, "generar_lista_verificacion", f"{nro_sicop}: {len(items)} requisitos")
     return ultima_generacion(conn, nro_sicop)
 
@@ -381,7 +452,7 @@ def _aplicar(conn: sqlite3.Connection, nro_sicop: str, items: list[dict], genera
             (*campos, generacion, *(() if confirmado else (perfil,)), item_id))
     # Lo que vino de una lista anterior y ya no está (sin tocar por nadie) se retira; no se borra.
     for clave, (item_id, origen, editado, activo, _) in existentes.items():
-        if clave not in nuevas and origen == "ia" and not editado and activo:
+        if clave not in nuevas and origen == "ia" and not editado and activo and not clave.startswith(PREFIJO_FILA):
             conn.execute("UPDATE eligibility_items SET activo = 0 WHERE id = ?", (item_id,))
 
 

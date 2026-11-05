@@ -25,8 +25,9 @@
 7. Lee «Encaje con Hermatix». Dice qué tanto se parece a lo que vendemos.
 8. Lee «Qué piden». Hay una fila por cada cosa que compran.
    [captura: Resumen · resaltar «Qué piden»]
-   La columna «¿Cumple?» dice si Hermatix tiene eso. Lo marca el encargado del cartel.
-   Si eres el encargado, haz clic en «Marcar», escribe una nota si quieres y elige «Cumple», «No cumple» o «Revisar».
+   La columna «¿Cumple?» dice si Hermatix lo puede ofrecer. Sale de lo que respondes en el asistente (misión 23).
+   También lo puedes marcar a mano: haz clic en «Marcar», escribe una nota si quieres y elige «Cumple», «No cumple»
+   o «Revisar». Vale lo más reciente: la respuesta del asistente o la marca.
 9. Lee «Requerimientos». Mira la columna «Excluyente».
    [captura: Resumen · resaltar la columna «Excluyente»]
    Si dice «Sí», es obligatorio. Si no se cumple, la oferta queda fuera.

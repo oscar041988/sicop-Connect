@@ -159,7 +159,7 @@ def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: di
         specs, mas_specs = _limitar(i.get("especificaciones_clave"), lim["especificaciones"])
         piden.append({"linea": _corto(i.get("linea"), 12), "bien": _corto(i.get("bien_o_servicio"), n),
                       "cantidad": _corto(i.get("cantidad"), 12), "specs": [_corto(e, n // 2) for e in specs],
-                      "mas_specs": mas_specs, "cita": i.get("cita"), "cumple": cumplimiento.linea(est_lineas, i)})
+                      "mas_specs": mas_specs, "cita": i.get("cita"), "cumple": cumplimiento.linea(est_reqs, est_lineas, i)})
     todos = sorted(r.get("requerimientos") or [], key=lambda q: not q.get("excluyente"))   # excluyentes primero
     reqs, mas_reqs = _limitar(todos, lim["requerimientos"])
     criterios, mas_criterios = _limitar(r.get("criterios_de_evaluacion"), lim["criterios"])

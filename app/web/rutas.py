@@ -282,7 +282,7 @@ def ver_resumen(request: Request, nro_sicop: str, imprimir: bool = False) -> Res
         "d": datos, "res": vigente, "sicop": sicop, "IA": _TEXTOS_IA, "imprimir": imprimir,
         "citas_enlazadas": numerados is not None, "citar": lambda texto: citas.enlazar(texto, nro_sicop, numerados),
         "cumple_req": lambda q: cumplimiento.requerimiento(est_reqs, q),
-        "cumple_linea": lambda i: cumplimiento.linea(est_lineas, i), "clave_linea": cumplimiento.clave_linea,
+        "cumple_linea": lambda i: cumplimiento.linea(est_reqs, est_lineas, i), "clave_linea": cumplimiento.clave_linea,
         "ESTADOS_LINEA": cumplimiento.ESTADOS_LINEA, "con_asistente": bool(est_reqs), "seg": seg,
         "puede_marcar": seg is not None and seguimiento.puede_entrar(seguridad.usuario_actual(request), seg),
         "hecho": request.session.pop("hecho_cumple", None), "error": request.session.pop("error_cumple", None),
@@ -387,6 +387,8 @@ def _citador(conn, nro_sicop: str, settings):
 def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime, ver_item: int | None,
                         error_asistente: str | None = None, formulario_asistente: dict | None = None) -> dict:
     settings = load_settings()
+    if asistente.sesion(conn, nro_sicop):
+        verificacion.sincronizar_filas(conn, nro_sicop)       # «Qué piden» de un resumen nuevo (no escribe si no cambió)
     pasos = asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date())
     sesion = asistente.sesion(conn, nro_sicop)
     # Revisión rápida (decisión de Oscar, 2026-11-04): mientras no se amplíe, solo se preguntan los excluyentes.
