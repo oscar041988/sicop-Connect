@@ -4,6 +4,10 @@
 
 ## Último resultado
 
+- **Botón «Lista de verificación para el asistente» (2026-11-05, pedido de Ivania):** era un enlace con flecha;
+  ahora es un botón azul de Hermatix (`.btn.azul`: `--hx-azul`, `--hx-azul-osc` al pasar el mouse). Misión 22 y sus
+  6 capturas rehechas. 66 pruebas de la lista y la ayuda pasan.
+
 - **Sin viñetas en «Especificaciones clave» y «Riesgos y dudas» (2026-11-05, pedido de Ivania)**, en el resumen y
   en el Reporte PDF (clase `sin-vinetas`). El reporte ahora también se rehace si cambia su diseño (huella de
   `reporte_cartel.html` junto con la de «¿Cumple?»). 39 pruebas del reporte y el resumen pasan (una nueva); los 24
@@ -19,7 +23,8 @@
   9 pruebas en `tests/test_cumplimiento.py`; corrida completa: **938 passed**.
   **Efecto (medido en una copia de la base):** `20261002824` suma 18 preguntas y su resultado pasa de «Pueden
   participar si completan» a «Falta información» hasta responderlas; `20261002863` +4 y `20261003280` +1, sin
-  cambio de resultado. Las constancias ya calculadas no cambian. **Pendiente · Ivania:** probarlo en el panel.
+  cambio de resultado. Las constancias ya calculadas no cambian. ~~Pendiente · Ivania: probarlo en el panel~~
+  **probado por Ivania (2026-11-05, `20261002824`): funciona.**
 
 - **«¿Cumple?» en el resumen y el Reporte PDF (2026-11-05, pedido de Ivania; opciones elegidas por ella).**
   Columna nueva en «Qué piden» y en «Requerimientos», en la página del resumen («Ver») y en el reporte.
@@ -90,18 +95,23 @@
     **parte A** como sugerencias (17 datos, con frases que proponen cada elemento en la lista de verificación).
     912 passed. Respaldo `sicop_20261104-133112` y `migrate` (0035) hechos (2026-11-04, panel cerrado): 3
     elementos, 4 versiones y 4 requisitos con elemento del perfil antes y después; `foreign_key_check` vacío.
-    **Pendiente · encargados y administradores:** cargar los datos en `/perfil`. **Pendiente · Ivania:** el
-    elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo (no se borra).
+    **Pendiente · encargados y administradores:** cargar los datos en `/perfil`. ~~Pendiente · Ivania: el
+    elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo~~ **Ivania lo deja así (2026-11-05):** no lo usa
+    ningún requisito ni respuesta, y la app no lo propone (no tiene palabras de más de 3 letras).
   - **Respaldo al Drive (2026-11-04):** Ivania instaló Google Drive para escritorio (`G:\`). Claude creó
     `G:\Mi unidad\sicop-respaldos` y copió el último respaldo del día, `sicop_20261104-133112` (6 archivos, ≈475
     MB; contiene todo lo de los tres anteriores), en su subcarpeta: tamaños iguales y huella del `.db` igual al
-    manifiesto. **Pendiente · Ivania:** compartir la carpeta solo con Oscar (sin enlace público). La copia vieja del
+    manifiesto. ~~Pendiente · Ivania: compartir la carpeta solo con Oscar (sin enlace público)~~ **compartida por
+    Ivania (2026-11-05).** La copia vieja del
     proyecto en «Mi unidad\sicop-connect» (del 14/10, con `.env` y `data/`) ya no está.
   - **Prueba del resumen v3 en 3 carteles (Claude, 2026-11-04):** `docs/comparacion_resumen_v3_20261104.md`. El v3
     y un v4 más corto fallaron (respuesta incompleta con 8000 tokens; con 16000, la IA tardó más de 120 s). Un **v5**
     (el v2 + garantías, plazos y vigencia de la oferta) funcionó en los 3: 19/29/23 requerimientos contra 16/12/13
-    del v2, mismo costo. **Pendiente · Ivania:** volver `IA_MAX_OUTPUT_TOKENS` a 4000 (o borrar la línea) y llevar a
-    Oscar la recomendación de activar el v5.
+    del v2, mismo costo. ~~Pendiente · Ivania: volver `IA_MAX_OUTPUT_TOKENS` a 4000 y llevar a Oscar la
+    recomendación~~ **4000 comprobado y v5 activado por Ivania (2026-11-05, `doctor`: `IA_PROMPT_VERSION v5`),
+    provisional hasta Oscar** (`DECISION_IA.md` §7). `ia cola --ver`: 18 en cola; la de las 10:00 hace 10 por día.
+    Al llegar el v5 a un cartel con lista de verificación (p. ej. `20261003242`, `20261003291`), «¿Cumple?» de
+    Requerimientos dice «Sin evaluar» hasta volver a generar la lista. **Pendiente · Oscar:** confirmar el v5.
   - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
     de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
 

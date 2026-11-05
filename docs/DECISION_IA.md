@@ -103,5 +103,7 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
   - Texto de esos documentos a la IA: **no**; `ASSISTANT_SEND_DOCUMENTS` sigue en `false`.
   - Presupuesto diario: se deja en **1.00 USD** (`IA_MAX_DAILY_COST`).
   - Resumen v3: **probarlo en 3 carteles** y comparar antes de activarlo para todos.
+    Resultado (`docs/comparacion_resumen_v3_20261104.md`): v3 y v4 fallaron; el **v5** funcionó. **Activado por
+    Ivania el 2026-11-05** (`IA_PROMPT_VERSION=v5`), provisional hasta que Oscar lo confirme.
   - Reglas del resultado (lección 4): **de acuerdo** con las dos (archivo pendiente → «si completan»; excluyente
     en «Revisar» sin decidir → «Falta información»).
