@@ -4,6 +4,11 @@
 
 ## Último resultado
 
+- **Sin viñetas en «Especificaciones clave» y «Riesgos y dudas» (2026-11-05, pedido de Ivania)**, en el resumen y
+  en el Reporte PDF (clase `sin-vinetas`). El reporte ahora también se rehace si cambia su diseño (huella de
+  `reporte_cartel.html` junto con la de «¿Cumple?»). 39 pruebas del reporte y el resumen pasan (una nueva); los 24
+  reportes reales caben en 2 páginas (copia de la base).
+
 - **«Qué piden» también en el asistente (2026-11-05, pedido de Ivania; opciones elegidas por ella: una pregunta
   por fila y vale lo más reciente).** Cada fila del último resumen entra a la lista de verificación como pregunta
   de sí o no, no excluyente: «El cartel pide: «Qué piden · Línea 1: … (50) — specs». ¿Hermatix lo puede
