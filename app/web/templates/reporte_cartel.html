@@ -49,6 +49,7 @@
   tr, .kpi, .pliego div, li { break-inside: avoid; }
   h2 { break-after: avoid; }
   .vacio { color: var(--mut); }
+  ul.sin-vinetas { list-style: none; padding-left: 0; }
   .cumple { font-weight: 700; white-space: nowrap; color: var(--mut); }
   .cumple-cumple { color: var(--verde); }
   .cumple-no_cumple { color: var(--no); }
@@ -94,7 +95,7 @@
   <tbody>
   {% for i in d.piden %}
   <tr><td>{{ i.linea }}</td><td>{{ i.bien }}</td><td>{{ i.cantidad }}</td>
-    <td>{% if i.specs %}<ul>{% for e in i.specs %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% if i.mas_specs %}<div class="mas">y {{ i.mas_specs }} más en el panel</div>{% endif %}{{ cita(i.cita) }}</td>
+    <td>{% if i.specs %}<ul class="sin-vinetas">{% for e in i.specs %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% if i.mas_specs %}<div class="mas">y {{ i.mas_specs }} más en el panel</div>{% endif %}{{ cita(i.cita) }}</td>
     <td class="col-cumple">{{ cumple(i.cumple) }}</td></tr>
   {% endfor %}
   </tbody>
@@ -136,7 +137,7 @@
 
     <h2>Riesgos y dudas</h2>
     {% if d.riesgos %}
-    <ul>{% for x, c in d.riesgos %}<li>{{ x }}{{ cita(c) }}</li>{% endfor %}</ul>
+    <ul class="sin-vinetas">{% for x, c in d.riesgos %}<li>{{ x }}{{ cita(c) }}</li>{% endfor %}</ul>
     {% if d.mas_riesgos %}<div class="mas">y {{ d.mas_riesgos }} más en el panel</div>{% endif %}
     {% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
   </div>

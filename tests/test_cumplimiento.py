@@ -209,3 +209,20 @@ def test_marca_sin_respuesta_del_asistente_gana(lista):
         e = cumplimiento.linea(cumplimiento.de_requerimientos(conn, NRO, AHORA.date()),
                                cumplimiento.de_lineas(conn, NRO), LINEAS[1])
     assert e.texto == "Revisar"
+
+
+def test_reporte_se_rehace_si_cambia_el_diseno(lista, monkeypatch, tmp_path):
+    db_path, ids, settings = lista
+    _guardar_resumen(db_path, ids)
+    monkeypatch.setattr(reporte, "pdf", lambda contenido, nro: b"%PDF /Type /Page " + contenido.encode()[:50])
+    plantillas = tmp_path / "plantillas"
+    plantillas.mkdir()
+    original = (reporte.PLANTILLAS / "reporte_cartel.html").read_text(encoding="utf-8")
+    (plantillas / "reporte_cartel.html").write_text(original, encoding="utf-8")
+    monkeypatch.setattr(reporte, "PLANTILLAS", plantillas)
+    settings = load_settings(env_file=None, environ={**settings.raw, "REPORTS_DIR": str(tmp_path / "reportes")})
+    with closing(connect(db_path)) as conn:
+        primero = reporte.generar(conn, settings, NRO, ANA, AHORA)
+        assert reporte.generar(conn, settings, NRO, ANA, AHORA).reutilizado
+        (plantillas / "reporte_cartel.html").write_text(original + "<!-- diseño nuevo -->", encoding="utf-8")
+        assert reporte.generar(conn, settings, NRO, ANA, AHORA).id != primero.id

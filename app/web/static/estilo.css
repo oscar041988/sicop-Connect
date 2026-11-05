@@ -356,6 +356,7 @@ table.lista.auto .btn { white-space: nowrap; }
 .doc-tabla thead th { background: var(--g0); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
 .doc-tabla tbody th { width: 34%; font-weight: 600; color: var(--g9); }
 .doc-tabla ul, .doc-lista { margin: 0; padding-left: 18px; }
+ul.sin-vinetas, .doc-tabla ul.sin-vinetas { list-style: none; padding-left: 0; }   /* especificaciones y riesgos: sin viñetas (Ivania, 05/11) */
 .doc-lista li { margin-bottom: 6px; }
 .excluyente { color: var(--rojo); }
 .cita { color: var(--mut); font-size: .82rem; white-space: nowrap; }

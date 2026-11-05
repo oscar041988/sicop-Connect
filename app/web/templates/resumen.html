@@ -65,7 +65,7 @@
       {% for i in r.que_piden %}
       {% set e = cumple_linea(i) %}
       <tr><td>{{ i.linea }}</td><td>{{ i.bien_o_servicio }}</td><td>{{ i.cantidad }}</td>
-        <td>{% if i.especificaciones_clave %}<ul>{% for x in i.especificaciones_clave %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ cita(i.cita) }}</td>
+        <td>{% if i.especificaciones_clave %}<ul class="sin-vinetas">{% for x in i.especificaciones_clave %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ cita(i.cita) }}</td>
         <td>{{ cumple(e) }}{% if e.detalle %}<br><small class="sub">{{ e.detalle }}</small>{% endif %}
           {% if puede_marcar and not imprimir %}
           <details class="marcar-cumple no-imprimir"><summary>Marcar</summary>
@@ -134,7 +134,7 @@
 
   <h2>Riesgos y dudas</h2>
   {% if r.riesgos_y_dudas %}
-  <ul class="doc-lista">{% for x in r.riesgos_y_dudas %}<li>{{ x.riesgo }} {{ cita(x.cita) }}</li>{% endfor %}</ul>
+  <ul class="doc-lista sin-vinetas">{% for x in r.riesgos_y_dudas %}<li>{{ x.riesgo }} {{ cita(x.cita) }}</li>{% endfor %}</ul>
   {% else %}<p class="vacio">{{ IA.NO }}</p>{% endif %}
 
   <div class="doc-pie">
