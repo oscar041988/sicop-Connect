@@ -47,7 +47,7 @@
 {% if ia_visible and (resumenes or d.evaluaciones | selectattr("encaje", "in", ["alta", "media", "baja"]) | list) %}
 {% include "_resumen_ia.html" %}
 {% endif %}
-<p class="enlace-verificacion"><a href="/oportunidades/{{ c.nro_sicop }}/verificacion">Lista de verificación para el asistente →</a>
+<p class="enlace-verificacion"><a class="btn azul" href="/oportunidades/{{ c.nro_sicop }}/verificacion">Lista de verificación para el asistente</a>
   <small class="sub">Cada requisito del pliego, con qué lo demuestra y su mínimo.</small></p>
 {% include "_asistente.html" %}
 

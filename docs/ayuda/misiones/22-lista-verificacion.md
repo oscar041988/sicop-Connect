@@ -8,8 +8,8 @@ La lista sale de ese resumen.
 
 ### Abrir la lista
 
-1. Busca el enlace «Lista de verificación para el asistente →», debajo del resumen.
-   [captura: Cartel · resaltar «Lista de verificación para el asistente →»]
+1. Busca el botón «Lista de verificación para el asistente», debajo del resumen.
+   [captura: Cartel · resaltar «Lista de verificación para el asistente»]
 2. Haz clic en el enlace.
 3. Si la lista está vacía, haz clic en «Generar la lista con IA».
    [captura: Lista de verificación · resaltar el botón de generar]

@@ -80,6 +80,8 @@ h3 { margin: 0; }
 .btn.p:hover, button:hover { background: var(--hx-azul); }
 .btn.o { background: #fff; border-color: var(--line); color: var(--ink); }
 .btn.o:hover { border-color: var(--g5); }
+.btn.azul { background: var(--hx-azul); color: #fff; }               /* para que resalte: «Lista de verificación» */
+.btn.azul:hover { background: var(--hx-azul-osc); }
 
 /* 6. Chips de estado, búsqueda y filtros */
 .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -453,8 +455,7 @@ ul.sin-vinetas, .doc-tabla ul.sin-vinetas { list-style: none; padding-left: 0; }
 .sugerencias-perfil form { margin: 0; }
 
 /* Lista de verificación del cartel (asistente de elegibilidad, lección 2). */
-.enlace-verificacion { margin: 4px 0 20px; }
-.enlace-verificacion a { font-weight: 700; }
+.enlace-verificacion { margin: 4px 0 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .generar-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 12px 0 4px; }
 .item-verificacion { margin-bottom: 12px; }
 .item-verificacion .requisito { font-weight: 600; margin: 6px 0 10px; }
