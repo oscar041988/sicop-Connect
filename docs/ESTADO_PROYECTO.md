@@ -4,6 +4,19 @@
 
 ## Último resultado
 
+- **Asistente · lección 5, Encargo 5 (código) hecho (2026-11-05, plan aprobado por Ivania).**
+  (1) `ASSISTANT_ENABLED` (**false por defecto**, decisión de Ivania siguiendo la guía): apagado, el cartel no
+  muestra el asistente ni el botón de la lista, y `/oportunidades/<nro>/asistente/…` y `/verificacion…` dan 404
+  (middleware `cerrar_asistente_apagado`); no borra nada. Sin IA sigue como formulario (prueba nueva).
+  (2) **Administración → Registro del asistente** (`/asistente/registro`, solo administradores): `audit_log` con
+  `historial.REGISTRO_ASISTENTE` (lista, asistente, «¿Cumple?», perfil y sus accesos). (3) Aviso arriba del panel de
+  carteles con los elementos del perfil vencidos o por vencer (`perfil.avisos`). (4) `OPERACION.md` §3.4,
+  `.env.example`, misión 23 («¿Y si no veo el asistente…?»). La base de ejemplo de la ayuda lo enciende. Las
+  pruebas lo encienden en `tests/conftest.py`; `tests/test_asistente_activacion.py` (5). Sin migración.
+  Corrida completa: **944 passed**. ~~Pendiente · Ivania: agregar `ASSISTANT_ENABLED=true` a su `.env`~~ **hecho
+  (`doctor`: `ASSISTANT_ENABLED true`) y revisado por Ivania en el panel (2026-11-05): se ve bien.** **Falta de la lección 5:** prueba completa con 3 carteles, servidor y una
+  semana de uso con Oscar.
+
 - **Botón «Lista de verificación para el asistente» (2026-11-05, pedido de Ivania):** era un enlace con flecha;
   ahora es un botón azul de Hermatix (`.btn.azul`: `--hx-azul`, `--hx-azul-osc` al pasar el mouse). Misión 22 y sus
   6 capturas rehechas. 66 pruebas de la lista y la ayuda pasan.
