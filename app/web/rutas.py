@@ -607,6 +607,17 @@ def calcular_resultado(request: Request, nro_sicop: str) -> Response:
 @router.get("/oportunidades/{nro_sicop}/asistente/resultados/{constancia_id}", response_class=HTMLResponse)
 def ver_constancia(request: Request, nro_sicop: str, constancia_id: int, imprimir: bool = False) -> Response:
     """La constancia como documento («Ver»); con ?imprimir=1 («Descargar») el navegador la guarda como PDF."""
+    return _pagina_constancia(request, nro_sicop, constancia_id, imprimir)
+
+
+@router.get("/oportunidades/{nro_sicop}/asistente/resultados/{constancia_id}/explicacion", response_class=HTMLResponse)
+def ver_explicacion(request: Request, nro_sicop: str, constancia_id: int) -> Response:
+    """«Ver explicación» (Ivania, 05/11): la misma constancia, solo con el resultado, la explicación y lo que falta."""
+    return _pagina_constancia(request, nro_sicop, constancia_id, False, solo_explicacion=True)
+
+
+def _pagina_constancia(request: Request, nro_sicop: str, constancia_id: int, imprimir: bool,
+                       solo_explicacion: bool = False) -> Response:
     if (error := _base_no_lista(request)) is not None:
         return error
     with closing(connect(load_settings().database_path)) as conn:
@@ -618,7 +629,7 @@ def ver_constancia(request: Request, nro_sicop: str, constancia_id: int, imprimi
         datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
         citar = _citador(conn, nro_sicop, load_settings())
     return PLANTILLAS.TemplateResponse(request, "resultado.html", {
-        "d": datos, "k": c, "imprimir": imprimir, "citar": citar,
+        "d": datos, "k": c, "imprimir": imprimir, "citar": citar, "solo_explicacion": solo_explicacion,
         "ELEG": {"resultados": elegibilidad.RESULTADOS, "estados": elegibilidad.ESTADOS, "aviso": elegibilidad.AVISO},
     })
 

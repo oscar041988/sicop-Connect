@@ -14,7 +14,7 @@
 
 <article class="doc-resumen">
   <div class="doc-cabecera">
-    <p class="doc-marca">Hermatix · SICOP Connect · Constancia del resultado de elegibilidad</p>
+    <p class="doc-marca">Hermatix · SICOP Connect · {{ "Explicación" if solo_explicacion else "Constancia" }} del resultado de elegibilidad</p>
     <h1>{{ c.descripcion | titulo | legible or "(sin título)" }}</h1>
     <p class="doc-institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
   </div>
@@ -32,6 +32,9 @@
     El resultado lo calcula la app con las reglas de comparación, nunca la IA.</p>
   <p class="resultado-aviso">{{ ELEG.aviso }}</p>
 
+  {% if solo_explicacion %}
+  <p class="no-imprimir"><a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ k.id }}">Ver constancia</a></p>
+  {% else %}
   <h2>Detalle por requisito</h2>
   <table class="tabla-resultado">
     <thead><tr><th>Requisito</th><th>Estado</th><th>Respuesta</th><th>Por qué</th></tr></thead>
@@ -52,6 +55,7 @@
 
   <p class="doc-nota">Versión de la lista: generación #{{ k.lista_generacion_id or "—" }} · huella {{ k.lista_huella[:12] }}.
     Constancia #{{ k.id }}: no se borra ni se modifica.</p>
+  {% endif %}
 </article>
 {% if imprimir %}<script>window.addEventListener("load", function () { window.print(); });</script>{% endif %}
 {% endblock %}

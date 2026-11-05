@@ -159,14 +159,11 @@
     {% if ultima %}
     <p class="resultado-titular {{ ultima.resultado }}"><strong>{{ ultima.resultado_texto }}</strong>
       <small class="sub">· calculado por {{ ultima.calculado_por }}, {{ ultima.creado_en | fecha }}</small></p>
-    {# La explicación es larga (todo lo que falta): cerrada, para que se vea solo el veredicto (Ivania, 05/11). #}
-    <details class="respuestas-asistente ver-explicacion">
-      <summary>Ver la explicación y lo que falta</summary>
-      <div class="resultado-explicacion">{% for linea in ultima.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
-    </details>
+    {# Solo el veredicto (Ivania, 05/11): la explicación y lo que falta están en la constancia. #}
+    <p class="botones-resultado"><a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}/explicacion">Ver explicación</a>
+      <a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}">Ver constancia</a>
+      <a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}?imprimir=1" target="_blank" rel="noopener">Descargar</a></p>
     <p class="resultado-aviso">{{ ELEG.aviso }}</p>
-    <p><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}">Ver constancia</a>
-      · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}?imprimir=1" target="_blank" rel="noopener">Descargar</a></p>
     {% if re.global != ultima.resultado %}
     <p class="sub">Con las respuestas de ahora el resultado sería «{{ ELEG.resultados[re.global] }}»: vuelve a calcular.</p>
     {% endif %}

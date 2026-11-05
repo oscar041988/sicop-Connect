@@ -89,7 +89,7 @@ def test_aviso_del_perfil_en_el_panel(web):
     assert 'href="/perfil">Revisar el perfil' in pagina
 
 
-def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_queda_cerrada(web):
+def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_esta_en_la_constancia(web):
     db_path, ids, _, c, u = web
     _seguido(db_path, u)
     oscar = c["oscar"]
@@ -100,8 +100,16 @@ def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_queda_cerrada(web):
     _post(oscar, f"/oportunidades/{NRO}/asistente/resultado")
     pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
     assert '<strong>No cumplen un requisito excluyente</strong>' in pagina
-    assert ('<details class="respuestas-asistente ver-explicacion"> <summary>Ver la explicación y lo que falta'
-            '</summary>') in pagina                                   # cerrada: sin «open»
-    assert pagina.index("Ver la explicación y lo que falta") < pagina.index("Esto es lo que falta")
+    assert "Esto es lo que falta" not in pagina                      # la explicación solo está en la constancia
+    rid = pagina.split("/asistente/resultados/")[1].split("/")[0]
+    base = f"/oportunidades/{NRO}/asistente/resultados/{rid}"
+    botones = [pagina.index(f'class="btn p" href="{base}/explicacion">Ver explicación</a>'),
+               pagina.index(f'class="btn o" href="{base}">Ver constancia</a>'),
+               pagina.index(f'class="btn o" href="{base}?imprimir=1"')]
+    assert botones == sorted(botones)                                       # en ese orden, uno a la par del otro
+    explicacion = oscar.get(f"{base}/explicacion").text
+    assert "Esto es lo que falta" in explicacion and "Detalle por requisito" not in explicacion
+    constancia = oscar.get(base).text
+    assert "Esto es lo que falta" in constancia and "Detalle por requisito" in constancia
     assert '<details class="respuestas-asistente cada-requisito">' in pagina           # cerrada aunque haya un Revisar
     assert "1 revisar" in pagina

@@ -485,6 +485,7 @@ form.en-linea { display: inline; margin-left: 8px; }
 .resultado-titular.no_cumple_excluyente { background: var(--no-bg); color: var(--no); }
 .resultado-explicacion p { margin: 0 0 6px; overflow-wrap: anywhere; }
 .resultado-aviso { font-size: .9rem; color: var(--mut); font-style: italic; }
+.botones-resultado { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
 .tabla-resultado { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .tabla-resultado th, .tabla-resultado td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 /* La columna «Estado» toma lo que mide su etiqueta: «No cumple» nunca se parte en pedazos (Ivania, 2026-11-04) */

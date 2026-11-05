@@ -19,7 +19,7 @@ requisito excluyente no se cumple.
    - «Pueden participar si completan lo que falta»: faltan archivos, datos no excluyentes o revisiones.
    - «No cumplen un requisito excluyente»: dice cuál.
    - «Falta información»: hay preguntas sin responder o con «Todavía no lo sé».
-4. Lee el aviso de abajo. Si quieres saber por qué y qué falta, haz clic en «Ver la explicación y lo que falta».
+4. Lee el aviso de abajo. Para saber por qué salió ese resultado y qué falta, haz clic en «Ver explicación».
    [captura: Resultado · resaltar el resultado]
    El resultado es una orientación. La decisión de participar es tuya.
 
@@ -44,7 +44,7 @@ requisito excluyente no se cumple.
 
 9. Haz clic en «Ver constancia».
    [captura: Resultado · resaltar «Ver constancia»]
-   Muestra el resultado, la explicación, el aviso y cada requisito con su respuesta.
+   Muestra el resultado, la explicación con lo que falta, el aviso y cada requisito con su respuesta.
    [captura: Constancia · resaltar el detalle por requisito]
 10. En la constancia, haz clic en «Descargar PDF» y elige «Guardar como PDF».
     [captura: Constancia · resaltar «Descargar PDF»]
