@@ -4,6 +4,18 @@
 
 ## Último resultado
 
+- **«Qué piden» también en el asistente (2026-11-05, pedido de Ivania; opciones elegidas por ella: una pregunta
+  por fila y vale lo más reciente).** Cada fila del último resumen entra a la lista de verificación como pregunta
+  de sí o no, no excluyente: «El cartel pide: «Qué piden · Línea 1: … (50) — specs». ¿Hermatix lo puede
+  ofrecer?» (`verificacion.sincronizar_filas`, clave `que-piden:…`, sin IA; al generar la lista, al empezar o
+  ampliar el asistente y al abrir el cartel; no escribe si nada cambió; lo que quitó una persona no vuelve; las
+  filas que ya no están en el resumen se retiran). «¿Cumple?» de la fila: lo más reciente entre la respuesta del
+  asistente y «Marcar»; el resumen y el reporte se actualizan solos. Sin migración. Misiones 05, 23 y 25.
+  9 pruebas en `tests/test_cumplimiento.py`; corrida completa: **938 passed**.
+  **Efecto (medido en una copia de la base):** `20261002824` suma 18 preguntas y su resultado pasa de «Pueden
+  participar si completan» a «Falta información» hasta responderlas; `20261002863` +4 y `20261003280` +1, sin
+  cambio de resultado. Las constancias ya calculadas no cambian. **Pendiente · Ivania:** probarlo en el panel.
+
 - **«¿Cumple?» en el resumen y el Reporte PDF (2026-11-05, pedido de Ivania; opciones elegidas por ella).**
   Columna nueva en «Qué piden» y en «Requerimientos», en la página del resumen («Ver») y en el reporte.
   Requerimientos: el estado del asistente de elegibilidad de hoy (Cumple / No cumple / Falta / Revisar;
