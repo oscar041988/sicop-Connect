@@ -19,7 +19,7 @@ requisito excluyente no se cumple.
    - «Pueden participar si completan lo que falta»: faltan archivos, datos no excluyentes o revisiones.
    - «No cumplen un requisito excluyente»: dice cuál.
    - «Falta información»: hay preguntas sin responder o con «Todavía no lo sé».
-4. Lee la explicación y el aviso de abajo.
+4. Lee el aviso de abajo. Si quieres saber por qué y qué falta, haz clic en «Ver la explicación y lo que falta».
    [captura: Resultado · resaltar el resultado]
    El resultado es una orientación. La decisión de participar es tuya.
 

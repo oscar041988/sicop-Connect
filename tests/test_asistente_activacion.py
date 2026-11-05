@@ -87,3 +87,21 @@ def test_aviso_del_perfil_en_el_panel(web):
     pagina = " ".join(oscar.get("/oportunidades").text.split())
     assert "Perfil de Hermatix:</strong> 1 elemento vencido o por vencer (Póliza SINTÉTICA de riesgos)" in pagina
     assert 'href="/perfil">Revisar el perfil' in pagina
+
+
+def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_queda_cerrada(web):
+    db_path, ids, _, c, u = web
+    _seguido(db_path, u)
+    oscar = c["oscar"]
+    _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")
+    _post(oscar, f"/oportunidades/{NRO}/asistente/ampliar")
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "0"})   # excluyente: No
+    _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/responder", {"valor_texto": "24/7"})  # → Revisar
+    _post(oscar, f"/oportunidades/{NRO}/asistente/resultado")
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert '<strong>No cumplen un requisito excluyente</strong>' in pagina
+    assert ('<details class="respuestas-asistente ver-explicacion"> <summary>Ver la explicación y lo que falta'
+            '</summary>') in pagina                                   # cerrada: sin «open»
+    assert pagina.index("Ver la explicación y lo que falta") < pagina.index("Esto es lo que falta")
+    assert '<details class="respuestas-asistente cada-requisito">' in pagina           # cerrada aunque haya un Revisar
+    assert "1 revisar" in pagina

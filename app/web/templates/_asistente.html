@@ -159,7 +159,11 @@
     {% if ultima %}
     <p class="resultado-titular {{ ultima.resultado }}"><strong>{{ ultima.resultado_texto }}</strong>
       <small class="sub">· calculado por {{ ultima.calculado_por }}, {{ ultima.creado_en | fecha }}</small></p>
-    <div class="resultado-explicacion">{% for linea in ultima.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
+    {# La explicación es larga (todo lo que falta): cerrada, para que se vea solo el veredicto (Ivania, 05/11). #}
+    <details class="respuestas-asistente ver-explicacion">
+      <summary>Ver la explicación y lo que falta</summary>
+      <div class="resultado-explicacion">{% for linea in ultima.explicacion.splitlines() %}<p>{{ linea }}</p>{% endfor %}</div>
+    </details>
     <p class="resultado-aviso">{{ ELEG.aviso }}</p>
     <p><a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}">Ver constancia</a>
       · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/resultados/{{ ultima.id }}?imprimir=1" target="_blank" rel="noopener">Descargar</a></p>
@@ -174,7 +178,7 @@
       <button type="submit">Calcular el resultado</button>
     </form>
 
-    <details class="respuestas-asistente" {% if re.conteo.revisar %}open{% endif %}>
+    <details class="respuestas-asistente cada-requisito">{# siempre cerrada: el conteo ya avisa los «Revisar» (Ivania, 05/11) #}
       <summary>Cómo va cada requisito: {{ re.conteo.cumple }} cumple · {{ re.conteo.no_cumple }} no cumple ·
         {{ re.conteo.falta }} falta · {{ re.conteo.revisar }} revisar</summary>
       <table class="tabla-resultado">
