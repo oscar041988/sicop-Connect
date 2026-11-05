@@ -4,6 +4,12 @@
 
 ## Último resultado
 
+- **Resultado del asistente sin ruido (2026-11-05, pedido de Ivania):** al calcular, en el cartel se ve solo el
+  veredicto; la explicación con todo lo que falta queda cerrada en «Ver la explicación y lo que falta», y la tabla
+  «Cómo va cada requisito» también queda siempre cerrada (su resumen muestra el conteo de «Revisar»). La
+  constancia (documento para imprimir) la sigue mostrando completa. Misión 24 y sus 8 capturas rehechas; prueba
+  nueva; 78 pruebas del asistente pasan.
+
 - **Asistente · lección 5, Encargo 5 (código) hecho (2026-11-05, plan aprobado por Ivania).**
   (1) `ASSISTANT_ENABLED` (**false por defecto**, decisión de Ivania siguiendo la guía): apagado, el cartel no
   muestra el asistente ni el botón de la lista, y `/oportunidades/<nro>/asistente/…` y `/verificacion…` dan 404
