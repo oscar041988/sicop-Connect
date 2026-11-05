@@ -5,7 +5,9 @@
 ## Último resultado
 
 - **Resultado del asistente sin ruido (2026-11-05, pedido de Ivania):** al calcular, en el cartel se ve solo el
-  veredicto; la explicación con todo lo que falta queda cerrada en «Ver la explicación y lo que falta», y la tabla
+  veredicto y tres botones, en este orden: «Ver explicación» (página nueva `…/resultados/<id>/explicacion`: la
+  constancia sin el detalle por requisito), «Ver constancia» y «Descargar» (Ivania, 05/11: botones, no una
+  pestaña desplegable; probados por Ivania), y la tabla
   «Cómo va cada requisito» también queda siempre cerrada (su resumen muestra el conteo de «Revisar»). La
   constancia (documento para imprimir) la sigue mostrando completa. Misión 24 y sus 8 capturas rehechas; prueba
   nueva; 78 pruebas del asistente pasan.
