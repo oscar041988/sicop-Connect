@@ -4,6 +4,38 @@
 
 ## Último resultado
 
+- **Detalle del cartel, segunda versión (2026-11-06).** A Ivania no le gustó la primera (tarjeta azul cargada y
+  cortada, pasos en dos filas, cajas dentro de cajas, todo muy largo); eligió «franja arriba». Ahora: franja blanca a
+  lo ancho (institución y chips, título, «¿Podemos participar?» con su color, **una sola acción verde** —«Dar
+  seguimiento» o el asistente— y «Decidir», que baja a la revisión), 4 cifras en una fila y enlaces (expediente,
+  ZIP, Reporte PDF, SICOP). Pestañas en una fila: Resumen, Requisitos, Condiciones, Documentos (mismas claves
+  `?paso=`). Datos en filas etiqueta | valor; revisión compacta (decisión en botones de opción). «Lista de
+  verificación» pasa a botón blanco. 233 pruebas relacionadas pasan. **Arreglado (06/11, aviso de Ivania): la
+  página se movía hacia los lados.** La columna de las pestañas crecía hasta lo más ancho que tuviera dentro (la
+  fila de pestañas en el celular; las tablas del resumen, de 640 px como mínimo); ahora `minmax(0, 1fr)` la limita
+  a la pantalla y la tabla se desplaza dentro de su caja. Medido con Playwright en 1366, 1280, 1024, 800 y 390 px
+  (base de EJEMPLO, las 4 pestañas): sin desborde. **Siguió moviéndose** (laptop con touchpad, toda la página):
+  con una copia de la base real, 7 carteles, las 4 pestañas, 8 anchos y barras de desplazamiento visibles, tampoco
+  hay desborde; la causa probable es el gesto «volver» del touchpad (dos dedos un poco de lado). En `estilo.css`:
+  `html { overscroll-behavior-x: none; overflow-x: clip; }` (todas las páginas). **Confirmado por Ivania (06/11): ya
+  no se mueve.** **Pendiente · Ivania:** verlo en el
+  navegador. **Después:** rehacer las capturas de las misiones 04, 08, 09 y 23 (`ayuda capturas`).
+- **Detalle del cartel rediseñado, primera versión (2026-11-05, pedido de Ivania; reemplazada el 06/11).** Solo
+  presentación: `app/web/templates/oportunidad.html` y un bloque `.cartel-*` al final de `estilo.css`; base, menú y
+  rutas sin cambios. Izquierda: tarjeta azul marino fija (institución, título, números, «¿Podemos participar?» con
+  círculo cumplidos/total y botón del asistente, 4 cifras, chips y botones). Derecha: 4 pasos con `?paso=entender|
+  requisitos|condiciones|evidencia` (sin JavaScript funciona; con JavaScript cambia sin recargar; `#asistente`,
+  `#pregunta` y los avisos del asistente abren «Requisitos»). Dato que falta → «—» o «no encontrado».
+  **No hay botón «Archivar cartel»:** no existe esa acción (etapas Preparando, Enviada, Ganada y Perdida); se muestra
+  solo el aviso de plazo cerrado cuando la etapa es Preparando. «Ver en SICOP ↗» abre la búsqueda pública de SICOP
+  (no hay enlace directo estable). Pruebas: `tests/test_cartel_pasos.py` (9) y 3 pruebas ajustadas a los textos nuevos
+  («Abrir», chips de etapa y encargado).
+
+- **Prueba completa del asistente (lección 5), 2 de 3 carteles (Ivania, 2026-11-05): funciona.**
+  `20261003280` (GPS): «No cumplen un requisito excluyente» (oferta firmada digitalmente y patente comercial).
+  `20261002863`: «Falta información». Explicación redactada por la IA en los dos. **Falta:** `20261003242`
+  (cuando tenga el resumen v5 y su lista vuelta a generar).
+
 - **Resultado del asistente sin ruido (2026-11-05, pedido de Ivania):** al calcular, en el cartel se ve solo el
   veredicto y tres botones, en este orden: «Ver explicación» (página nueva `…/resultados/<id>/explicacion`: la
   constancia sin el detalle por requisito), «Ver constancia» y «Descargar» (Ivania, 05/11: botones, no una

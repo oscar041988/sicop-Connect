@@ -168,9 +168,10 @@ def test_ver_un_pdf_lo_abre_en_el_navegador_y_descargar_sigue_igual(entorno):
     cliente = _cliente("encargado@ejemplo.test")
 
     html = cliente.get(f"/oportunidades/{NRO}").text
-    assert html.count('">Ver</a>') == 1   # el PDF sí; el Word solo «Descargar»
-    assert f'href="/oportunidades/{NRO}/documentos/{pdf}/ver" target="_blank" rel="noopener">Ver</a>' in html
-    assert html.count(">Descargar</a>") == 2
+    # Detalle rediseñado (2026-11-05): «Abrir» el PDF en el navegador; el Word se abre bajándolo.
+    assert html.count('/ver" target="_blank" rel="noopener">Abrir</a>') == 1
+    assert f'href="/oportunidades/{NRO}/documentos/{pdf}/ver" target="_blank" rel="noopener">Abrir</a>' in html
+    assert html.count(">Abrir</a>") == 2 and html.count(">Descargar</a>") == 1
 
     r = cliente.get(f"/oportunidades/{NRO}/documentos/{pdf}/ver")
     assert r.status_code == 200 and r.content == b"%PDF SIMULADO"

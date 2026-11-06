@@ -3,205 +3,409 @@
 {% block titulo %}{{ c.nro_sicop }}{% endblock %}
 {% block contenido %}
 <p class="migas"><a href="/oportunidades">← Oportunidades</a></p>
+{# Rediseño del detalle (2026-11-06, segunda versión, pedido de Ivania): una franja a lo ancho con lo esencial y una sola
+   acción principal; debajo, 4 pestañas en una fila. Solo presentación: usa los mismos datos que antes. La pestaña
+   sale de ?paso= (funciona sin JavaScript); con JavaScript cambia sin recargar.
+   Todo el texto de SICOP, de la IA y de las personas va escapado (nada de |safe). #}
+{% set PASOS = {"entender": "Resumen", "requisitos": "Requisitos", "condiciones": "Condiciones",
+                "evidencia": "Documentos"} %}
+{% set con_asis = asistente_activo and asis is defined %}
+{% set pedido = request.query_params.get("paso") %}
+{% if pedido in PASOS %}{% set paso = pedido %}
+{% elif request.query_params.get("pregunta") or (con_asis and (asis.hecho or asis.error)) %}{% set paso = "requisitos" %}
+{% else %}{% set paso = "entender" %}{% endif %}
+{% set vigente = (resumenes | selectattr("datos") | first) if ia_visible and resumenes else none %}
+{% set r = vigente.datos if vigente else none %}
+{% set k = (r.kpi_pliego if r else none) or {} %}
+{% set contrato = dict(sicop.contrato) if sicop else {} %}
+{% set cierre = sicop.cierre if sicop and sicop.cierre else c.fecha_cierre_recepcion %}
+{% set cerrado = d.plazo == "vencido" %}
+{% set NO = "no encontrado" %}
 
-<section class="ficha">
-  <div class="op-etiquetas">
-    {% for e in d.evaluaciones if e.encaje in ("alta", "media") %}
-    <span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span>
-    <span class="familia">{{ NOMBRES_FAMILIA.get(e.familia, e.familia) }}{% if e.producto %} · {{ e.producto }}{% endif %}</span>
-    {% endfor %}
-    {% if d.revisiones %}<span class="decision decision-{{ d.revisiones[0].decision }}">{{ DECISIONES[d.revisiones[0].decision] }}</span>
-    {% else %}<span class="sin-revisar">Sin revisar</span>{% endif %}
-    {% if seg %}<span class="en-seguimiento">En seguimiento · {{ seg.encargado or "sin encargado" }} · {{ seg.etapa_texto | lower }}</span>{% endif %}
+<section class="cartel-franja" aria-label="Datos del cartel">
+  <div class="cf-arriba">
+    <p class="cf-institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
+    <p class="ct-chips">
+      {% if d.revisiones %}<span class="ct-chip">{{ DECISIONES[d.revisiones[0].decision] }}</span>{% else %}<span class="ct-chip">Sin revisar</span>{% endif %}
+      {% if seg %}<span class="ct-chip">Etapa: {{ seg.etapa_texto }}</span>
+      <span class="ct-chip">{{ seg.encargado or "Sin encargado" }}</span>{% else %}<span class="ct-chip">Sin seguimiento</span>{% endif %}
+    </p>
   </div>
-  <h1 class="titulo-cartel">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
-  <p class="institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>
-  <div class="regresiva plazo-{{ d.plazo }}">
-    <strong>{{ regresiva }}</strong>
-    <span>{{ PLAZOS[d.plazo] }} · cierre {{ c.fecha_cierre_recepcion | fecha }}</span>
+  <h1 class="cf-titulo">{{ resaltar(c.descripcion or "(sin título)", d.frases.get("título"), titulo=True) }}</h1>
+  <p class="cf-numeros">{{ termino("Número SICOP") }} <strong>{{ c.nro_sicop }}</strong> · {{ c.nro_procedimiento or "—" }}
+    · {{ d.tipo_procedimiento or "tipo sin dato" }}</p>
+
+  {# ¿Podemos participar? Con la lista de verificación y las respuestas del asistente (las mismas del resultado). #}
+  <div class="cf-medio">
+    <div class="cf-participar">
+      {% if con_asis and asis.pasos %}
+      {% set evs = res_eleg.evaluaciones %}
+      {% set n = namespace(total=0, cumplen=0, no_cumplen=0, sin=0) %}
+      {% if asis.sesion %}
+      {% for e in evs %}{% set n.total = n.total + 1 %}
+        {% if e.estado == "cumple" %}{% set n.cumplen = n.cumplen + 1 %}{% elif e.estado == "no_cumple" %}{% set n.no_cumplen = n.no_cumplen + 1 %}{% endif %}
+        {% if e.respuesta is none or e.respuesta.estado == "no_se" %}{% set n.sin = n.sin + 1 %}{% endif %}
+      {% endfor %}
+      {% else %}{% set n.total = asis.pasos | length %}{% set n.sin = n.total %}{% endif %}
+      {% set TEXTOS = {"puede_participar": "Pueden participar", "puede_si_completa": "Pueden participar si completan",
+                       "no_cumple_excluyente": "No cumplen un excluyente", "falta_informacion": "Falta información"} %}
+      {% set veredicto = res_eleg.global if asis.sesion else "falta_informacion" %}
+      <div class="ct-circulo cf-v-{{ veredicto }}" style="--pct: {{ ((n.cumplen * 100) // n.total) if n.total else 0 }}"
+           role="img" aria-label="{{ n.cumplen }} de {{ n.total }} requisitos cumplen">
+        <span>{{ n.cumplen }}/{{ n.total }}</span></div>
+      <div>
+        <p class="cf-pregunta">¿Podemos participar?</p>
+        <p class="cf-estado cf-v-{{ veredicto }}">{{ TEXTOS[veredicto] }}</p>
+        <p class="cf-desglose">{{ n.cumplen }} cumplen · {{ n.no_cumplen }} no cumplen · {{ n.sin }} sin responder</p>
+      </div>
+      {% else %}
+      <div>
+        <p class="cf-pregunta">¿Podemos participar?</p>
+        {% if con_asis %}<p class="cf-desglose">Todavía no tiene lista de verificación.</p>
+        {% elif not asistente_activo %}<p class="cf-desglose">— · El asistente de elegibilidad está apagado.</p>
+        {% elif not seg %}<p class="cf-desglose">— · Para usar el asistente, primero «Dar seguimiento» al cartel.</p>
+        {% else %}<p class="cf-desglose">— · El asistente de este cartel lo usan {{ seg.encargado or "su encargado (todavía sin asignar)" }}
+          y los administradores.</p>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# Una sola acción principal (verde): sin seguimiento, «Dar seguimiento»; con él, el asistente. #}
+    <div class="cf-acciones" id="seguimiento">
+      {% if not seg %}
+      <form method="post" action="/oportunidades/{{ c.nro_sicop }}/seguimiento">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Dar seguimiento</button>
+      </form>
+      {% elif con_asis %}
+      <a class="btn p" href="?paso=requisitos#asistente" data-paso="requisitos">
+        {% if asis.pasos and asis.sesion %}Continuar con el asistente{% else %}Abrir asistente{% endif %}</a>
+      {% endif %}
+      <a class="btn o" href="#revisiones">Decidir</a>
+    </div>
   </div>
+
+  <dl class="cf-cifras">
+    <div><dt>Monto estimado</dt><dd>
+      {% if sicop and sicop.monto is not none %}{{ monto(sicop.monto, sicop.moneda) }}
+      {% else %}{% for moneda, m in c.estimado_por_moneda.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}{% endif %}</dd></div>
+    <div><dt>Cierre</dt><dd{% if cerrado %} class="cf-cerrado"{% endif %}>{{ cierre | fecha }}<small>{{ regresiva }}</small></dd></div>
+    <div><dt>Encaje</dt><dd>
+      {% set e1 = d.evaluaciones | first %}
+      {% if e1 %}{{ ENCAJES.get(e1.encaje, e1.encaje) }}<small>{{ NOMBRES_FAMILIA.get(e1.familia, e1.familia) }}</small>{% else %}—{% endif %}</dd></div>
+    <div><dt>Duración del contrato</dt><dd>{{ contrato.get("Duración del contrato") or ((k.vigencia_contrato or {}).valor or "—") }}</dd></div>
+  </dl>
+
+  <p class="cf-enlaces">
+    {% if seg and puede_entrar %}<a href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
+    <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>{% endif %}
+    {% if vigente %}<a href="/oportunidades/{{ c.nro_sicop }}/reporte" title="Máximo 2 páginas">Reporte PDF</a>{% endif %}
+    <a href="https://www.sicop.go.cr/app/module/bid/public/tenders" target="_blank" rel="noopener"
+       title="Búscalo con el número {{ c.nro_sicop }} (no hay un enlace directo estable)">Ver en SICOP ↗</a>
+  </p>
+  {% if seg and not puede_entrar %}
+  <p class="cf-desglose">Lo abrió {{ seg.abierto_por }} el {{ seg.abierto_en | fecha }}. El expediente lo ven
+    {% if seg.encargado %}{{ seg.encargado }}{% else %}su encargado (todavía sin asignar){% endif %} y los administradores.</p>
+  {% endif %}
 </section>
 
-<div class="seguimiento-acciones" id="seguimiento">
-  {% if not seg %}
-  <form method="post" action="/oportunidades/{{ c.nro_sicop }}/seguimiento">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit">Dar seguimiento</button>
-  </form>
-  <small class="sub">Lo pone en la página «Seguimiento». El encargado lo asigna un administrador.</small>
-  {% elif puede_entrar %}
-  <a class="btn p" href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
-  {% else %}
-  <small class="sub">Lo abrió {{ seg.abierto_por }} el {{ seg.abierto_en | fecha }}. El expediente lo ven
-    {% if seg.encargado %}{{ seg.encargado }}{% else %}su encargado (todavía sin asignar){% endif %} y los administradores.</small>
+<div class="cartel-pasos">
+  <nav class="pasos-cartel" aria-label="Partes del cartel">
+    {% for clave, nombre in PASOS.items() %}
+    <a class="paso-pill{% if clave == paso %} activa{% endif %}" href="?paso={{ clave }}" data-paso="{{ clave }}"
+       {% if clave == paso %}aria-current="step"{% endif %}>{{ nombre }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if cerrado and seg and seg.etapa == "preparando" %}
+  {# No existe una acción «archivar» (las etapas son Preparando, Enviada, Ganada y Perdida): solo el aviso. #}
+  <p class="aviso-etapa cartel-cerrado">El plazo cerró el {{ (cierre | fecha).split(" ") | first }}. Este cartel ya no admite ofertas.</p>
   {% endif %}
+
+  {# ── Paso 1: Entender ── #}
+  <section class="panel-paso" id="paso-entender" data-paso="entender"{% if paso != "entender" %} hidden{% endif %}>
+    {% if r %}
+    {% if vigente.diferencias %}
+    <p class="aviso-etapa"><strong>Revisar:</strong> el resumen no coincide con SICOP en
+      {{ vigente.diferencias | map(attribute="dato") | join(", ") | lower }}. Los datos oficiales son los de SICOP.</p>
+    {% endif %}
+    <p class="frase-cartel">{{ r.de_que_trata or NO }}</p>
+    <p><span class="etiqueta-ia">Generado por IA · verificar con el pliego</span>
+      <span class="recomendacion-etiqueta rec-{{ r.recomendacion }}">{{ termino("Recomendación preliminar") }}: {{ IA.recomendaciones.get(r.recomendacion, IA.NO) }}</span></p>
+    <p class="sub">{{ r.justificacion }} La decisión es del encargado.</p>
+    {% elif ia_visible and resumenes %}
+    <p class="vacio">El último intento no dio resumen ({{ resumenes[0].motivo or "sin motivo" }}, {{ resumenes[0].creado_en | fecha }}).
+      La cola automática lo vuelve a pedir otro día.</p>
+    {% elif ia_visible %}
+    <p class="vacio">Todavía no tiene resumen. La cola automática de las 10:00 resume los carteles del panel que ya tienen
+      sus documentos de SICOP.</p>
+    {% else %}
+    <p class="vacio">El resumen con IA está apagado.</p>
+    {% endif %}
+
+    <div class="tarjetas-cartel">
+      <article><h3>Qué compran</h3>
+        {% if r and r.que_piden %}
+        <ul class="sin-vinetas">{% for i in r.que_piden[:3] %}<li>{{ i.bien_o_servicio }}{% if i.cantidad and i.cantidad != NO %} · {{ i.cantidad }}{% endif %}</li>{% endfor %}</ul>
+        {% elif c.lineas %}
+        <ul class="sin-vinetas">{% for l in c.lineas[:3] %}<li>{{ l.nombre_catalogo or l.codigo_identificacion or "—" }}</li>{% endfor %}</ul>
+        {% else %}<p>{{ NO }}</p>{% endif %}
+        <p class="sub">{{ c.lineas | length }} {{ "línea" if c.lineas | length == 1 else "líneas" }}</p></article>
+      <article><h3>Cuánto tiempo</h3>
+        <p>{{ contrato.get("Duración del contrato") or ((k.vigencia_contrato or {}).valor or NO) }}</p>
+        <p class="sub">Prórroga: {{ contrato.get("Prórroga") or NO }} · entrega: {{ (k.plazo_entrega or {}).valor or NO }}</p></article>
+      <article><h3>Garantía de cumplimiento</h3>
+        {% set g = (sicop.garantias | selectattr("nombre", "equalto", "Garantía de cumplimiento") | first) if sicop else none %}
+        {% if g %}<p>{{ g.se_pide }}{% if g.porcentaje is not none %} · {{ g.porcentaje }} %{% elif g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% endif %}</p>
+        {% if g.plazo %}<p class="sub">Plazo {{ g.plazo }}</p>{% endif %}
+        {% elif (k.garantia_cumplimiento_pct or {}).valor %}<p>{{ k.garantia_cumplimiento_pct.valor }}</p>
+        {% else %}<p>{{ NO }}</p>{% endif %}</article>
+      <article><h3>Cómo eligen</h3>
+        {% if r and r.criterios_de_evaluacion %}
+        <ul class="sin-vinetas">{% for x in r.criterios_de_evaluacion[:3] %}<li>{{ x.criterio }}{% if x.peso %} · {{ x.peso }}{% endif %}</li>{% endfor %}</ul>
+        {% elif sicop and sicop.criterios %}
+        <ul class="sin-vinetas">{% for x in sicop.criterios[:3] %}<li>{{ x | legible }}</li>{% endfor %}</ul>
+        {% else %}<p>{{ NO }}</p>{% endif %}</article>
+    </div>
+
+    {% if vigente %}{# la fila con «Ver», «Descargar» y el historial; los avisos sin resumen ya salen arriba #}
+    {% include "_resumen_ia.html" %}
+    {% endif %}
+  </section>
+
+  {# ── Paso 2: Requisitos ── #}
+  <section class="panel-paso" id="paso-requisitos" data-paso="requisitos"{% if paso != "requisitos" %} hidden{% endif %}>
+    <h2>Requisitos</h2>
+    {% if con_asis and asis.pasos %}
+    {% set filas = (res_eleg.evaluaciones if asis.sesion else asis.pasos) | sort(attribute="item.excluyente", reverse=true) %}
+    <ul class="requisitos-cartel">
+      {% for f in filas %}
+      {% set est = f.estado if asis.sesion else "falta" %}
+      {% set color = {"cumple": "verde", "no_cumple": "rojo"}.get(est, "ambar") %}
+      <li><span class="punto {{ color }}" aria-hidden="true"></span>
+        <div><p>{% if f.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ f.item.requisito }}</p>
+          <p class="sub">{% for x in f.item.citas %}{{ citar(x) }}{% if not loop.last %} · {% endif %}{% else %}Cita: —{% endfor %}</p></div>
+        <span class="pildora {{ color }}">{{ ELEG.estados.get(est, "Falta") }}</span></li>
+      {% endfor %}
+    </ul>
+    {% elif not asistente_activo %}
+    <p class="vacio">El asistente de elegibilidad está apagado: la lista de verificación no se muestra.</p>
+    {% elif not seg %}
+    <p class="vacio">La lista de verificación se usa con el asistente: primero «Dar seguimiento» al cartel.</p>
+    {% elif not puede_entrar %}
+    <p class="vacio">—</p>
+    {% else %}
+    <p class="vacio">Este cartel todavía no tiene lista de verificación.</p>
+    {% endif %}
+    {% if asistente_activo %}{# ASSISTANT_ENABLED (asistente, lección 5) #}
+    <p class="enlace-verificacion"><a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/verificacion">Lista de verificación para el asistente</a>
+      <small class="sub">Cada requisito del pliego, con qué lo demuestra y su mínimo.</small></p>
+    {% include "_asistente.html" %}
+    {% endif %}
+  </section>
+
+  {# ── Paso 3: Condiciones ── #}
+  <section class="panel-paso" id="paso-condiciones" data-paso="condiciones"{% if paso != "condiciones" %} hidden{% endif %}>
+    <h2 id="sicop">Condiciones</h2>
+    {% if sicop %}
+    <p class="sub">Información de SICOP · consultada el {{ sicop.consultado_en | fecha }}
+      {% if sicop.versiones > 1 %}· {{ sicop.versiones }} versiones guardadas (se muestra la última){% endif %}
+      · estado del concurso: <strong>{{ sicop.estado or "—" }}</strong> · versión del pliego {{ sicop.version_pliego or "—" }}
+      {% if sicop.modificado %} · modificado: {{ sicop.modificado }}{% endif %}</p>
+    {% if sicop.cierre_distinto %}
+    <p class="aviso">SICOP dice que la recepción cierra el {{ sicop.cierre | fecha }}; los datos abiertos todavía dicen
+      {{ c.fecha_cierre_recepcion | fecha }}. Vale la fecha de SICOP.</p>
+    {% endif %}
+    <div class="tarjetas-cartel condiciones">
+      {% for nombre in ("Reajuste de precios", "Multas", "Cláusula penal") %}
+      {% set valor = contrato.get(nombre) %}
+      <article><h3>{{ nombre }}</h3>
+        {% if valor %}
+        {% set partes = valor.split(" · ", 1) %}
+        <p class="valor-corto">{{ partes[0] | truncate(40, true, "…") }}</p>
+        {% if partes | length > 1 or valor | length > 40 %}
+        <p class="dos-lineas">{{ partes[1] if partes | length > 1 else valor }}</p>
+        <details><summary>Leer texto completo del pliego</summary><p>{{ valor | legible }}</p></details>
+        {% endif %}
+        {% else %}<p class="valor-corto">{{ NO }}</p>{% endif %}</article>
+      {% endfor %}
+      <article><h3>Criterios de evaluación</h3>
+        {% if sicop.criterios %}
+        <p class="valor-corto">{{ sicop.criterios | length }} {{ "criterio" if sicop.criterios | length == 1 else "criterios" }}</p>
+        <p class="dos-lineas">{{ sicop.criterios | join(" · ") }}</p>
+        <details><summary>Leer texto completo del pliego</summary>
+          <ul>{% for x in sicop.criterios %}<li>{{ x | legible }}</li>{% endfor %}</ul>
+          {% if sicop.impactos %}<p><small>Impactos:</small></p>
+          <ul>{% for x in sicop.impactos %}<li>{{ x | legible }}</li>{% endfor %}</ul>{% endif %}</details>
+        {% else %}<p class="valor-corto">{{ NO }}</p>{% endif %}</article>
+      <article><h3>Garantías</h3>
+        {% if sicop.garantias %}
+        <ul class="sin-vinetas">{% for g in sicop.garantias %}<li><strong>{{ g.nombre }}:</strong> {{ g.se_pide }}{% if g.porcentaje is not none %} · {{ g.porcentaje }} %{% elif g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% if g.tipo %} ({{ g.tipo }}){% endif %}{% endif %}{% if g.plazo %} · plazo {{ g.plazo }}{% endif %}</li>{% endfor %}</ul>
+        {% else %}<p class="valor-corto">{{ NO }}</p>{% endif %}</article>
+      {% for nombre in ("Anticipo", "Prórroga") %}
+      {% set valor = contrato.get(nombre) %}
+      <article><h3>{{ nombre }}</h3>
+        {% if valor %}
+        {% set partes = valor.split(" · ", 1) %}
+        <p class="valor-corto">{{ partes[0] | truncate(40, true, "…") }}</p>
+        {% if partes | length > 1 or valor | length > 40 %}
+        <p class="dos-lineas">{{ partes[1] if partes | length > 1 else valor }}</p>
+        <details><summary>Leer texto completo del pliego</summary><p>{{ valor | legible }}</p></details>
+        {% endif %}
+        {% else %}<p class="valor-corto">{{ NO }}</p>{% endif %}</article>
+      {% endfor %}
+    </div>
+    <dl class="datos">
+      <div><dt>Recepción de ofertas</dt><dd>Cierra <strong>{{ sicop.cierre | fecha }}</strong><br><small>Desde {{ sicop.inicio | fecha }} · {{ sicop.recepcion | legible or "—" }}</small></dd></div>
+      <div><dt>Apertura y aclaraciones</dt><dd>Apertura {{ sicop.apertura | fecha }}<br><small>Aclaraciones hasta {{ sicop.aclaraciones | fecha }}</small></dd></div>
+      <div><dt>Monto estimado</dt><dd><strong>{{ monto(sicop.monto, sicop.moneda) }}</strong>{% if sicop.monto_usd is not none %}<br>{{ monto(sicop.monto_usd, "USD") }}{% endif %}<br><small>{{ sicop.tipo_procedimiento | legible or "—" }}{% if sicop.modalidad %} · {{ sicop.modalidad | legible }}{% endif %}{% if sicop.lineas is not none %} · {{ sicop.lineas }} líneas{% endif %}</small></dd></div>
+      <div><dt>Comprador</dt><dd>{{ c.institucion or "Sin datos" }}<br><small>Cédula {{ c.institution_cedula or "—" }} · publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
+    </dl>
+    {% elif retiro %}
+    <p class="vacio">La información de SICOP y los documentos de este cartel se borraron al cierre, el
+      {{ retiro | fecha }} (no estaba marcado «Interesa» ni en seguimiento).</p>
+    {% else %}
+    <p class="vacio">Todavía no se consultó en SICOP: reajuste, multas, garantías y criterios: {{ NO }}. El
+      enriquecimiento diario lo consulta si está en la cola (Alta → Media → Baja, con el plazo abierto).</p>
+    {% endif %}
+  </section>
+
+  {# ── Paso 4: Documentos y evidencia ── #}
+  <section class="panel-paso" id="paso-evidencia" data-paso="evidencia"{% if paso != "evidencia" %} hidden{% endif %}>
+    <h2 id="documentos">Documentos{% if documentos %} ({{ documentos | selectattr("estado", "equalto", "guardado") | list | length }} guardados de {{ documentos | length }}){% endif %}</h2>
+    {% if documentos %}
+    <ul class="documentos-cartel">
+      {% for doc in documentos %}
+      <li><div><p>{{ doc.nombre | legible or "—" }}</p>
+          <p class="sub">{{ doc.archivo | legible or "—" }}{% if doc.tamano %} · {{ "%.1f" | format(doc.tamano / 1000000) }} MB{% endif %}
+          · {% if doc.estado == "guardado" %}{{ TEXTO_DOC.get(doc.texto, doc.texto or "—") }}{% if doc.texto == "extraido" and doc.paginas %}, {{ doc.paginas }} páginas{% endif %}{% else %}<span class="falta">{{ ESTADO_DOC.get(doc.estado, doc.estado) }}</span>{% if doc.motivo %}: {{ doc.motivo }}{% endif %}{% endif %}</p></div>
+        <span class="botones">{% if doc.estado == "guardado" %}{% if doc.vista %}<a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}/ver" target="_blank" rel="noopener">Abrir</a>
+          <a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Descargar</a>{% else %}<a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Abrir</a>{% endif %}{% else %}—{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="vacio">Sin documentos de SICOP para este cartel.</p>
+    {% endif %}
+
+    <h2>{{ termino("Por qué aparece") }}</h2>
+    {% for e in d.evaluaciones %}
+    <div class="barra-familia">
+      <p><strong>{{ NOMBRES_FAMILIA.get(e.familia, e.familia) }}</strong>{% if e.producto %} · {{ e.producto }}{% endif %}
+        <span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span></p>
+      <div class="barra" aria-hidden="true"><span class="nivel-{{ e.encaje }}"></span></div>
+      <details><summary>Ver la evidencia</summary>
+        <p><small>Regla:</small> {{ e.regla or "—" }}</p>
+        <p><small>Evidencia:</small> {{ e.evidencia | legible }}</p>
+        {% if e.calidad_datos %}<p><small>Calidad de datos: {{ CALIDADES.get(e.calidad_datos, e.calidad_datos) }}</small></p>{% endif %}
+      </details>
+    </div>
+    {% else %}
+    <p class="vacio">Este cartel no tiene coincidencias con las reglas vigentes.</p>
+    {% endfor %}
+
+    <h2>Líneas ({{ c.lineas | length }})</h2>
+    {% if c.lineas %}
+    <div class="tabla-scroll"><table class="lista">
+      <thead><tr><th>#</th><th>Código</th><th>Descripción del catálogo</th><th>Cantidad × precio</th><th>Estimado</th></tr></thead>
+      <tbody>
+        {% for l in c.lineas %}
+        <tr>
+          <td>{{ l.numero_linea }}</td>
+          <td><small>{{ l.codigo_identificacion }}</small></td>
+          <td>{% if l.nombre_catalogo %}{{ resaltar(l.nombre_catalogo, d.frases.get("línea " ~ l.numero_linea)) }}{% else %}<small class="falta">Sin catálogo descargado para este código</small>{% endif %}</td>
+          <td><small>{{ l.cantidad }} × {{ l.precio_unitario }}</small></td>
+          <td>{{ monto(l.estimado.valor, l.estimado.moneda) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <p>Estimado por moneda (cantidad × precio; no es presupuesto ni adjudicación):
+      {% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}</p>
+    {% else %}
+    <p class="vacio">Sin líneas importadas para este cartel.</p>
+    {% endif %}
+    <p class="sub">Cobertura de la fuente: datos <strong>{{ d.cobertura.origen or "de origen desconocido" }}</strong>
+      · archivo {{ d.cobertura.archivo or "—" }} (importado {{ d.cobertura.importado | fecha }})
+      · visto por primera vez {{ d.cobertura.primera_vez | fecha }}, última {{ d.cobertura.ultima_vez | fecha }}.</p>
+  </section>
+
+  <section id="revisiones" class="revision-cartel">
+    <h2>{{ termino("Revisión") }}</h2>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/revision">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <fieldset>
+        <legend>Decisión</legend>
+        {% for valor, texto in DECISIONES.items() %}
+        <label><input type="radio" name="decision" value="{{ valor }}" required {% if formulario.get("decision") == valor %}checked{% endif %}> {{ texto }}</label>
+        {% endfor %}
+      </fieldset>
+      <label>Motivo (obligatorio si «No interesa»)
+        <select name="motivo">
+          <option value="">—</option>
+          {% for valor, texto in MOTIVOS.items() %}
+          <option value="{{ valor }}" {% if formulario.get("motivo") == valor %}selected{% endif %}>{{ texto }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Comentario
+        <textarea name="comentario" rows="3" maxlength="2000">{{ formulario.get("comentario", "") }}</textarea>
+      </label>
+      <p class="sub">Se guarda a nombre de <strong>{{ usuario.nombre }}</strong>. Si registras la decisión de otra
+        persona, dilo en el comentario (p. ej. «decisión de Oscar»).</p>
+      <button type="submit">Guardar revisión</button>
+    </form>
+
+    <details{% if error %} open{% endif %}>
+      <summary>Historial de revisiones ({{ d.revisiones | length }})</summary>
+      {% if d.revisiones %}
+      <ol class="historial">
+        {% for rv in d.revisiones %}
+        <li>
+          <span class="decision decision-{{ rv.decision }}">{{ DECISIONES[rv.decision] }}</span>
+          {% if rv.motivo %}· {{ MOTIVOS[rv.motivo] }}{% endif %}
+          · {{ rv.responsable }}{% if rv.escrito_a_mano %} <small>(escrito a mano)</small>{% endif %} · {{ rv.fecha | fecha }}
+          {% if loop.first %}<small>(vigente)</small>{% endif %}
+          {% if rv.comentario %}<p>{{ rv.comentario }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="vacio">Sin revisiones todavía.</p>
+      {% endif %}
+    </details>
+  </section>
 </div>
 
-<dl class="datos">
-  <div><dt>{{ termino("Número SICOP") }}</dt><dd><strong>{{ c.nro_sicop }}</strong><br><small>Búscalo con este número en el portal de SICOP (no hay un enlace directo estable).</small></dd></div>
-  <div><dt>Procedimiento</dt><dd>{{ c.nro_procedimiento or "—" }}<br><small>{{ d.tipo_procedimiento or "Tipo sin dato" }}</small></dd></div>
-  <div><dt>Comprador</dt><dd>{{ c.institucion or "Sin datos (la cédula no está en instituciones)" }}<br><small>Cédula {{ c.institution_cedula or "—" }}</small></dd></div>
-  <div><dt>Estimado</dt><dd>{% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}<br><small>Publicado {{ c.fecha_publicacion | fecha }}</small></dd></div>
-</dl>
-
-{% if ia_visible and (resumenes or d.evaluaciones | selectattr("encaje", "in", ["alta", "media", "baja"]) | list) %}
-{% include "_resumen_ia.html" %}
-{% endif %}
-{% if asistente_activo %}{# ASSISTANT_ENABLED (asistente, lección 5) #}
-<p class="enlace-verificacion"><a class="btn azul" href="/oportunidades/{{ c.nro_sicop }}/verificacion">Lista de verificación para el asistente</a>
-  <small class="sub">Cada requisito del pliego, con qué lo demuestra y su mínimo.</small></p>
-{% include "_asistente.html" %}
-{% endif %}
-
-<section id="sicop">
-  <h2>Información de SICOP</h2>
-  {% if sicop %}
-  <p class="sub">Ficha de la consulta pública de SICOP · consultada el {{ sicop.consultado_en | fecha }}
-    {% if sicop.versiones > 1 %}· {{ sicop.versiones }} versiones guardadas (se muestra la última){% endif %}</p>
-  {% if sicop.cierre_distinto %}
-  <p class="aviso">SICOP dice que la recepción cierra el {{ sicop.cierre | fecha }}; los datos abiertos todavía dicen
-    {{ c.fecha_cierre_recepcion | fecha }}. Vale la fecha de SICOP.</p>
-  {% endif %}
-  <dl class="datos">
-    <div><dt>Estado del concurso</dt><dd><strong>{{ sicop.estado or "—" }}</strong><br><small>Versión del pliego {{ sicop.version_pliego or "—" }}{% if sicop.modificado %} · modificado: {{ sicop.modificado }}{% endif %}</small></dd></div>
-    <div><dt>Recepción de ofertas</dt><dd>Cierra <strong>{{ sicop.cierre | fecha }}</strong><br><small>Desde {{ sicop.inicio | fecha }} · {{ sicop.recepcion | legible or "—" }}</small></dd></div>
-    <div><dt>Apertura y aclaraciones</dt><dd>Apertura {{ sicop.apertura | fecha }}<br><small>Aclaraciones hasta {{ sicop.aclaraciones | fecha }}</small></dd></div>
-    <div><dt>Monto estimado</dt><dd><strong>{{ monto(sicop.monto, sicop.moneda) }}</strong>{% if sicop.monto_usd is not none %}<br>{{ monto(sicop.monto_usd, "USD") }}{% endif %}<br><small>{{ sicop.tipo_procedimiento | legible or "—" }}{% if sicop.modalidad %} · {{ sicop.modalidad | legible }}{% endif %}{% if sicop.lineas is not none %} · {{ sicop.lineas }} líneas{% endif %}</small></dd></div>
-  </dl>
-  {% if sicop.garantias or sicop.contrato %}
-  <h3>Garantías y contrato</h3>
-  <div class="tabla-scroll"><table class="lista auto">
-    <tbody>
-      {% for g in sicop.garantias %}
-      <tr><th>{{ g.nombre }}</th><td>{{ g.se_pide }}{% if g.porcentaje is not none %} · {{ g.porcentaje }} %{% elif g.monto is not none %} · {{ monto(g.monto, g.moneda) }}{% if g.tipo %} ({{ g.tipo }}){% endif %}{% endif %}{% if g.plazo %} · plazo {{ g.plazo }}{% endif %}</td></tr>
-      {% endfor %}
-      {% for dato, valor in sicop.contrato %}
-      <tr><th>{{ dato }}</th><td>{{ valor | legible }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table></div>
-  {% endif %}
-  {% if sicop.criterios or sicop.impactos %}
-  <h3>Criterios de evaluación</h3>
-  <ul>{% for x in sicop.criterios %}<li>{{ x | legible }}</li>{% endfor %}</ul>
-  {% if sicop.impactos %}<p><small>Impactos:</small></p>
-  <ul>{% for x in sicop.impactos %}<li>{{ x | legible }}</li>{% endfor %}</ul>{% endif %}
-  {% endif %}
-  {% elif retiro %}
-  <p class="vacio">La información de SICOP y los documentos de este cartel se borraron al cierre, el
-    {{ retiro | fecha }} (no estaba marcado «Interesa» ni en seguimiento).</p>
-  {% else %}
-  <p class="vacio">Todavía no se consultó en SICOP. El enriquecimiento diario lo consulta si está en la cola
-    (Alta → Media → Baja, con el plazo abierto).</p>
-  {% endif %}
-
-  {% if documentos %}
-  <h3 id="documentos">Documentos ({{ documentos | selectattr("estado", "equalto", "guardado") | list | length }} guardados de {{ documentos | length }})</h3>
-  <div class="tabla-scroll"><table class="lista auto">
-    <thead><tr><th>Documento</th><th>Archivo</th><th>Tamaño</th><th>Texto</th><th></th></tr></thead>
-    <tbody>
-      {% for doc in documentos %}
-      <tr>
-        <td>{{ doc.nombre | legible or "—" }}<br><small>{{ doc.tipo | legible or "" }}</small></td>
-        <td><small>{{ doc.archivo | legible or "—" }}</small></td>
-        <td><small>{% if doc.tamano %}{{ "%.1f" | format(doc.tamano / 1000000) }} MB{% else %}—{% endif %}</small></td>
-        <td><small>{% if doc.estado == "guardado" %}{{ TEXTO_DOC.get(doc.texto, doc.texto or "—") }}{% if doc.texto == "extraido" and doc.paginas %}, {{ doc.paginas }} páginas{% endif %}{% else %}<span class="falta">{{ ESTADO_DOC.get(doc.estado, doc.estado) }}</span>{% if doc.motivo %}: {{ doc.motivo }}{% endif %}{% endif %}</small></td>
-        <td class="botones">{% if doc.estado == "guardado" %}{% if doc.vista %}<a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}/ver" target="_blank" rel="noopener">Ver</a> {% endif %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/documentos/{{ doc.id }}">Descargar</a>{% endif %}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table></div>
-  {% endif %}
-</section>
-
-<section>
-  <h2>{{ termino("Por qué aparece") }}</h2>
-  {% for e in d.evaluaciones %}
-  <article class="tarjeta">
-    <p><span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span>
-       <strong>{{ e.familia }}</strong>{% if e.producto %} · {{ e.producto }}{% endif %}
-       {% if e.calidad_datos %} · <small>Calidad de datos: {{ CALIDADES.get(e.calidad_datos, e.calidad_datos) }}</small>{% endif %}</p>
-    <p><small>Regla:</small> {{ e.regla or "—" }}</p>
-    <p><small>Evidencia:</small> {{ e.evidencia | legible }}</p>
-  </article>
-  {% else %}
-  <p class="vacio">Este cartel no tiene coincidencias con las reglas vigentes.</p>
-  {% endfor %}
-</section>
-
-<section>
-  <h2>Líneas ({{ c.lineas | length }})</h2>
-  {% if c.lineas %}
-  <table class="lista">
-    <thead><tr><th>#</th><th>Código</th><th>Descripción del catálogo</th><th>Cantidad × precio</th><th>Estimado</th></tr></thead>
-    <tbody>
-      {% for l in c.lineas %}
-      <tr>
-        <td>{{ l.numero_linea }}</td>
-        <td><small>{{ l.codigo_identificacion }}</small></td>
-        <td>{% if l.nombre_catalogo %}{{ resaltar(l.nombre_catalogo, d.frases.get("línea " ~ l.numero_linea)) }}{% else %}<small class="falta">Sin catálogo descargado para este código</small>{% endif %}</td>
-        <td><small>{{ l.cantidad }} × {{ l.precio_unitario }}</small></td>
-        <td>{{ monto(l.estimado.valor, l.estimado.moneda) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <p>Estimado por moneda (cantidad × precio; no es presupuesto ni adjudicación):
-    {% for moneda, m in c.estimado_por_moneda.items() %}<strong>{{ monto(m.valor, moneda) }}</strong>{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}</p>
-  {% else %}
-  <p class="vacio">Sin líneas importadas para este cartel.</p>
-  {% endif %}
-</section>
-
-<section>
-  <h2>Cobertura de la fuente</h2>
-  <p>Datos <strong>{{ d.cobertura.origen or "de origen desconocido" }}</strong>
-    · archivo {{ d.cobertura.archivo or "—" }} (importado {{ d.cobertura.importado | fecha }})
-    · visto por primera vez {{ d.cobertura.primera_vez | fecha }}, última {{ d.cobertura.ultima_vez | fecha }}.</p>
-</section>
-
-<section id="revisiones">
-  <h2>{{ termino("Revisión") }}</h2>
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/revision">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <fieldset>
-      <legend>Decisión</legend>
-      {% for valor, texto in DECISIONES.items() %}
-      <label><input type="radio" name="decision" value="{{ valor }}" required {% if formulario.get("decision") == valor %}checked{% endif %}> {{ texto }}</label>
-      {% endfor %}
-    </fieldset>
-    <label>Motivo (obligatorio si «No interesa»)
-      <select name="motivo">
-        <option value="">—</option>
-        {% for valor, texto in MOTIVOS.items() %}
-        <option value="{{ valor }}" {% if formulario.get("motivo") == valor %}selected{% endif %}>{{ texto }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>Comentario
-      <textarea name="comentario" rows="3" maxlength="2000">{{ formulario.get("comentario", "") }}</textarea>
-    </label>
-    <p class="sub">Se guarda a nombre de <strong>{{ usuario.nombre }}</strong>. Si registras la decisión de otra
-      persona, dilo en el comentario (p. ej. «decisión de Oscar»).</p>
-    <button type="submit">Guardar revisión</button>
-  </form>
-
-  <h3>Historial</h3>
-  {% if d.revisiones %}
-  <ol class="historial">
-    {% for r in d.revisiones %}
-    <li>
-      <span class="decision decision-{{ r.decision }}">{{ DECISIONES[r.decision] }}</span>
-      {% if r.motivo %}· {{ MOTIVOS[r.motivo] }}{% endif %}
-      · {{ r.responsable }}{% if r.escrito_a_mano %} <small>(escrito a mano)</small>{% endif %} · {{ r.fecha | fecha }}
-      {% if loop.first %}<small>(vigente)</small>{% endif %}
-      {% if r.comentario %}<p>{{ r.comentario }}</p>{% endif %}
-    </li>
-    {% endfor %}
-  </ol>
-  {% else %}
-  <p class="vacio">Sin revisiones todavía.</p>
-  {% endif %}
-</section>
+<script>
+/* Pasos sin recargar: sin JavaScript, cada píldora es un enlace ?paso= que resuelve el servidor. */
+(function () {
+  var pills = document.querySelectorAll(".paso-pill"), paneles = document.querySelectorAll(".panel-paso");
+  function mostrar(paso, recordar) {
+    paneles.forEach(function (p) { p.hidden = p.dataset.paso !== paso; });
+    pills.forEach(function (a) {
+      var activa = a.dataset.paso === paso;
+      a.classList.toggle("activa", activa);
+      if (activa) { a.setAttribute("aria-current", "step"); } else { a.removeAttribute("aria-current"); }
+    });
+    if (recordar) {
+      var u = new URL(window.location.href);
+      u.searchParams.set("paso", paso); u.searchParams.delete("pregunta"); u.hash = "";
+      history.replaceState(null, "", u);
+    }
+  }
+  document.querySelectorAll("a[data-paso]").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      mostrar(a.dataset.paso, true);
+      var destino = a.hash && document.getElementById(a.hash.slice(1));
+      if (destino) { destino.scrollIntoView(); }
+    });
+  });
+  /* #asistente, #pregunta, #documentos…: abre el paso donde está ese bloque */
+  var ancla = window.location.hash && document.getElementById(window.location.hash.slice(1));
+  var panel = ancla && ancla.closest(".panel-paso");
+  if (panel && panel.hidden) { mostrar(panel.dataset.paso, false); ancla.scrollIntoView(); }
+})();
+</script>
 {% endblock %}

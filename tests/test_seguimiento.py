@@ -169,7 +169,7 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
 
     assert respuesta.status_code == 303 and respuesta.headers["location"] == f"/oportunidades/{NRO}#asistente"
     detalle = ana.get(f"/oportunidades/{NRO}").text
-    assert "En seguimiento · sin encargado" in detalle and "Dar seguimiento</button>" not in detalle
+    assert ">Sin encargado</span>" in detalle and "Etapa: Preparando" in detalle and "Dar seguimiento</button>" not in detalle
     lista = ana.get("/seguimiento").text
     assert NRO in lista and "Sin encargado" in lista and "Lo abrió Ana" in lista
     assert f'href="/seguimiento/{NRO}"' not in lista  # sin encargado, solo entran los administradores
@@ -202,7 +202,7 @@ def test_el_expediente_solo_lo_ven_su_encargado_y_los_administradores(clientes, 
     # Ana no entra, pero ve quién lo tiene: en el panel, en el cartel y en la página de seguimiento.
     assert "En seguimiento · Ivania" in clientes["ana"].get("/oportunidades").text
     detalle = clientes["ana"].get(f"/oportunidades/{NRO}").text
-    assert "En seguimiento · Ivania" in detalle and f'href="/seguimiento/{NRO}"' not in detalle
+    assert '<span class="ct-chip">Ivania</span>' in detalle and f'href="/seguimiento/{NRO}"' not in detalle
     assert f'href="/seguimiento/{NRO}"' in clientes["ivania"].get(f"/oportunidades/{NRO}").text
 
 
@@ -315,7 +315,7 @@ def test_la_etapa_la_cambian_el_encargado_y_los_administradores(clientes, db):
     assert _etapa(clientes["oscar"], "ganada").status_code == 303
     assert _etapa_de(db) == "ganada"
     # Todos ven la etapa, aunque no entren al expediente.
-    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get(f"/oportunidades/{NRO}").text
+    assert "Etapa: Ganada" in clientes["ana"].get(f"/oportunidades/{NRO}").text
     assert "En seguimiento · Ivania · ganada" in clientes["ana"].get("/oportunidades").text
     assert "etapa-ganada" in clientes["ana"].get("/seguimiento").text
 
