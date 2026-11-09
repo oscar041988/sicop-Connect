@@ -475,3 +475,30 @@ def test_si_reevaluar_falla_lo_dice_y_no_se_cae(tmp_path, monkeypatch):
     with closing(sqlite3.connect(settings.database_path)) as conn:
         assert en.reevaluar(conn, [GPS], avisos.append) == 0
     assert "YAML roto" in avisos[0] and "evaluate" in avisos[0]
+
+
+class _Gmail:
+    """Proveedor falso: anota lo que se le pide enviar."""
+    enviados: list = []
+
+    def __init__(self, settings):
+        pass
+
+    def enviar(self, para, asunto, html, texto):
+        _Gmail.enviados.append((para, asunto))
+
+
+@pytest.mark.parametrize("encendido, enviado", [("false", False), ("true", True)])
+def test_correos_del_enriquecimiento_solo_con_enrich_emails(tmp_path, encendido, enviado):
+    """Decisión de Ivania (2026-11-09): con avisos en envío real, el resumen sale solo si ENRICH_EMAILS=true."""
+    settings = _base(tmp_path, NOTIFICATIONS_ENABLED="true", NOTIFICATIONS_DRY_RUN="false", ENRICH_EMAILS=encendido)
+    _Gmail.enviados = []
+    estados = []
+
+    texto = en._avisar(settings, "Asunto", "Cuerpo", "resumen-enriquecimiento-1", _Gmail, estados.append)
+
+    assert (_Gmail.enviados == [("alertas@ejemplo.test", "Asunto")]) is enviado
+    assert estados == (["incierta", "aceptada"] if enviado else ["vista_previa"])
+    if not enviado:
+        assert "correos del enriquecimiento apagados" in texto
+        assert (settings.exports_dir / "resumen-enriquecimiento-1.txt").exists()

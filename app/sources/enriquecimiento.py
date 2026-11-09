@@ -342,15 +342,18 @@ def _html(texto: str) -> str:
 
 def _avisar(settings: Settings, asunto: str, cuerpo: str, nombre: str, proveedor: Callable | None,
             marcar: Callable[[str], None]) -> str:
-    """Vista previa en EXPORTS_DIR, o envío real si se permite (mismas reglas que automatico._alertar)."""
-    real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
+    """Vista previa en EXPORTS_DIR, o envío real si se permite (mismas reglas que automatico._alertar, y además
+    ENRICH_EMAILS=true: apagado, nunca se envía)."""
+    real = (settings.enrich_emails and settings.notifications_enabled and not settings.notifications_dry_run
+            and settings.obtain_alert_to)
     if not real or proveedor is None:
         ruta = settings.exports_dir / f"{nombre}.txt"
         ruta.parent.mkdir(parents=True, exist_ok=True)
         ruta.write_text(f"Para: {settings.obtain_alert_to or '(falta OBTAIN_ALERT_TO)'}\nAsunto: {asunto}\n\n"
                         f"{cuerpo}\n", encoding="utf-8")
         marcar("vista_previa")
-        return f"vista previa en {ruta} (avisos en dry-run, no se envió)"
+        motivo = "avisos en dry-run" if settings.enrich_emails else "correos del enriquecimiento apagados"
+        return f"vista previa en {ruta} ({motivo}, no se envió)"
     marcar("incierta")  # antes de llamar a Gmail: si se cae, no se reenvía sola
     try:
         proveedor(settings).enviar(settings.obtain_alert_to, asunto, f"<pre>{_html(cuerpo)}</pre>", cuerpo)

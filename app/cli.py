@@ -681,7 +681,8 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
         return 0
     print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · máximo {settings.enrich_max_per_day} "
           f"por día · pausa de {settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
-    real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
+    real = (settings.enrich_emails and settings.notifications_enabled and not settings.notifications_dry_run
+            and settings.obtain_alert_to)
     try:
         corrida = enriquecimiento.correr(settings, maximo=maximo, avisar=print,
                                          proveedor=_crear_proveedor_alerta if real else None, **_opciones_enrich())

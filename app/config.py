@@ -68,6 +68,7 @@ DEFAULTS: dict[str, str] = {
     "ASSISTANT_ENABLED": "false",
     "ASSISTANT_SEND_DOCUMENTS": "false",
     "ENRICH_ENABLED": "false",
+    "ENRICH_EMAILS": "false",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
@@ -368,6 +369,12 @@ class Settings:
     def enrich_enabled(self) -> bool:
         """false (por defecto): enrich run no consulta SICOP. Se activa a mano en .env (lección 4)."""
         return _as_bool(self.get("ENRICH_ENABLED"))
+
+    @property
+    def enrich_emails(self) -> bool:
+        """false (por defecto; decisión de Ivania, 2026-11-09): enrich run no manda el resumen ni la alerta por
+        CAPTCHA a OBTAIN_ALERT_TO, solo deja la vista previa en EXPORTS_DIR (ENRICH_EMAILS)."""
+        return _as_bool(self.get("ENRICH_EMAILS"))
 
     @property
     def enrich_max_per_day(self) -> int:
