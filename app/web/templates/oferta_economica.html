@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Oferta económica {{ d.procedimiento }}</title>
+{# Oferta económica (app/oferta_economica.py; DECISION_PROPUESTA.md, aprobado 2026-11-09). Estructura de la oferta que
+   ganó Hermatix en Tarrazú: carta, tabla de precios con el monto en letras, condiciones generales, desglose del precio
+   y fórmula de reajuste. La firma digital la pone una persona antes de subirla a SICOP. Todo el texto va escapado. #}
+<style>
+  @page { size: Letter; }
+  :root { --azul: #103050; --verde: #1e7a4e; --linea: #cfd8e1; --mut: #55606b; --fondo: #f1f4f7; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Cambria", "Georgia", "Times New Roman", serif; font-size: 11pt; line-height: 1.45;
+         color: #111a22; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .logo { height: 40px; margin-bottom: 14px; }
+  p { margin: 0 0 9px; }
+  .fecha { text-align: right; margin-bottom: 18px; }
+  .destino p { margin: 0; }
+  .ref { margin: 16px 0; font-weight: 700; }
+  .ref span { display: block; font-weight: 400; }
+  h2 { font-size: 13pt; color: var(--azul); margin: 0 0 10px; text-transform: uppercase; letter-spacing: .03em; }
+  h3 { font-size: 11.5pt; color: var(--azul); margin: 18px 0 8px; }
+  .nueva-pagina { break-before: page; }
+  table, .letras, .formula, .firma { break-inside: avoid; }   /* una tabla nunca queda partida entre dos hojas */
+  h2, h3 { break-after: avoid; }
+  .bloque { break-inside: avoid; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--linea); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--fondo); font-size: 9.5pt; text-transform: uppercase; letter-spacing: .02em; color: var(--mut); }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; background: var(--fondo); }
+  .ultima { text-align: center; letter-spacing: .08em; margin: 6px 0 12px; }
+  .letras { border: 1px solid var(--linea); padding: 8px 10px; }
+  .letras strong { display: block; font-size: 9.5pt; text-transform: uppercase; color: var(--mut); }
+  ul.cond { margin: 0 0 8px; padding-left: 0; list-style: none; }
+  ul.cond li { display: grid; grid-template-columns: 11em 1fr; gap: 8px; padding: 3px 0; }
+  ul.cond b { color: var(--azul); }
+  .acepta { font-weight: 700; margin-top: 8px; }
+  .formula { font-family: "Cambria Math", "Cambria", serif; font-size: 12pt; text-align: center; padding: 10px;
+             background: var(--fondo); margin: 8px 0; }
+  dl.def { display: grid; grid-template-columns: 4.5em 1fr; gap: 3px 10px; margin: 6px 0; font-size: 10pt; }
+  dl.def dt { font-weight: 700; } dl.def dd { margin: 0; }
+  .firma { margin-top: 60px; width: 60%; margin-left: auto; margin-right: auto; text-align: center; }
+  .firma .linea { border-top: 1px solid #111a22; margin-bottom: 6px; }
+  .firma p { margin: 0; }
+</style>
+</head>
+<body>
+{% if logo %}<img class="logo" src="{{ logo }}" alt="{{ d.empresa.nombre }}">{% endif %}
+
+<p class="fecha">{{ d.lugar or "San José" }}, {{ fecha }}.</p>
+
+<div class="destino">
+  <p>Señores</p>
+  <p>{{ d.institucion }}</p>
+  <p>{{ d.destinatario or "Proveeduría Institucional" }}</p>
+</div>
+
+<p class="ref">{{ d.tipo_procedimiento or "Procedimiento de contratación" }}
+  <span>«{{ d.objeto }}»</span>
+  <span>Procedimiento N.° {{ d.procedimiento }}</span></p>
+
+<p>Estimados señores:</p>
+{% set r = d.representante or {} %}
+<p>Quien suscribe, {{ r.nombre or "[nombre del representante legal]" }}{% if r.calidades %}, {{ r.calidades }}{% endif %},
+  en mi condición de {{ r.cargo or "representante legal" }} de la empresa {{ d.empresa.nombre }}, cédula jurídica
+  {{ d.empresa.cedula_juridica }}, presento nuestra <strong>OFERTA ECONÓMICA</strong> para el procedimiento
+  N.° {{ d.procedimiento }}, «{{ d.objeto }}».</p>
+{% if d.declaracion_registro is not defined or d.declaracion_registro %}
+<p>Manifiesto que la información contenida en las declaraciones incorporadas en el Registro Electrónico Oficial de
+  Proveedores y Subcontratistas se encuentra invariable, de conformidad con el artículo 29 de la Ley General de
+  Contratación Pública.</p>
+{% endif %}
+
+<section class="nueva-pagina">
+  <h2>Oferta económica</h2>
+  <p>«{{ d.objeto }}» · Procedimiento N.° {{ d.procedimiento }}{% if d.partida %} · Partida {{ d.partida }}{% endif %}</p>
+  <table>
+    <thead><tr><th>Línea</th><th class="num">Cantidad</th><th>Descripción</th>
+      <th class="num">Precio unitario{% if o.meses %} mensual{% endif %}</th>
+      <th class="num">{% if o.meses %}Monto mensual{% else %}Monto{% endif %}</th></tr></thead>
+    <tbody>
+    {% for l in o.lineas %}
+    <tr><td>{{ l.numero }}</td><td class="num">{{ q(l.cantidad) }}</td>
+      <td>{{ l.descripcion }}</td><td class="num">{{ f(l.precio_unitario) }}</td><td class="num">{{ f(l.monto) }}</td></tr>
+    {% endfor %}
+    {% if o.meses %}
+    <tr><td colspan="4">Subtotal mensual</td><td class="num">{{ f(o.subtotal_periodo) }}</td></tr>
+    <tr><td colspan="4">Subtotal por {{ o.meses }} {{ "mes" if o.meses == 1 else "meses" }}</td><td class="num">{{ f(o.subtotal) }}</td></tr>
+    {% else %}
+    <tr><td colspan="4">Subtotal</td><td class="num">{{ f(o.subtotal) }}</td></tr>
+    {% endif %}
+    {% if o.iva_tasa is none %}
+    <tr><td colspan="4">IVA: exento ({{ o.iva_exento_motivo }})</td><td class="num">{{ f(o.iva) }}</td></tr>
+    {% else %}
+    <tr><td colspan="4">IVA ({{ q(o.iva_tasa) }} %)</td><td class="num">{{ f(o.iva) }}</td></tr>
+    {% endif %}
+    <tr class="total"><td colspan="4">Total{% if o.meses %} por {{ o.meses }} {{ "mes" if o.meses == 1 else "meses" }}{% endif %}</td>
+      <td class="num">{{ f(o.total) }}</td></tr>
+    </tbody>
+  </table>
+  <p class="ultima">***** Última línea *****</p>
+  <p class="letras"><strong>Monto total en letras</strong>{{ letras }}</p>
+
+  {% set c = d.condiciones or {} %}
+  <h3>Condiciones generales de la oferta</h3>
+  <ul class="cond">
+    {% if c.garantia %}<li><b>Garantía</b><span>{{ c.garantia }}</span></li>{% endif %}
+    {% if c.entrega %}<li><b>Tiempo de entrega</b><span>{{ c.entrega }}</span></li>{% endif %}
+    {% if c.forma_pago %}<li><b>Forma de pago</b><span>{{ c.forma_pago }}</span></li>{% endif %}
+    {% if c.validez %}<li><b>Validez de la oferta</b><span>{{ c.validez }}</span></li>{% endif %}
+    {% for otra in c.otras or [] %}<li><b>{{ otra.nombre }}</b><span>{{ otra.texto }}</span></li>{% endfor %}
+  </ul>
+  <p class="acepta">Aceptamos el pliego de condiciones y, por lo tanto, cumplimos con lo establecido.</p>
+  <p>El precio de nuestra oferta es en firme, definitivo y en plaza{% if o.moneda == "CRC" %}, en colones costarricenses{% endif %}.</p>
+</section>
+
+<section>
+  <div class="bloque">
+  <h3>Desglose del precio</h3>
+  <p>Estructura de costos sobre el subtotal de {{ f(o.subtotal) }}, en porcentajes y montos concordantes.</p>
+  <table>
+    <thead><tr><th>Rubro</th><th class="num">Porcentaje</th><th class="num">Monto</th></tr></thead>
+    <tbody>
+    {% for rb in o.rubros %}<tr><td>{{ rb.nombre }}</td><td class="num">{{ q(rb.porcentaje) }} %</td><td class="num">{{ f(rb.monto) }}</td></tr>{% endfor %}
+    <tr class="total"><td>Total</td><td class="num">100 %</td><td class="num">{{ f(o.subtotal) }}</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Fórmula de reajuste de precios</h3>
+  <p class="formula">PV = PC × [ MO × (iMOtm / iMOtc) + I × (iIti / iItc) + GA × (iGAtg / iGAtc) + U ]</p>
+  <dl class="def">
+    {% for rb in o.rubros %}
+    <dt>{{ {"mano_de_obra": "MO", "insumos": "I", "gastos_administrativos": "GA", "utilidad": "U"}[rb.clave] }}</dt>
+    <dd>{{ q(rb.porcentaje) }} % · porcentaje de {{ rb.nombre | lower }} del precio de cotización.</dd>
+    {% endfor %}
+    <dt>PV</dt><dd>Precio variado.</dd>
+    <dt>PC</dt><dd>Precio de cotización.</dd>
+    <dt>iMOtm</dt><dd>Índice del costo de la mano de obra en el momento considerado para la variación.</dd>
+    <dt>iMOtc</dt><dd>Índice del costo de la mano de obra en el momento de la cotización.</dd>
+    <dt>iIti</dt><dd>Índice del costo de los insumos en el momento considerado para la variación.</dd>
+    <dt>iItc</dt><dd>Índice del costo de los insumos en el momento de la cotización.</dd>
+    <dt>iGAtg</dt><dd>Índice del costo de los gastos administrativos en el momento de la variación.</dd>
+    <dt>iGAtc</dt><dd>Índice del costo de los gastos administrativos en el momento de la cotización.</dd>
+  </dl>
+</section>
+
+<div class="firma">
+  <div class="linea"></div>
+  <p>{{ r.nombre or "[nombre del representante legal]" }}</p>
+  <p>{{ r.cargo_firma or "Representante legal" }}</p>
+  <p>{{ d.empresa.nombre }}</p>
+  {% if r.cedula %}<p>Cédula de identidad: {{ r.cedula }}</p>{% endif %}
+  <p>Cédula jurídica: {{ d.empresa.cedula_juridica }}</p>
+</div>
+</body>
+</html>

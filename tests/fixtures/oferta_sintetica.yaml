@@ -1,0 +1,34 @@
+# Oferta económica SINTÉTICA para las pruebas (app/oferta_economica.py). Ningún dato es real.
+procedimiento: 2026LD-000099-0009999999
+tipo_procedimiento: Licitación Reducida
+institucion: Municipalidad SINTÉTICA de Ejemplo
+destinatario: Proveeduría Institucional
+objeto: Arrendamiento SINTÉTICO de un sistema de videotelemática para la flotilla
+fecha: 2026-11-09
+lugar: San José
+partida: 1
+empresa:
+  nombre: Empresa SINTÉTICA S.A.
+  cedula_juridica: 3-101-000000
+representante:
+  nombre: Persona SINTÉTICA
+  cargo: apoderada generalísima sin límite de suma
+moneda: CRC
+meses: 12
+lineas:
+  - numero: 1
+    cantidad: 8
+    descripcion: Arrendamiento de equipo de videotelemática con IA (SINTÉTICO)
+    precio_unitario: "25000.00"
+iva:
+  exento: exoneración SINTÉTICA de prueba
+condiciones:
+  garantia: Durante todo el período contractual.
+  entrega: 10 días hábiles.
+  forma_pago: 30 días naturales o la usual de la institución.
+  validez: 4 meses a partir de la apertura de las ofertas.
+desglose:
+  mano_de_obra: {nombre: Mano de obra e instalación, porcentaje: "33.33"}
+  insumos: {nombre: Equipos y plataforma, porcentaje: "33.33"}
+  gastos_administrativos: {nombre: Gastos administrativos, porcentaje: "16.67"}
+  utilidad: {nombre: Utilidad, porcentaje: "16.67"}

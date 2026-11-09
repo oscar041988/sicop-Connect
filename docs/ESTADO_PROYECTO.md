@@ -4,6 +4,12 @@
 
 ## Último resultado
 
+- **Propuestas: la oferta económica (2026-11-09, DECISION_PROPUESTA.md aprobado por Oscar, comunicado por Ivania).**
+  `python -m app.cli oferta economica --datos OFERTA.yaml` arma el PDF (carta, tabla con el monto en letras,
+  condiciones, desglose que cuadra y fórmula de reajuste), sin IA; una persona lo firma y lo sube a SICOP. Con los
+  datos de Tarrazú (solo local) reproduce la oferta ganadora al céntimo. 32 pruebas (datos SINTÉTICOS).
+  **Siguiente:** el formulario en el panel del cartel.
+
 - **Oferta ganadora de Hermatix revisada (2026-11-09, autorización de Oscar comunicada por Ivania).** Licitación
   Reducida 2025LD-000058-0002900001 (Tarrazú, videovigilancia con IA para la flotilla): pliego, estudio de mercado y
   oferta económica en `data/ofertas/` (fuera de Git). Análisis completo con precios **solo en local**

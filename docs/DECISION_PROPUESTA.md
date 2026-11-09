@@ -1,8 +1,8 @@
 # Decisión: que la app arme la oferta de un cartel para presentarla en SICOP
 
-**BORRADOR para Oscar. Redactado por Ivania con Claude el 2026-11-09. Todavía no está aprobado.**
-Lo marcado **[por decidir · Oscar]** no se llena hasta que él lo diga. Mientras este documento no esté aceptado,
-no se construye nada de esta ampliación.
+**APROBADO por Oscar (comunicado por Ivania el 2026-11-09).** Redactado por Ivania con Claude el mismo día.
+Lo marcado **[por decidir · Oscar]** en la sección 6 sigue abierto: se llena cuando él lo diga. Lo que no depende de
+esas decisiones (la parte económica, que la app calcula sin IA) se puede construir ya.
 
 ## 1. Problema
 
@@ -129,8 +129,10 @@ se presenta desde la app. Con lo aprendido en Tarrazú (sección 9), los archivo
 
 ## 8. Aceptación
 
-- [ ] Oscar leyó este documento y decide la sección 6 (fecha: ____).
-- [ ] Llegaron las ofertas de ejemplo de la sección 4 (sin ellas no se empieza la etapa 1).
+- [x] Oscar aprueba la ampliación (2026-11-09, comunicado por Ivania). Falta que decida los puntos abiertos de la
+      sección 6.
+- [x] Oferta de ejemplo: la ganadora de Tarrazú (sección 9). Para construir no hacen falta los documentos de la
+      empresa (son adjuntos: la app solo los lista y revisa su vigencia).
 - [ ] Si se aprueba la IA para la oferta: `DECISION_IA.md` con su sección nueva y `CLAUDE.md` actualizado.
 
 ## 9. Lo aprendido de una oferta ganadora (Tarrazú, 2025)
@@ -168,3 +170,27 @@ respuesta punto por punto ni los documentos de admisibilidad: fueron en otros ar
 
 **Falta** para seguir: la oferta técnica y sus anexos, el acta de adjudicación con los puntajes y las capturas de
 SICOP. (Hermatix no ha perdido concursos; para comparar, otras ofertas ganadas.)
+
+## 10. Construido: la oferta económica (2026-11-09)
+
+Primera parte, sin IA: `python -m app.cli oferta economica --datos OFERTA.yaml [--salida RUTA.pdf]`
+(`app/oferta_economica.py`, plantilla `app/web/templates/oferta_economica.html`). Lee los datos de la oferta (el
+ejemplo SINTÉTICO está en `tests/fixtures/oferta_sintetica.yaml`) y arma un PDF tamaño carta con:
+
+- **Carta de presentación** con la declaración del Registro de Proveedores (art. 29 LGCP).
+- **Tabla de precios**: líneas, precio unitario (mensual si es arrendamiento), subtotales, IVA (tasa o exento con su
+  motivo, como pide el pliego), total, «Última línea» y el **monto en letras**.
+- **Condiciones generales**: garantía, entrega, forma de pago, validez, aceptación del pliego y precio en firme.
+- **Desglose del precio** en los cuatro rubros de la fórmula (mano de obra, insumos, gastos administrativos y
+  utilidad), con montos que suman exactamente el subtotal.
+- **Fórmula de reajuste** con los porcentajes del desglose.
+- Bloque de **firma** (la firma digital la pone la persona).
+
+Los montos son Decimal con su moneda (una sola por oferta). El precio lo escribe y lo aprueba una persona. El PDF
+queda en `EXPORTS_DIR/ofertas/<procedimiento>/` (fuera de Git) y nunca se sobrescribe. **Comprobado:** con los datos
+de la oferta ganadora de Tarrazú (solo en local), la app da los mismos montos, el mismo monto en letras y el mismo
+desglose al céntimo. 32 pruebas en `tests/test_oferta_economica.py`.
+
+**Siguiente:** llenar la oferta desde el panel del cartel (formulario, con el procedimiento, la institución y el objeto
+tomados del cartel), en vez de escribir el YAML a mano.
+

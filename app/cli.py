@@ -767,6 +767,44 @@ def enrich_remoto(settings: Settings, maximo: int | None, transporte=None) -> in
     return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
 
 
+def oferta_economica_cmd(settings: Settings, datos: Path, salida: Path | None) -> int:
+    """La oferta económica en PDF desde un archivo YAML (DECISION_PROPUESTA.md). 0 = PDF hecho · 1 = un dato no
+    sirve (el mensaje dice cuál)."""
+    import yaml
+    from app import oferta_economica as oe
+    try:
+        crudo = yaml.safe_load(datos.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print(f"Error: no existe {datos}.", file=sys.stderr)
+        return 1
+    except yaml.YAMLError as exc:
+        print(f"Error: {datos.name} no es un YAML válido ({exc}).", file=sys.stderr)
+        return 1
+    try:
+        oferta = oe.leer(crudo)
+    except oe.OfertaError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    ahora = datetime.now(HORA_CR)
+    contenido = oe.pdf(oe.html(oferta, ahora.date()), str(crudo["procedimiento"]))
+    if salida is not None:
+        salida.parent.mkdir(parents=True, exist_ok=True)
+        salida.write_bytes(contenido)
+        ruta = salida
+    else:
+        ruta = oe.guardar(contenido, settings.exports_dir, str(crudo["procedimiento"]), ahora)
+    f = lambda m: oe.formato(m, oferta.moneda)  # noqa: E731
+    print(f"Oferta económica · procedimiento {crudo['procedimiento']} · {oferta.moneda}")
+    if oferta.meses:
+        print(f"  Subtotal mensual {f(oferta.subtotal_periodo)} · por {oferta.meses} meses {f(oferta.subtotal)}")
+    print(f"  IVA {f(oferta.iva)} · total {f(oferta.total)}")
+    print(f"  En letras: {oe.monto_en_letras(oferta.total, oferta.moneda)}")
+    print("  Desglose: " + " · ".join(f"{r.nombre} {oe.numero_corto(r.porcentaje)} % = {f(r.monto)}" for r in oferta.rubros))
+    print(f"PDF: {ruta}")
+    print("Revísalo, fírmalo con firma digital y súbelo a SICOP (la app no presenta la oferta).")
+    return 0
+
+
 def _crear_proveedor_alerta(settings: Settings):
     return _crear_proveedor(settings)
 
@@ -1365,6 +1403,13 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
+    of = sub.add_parser("oferta", help="Archivos de la oferta de un cartel (DECISION_PROPUESTA.md): la app los formula, "
+                                     "una persona los firma y los sube a SICOP")
+    of_sub = of.add_subparsers(dest="oferta_command", required=True)
+    ofe = of_sub.add_parser("economica", help="Oferta económica en PDF: carta, tabla de precios con el monto en letras, "
+                                             "condiciones, desglose y fórmula de reajuste")
+    ofe.add_argument("--datos", required=True, type=Path, help="Archivo YAML con los datos de la oferta")
+    ofe.add_argument("--salida", type=Path, help="Dónde guardar el PDF (si no, en EXPORTS_DIR/ofertas/)")
     ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1), prueba de la conexión (lección 2) y resumen (lección 3)")
     ia_sub = ia.add_subparsers(dest="ia_command", required=True)
     ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
@@ -1445,6 +1490,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         if args.obtain_command == "auto":
             return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
+    if args.command == "oferta":
+        return oferta_economica_cmd(settings, args.datos, args.salida)
     if args.command == "enrich":
         if args.enrich_command == "run":
             return enrich_run(settings, args.max)
