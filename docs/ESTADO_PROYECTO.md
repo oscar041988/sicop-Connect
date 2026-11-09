@@ -14,9 +14,13 @@
   - Un resumen anterior a v6 muestra la justificación corta y avisa que se genere de nuevo.
   - Pruebas con IA simulada: `test_reporte.py` (3 nuevas), `test_ia_resumen.py` (1 nueva). Revisado en un PDF de
     MUESTRA con la base de EJEMPLO.
-  - **Pendiente:** activar con `IA_PROMPT_VERSION=v6` en el `.env` (Ivania). Sugerido, como con v3–v5: probar en 3
-    carteles reales y mostrárselos a Oscar. Con v6, la cola de las 10:00 rehace los resúmenes abiertos dentro del
-    tope diario (10 por día, 1.00 USD).
+  - Migración 0039 aplicada a la base local (`migrate`, 9/11).
+  - Probado con IA real en `20261100575` (paradas de Siquirres, «Descartar»): v6 (resumen #58, 0.022 USD) escribió
+    al final «el documento de decisión inicial no tiene texto leído»; Ivania pidió quitarlo → **prompt v7** (v6 +
+    no mencionar documentos sin leer ni limitaciones del expediente). v7: resumen #59 (0.022 USD), sin esa frase;
+    reporte de 2 páginas. Ese cartel queda con el resumen v7 en el panel.
+  - **Pendiente:** activar con `IA_PROMPT_VERSION=v7` en el `.env` (Ivania), después de mostrarle el reporte a
+    Oscar. Con v7, la cola de las 10:00 rehace los resúmenes abiertos dentro del tope diario (10 por día, 1.00 USD).
 
 - **Borrador `docs/DECISION_PROPUESTA.md` (2026-11-09, pedido de Oscar por Ivania): la app arma la oferta para
   SICOP.** Sin aprobar: no se construye nada hasta que Oscar lo acepte.

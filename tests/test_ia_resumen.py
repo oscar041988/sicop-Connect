@@ -302,6 +302,9 @@ def test_v6_explicacion_de_la_recomendacion_en_el_esquema_y_el_texto():
     assert "explicacion_recomendacion" in resumen.ESQUEMA["required"]
     assert "explicacion_recomendacion" in resumen.cargar_prompt("v6")
     assert "explicacion_recomendacion" not in resumen.cargar_prompt("v5")        # v5 no se tocó
+    # v7 (Ivania, 2026-11-09): la explicación no habla de documentos sin leer; v6 queda igual que cuando se usó.
+    assert "No menciones en" in resumen.cargar_prompt("v7") and "No menciones en" not in resumen.cargar_prompt("v6")
+    assert "explicacion_recomendacion" in resumen.cargar_prompt("v7")
     datos = resumen.normalizar({"recomendacion": "descartar", "justificacion": "No se alinea (SINTÉTICO).",
                                 "explicacion_recomendacion": "Piden obra civil, no tecnología (SINTÉTICO)."})
     r = resumen.Resultado(1, NRO, "ok", False, "2026-11-09", "modelo-simulado", "v6", "a" * 64, datos)

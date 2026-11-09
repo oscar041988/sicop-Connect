@@ -287,7 +287,8 @@ Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`,
 - **Desde el 2026-11-09: máximo 3 páginas** (Oscar, `DECISION_IA.md` regla 9). Al final, «Por qué se recomienda»:
   la explicación detallada del resumen (prompt v6, 150 a 250 palabras con citas; tope de 1 800 caracteres en el
   PDF). Un resumen anterior a v6 muestra la justificación corta y avisa que se genere de nuevo. Migración 0039: el
-  CHECK de `ia_reports.paginas` pasa a 1–3.
+  CHECK de `ia_reports.paginas` pasa a 1–3. Prompt v7 (mismo día, Ivania): la explicación no menciona documentos
+  que no se pudieron leer ni otras limitaciones del expediente.
 - **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
   partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
 - **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo
