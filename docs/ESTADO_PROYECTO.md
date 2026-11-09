@@ -4,6 +4,14 @@
 
 ## Último resultado
 
+- **Fase 2 · envío del enriquecimiento al servidor (2026-11-09, diseño y paso 1): `docs/ENVIO_ENRIQUECIMIENTO.md`.**
+  Decisiones de Ivania: la cola de IA corre en el servidor (no usa navegador); la PC pide la cola al servidor y
+  devuelve, por cartel, la ficha tal cual y los archivos; el servidor repite `guardar_ficha` y `guardar_documento`
+  (sin copiar filas entre bases). Token `ENRICH_TOKEN`, solo HTTPS. 4 pasos.
+  - **Paso 1 hecho:** `deploy/systemd/sicop-ia-cola.service` y `.timer` (lunes a viernes 10:45; el enriquecimiento
+    tardó de 9 a 21 min). `ACTUALIZACION_SERVIDOR.md`: la cola de IA pasa al servidor desde el primer día.
+  - **Siguiente:** paso 2, las dos direcciones del servidor (`GET …/cola`, `POST …/resultado`) con token.
+
 - **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
   `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas
   (rutas relativas: revisado, sirve en el servidor; ~600 MB sin las grabaciones); el ciclo de las 8:00 pasa al

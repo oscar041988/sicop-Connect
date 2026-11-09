@@ -11,14 +11,15 @@ del día ya salió) y con tiempo para revertir. Nada de esto se ha ejecutado tod
 | Esquema de la base | 0007 | **0039** |
 | Base de datos | la del servidor (vieja) | **la base local de Ivania** (decisión de Ivania, 2026-11-09): trae todo lo hecho desde el 21/10 |
 | Ciclo de las 8:00 (avisos) | — | **en el servidor** (`sicop-cycle.timer`); se apaga la tarea de Windows |
-| Enriquecimiento e IA de las 10:00 | tarea de Windows | **en pausa** (fase 2, abajo) |
+| Enriquecimiento de las 10:00 (navegador) | tarea de Windows | **en pausa** hasta la fase 2 (`docs/ENVIO_ENRIQUECIMIENTO.md`) |
+| Cola de resúmenes con IA | tarea de Windows, después del enriquecimiento | **en el servidor** (`sicop-ia-cola.timer`, 10:45) |
 | Paquetes nuevos | — | `playwright`, `openpyxl`, `pdfplumber`, `openai` (en `requirements.lock.txt`) |
 
-**Por qué se pausan el enriquecimiento y la cola de IA:** corren en la PC de Ivania y guardan en su base. Con la
-base en el servidor, lo que guarden ya no llegaría al panel. El envío PC → servidor con token (decisión del 27/10,
-«al desplegar») todavía no existe: es la **fase 2**. Mientras tanto, los carteles nuevos se ven en el panel, se
-evalúan y se avisan, pero sin ficha de SICOP, documentos ni resumen con IA. El asistente y el Reporte PDF siguen
-funcionando con lo que ya hay.
+**Por qué se pausa el enriquecimiento:** corre en la PC de Ivania (necesita un navegador con ventana) y guarda en
+su base. Con la base en el servidor, lo que guarde ya no llegaría al panel. El envío PC → servidor con token es la
+**fase 2** (`docs/ENVIO_ENRIQUECIMIENTO.md`), en construcción. Mientras tanto, los carteles nuevos se ven en el
+panel, se evalúan y se avisan, pero sin ficha de SICOP ni documentos. La **cola de IA** no usa navegador: pasa al
+servidor desde el primer día y resume lo que ya tiene documentos.
 
 **Revisado (2026-11-09):** la base local guarda todas las rutas de archivos como relativas a su carpeta y con `/`
 (documentos, expedientes, perfil, asistente, reportes): funciona igual en el servidor. Suite completa con
@@ -231,8 +232,8 @@ Un ciclo supervisado **en vista previa**, sin enviar (patrón de `systemd-run`):
 avisado. Después:
 
 ```bash
-sudo systemctl enable --now sicop-cycle.timer
-sudo systemctl list-timers 'sicop-*'                 # próximo: lunes a viernes 08:00
+sudo systemctl enable --now sicop-cycle.timer sicop-ia-cola.timer
+sudo systemctl list-timers 'sicop-*'                 # cycle: lunes a viernes 08:00 · ia-cola: 10:45
 ```
 
 **Al día siguiente:** comprobar que el correo de las 8:00 llegó **una sola vez** (si llega doble, la tarea de
@@ -253,7 +254,7 @@ Y en Windows, `Enable-ScheduledTask` para las dos tareas: la PC vuelve a ser la 
 
 ## Fase 2 (pendiente)
 
-- **Envío PC → servidor con token** para el enriquecimiento y la cola de IA (decisión del 27/10), o pasarlos al
-  servidor. Hasta entonces quedan en pausa.
+- **Envío PC → servidor con token** para el enriquecimiento (decisión del 27/10): `docs/ENVIO_ENRIQUECIMIENTO.md`.
+  Hasta entonces queda en pausa. La cola de IA ya corre en el servidor.
 - Activar la obtención automática (§9.9), si Oscar lo decide.
 - Después de unos días bien, borrar `/opt/sicop-connect-02b569b` y `sicop-02b569b.db` (con un respaldo guardado).

@@ -1,0 +1,65 @@
+# Fase 2: el enriquecimiento desde la PC hacia el servidor
+
+Diseño del 2026-11-09 (Ivania con Claude). Cumple la decisión del 27/10 (`DECISION_OBTENCION.md` §9: «la dirección
+con token hacia el servidor se hace al desplegar»). Contexto: `docs/ACTUALIZACION_SERVIDOR.md`.
+
+## Problema
+
+Con la base en el servidor, la PC de Ivania deja de ser la principal. Pero la consulta de fichas y documentos en
+SICOP necesita un navegador con ventana (decisión del 27/10), y el servidor no tiene pantalla. Sin esta fase, los
+carteles nuevos quedan sin ficha, documentos ni resumen con IA.
+
+## Decisiones de Ivania (2026-11-09)
+
+1. **La cola de resúmenes con IA corre en el servidor** (no usa navegador: lee los documentos de la base y llama a
+   OpenAI). Unidad systemd propia, mismo presupuesto diario.
+2. **La PC pide la cola y devuelve resultados.** A las 10:00 la PC pide al servidor qué carteles consultar, abre
+   SICOP con la ventana visible y manda, cartel por cartel, la ficha y los documentos. El servidor los guarda.
+
+## Cómo funciona
+
+```
+10:00  PC ──GET /api/enriquecimiento/cola (token)──▶ servidor   (antes: borrado al cierre)
+       PC ◀── carteles a consultar (número, título, cierre) ──
+       PC: navegador con ventana → ficha + documentos de cada cartel (grabación en la PC)
+       PC ──POST /api/enriquecimiento/resultado (token), uno por cartel──▶ servidor
+             ficha tal cual (respuestas de SICOP) + archivos + bitácora de la consulta
+       servidor: guardar_ficha → guardar_documento (lee el texto de los PDF) → bitácora → reevaluar
+10:45  servidor: ia cola (sicop-ia-cola.timer) → resúmenes con IA de lo enriquecido
+```
+
+- **El servidor repite los mismos guardados** que hoy hace la PC (`guardar_ficha` y `guardar_documento` de
+  `app/sources`): la misma revisión de cada archivo, el mismo texto de los PDF, la misma deduplicación por huella.
+  No se copian filas de una base a otra, así que no hay que reconciliar números internos.
+- **La PC trabaja con una base de trabajo propia** (`data/trabajo.db`, solo para el navegador): recibe los
+  carteles de la cola y guarda ahí lo que consulta, como hoy. Lo que vale es lo del servidor.
+- **Las grabaciones** (video y capturas) se quedan en la PC, como hoy; al servidor va la ruta en la bitácora.
+- **Repetir es seguro:** si un envío se corta, se vuelve a mandar; el servidor reconoce la ficha y los archivos que
+  ya tiene y no los duplica.
+
+## Seguridad
+
+- **Token** largo y aleatorio (`ENRICH_TOKEN`), el mismo en `app.env` del servidor y en el `.env` de la PC. Lo
+  genera el administrador en el servidor, como `SESSION_SECRET`; nunca va a Git, a un chat ni a Claude.
+- Solo por **HTTPS** (`https://sicop.hermatix.com`). Comparación en tiempo constante. Sin token o con uno malo:
+  401, y queda en el historial. Sin `ENRICH_TOKEN` en el servidor, las dos direcciones no existen (404).
+- Las dos direcciones **solo** dan la cola y reciben resultados de carteles que estaban en ella; no leen
+  revisiones, usuarios, perfil ni nada más.
+- Límites: tamaño máximo por envío (`DOCUMENT_MAX_MB` por archivo, `DOCUMENTS_MAX_MB_PER_TENDER` por cartel) y los
+  mismos tipos de archivo que hoy.
+
+## Pasos (cada uno con sus pruebas, datos SIMULADOS)
+
+1. **Cola de IA en el servidor:** `deploy/systemd/sicop-ia-cola.service` y `.timer` (lunes a viernes, 10:45), y la
+   guía de actualización al día. Sin código nuevo de la app (`ia cola` ya existe).
+2. **Servidor, las dos direcciones:** `GET …/cola` (corre el borrado al cierre y devuelve la cola del día) y
+   `POST …/resultado` (ficha, archivos y bitácora; repite los guardados y reevalúa). Token y límites.
+3. **PC, `enrich remoto`:** pide la cola, prepara la base de trabajo, consulta con el código de hoy y envía cada
+   cartel al terminarlo. Ante un CAPTCHA, lo mismo que hoy (espera, un reintento, se detiene y avisa).
+4. **Cierre:** la tarea de Windows de las 10:00 pasa a `enrich remoto` (sin `ia cola`, que ya corre en el servidor),
+   misión de ayuda, `ACTUALIZACION_SERVIDOR.md`
+   y prueba completa con un servidor local de prueba (la app corriendo en la PC con otra base).
+
+## Pendiente
+
+- Probarlo contra el servidor real el día de la actualización (o después), con Oscar.
