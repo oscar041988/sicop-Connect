@@ -4,6 +4,18 @@
 
 ## Último resultado
 
+- **Revisión reglas vs IA (2026-11-09, pedido de Ivania): `docs/revision_reglas_vs_ia_20261109.md`.** 41 carteles
+  con resumen, 10 desacuerdos; 2 se habían avisado por correo con la IA diciendo descartar.
+  - **A1 hecho:** `20261002824` (cámaras fotográficas y de videoconferencia, UNA) salía Media por «CAMARAS» en el
+    título + «grabacion de video» en el pliego. «grabacion de video» pasó de señal media a **contexto** en
+    videotelemática (reglas `967ebe5b6cc0`); en una copia de la base solo cambia ese cartel. Golden set: 39 casos,
+    39/39. La base local se reevalúa con el próximo ciclo (o `evaluate`).
+  - **B1 hecho:** prompt **v8** = v7 + FleetRun es software, el mantenimiento en taller se descarta. Probado con
+    IA real en `20261100749` y `20261004211`: de «Revisar requisitos» a «Descartar» (0.046 USD).
+  - **Pendiente · Oscar (A2):** `20261003868` (64 sensores LoRaWAN para inundaciones) sale Alta en iot_frio y se
+    avisó; la IA dice descartar. ¿Interesan los sensores IoT en general o solo frío y temperatura?
+  - **Pendiente · Ivania:** activar `IA_PROMPT_VERSION=v8` (reemplaza a v7) cuando Oscar apruebe el reporte.
+
 - **Pulido del código (2026-11-09, pedido de Ivania; commit `b2d47a5`).**
   - **Error real arreglado: dos programas que escriben a la vez se trababan.** Las transacciones empezaban con
     `BEGIN`: si una leía y después escribía mientras otro programa escribía, SQLite fallaba en los dos con

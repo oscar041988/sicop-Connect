@@ -62,10 +62,13 @@ familias:
       "videovigilancia vehicular", "camaras para flotilla", "grabacion a bordo",
     ]
     senales_media: [
-      "camaras", "dvr", "video en tiempo real", "grabacion de video", "camaras hd", "audio bidireccional",
+      "camaras", "dvr", "video en tiempo real", "camaras hd", "audio bidireccional",
     ]
     contexto: [
       "buses", "autobuses", "transporte", "ambulancias", "patrullas", "camiones recolectores", "flotilla",
+      # Era señal media: cualquier cámara graba video. Con «cámaras» en el título sumaba Media sin ser de vehículos
+      # (20261002824, cámaras fotográficas y de videoconferencia de la UNA; Ivania, 2026-11-09).
+      "grabacion de video",
     ]
     exclusiones: [
       "edificio", "cctv perimetral", "perimetral", "videovigilancia urbana fija", "cctv urbano",
