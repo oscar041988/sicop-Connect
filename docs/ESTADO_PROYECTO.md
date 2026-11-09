@@ -4,6 +4,16 @@
 
 ## Último resultado
 
+- **Borrador `docs/DECISION_PROPUESTA.md` (2026-11-09, pedido de Oscar por Ivania): la app arma la oferta para
+  SICOP.** Sin aprobar: no se construye nada hasta que Oscar lo acepte.
+  - Límites: no se puede asegurar ganar todos los concursos; la oferta la sube y firma con firma digital la persona
+    autorizada (no hay API de SICOP para presentarla); el precio lo aprueba una persona.
+  - Meta: cero descalificaciones por forma y máximo puntaje en lo que no es precio. 5 etapas: paquete de
+    documentos, respuesta técnica, puntaje esperado, tabla de precios, revisión final.
+  - **Siguiente:** Oscar decide la sección 6 (9 puntos) y entrega una o dos ofertas reales con capturas de cada
+    pantalla de SICOP (sin eso no empieza la etapa 1). IA para redactar ofertas: aprobación nueva en
+    `DECISION_IA.md`.
+
 - **Sin avisos de vencimiento del perfil (2026-11-09, Ivania: «no necesitamos que notifique eso»).** Se quitaron el
   cuadro «Revisar pronto» de «Perfil» y la línea «Perfil de Hermatix: N elementos vencidos o por vencer… Revisar el
   perfil» de la lista de carteles (`perfil.avisos` ya no existe). Cada elemento conserva su estado («Por vencer»,
