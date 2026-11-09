@@ -252,3 +252,29 @@ def test_migracion_con_error_no_deja_nada_a_medias(tmp_path, db):
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT name FROM sqlite_master WHERE name = 'tabla_nueva'").fetchone() is None
         assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029", "0030", "0031", "0032", "0033", "0034", "0035", "0036", "0037", "0038"]
+
+
+def test_connect_espera_si_otro_programa_esta_escribiendo(tmp_path):
+    """Ciclo del 2026-11-05: «database is locked» porque otro programa escribía. Ahora connect() espera."""
+    import threading
+    import time
+
+    from app.database import ESPERA_BASE_OCUPADA_S, connect, transaccion
+
+    db = tmp_path / "sicop.db"
+    with closing(connect(db)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == ESPERA_BASE_OCUPADA_S * 1000
+
+    otro = sqlite3.connect(db, isolation_level=None, check_same_thread=False)  # lo suelta el temporizador
+    otro.execute("BEGIN IMMEDIATE")  # «el panel» tiene la base tomada para escribir
+    otro.execute("INSERT INTO t VALUES (1)")
+    soltar = threading.Timer(1.0, lambda: (otro.execute("COMMIT"), otro.close()))
+    soltar.start()
+    inicio = time.monotonic()
+    with closing(connect(db)) as conn:
+        with transaccion(conn):  # antes fallaba a los 5 s si el otro tardaba más; ahora espera hasta 30
+            conn.execute("INSERT INTO t VALUES (2)")
+        assert conn.execute("SELECT x FROM t ORDER BY x").fetchall() == [(1,), (2,)]
+    soltar.join()
+    assert time.monotonic() - inicio >= 0.9  # esperó a que el otro terminara

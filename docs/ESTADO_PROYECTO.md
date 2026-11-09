@@ -9,8 +9,9 @@
   de las 8:00; 5/11 `database is locked` (otro programa escribía en `sicop.db`; la app espera 5 s); 6/11 Windows
   la detuvo (`0x800710E0`, sin línea en el registro, causa no confirmada). Arreglo: `StartWhenAvailable` encendido
   en la tarea «SICOP CONNECT - ciclo diario» (cambia la decisión del 22/10 de dejarla así); README de
-  `deploy/windows` al día. El servidor sigue con `Persistent=false`. **Pendiente, propuesto:** espera de 30 s ante
-  la base ocupada (`app/database.py`, `connect`). Ciclo #54 del 9/11 a las 8:00: OK, 12 avisos y el resumen
+  `deploy/windows` al día. El servidor sigue con `Persistent=false`. **Base ocupada (hecho, 9/11):** `connect()`
+  espera hasta 30 s (`ESPERA_BASE_OCUPADA_S`, antes 5 s de Python) a que otro programa termine de escribir; prueba
+  en `tests/test_migraciones.py`. Ciclo #54 del 9/11 a las 8:00: OK, 12 avisos y el resumen
   semanal aceptados por Gmail.
 
 - **Exclusión «construccion de paradas» (2026-11-09, Ivania).** `20261100575` «CONSTRUCCIÓN DE PARADAS SIQUIRRES

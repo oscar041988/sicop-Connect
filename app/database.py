@@ -18,6 +18,9 @@ _MIGRATION_NAME = re.compile(r"^(\d{4})_[a-z0-9_]+\.sql$")
 # la documentación de SQLite, «ALTER TABLE»): corre con las llaves foráneas apagadas y, ANTES de confirmar, se
 # revisan todas con PRAGMA foreign_key_check; si alguna quedó rota, no se aplica nada.
 SIN_LLAVES_FORANEAS = "-- migracion: sin llaves foraneas"
+# Segundos que una conexión espera si otro programa está escribiendo (el panel, el enriquecimiento) antes de fallar con
+# «database is locked». Con los 5 s de Python, el ciclo del 2026-11-05 a las 8:00 se detuvo.
+ESPERA_BASE_OCUPADA_S = 30
 
 
 class MigrationError(Exception):
@@ -67,9 +70,9 @@ def transaccion(conn: sqlite3.Connection):
 
 
 def connect(path: Path) -> sqlite3.Connection:
-    """Conexión con claves foráneas activas y transacciones explícitas."""
+    """Conexión con claves foráneas activas, transacciones explícitas y espera ante la base ocupada."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, isolation_level=None)
+    conn = sqlite3.connect(path, isolation_level=None, timeout=ESPERA_BASE_OCUPADA_S)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
