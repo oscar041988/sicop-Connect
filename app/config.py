@@ -69,6 +69,7 @@ DEFAULTS: dict[str, str] = {
     "ASSISTANT_SEND_DOCUMENTS": "false",
     "ENRICH_ENABLED": "false",
     "ENRICH_EMAILS": "false",
+    "ENRICH_TOKEN": "",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
@@ -85,7 +86,8 @@ DEFAULTS: dict[str, str] = {
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY"})
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY",
+                            "ENRICH_TOKEN"})
 AI_MODES = ("none", "openai")
 
 
@@ -375,6 +377,12 @@ class Settings:
         """false (por defecto; decisión de Ivania, 2026-11-09): enrich run no manda el resumen ni la alerta por
         CAPTCHA a OBTAIN_ALERT_TO, solo deja la vista previa en EXPORTS_DIR (ENRICH_EMAILS)."""
         return _as_bool(self.get("ENRICH_EMAILS"))
+
+    @property
+    def enrich_token(self) -> str:
+        """Token que comparten el servidor y la PC del enriquecimiento (fase 2, docs/ENVIO_ENRIQUECIMIENTO.md). Vacío:
+        las direcciones /api/enriquecimiento no existen (404)."""
+        return self.get("ENRICH_TOKEN").strip()
 
     @property
     def enrich_max_per_day(self) -> int:

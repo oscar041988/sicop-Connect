@@ -19,12 +19,13 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
 ## Cómo funciona
 
 ```
-10:00  PC ──GET /api/enriquecimiento/cola (token)──▶ servidor   (antes: borrado al cierre)
-       PC ◀── carteles a consultar (número, título, cierre) ──
+10:00  PC ──POST /api/enriquecimiento/corridas (token)──▶ servidor: borrado al cierre, cola, corrida nueva
+       PC ◀── carteles a consultar (número, título, cierre y los documentos que el servidor ya tiene) ──
        PC: navegador con ventana → ficha + documentos de cada cartel (grabación en la PC)
-       PC ──POST /api/enriquecimiento/resultado (token), uno por cartel──▶ servidor
+       PC ──POST …/corridas/N/consultas (token), uno por cartel──▶ servidor
              ficha tal cual (respuestas de SICOP) + archivos + bitácora de la consulta
        servidor: guardar_ficha → guardar_documento (lee el texto de los PDF) → bitácora → reevaluar
+       PC ──POST …/corridas/N/cierre (token)──▶ servidor: ok, con_fallos o detenida
 10:45  servidor: ia cola (sicop-ia-cola.timer) → resúmenes con IA de lo enriquecido
 ```
 
@@ -42,9 +43,12 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
 - **Token** largo y aleatorio (`ENRICH_TOKEN`), el mismo en `app.env` del servidor y en el `.env` de la PC. Lo
   genera el administrador en el servidor, como `SESSION_SECRET`; nunca va a Git, a un chat ni a Claude.
 - Solo por **HTTPS** (`https://sicop.hermatix.com`). Comparación en tiempo constante. Sin token o con uno malo:
-  401, y queda en el historial. Sin `ENRICH_TOKEN` en el servidor, las dos direcciones no existen (404).
-- Las dos direcciones **solo** dan la cola y reciben resultados de carteles que estaban en ella; no leen
-  revisiones, usuarios, perfil ni nada más.
+  401, y queda en el registro del servidor (`journalctl`), sin escribir en la base. Sin `ENRICH_TOKEN` en el
+  servidor, las direcciones no existen (404).
+- Las tres direcciones **solo** abren y cierran la corrida y reciben resultados de carteles que estaban en su cola
+  (`enrich_runs.cola_json`, migración 0040); no leen revisiones, usuarios, perfil ni nada más.
+- El servidor no le cree a la PC: decide él si la ficha es nueva, vuelve a quitar los datos de personas y revisa
+  cada archivo como siempre.
 - Límites: tamaño máximo por envío (`DOCUMENT_MAX_MB` por archivo, `DOCUMENTS_MAX_MB_PER_TENDER` por cartel) y los
   mismos tipos de archivo que hoy.
 
@@ -52,8 +56,10 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
 
 1. **Cola de IA en el servidor:** `deploy/systemd/sicop-ia-cola.service` y `.timer` (lunes a viernes, 10:45), y la
    guía de actualización al día. Sin código nuevo de la app (`ia cola` ya existe).
-2. **Servidor, las dos direcciones:** `GET …/cola` (corre el borrado al cierre y devuelve la cola del día) y
-   `POST …/resultado` (ficha, archivos y bitácora; repite los guardados y reevalúa). Token y límites.
+2. **Servidor, las tres direcciones** (hecho, 2026-11-09): `app/sources/remoto.py` y `app/web/api_enriquecimiento.py`,
+   migración 0040, `ENRICH_TOKEN`. Pedir la cola crea la corrida y borra lo que cerró: por eso es `POST`, no `GET`.
+   8 pruebas en `tests/test_api_enriquecimiento.py` (token, corrida completa, repetir sin duplicar, fuera de la
+   cola, CAPTCHA, datos de personas, tope).
 3. **PC, `enrich remoto`:** pide la cola, prepara la base de trabajo, consulta con el código de hoy y envía cada
    cartel al terminarlo. Ante un CAPTCHA, lo mismo que hoy (espera, un reintento, se detiene y avisa).
 4. **Cierre:** la tarea de Windows de las 10:00 pasa a `enrich remoto` (sin `ia cola`, que ya corre en el servidor),

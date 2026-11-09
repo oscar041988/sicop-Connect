@@ -10,14 +10,20 @@
   (sin copiar filas entre bases). Token `ENRICH_TOKEN`, solo HTTPS. 4 pasos.
   - **Paso 1 hecho:** `deploy/systemd/sicop-ia-cola.service` y `.timer` (lunes a viernes 10:45; el enriquecimiento
     tardó de 9 a 21 min). `ACTUALIZACION_SERVIDOR.md`: la cola de IA pasa al servidor desde el primer día.
-  - **Siguiente:** paso 2, las dos direcciones del servidor (`GET …/cola`, `POST …/resultado`) con token.
+  - **Paso 2 hecho:** tres direcciones con token en el servidor (`app/web/api_enriquecimiento.py`, lógica en
+    `app/sources/remoto.py`): abrir corrida (borrado al cierre + cola), consulta de un cartel (ficha + archivos:
+    repite `guardar_ficha`/`guardar_documento` y reevalúa) y cierre. Migración **0040** (`enrich_runs.origen`,
+    `cola_json`), `ENRICH_TOKEN` (oculto en `doctor`). 8 pruebas nuevas.
+  - **Suite con Python 3.12 (servidor):** 964 passed y 1 falla causada por agregar la 0040 durante la corrida
+    (lista fija de migraciones); arreglada.
+  - **Siguiente:** paso 3, `enrich remoto` en la PC.
 
 - **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
   `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas
   (rutas relativas: revisado, sirve en el servidor; ~600 MB sin las grabaciones); el ciclo de las 8:00 pasa al
   servidor y se apaga la tarea de Windows; **enriquecimiento e IA en pausa** hasta la fase 2 (envío PC → servidor
   con token, decisión del 27/10). Texto nuevo del PR en `docs/PR_DESARROLLO.md` (102 commits sobre `main`).
-  Nada se ejecutó en el servidor. **Suite con Python 3.12** (entorno limpio): resultado pendiente.
+  Nada se ejecutó en el servidor. **Suite con Python 3.12** (entorno limpio): 964 passed (ver fase 2).
   - **Pendiente · Oscar:** unir el PR, los valores de la sección 0 de la guía y el día del cambio.
 
 - **Ayuda al día con el detalle del cartel rediseñado (2026-11-09, pedido de Ivania).** `ayuda capturas` de todas

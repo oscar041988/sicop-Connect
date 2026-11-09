@@ -10,7 +10,7 @@ cartel rediseñado
 
 ## Qué trae esta rama
 
-**102 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0039**. Todo se construyó y se probó
+**102 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0040**. Todo se construyó y se probó
 en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACTUALIZACION_SERVIDOR.md`**.
 
 ### Gestor de documentos (pasos 1B a 5)
@@ -52,22 +52,24 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 
 ## Qué cambia al actualizar el servidor (`docs/ACTUALIZACION_SERVIDOR.md`)
 - [ ] Respaldo de la base del servidor y de las unidades de systemd.
-- [ ] La base del servidor se reemplaza por **la base local de Ivania** (esquema 0039) con sus carpetas de datos.
+- [ ] La base del servidor se reemplaza por **la base local de Ivania** (esquema 0039; `migrate` aplica la 0040)
+      con sus carpetas de datos.
 - [ ] `pip install -r requirements.lock.txt`: se suman `playwright`, `openpyxl`, `pdfplumber` y `openai`.
 - [ ] Carpetas nuevas en `/var/lib/sicop-connect` y variables nuevas en `app.env` (la clave de OpenAI, Oscar).
-- [ ] El ciclo de las 8:00 pasa al servidor; se apaga la tarea de Windows. El enriquecimiento y la cola de IA
-      quedan en pausa hasta la fase 2.
+- [ ] El ciclo de las 8:00 y la cola de IA (10:45) pasan al servidor; se apaga la tarea de Windows. El
+      enriquecimiento queda en pausa hasta terminar la fase 2 (`docs/ENVIO_ENRIQUECIMIENTO.md`).
 
 ## Para decidir (Oscar)
 - [ ] Aprobar el Reporte PDF con la explicación y activar el prompt **v8**.
 - [ ] ¿Le interesan a Hermatix los sensores IoT en general, no solo de frío y temperatura?
       (`docs/revision_reglas_vs_ia_20261109.md`, caso A2).
 - [ ] La sección 6 de `docs/DECISION_PROPUESTA.md`.
-- [ ] Fase 2: el envío del enriquecimiento de la PC al servidor con token, o pasarlo al servidor.
+- [ ] Fase 2 (en construcción): la PC manda el enriquecimiento al servidor con un token (`ENRICH_TOKEN`). Ya
+      están las direcciones del servidor; falta el comando de la PC.
 
 ## Pruebas
-- Suite completa con **Python 3.14**: 965 passed. Con **Python 3.12** (el del servidor), en un entorno limpio con
-  `requirements-dev.txt`: el resultado está en `ESTADO_PROYECTO.md`. SICOP, Gmail y la IA se prueban con datos SIMULADOS.
+- Suite completa con **Python 3.14** y con **Python 3.12** (el del servidor, entorno limpio con
+  `requirements-dev.txt`): los resultados, en `ESTADO_PROYECTO.md`. Volver a correr las dos justo antes de unir. SICOP, Gmail y la IA se prueban con datos SIMULADOS.
 
 ## Importante
 - Las guías en Word de `docs/` no están en Git (`.gitignore`).

@@ -13,7 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import __version__
 from app.config import Settings, load_settings
 from app.database import check_database
-from app.web import carga, seguridad
+from app.web import api_enriquecimiento, carga, seguridad
 from app.web.intentos import LimiteIntentos
 from app.web.rutas import cerrar_asistente_apagado, csrf_invalido, router as panel, sin_permiso
 
@@ -38,6 +38,7 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     app.state.intentos = LimiteIntentos()  # intentos de login fallidos, en memoria
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "web" / "static"), name="static")
     app.include_router(panel)
+    app.include_router(api_enriquecimiento.router)  # fase 2: la PC con su token, sin sesión
     app.add_exception_handler(seguridad.CsrfInvalido, csrf_invalido)
     app.add_exception_handler(seguridad.SinPermiso, sin_permiso)
     app.get("/health")(health)
