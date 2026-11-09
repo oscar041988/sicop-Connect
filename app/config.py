@@ -70,6 +70,7 @@ DEFAULTS: dict[str, str] = {
     "ENRICH_ENABLED": "false",
     "ENRICH_EMAILS": "false",
     "ENRICH_TOKEN": "",
+    "ENRICH_SERVER_URL": "",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
@@ -383,6 +384,15 @@ class Settings:
         """Token que comparten el servidor y la PC del enriquecimiento (fase 2, docs/ENVIO_ENRIQUECIMIENTO.md). Vacío:
         las direcciones /api/enriquecimiento no existen (404)."""
         return self.get("ENRICH_TOKEN").strip()
+
+    @property
+    def enrich_server_url(self) -> str:
+        """En la PC: el servidor al que enrich remoto pide la cola y manda las fichas (https://…, sin «/» al final).
+        Vacío: la PC trabaja sola con su base (enrich run). http:// solo para 127.0.0.1 o localhost (pruebas)."""
+        url = self.get("ENRICH_SERVER_URL").strip().rstrip("/")
+        if url and not (url.startswith("https://") or url.startswith(("http://127.0.0.1", "http://localhost"))):
+            raise ValueError("ENRICH_SERVER_URL tiene que empezar con https:// (el token no viaja sin cifrar).")
+        return url
 
     @property
     def enrich_max_per_day(self) -> int:

@@ -60,8 +60,14 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
    migración 0040, `ENRICH_TOKEN`. Pedir la cola crea la corrida y borra lo que cerró: por eso es `POST`, no `GET`.
    8 pruebas en `tests/test_api_enriquecimiento.py` (token, corrida completa, repetir sin duplicar, fuera de la
    cola, CAPTCHA, datos de personas, tope).
-3. **PC, `enrich remoto`:** pide la cola, prepara la base de trabajo, consulta con el código de hoy y envía cada
-   cartel al terminarlo. Ante un CAPTCHA, lo mismo que hoy (espera, un reintento, se detiene y avisa).
+3. **PC, `enrich remoto`** (hecho, 2026-11-09): `app/sources/enriquecimiento_pc.py` y `python -m app.cli enrich
+   remoto [--max N]`. Pide la cola, limpia sus grabaciones viejas (menos las de FALLO sin revisar, que dice el
+   servidor), arma `data/trabajo/` nueva, consulta con `consultar_uno` **sin volver a bajar** lo que el servidor
+   ya tiene y envía cada cartel al terminarlo. Ante un CAPTCHA, lo mismo que hoy. HTTPS con `urllib` (sin
+   dependencias nuevas); reintenta 3 veces si el servidor no responde o da 5xx, no si responde 4xx. Configuración:
+   `ENRICH_SERVER_URL` (solo `https://`, o `http://127.0.0.1` para probar) y `ENRICH_TOKEN`; con
+   `ENRICH_SERVER_URL`, `enrich run` se niega (no escribe en la base local). 5 pruebas en
+   `tests/test_enriquecimiento_pc.py` (dos de punta a punta con el SICOP simulado).
 4. **Cierre:** la tarea de Windows de las 10:00 pasa a `enrich remoto` (sin `ia cola`, que ya corre en el servidor),
    misión de ayuda, `ACTUALIZACION_SERVIDOR.md`
    y prueba completa con un servidor local de prueba (la app corriendo en la PC con otra base).

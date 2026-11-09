@@ -462,7 +462,8 @@ def revisar_base(conn: sqlite3.Connection, nros: list[str], documentos: bool) ->
 
 def consultar_uno(conn: sqlite3.Connection, settings: Settings, nro: str, *, documentos: bool,
                   dormir: Callable[[float], None], reloj: Callable[[], datetime], avisar: Callable[[str], None],
-                  espera_documento_ms: int | None = None, **opciones) -> Consulta:
+                  espera_documento_ms: int | None = None, ya_guardados: frozenset[str] = frozenset(),
+                  **opciones) -> Consulta:
     """Una consulta: ficha (y documentos) de un cartel, en una ventana. La usan enrich --nro y enrich run.
     Nunca lanza FalloFicha: el resultado queda en la Consulta (control = CAPTCHA o bloqueo)."""
     from app.sources import sicop_documentos as sd
@@ -479,6 +480,8 @@ def consultar_uno(conn: sqlite3.Connection, settings: Settings, nro: str, *, doc
         lista = ficha.respuestas["documentos"]
         avisar(f"Ficha guardada. Documentos: {len(lista)}.")
         extra = {"espera_ms": espera_documento_ms} if espera_documento_ms else {}
+        if ya_guardados:
+            extra["ya_guardados"] = ya_guardados
         try:
             sd.descargar_documentos(page, contexto, conn, settings, nro, hecho["guardado"].detalle_id, lista,
                                     hecho["documentos"], revisar=revisar, dormir=dormir, reloj=reloj,

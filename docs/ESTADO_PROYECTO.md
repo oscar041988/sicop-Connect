@@ -16,7 +16,14 @@
     `cola_json`), `ENRICH_TOKEN` (oculto en `doctor`). 8 pruebas nuevas.
   - **Suite con Python 3.12 (servidor):** 964 passed y 1 falla causada por agregar la 0040 durante la corrida
     (lista fija de migraciones); arreglada.
-  - **Siguiente:** paso 3, `enrich remoto` en la PC.
+  - **Paso 3 hecho:** `python -m app.cli enrich remoto` (`app/sources/enriquecimiento_pc.py`): pide la cola,
+    base de trabajo nueva en `data/trabajo/`, consulta con el navegador y manda cada cartel; no vuelve a bajar lo
+    que el servidor ya tiene; CAPTCHA igual que `enrich run`. `ENRICH_SERVER_URL` (solo https); con ella, `enrich
+    run` se niega. Cambios chicos: `ya_guardados` en `consultar_uno`/`descargar_documentos`, grabaciones a
+    conservar que manda el servidor. 5 pruebas (2 de punta a punta con el SICOP simulado). Suite del paso 2:
+    973 passed.
+  - **Siguiente:** paso 4, la tarea de Windows (`enrich remoto`, sin `ia cola`), la ayuda y una prueba con la
+    app corriendo en la PC como servidor de prueba.
 
 - **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
   `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas

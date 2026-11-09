@@ -143,16 +143,17 @@ def cupo_de_hoy(conn: sqlite3.Connection, settings: Settings, ahora: datetime, m
     return restante if maximo is None else min(restante, maximo)
 
 
-def limpiar_grabaciones(conn: sqlite3.Connection, settings: Settings, hoy: date) -> int:
+def limpiar_grabaciones(conn: sqlite3.Connection | None, settings: Settings, hoy: date,
+                        conservar: set[str] | None = None) -> int:
     """Borra las grabaciones de más de RECORDINGS_KEEP_DAYS días, menos las de una consulta con FALLO o CAPTCHA que
     nadie marcó revisada en el panel (migración 0022).
-    Solo toca carpetas de día (AAAA-MM-DD) dentro de RECORDINGS_DIR. Devuelve cuántas carpetas de cartel borró."""
+    Solo toca carpetas de día (AAAA-MM-DD) dentro de RECORDINGS_DIR. Devuelve cuántas carpetas de cartel borró.
+    conservar: «AAAA-MM-DD/nro» ya calculado en otra base (enrich remoto: lo manda el servidor); entonces no se usa conn."""
     raiz = settings.recordings_dir
     if not raiz.is_dir():
         return 0
-    conservar = {"/".join(g.split("/")[:2]) for (g,) in conn.execute(
-        "SELECT grabacion FROM enrich_consultas c WHERE resultado IN ('fallo', 'control') AND grabacion IS NOT NULL"
-        "   AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)")}
+    if conservar is None:
+        conservar = grabaciones_a_conservar(conn)
     limite = hoy - timedelta(days=settings.recordings_keep_days)
     borradas = 0
     for dia in raiz.iterdir():
@@ -165,6 +166,13 @@ def limpiar_grabaciones(conn: sqlite3.Connection, settings: Settings, hoy: date)
         if not any(dia.iterdir()):
             dia.rmdir()
     return borradas
+
+
+def grabaciones_a_conservar(conn: sqlite3.Connection) -> set[str]:
+    """«AAAA-MM-DD/nro» de las consultas con FALLO o CAPTCHA que nadie marcó revisadas en el panel."""
+    return {"/".join(g.split("/")[:2]) for (g,) in conn.execute(
+        "SELECT grabacion FROM enrich_consultas c WHERE resultado IN ('fallo', 'control') AND grabacion IS NOT NULL"
+        "   AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)")}
 
 
 def _cierre_mas_tardio(*fechas: str | None) -> datetime | None:

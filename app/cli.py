@@ -679,6 +679,15 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
     if not settings.enrich_enabled:
         print("Enriquecimiento desactivado (ENRICH_ENABLED=false en .env): no se consultó SICOP.")
         return 0
+    try:
+        servidor = settings.enrich_server_url
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if servidor:
+        print(f"Esta PC trabaja con el servidor ({servidor}, ENRICH_SERVER_URL): no se escribe en la base local. "
+              "Usa python -m app.cli enrich remoto.", file=sys.stderr)
+        return 1
     print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · máximo {settings.enrich_max_per_day} "
           f"por día · pausa de {settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
     real = (settings.enrich_emails and settings.notifications_enabled and not settings.notifications_dry_run
@@ -708,6 +717,53 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
     if corrida.alerta:
         print(f"Alerta por CAPTCHA o bloqueo: {corrida.alerta}", file=sys.stderr)
     print(f"Resumen: {corrida.resumen}")
+    return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
+
+
+def enrich_remoto(settings: Settings, maximo: int | None, transporte=None) -> int:
+    """Fase 2: la PC consulta SICOP y manda todo al servidor. 0 = ok o sin cola · 1 = algún FALLO, falta configurar
+    o el servidor no respondió · 2 = CAPTCHA o bloqueo, u otra corrida en curso en esta PC."""
+    from app.bloqueo import CicloOcupado
+    from app.sources import enriquecimiento_pc as pc
+    if maximo is not None and maximo < 1:
+        print("Error: --max debe ser 1 o más.", file=sys.stderr)
+        return 1
+    if not settings.enrich_enabled:
+        print("Enriquecimiento desactivado (ENRICH_ENABLED=false en .env): no se consultó SICOP.")
+        return 0
+    try:
+        servidor = settings.enrich_server_url
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if not servidor or not settings.enrich_token:
+        print("Error: faltan ENRICH_SERVER_URL y/o ENRICH_TOKEN en el .env (docs/ENVIO_ENRIQUECIMIENTO.md).",
+              file=sys.stderr)
+        return 1
+    print(f"Servidor {servidor} · navegador {'sin' if settings.browser_headless else 'con'} ventana · pausa de "
+          f"{settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
+    try:
+        corrida = pc.correr_remoto(settings, transporte or pc.TransporteHttp(servidor, settings.enrich_token),
+                                   maximo=maximo, avisar=print, **_opciones_enrich())
+    except CicloOcupado as exc:
+        print(f"Error: ya hay otra corrida en curso en esta PC ({exc or 'sin detalle'}). No se hizo nada.",
+              file=sys.stderr)
+        return 2
+    except pc.ServidorError as exc:
+        print(f"Error: el servidor no abrió la corrida: {exc}. No se consultó SICOP.", file=sys.stderr)
+        return 1
+    fallos = sum(c.resultado in ("fallo", "control") for c in corrida.consultas)
+    print(f"\nCorrida #{corrida.corrida_id} (servidor): {corrida.estado} · en cola {corrida.en_cola} · consultados "
+          f"{len(corrida.consultas)} · FALLO {fallos} · grabaciones viejas borradas {corrida.grabaciones_borradas}")
+    for c in corrida.consultas:
+        print(f"  {c.nro_sicop} · {c.resultado} · {c.duracion_s} s"
+              + (f" · {c.motivo}" if c.resultado in ("fallo", "control") else ""))
+    if corrida.reintentada is not None:
+        print(f"  Reintento: {corrida.reintentada.nro_sicop} dio CAPTCHA o bloqueo; se esperó "
+              f"{settings.enrich_retry_wait_minutes} min y se reintentó una vez.")
+    if corrida.error:
+        print(f"Se detuvo: {corrida.error}", file=sys.stderr)
+        return 1
     return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
 
 
@@ -1300,6 +1356,9 @@ def build_parser() -> argparse.ArgumentParser:
     er = en_sub.add_parser("run", help="Enriquecimiento automático: la cola del día con fichas y documentos (tarea "
                                        "programada; solo con ENRICH_ENABLED=true)")
     er.add_argument("--max", type=int, metavar="N", help="Consultar como máximo N carteles (para probar)")
+    ere = en_sub.add_parser("remoto", help="Fase 2: consulta SICOP con esta PC y manda las fichas al servidor "
+                                          "(ENRICH_SERVER_URL y ENRICH_TOKEN; solo con ENRICH_ENABLED=true)")
+    ere.add_argument("--max", type=int, metavar="N", help="Consultar como máximo N carteles (para probar)")
     en_sub.add_parser("cola", help="Muestra la cola de hoy sin consultar SICOP")
     en_sub.add_parser("status", help="Últimas corridas y consultas de la bitácora")
     en.add_argument("--nro", dest="nros", action="append", metavar="NUMERO_SICOP",
@@ -1389,6 +1448,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "enrich":
         if args.enrich_command == "run":
             return enrich_run(settings, args.max)
+        if args.enrich_command == "remoto":
+            return enrich_remoto(settings, args.max)
         if args.enrich_command == "cola":
             return enrich_cola(settings)
         if args.enrich_command == "status":

@@ -71,6 +71,7 @@ def abrir_corrida(conn: sqlite3.Connection, settings: Settings, ahora: datetime)
     return {
         "corrida": run_id, "en_cola": len(lista), "maximo": settings.enrich_max_per_day,
         "borrados_al_cierre": borrados,
+        "grabaciones_conservar": sorted(en.grabaciones_a_conservar(conn)),   # la PC limpia sus videos con esto
         "carteles": [{"nro_sicop": c.nro_sicop, "descripcion": c.descripcion, "cierre": c.cierre,
                       "motivo": c.motivo, "encaje": c.encaje, "documentos_guardados": guardados[c.nro_sicop]}
                      for c in hoy],
@@ -125,7 +126,7 @@ def _documentos(conn: sqlite3.Connection, settings: Settings, nro: str, detalle_
             # La PC no lo bajó: lo anota con el motivo que ella dio (omitido por tamaño, fallo de descarga…).
             info = informados.get(server) or {}
             estado = info.get("estado") if info.get("estado") in ("omitido_tamano", "omitido_tope", "fallo",
-                                                                   "rechazado") else "fallo"
+                                                                   "rechazado", "duplicado") else "fallo"
             motivo = str(info.get("motivo") or "la PC no mandó el archivo")[:500]
             sd._registrar(conn, nro, detalle_id, doc, server, ahora, estado, motivo)
             resultados.append(sd.ResultadoDocumento(seq, nombre, estado, motivo=motivo))
