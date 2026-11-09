@@ -67,7 +67,7 @@ para concursar.
 
 | Qué | Para qué | ¿Ya está? | Quién lo entrega |
 |---|---|---|---|
-| **Una o dos ofertas reales ya presentadas en SICOP**, una ganada y una perdida, con capturas de cada pantalla del formulario de oferta | Conocer los campos y adjuntos que pide SICOP sin inventarlos | No | **[por decidir · Oscar]** |
+| **Una o dos ofertas reales ya presentadas en SICOP**, una ganada y una perdida, con capturas de cada pantalla del formulario de oferta | Conocer los campos y adjuntos que pide SICOP sin inventarlos | **Parcial:** pliego y oferta económica de una ganada (Tarrazú, 2025; sección 9). Faltan la oferta técnica, una perdida y las capturas | Oscar |
 | **El acta de adjudicación de esas ofertas**, con el puntaje de cada oferente | Saber por qué se ganó o se perdió | Parcial (hay adjudicaciones en «Competencia») | **[por decidir · Oscar]** |
 | **Documentos legales**: personería jurídica, cédula jurídica, CCSS y FODESAF al día, declaraciones juradas que siempre se piden | Adjuntarlos sin buscarlos | Parcial (están en el «Perfil») | **[por decidir · Oscar]** |
 | **Fichas técnicas** de cada producto (FleetMatix, Fenova IA, PassengerIQ, MoveOn, SmartTags, FleetRun, Osmia IoT, BodyCams) y las certificaciones de los fabricantes | La respuesta técnica (etapa 2) | No | **[por decidir · Oscar]** |
@@ -119,3 +119,37 @@ para concursar.
 - [ ] Oscar leyó este documento y decide la sección 6 (fecha: ____).
 - [ ] Llegaron las ofertas de ejemplo de la sección 4 (sin ellas no se empieza la etapa 1).
 - [ ] Si se aprueba la IA para la oferta: `DECISION_IA.md` con su sección nueva y `CLAUDE.md` actualizado.
+
+## 9. Lo aprendido de una oferta ganadora (Tarrazú, 2025)
+
+Leída con autorización de Oscar (2026-11-09, comunicada por Ivania): el pliego y la oferta económica de la
+Licitación Reducida **2025LD-000058-0002900001** (Municipalidad de Tarrazú, videovigilancia con IA para la flotilla;
+familia videotelemática), que ganó Hermatix. El análisis completo, con precios, está **solo en local**
+(`data/ofertas/analisis_oferta_tarrazu.md`): los precios y el margen no van a Git.
+
+**Qué pidió el pliego** (y la app tendría que convertir en lista de verificación de la etapa 1):
+- Documentos **autenticados por notario**: certificación de la empresa, 2 cartas de referencia (5 años de
+  experiencia) y títulos y CV de 2 técnicos. Además patente, permiso sanitario y certificado RAEE.
+- Por equipo: marca, modelo, año (≤ 2 años), fabricante, distribuidor y **catálogos originales** de fábrica.
+- Precio en números **y letras**, tributos desglosados y **presupuesto detallado** en montos y porcentajes.
+- Evaluación: precio 50 · calidad técnica 25 (matriz de cumplimiento) · plataforma 10 · soporte 10 · posventa 5 ·
+  desempate PYME +5.
+
+**Cómo es la oferta económica de Hermatix:** carta de presentación con la declaración del Registro de Proveedores
+(art. 29 LGCP) · tabla de precios (línea, cantidad, precio unitario mensual, mensual, anual, IVA, total en letras,
+«Última línea») · condiciones generales (garantía, entrega, pago, validez, aceptación del pliego) · descripción del
+equipo y de las funciones ADAS y DSM · desglose del precio en 4 rubros (montos y porcentajes) · firma.
+
+**Lo que esto le dice a la app:**
+1. **La app puede armar sola** (sin IA, la app calcula): la tabla de precios con el **monto en letras**, el desglose
+   con montos y porcentajes que cuadran, y la carta y las condiciones generales desde una plantilla de Hermatix.
+2. **La lista de verificación ya existe** (asistente de elegibilidad): falta marcar qué va **autenticado por
+   notario** y qué documento del perfil lo cubre.
+3. **La matriz de cumplimiento técnico vale 25 puntos** y la oferta económica no la trae: la respuesta punto por
+   punto (cada especificación ↔ la ficha técnica que la prueba) es la etapa 2, y es donde más puntos hay después
+   del precio. Ejemplo: el pliego pedía identificación facial del conductor, RS232/RS485 y cifrado de la memoria,
+   que la oferta económica no menciona.
+4. **Señalar inconsistencias del pliego** («sesenta (10) dispositivos») y pedir la aclaración a tiempo.
+
+**Falta** para seguir: la oferta técnica y sus anexos, el acta de adjudicación con los puntajes, una oferta
+perdida y las capturas de SICOP.
