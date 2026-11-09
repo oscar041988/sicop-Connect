@@ -27,7 +27,7 @@
    [captura: Cartel · resaltar «Historial»]
    La de arriba dice «(vigente)»: es la que vale ahora.
 
-Tu decisión también se ve en el panel, en la etiqueta de la tarjeta.
+Tu decisión también se ve en el panel, en las etiquetas de la fila del cartel.
 
 **Dónde quedaste:** al final del cartel, en «Historial».
 

@@ -49,7 +49,7 @@ Puedes juntar varios filtros. Por ejemplo: «Familia» GPS y «Plazo» de 7 día
 
 ### Abrir un cartel
 
-13. Haz clic en el título de cualquier tarjeta.
+13. Haz clic en cualquier cartel de la lista.
     [captura: Panel de carteles · resaltar el título de un cartel]
     Se abre la página completa de ese cartel.
 

@@ -13,33 +13,35 @@
    [captura: Panel de carteles · resaltar «Sin revisar»]
    Ahora ves solo los carteles que nadie del equipo ha marcado todavía.
 
-### Leer una tarjeta, de arriba abajo
+### Leer una fila, de izquierda a derecha
 
-Cada tarjeta de la lista es un cartel. Léela así, de arriba abajo:
+Cada fila de la lista es un cartel. Léela así, de izquierda a derecha:
 
-3. Busca la etiqueta verde «Nuevo», arriba a la izquierda. No siempre hay.
+3. Lee el título del cartel. Dice qué quieren comprar.
+   [captura: Panel de carteles · resaltar el título de un cartel]
+4. Lee debajo del título el nombre de la institución y el tipo de concurso. La institución es quien compra.
+5. Busca al lado la etiqueta verde «Nuevo». No siempre hay.
    [captura: Panel de carteles · resaltar la etiqueta «Nuevo»]
    Sale solo el día que el cartel llega a la app.
-4. Mira la etiqueta de al lado. Dice la familia: el producto de Hermatix que se parece.
+6. Mira la etiqueta de la familia: el producto de Hermatix que se parece.
    [captura: Panel de carteles · resaltar la familia]
-5. Mira si hay una etiqueta con los días que faltan. Sale si cierra en 7 días o menos.
-6. Lee el título del cartel. Dice qué quieren comprar.
-   [captura: Panel de carteles · resaltar el título de un cartel]
-7. Lee debajo del título el nombre de la institución. Es quien compra.
-8. Mira la prioridad, a la derecha de la tarjeta: Alta o Media.
+7. Mira la columna «Monto estimado». Dice cuánto calcula gastar la institución.
+8. Mira la columna «Cierre de ofertas». Es el último día para ofertar.
+   [captura: Panel de carteles · resaltar «Cierre de ofertas»]
+   Debajo dice cuánto falta. Si cierra en 7 días o menos, sale en naranja.
+9. Mira la prioridad, en la última columna: Alta o Media.
    [captura: Panel de carteles · resaltar la prioridad]
    Alta se parece más a lo que vendemos. Media se parece un poco.
-9. Mira los tres datos de abajo: «Monto estimado», «Cierre de ofertas» y «Modalidad».
-   [captura: Panel de carteles · resaltar «Cierre de ofertas»]
-   El «Cierre de ofertas» es el último día para ofertar. Debajo dice cuánto falta.
 
 ### Ver más sin salir de la lista
 
-10. Haz clic en «Ver toda la información», al final de la tarjeta.
-    [captura: Panel de carteles · resaltar «Ver toda la información»]
+10. Haz clic en «Ver más», al lado de las etiquetas.
+    [captura: Panel de carteles · resaltar «Ver más»]
 11. Lee los datos que se abren: número SICOP, palabras clave y servicio de Hermatix.
     Las «Palabras clave detectadas» son las palabras que hicieron aparecer el cartel.
-12. Haz clic otra vez en «Ver toda la información» para cerrarlo.
+12. Haz clic otra vez en «Ver más» para cerrarlo.
+
+Para abrir el cartel completo, haz clic en cualquier parte de su fila.
 
 ### Recorrer toda la lista
 
@@ -54,13 +56,13 @@ Los carteles salen ordenados: primero los que cierran antes. Los vencidos no sal
 
 ## ¿Y si…?
 
-**¿Y si ninguna tarjeta tiene la etiqueta «Nuevo»?**
+**¿Y si ninguna fila tiene la etiqueta «Nuevo»?**
 Es normal. Hoy no llegaron carteles nuevos. Usa «Sin revisar», como en el paso 2.
 
 **¿Y si sale «No hay carteles con estos filtros.»?**
 Haz clic en «Todos». Si sigue igual, abre «Más filtros» y haz clic en «Limpiar».
 
-**¿Y si una tarjeta tiene una raya de color a la izquierda?**
+**¿Y si una fila tiene una raya de color a la izquierda?**
 Alguien del equipo la marcó «Interesa» u «Ofertada». Mira su etiqueta.
 
 **Sigue con:** [¿Cómo busco y filtro carteles?](03-buscar-y-filtrar.md)
