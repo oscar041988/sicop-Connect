@@ -59,8 +59,12 @@ def discover_migrations(directory: Path = MIGRATIONS_DIR) -> list[Migration]:
 
 @contextmanager
 def transaccion(conn: sqlite3.Connection):
-    """Todo lo de adentro se guarda junto o no se guarda nada (para conexiones de connect())."""
-    conn.execute("BEGIN")
+    """Todo lo de adentro se guarda junto o no se guarda nada (para conexiones de connect()).
+
+    IMMEDIATE: reserva la escritura al empezar. Con un BEGIN normal, una transacción que lee y después escribe
+    mientras otro programa escribe queda trabada con él: SQLite falla en los dos con «database is locked» sin
+    esperar ESPERA_BASE_OCUPADA_S. Así, si la base está ocupada, espera en el BEGIN y sigue."""
+    conn.execute("BEGIN IMMEDIATE")
     try:
         yield
         conn.execute("COMMIT")

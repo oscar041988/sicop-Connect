@@ -10,7 +10,6 @@ como dice el diccionario oficial; se comprobó con las 36 líneas de las 3 clasi
 
 from __future__ import annotations
 
-import io
 import sqlite3
 import zipfile
 from pathlib import Path

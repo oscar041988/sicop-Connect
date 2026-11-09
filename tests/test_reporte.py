@@ -216,3 +216,14 @@ def test_la_explicacion_tiene_tope():
     assert reporte._explicacion(NO) == [] and reporte._explicacion(None) == []
     larga = reporte._explicacion("palabra " * 1000)
     assert len(larga) == 1 and len(larga[0]) <= reporte.MAX_EXPLICACION and larga[0].endswith("…")
+
+
+def test_si_cambian_los_topes_el_reporte_se_rehace(base, monkeypatch):
+    """Antes solo contaba la plantilla: con topes nuevos se seguía entregando el reporte viejo."""
+    db, settings = base
+    with closing(connect(db)) as conn:
+        _guardar_resumen(conn, _resumen())
+        primero = reporte.generar(conn, settings, NRO, ANA, AHORA)
+        monkeypatch.setattr(reporte, "LIMITES", {**reporte.LIMITES, "requerimientos": 3})
+        nuevo = reporte.generar(conn, settings, NRO, ANA, datetime(2026, 10, 1, 16, 0, tzinfo=timezone.utc))
+    assert not nuevo.reutilizado and nuevo.id != primero.id

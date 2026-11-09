@@ -278,3 +278,36 @@ def test_connect_espera_si_otro_programa_esta_escribiendo(tmp_path):
         assert conn.execute("SELECT x FROM t ORDER BY x").fetchall() == [(1,), (2,)]
     soltar.join()
     assert time.monotonic() - inicio >= 0.9  # esperó a que el otro terminara
+
+
+def test_transaccion_que_lee_y_escribe_no_se_traba_con_otro_programa(tmp_path):
+    """Con BEGIN normal, leer y luego escribir mientras otro escribe fallaba en los dos («database is locked»)."""
+    import threading
+    import time
+
+    from app.database import connect, transaccion
+
+    db = tmp_path / "sicop.db"
+    with closing(connect(db)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+    otro = sqlite3.connect(db, isolation_level=None, timeout=30, check_same_thread=False)
+    errores = []
+
+    def panel():  # otro programa que escribe mientras el ciclo trabaja
+        try:
+            with transaccion(otro):
+                otro.execute("INSERT INTO t VALUES (1)")
+                time.sleep(0.5)
+        except sqlite3.OperationalError as exc:
+            errores.append(exc)
+
+    with closing(connect(db)) as conn:
+        with transaccion(conn):
+            hilo = threading.Thread(target=panel)
+            hilo.start()
+            time.sleep(0.1)
+            conn.execute("SELECT count(*) FROM t").fetchone()   # el ciclo lee…
+            conn.execute("INSERT INTO t VALUES (2)")            # …y después escribe
+        hilo.join()
+        assert errores == [] and sorted(conn.execute("SELECT x FROM t").fetchall()) == [(1,), (2,)]
+    otro.close()

@@ -282,8 +282,10 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
     """El reporte del resumen vigente: reutiliza el último si no cambiaron ni el resumen ni los estados «¿Cumple?»
     (y el archivo sigue ahí)."""
     res = _resumen(conn, nro_sicop)
-    # Los estados «¿Cumple?» y el diseño del reporte: si cambia cualquiera de los dos, se genera de nuevo.
-    diseno = hashlib.sha256((PLANTILLAS / "reporte_cartel.html").read_bytes()).hexdigest()
+    # Los estados «¿Cumple?» y el diseño del reporte (la plantilla, los topes por sección y el máximo de páginas): si
+    # cambia cualquiera, se genera de nuevo.
+    topes = repr((MAX_PAGINAS, MAX_EXPLICACION, LIMITES, LIMITES_MEDIOS, LIMITES_CORTOS)).encode()
+    diseno = hashlib.sha256((PLANTILLAS / "reporte_cartel.html").read_bytes() + topes).hexdigest()
     cumple_huella = hashlib.sha256(f"{cumplimiento.huella(*estados(conn, nro_sicop, ahora))}{diseno}".encode()).hexdigest()
     anterior = ultimo(conn, settings, nro_sicop)
     if (not forzar and anterior and anterior.ia_summary_id == res.id and anterior.cumple_huella == cumple_huella

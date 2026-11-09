@@ -474,8 +474,6 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
             shutil.copy(archivo, hasta_0031)
     base = tmp_path / "sicop.db"
     apply_migrations(base, hasta_0031)
-    settings = load_settings(env_file=None, environ={"DATABASE_PATH": str(base),
-                                                     "ASSISTANT_DOCS_DIR": str(tmp_path / "asistente")})
     with closing(connect(base)) as conn:
         conn.execute("INSERT INTO tenders (nro_sicop, descripcion, content_hash, first_seen, last_seen)"
                      " VALUES (?, 'x', 'h', 't', 't')", (NRO,))

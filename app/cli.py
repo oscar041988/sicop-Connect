@@ -423,9 +423,9 @@ def _imprimir_candidatos(conn, version: str, limite: int, nro_sicop: str | None)
         print("Sin coincidencias para mostrar.")
         return
     print("Candidatos (Alta y Media):" if not nro_sicop else "Resultado del cartel:")
-    for nro, desc, familia, producto, encaje, regla, evidencia, plazo, calidad in filas:
+    for nro, desc, familia, producto, encaje, regla, evidencia, plazo, calidad_datos in filas:
         print(f"  {nro} · {ETIQUETAS_ENCAJE[encaje]} · {familia} ({producto}) · {ETIQUETAS_PLAZO[plazo]}"
-              f" · {ETIQUETAS_CALIDAD[calidad]}")
+              f" · {ETIQUETAS_CALIDAD[calidad_datos]}")
         print(f"      {desc}")
         print(f"      regla: {regla}")
         print(f"      evidencia: {evidencia}")

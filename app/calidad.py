@@ -211,7 +211,7 @@ def guardar(conn: sqlite3.Connection, m: Medicion, ahora: datetime) -> tuple[int
             (ultima[0],))}
         if anteriores == filas:
             return ultima[0], False
-    conn.execute("BEGIN")
+    conn.execute("BEGIN IMMEDIATE")
     try:
         run_id = conn.execute(
             "INSERT INTO rule_score_runs (rules_version, measured_at, casos_golden, casos_revision)"
