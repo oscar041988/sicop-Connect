@@ -4,6 +4,42 @@
 
 ## Último resultado
 
+- **Ciclo diario de Windows: corre tarde si se perdió las 8:00 (2026-11-09, decisión de Ivania).** Del 3 al 6/11
+  no salió ningún aviso (18 «nueva» quedaron preparados): 3/11 despertó a las 8:02; 4/11 sesión abierta después
+  de las 8:00; 5/11 `database is locked` (otro programa escribía en `sicop.db`; la app espera 5 s); 6/11 Windows
+  la detuvo (`0x800710E0`, sin línea en el registro, causa no confirmada). Arreglo: `StartWhenAvailable` encendido
+  en la tarea «SICOP CONNECT - ciclo diario» (cambia la decisión del 22/10 de dejarla así); README de
+  `deploy/windows` al día. El servidor sigue con `Persistent=false`. **Pendiente, propuesto:** espera de 30 s ante
+  la base ocupada (`app/database.py`, `connect`). Ciclo #54 del 9/11 a las 8:00: OK, 12 avisos y el resumen
+  semanal aceptados por Gmail.
+
+- **Exclusión «construccion de paradas» (2026-11-09, Ivania).** `20261100575` «CONSTRUCCIÓN DE PARADAS SIQUIRRES
+  2026» daba Media en conteo_pasajeros («PARADAS») y salió en el aviso del 9/11: es obra civil. Exclusión en las
+  9 familias de `config/hermatix_rules.yaml` (reglas `c40b2c956048`) y fila nueva en el golden set
+  (falso_positivo_conocido; 38 casos, acierto 38/38). Sin líneas de catálogo: `golden_lineas.csv` no cambia. La
+  base se reevalúa con el próximo ciclo (o `evaluate`).
+
+- **Correos del enriquecimiento apagados (2026-11-09, decisión de Ivania: «no nos interesan»).** Nuevo
+  `ENRICH_EMAILS` (false por defecto): `enrich run` ya no manda el resumen diario ni la alerta por CAPTCHA a
+  `OBTAIN_ALERT_TO`, aunque los avisos estén en envío real; queda solo la vista previa en `EXPORTS_DIR` y la
+  bitácora. No hace falta tocar el `.env`. Los recordatorios de la obtención (ZIP) no cambian. Prueba nueva en
+  `tests/test_enriquecimiento.py`.
+
+- **Panel de carteles: lista compacta (2026-11-06, pedido de Ivania; sin revisar en el navegador todavía).** Una
+  fila por cartel con encabezado de columnas (Cartel | Monto estimado | Cierre de ofertas | Prioridad); debajo del
+  título, institución · tipo, etiquetas y «Ver más» (antes «Ver toda la información», mismos datos) en una sola
+  línea; toda la fila abre el cartel; «Cierra en N días» en naranja bajo la fecha si faltan 7 o menos. Con la base
+  de EJEMPLO la página pasa de 7650 a 2884 px (unas 8 filas por pantalla). En el celular, cada dato muestra su
+  etiqueta. Solo `oportunidades.html` y un bloque `.compacta` al final de `estilo.css`. Misiones 02, 03 y 08
+  ajustadas; 51 pruebas de ayuda y 192 del panel, seguimiento y acceso pasan. **Después:** rehacer las capturas
+  de la misión 02.
+  **Segunda pasada (06/11, «¿es atractivo y amigable?»):** la decisión del equipo («Interesa», «Ofertada») en
+  verde sólido y la familia neutra; flecha «›» al final de cada fila; montos a la derecha; sin la palabra
+  «prioridad» repetida. Revisado con una COPIA de la base real (usuario temporal solo en la copia): títulos de
+  SICOP de 3 líneas → 2 líneas y «…» (completo al pasar el mouse); «Sin coincidencia» no cabía → columna más
+  ancha. 197 pruebas pasan. **Visto en los datos reales:** un cartel sale una vez por familia (Correos, 3 filas
+  iguales); agruparlo cambia `panel.listar` y el Excel: proponerlo aparte.
+
 - **Detalle del cartel, segunda versión (2026-11-06).** A Ivania no le gustó la primera (tarjeta azul cargada y
   cortada, pasos en dos filas, cajas dentro de cajas, todo muy largo); eligió «franja arriba». Ahora: franja blanca a
   lo ancho (institución y chips, título, «¿Podemos participar?» con su color, **una sola acción verde** —«Dar

@@ -29,15 +29,19 @@ $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
     -WorkingDirectory $proyecto
 $horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 8:00
 $ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -StartWhenAvailable
 Register-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario" -Action $accion -Trigger $horario -Settings $ajustes `
     -Description "run-cycle --origen real --dry-run, lunes a viernes 8:00. Registro en data\logs."
 ```
 
 - Corre con tu usuario y **solo con la sesión abierta**: la computadora tiene que estar encendida y con tu
   sesión iniciada a las 8:00.
-- Si a las 8:00 estaba apagada, ese día no corre y no se ejecuta tarde (igual que `Persistent=false` en el
-  servidor: `-StartWhenAvailable` no se usa a propósito).
+- `-StartWhenAvailable` (2026-11-09, decisión de Ivania): si a las 8:00 estaba apagada, suspendida o sin la
+  sesión abierta, el ciclo corre **tarde**, en cuanto se pueda (una sola vez, no una por cada día perdido). Se
+  agregó porque del 3 al 6/11 el ciclo no corrió (despertó 8:02, sesión después de las 8:00) y se acumularon
+  avisos. El servidor sigue con `Persistent=false` (decisión de Oscar): son ajustes distintos. Una tarea ya creada
+  se cambia con `$t = Get-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"; $t.Settings.StartWhenAvailable
+  = $true; Set-ScheduledTask -InputObject $t`.
 - `-WakeToRun` (2026-10-28): si a las 8:00 está **suspendida**, Windows la despierta para correr la tarea. Solo
   funciona con los temporizadores de reactivación activados en el plan de energía; en esta computadora, **solo
   con cargador** (`powercfg /setacvalueindex SCHEME_CURRENT SUB_SLEEP RTCWAKE 1` y
