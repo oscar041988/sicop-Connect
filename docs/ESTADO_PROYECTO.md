@@ -4,6 +4,20 @@
 
 ## Último resultado
 
+- **Pulido del código (2026-11-09, pedido de Ivania; commit `b2d47a5`).**
+  - **Error real arreglado: dos programas que escriben a la vez se trababan.** Las transacciones empezaban con
+    `BEGIN`: si una leía y después escribía mientras otro programa escribía, SQLite fallaba en los dos con
+    «database is locked» sin esperar los 30 s de `ESPERA_BASE_OCUPADA_S` (probado: con `BEGIN` fallan los dos;
+    con `BEGIN IMMEDIATE` espera 1 s y sigue). Ahora `BEGIN IMMEDIATE` en `database.transaccion`, `calidad.py`,
+    `importers/comun.py` y `matching/evaluar.py`; prueba en `tests/test_migraciones.py`.
+  - **Reportes PDF:** la huella para reutilizar un reporte ahora incluye los topes por sección y el máximo de
+    páginas (antes solo la plantilla): con topes nuevos se rehace. Prueba en `tests/test_reporte.py`.
+  - `cli.py`: variable del bucle que tapaba el módulo `calidad` → `calidad_datos`. Sin usar: `import io` en
+    `importers/catalogo.py` y una variable en `test_asistente.py`.
+  - Revisado sin problemas: dinero en `Decimal` (el único `float` es la copia JSON), SQL con parámetros `?`,
+    fechas con zona horaria, `except … pass` intencionales. Herramienta: pyflakes, solo en el scratchpad (no es
+    dependencia del proyecto).
+
 - **Reporte PDF: «Por qué se recomienda» al final (2026-11-09, pedido de Oscar por Ivania).** Media página que
   explica en detalle la recomendación preliminar (las tres: dar seguimiento, revisar requisitos, descartar), con
   citas y, si es descartar, qué tendría que pedir el cartel para que valiera la pena. Decisiones de Ivania: para las
