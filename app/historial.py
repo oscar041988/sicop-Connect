@@ -44,6 +44,8 @@ ACCIONES = {
     "ver_documento_asistente": "Vio un documento de una respuesta del asistente",
     "descargar_documento_asistente": "Descargó un documento de una respuesta del asistente",
     "generar_reporte": "Generó el Reporte de cartel en PDF",
+    "guardar_oferta": "Guardó el borrador de la oferta económica",
+    "generar_oferta": "Generó la oferta económica en PDF",
     "ampliar_asistente": "Abrió el resto de las preguntas del asistente (después de los excluyentes)",
     "revisar_resultado": "Decidió si un requisito cumple en el resultado de elegibilidad",
     "calcular_resultado": "Calculó el resultado de elegibilidad de un cartel",

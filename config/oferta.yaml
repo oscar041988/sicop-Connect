@@ -1,0 +1,20 @@
+# Valores iniciales de la oferta económica (app/oferta_economica.py). Lo edita Hermatix. Solo datos públicos de la
+# empresa y textos generales: los precios y los porcentajes del desglose los escribe una persona en cada oferta, y el
+# nombre y la cédula del representante legal se escriben en cada oferta (no se guardan aquí).
+empresa:
+  nombre: Hermatix M2M Communication S.A.
+  cedula_juridica: 3-102-705192
+lugar: San José
+destinatario: Proveeduría Institucional
+representante:
+  cargo: representante legal
+condiciones:
+  garantia: Durante todo el período contractual.
+  entrega: ""
+  forma_pago: 30 días naturales o la usual de la institución.
+  validez: ""
+desglose:
+  mano_de_obra: Mano de obra e instalación
+  insumos: Equipos, plataforma y licencias
+  gastos_administrativos: Gastos administrativos y operativos
+  utilidad: Utilidad

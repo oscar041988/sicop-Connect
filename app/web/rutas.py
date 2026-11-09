@@ -34,14 +34,15 @@ from app.ayuda import pagina as ayuda
 from app.ayuda import votos as ayuda_votos
 from app.cli import EJEMPLOS_POR_ADVERTENCIA, IMPORTADORES, MAX_RECHAZOS_VISIBLES, SEPARADORES
 from app.config import load_settings
-from app.database import check_database, connect
+from app.database import check_database, connect, transaccion
 from app.importers import zip_pliegos
 from app.importers.comun import HORA_CR, ORIGENES, ImportacionError
 from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, panel, perfil, reintentos, resumen,
+                 expediente_descarga, exportar, fichas_panel, historial, oferta_economica, panel, perfil, reintentos,
+                 resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
@@ -351,6 +352,69 @@ def descargar_reporte(request: Request, nro_sicop: str) -> Response:
         except ia_reporte.ReporteError as exc:
             return _no_encontrado(request, str(exc))
     return FileResponse(r.ruta, media_type="application/pdf", filename=r.ruta.name)
+
+
+# --- Oferta económica (DECISION_PROPUESTA.md, aprobado por Oscar el 2026-11-09) ---------------------------------------
+# La llenan y la descargan quienes entran al expediente del cartel (su encargado y los administradores): trae precios.
+# La app formula el PDF; una persona lo firma con firma digital y lo sube a SICOP.
+
+def _render_oferta(request: Request, conn, nro_sicop: str, datos: dict, status_code: int = 200,
+                   **contexto) -> Response:
+    d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
+    guardado = oferta_economica.borrador(conn, nro_sicop)
+    return PLANTILLAS.TemplateResponse(request, "oferta_form.html", {
+        "seccion": "seguimiento", "c": d.compra, "o": datos, "guardado": guardado,
+        "RUBROS": oferta_economica.RUBROS, "MONEDAS": oferta_economica.MONEDAS,
+        "hecho": request.session.pop("hecho_oferta", None), **contexto}, status_code=status_code)
+
+
+@router.get("/oportunidades/{nro_sicop}/oferta", response_class=HTMLResponse)
+def ver_oferta(request: Request, nro_sicop: str) -> Response:
+    """El formulario de la oferta económica: el borrador guardado o, si no hay, los datos que salen del cartel."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        guardado = oferta_economica.borrador(conn, nro_sicop)
+        if guardado is not None:
+            datos = guardado[0]
+        else:
+            d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
+            datos = oferta_economica.valores_iniciales(d.compra, d.tipo_procedimiento)
+        return _render_oferta(request, conn, nro_sicop, datos)
+
+
+@router.post("/oportunidades/{nro_sicop}/oferta", response_class=HTMLResponse, dependencies=[Depends(verificar_csrf)])
+async def guardar_oferta(request: Request, nro_sicop: str) -> Response:
+    """«Guardar borrador» lo guarda; «Descargar PDF» lo guarda, lo revisa y entrega el PDF. Si un dato no sirve, el
+    formulario vuelve con lo escrito y el error (nunca se pierde lo que se llenó)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    form = await request.form()
+    return await run_in_threadpool(_guardar_oferta, request, nro_sicop, form)
+
+
+def _guardar_oferta(request: Request, nro_sicop: str, form) -> Response:
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        datos = oferta_economica.desde_formulario(form)
+        quien, ahora = _quien(request), datetime.now(HORA_CR)
+        oferta_economica.guardar_borrador(conn, nro_sicop, datos, quien, ahora)
+        if form.get("accion") != "pdf":
+            request.session["hecho_oferta"] = "Borrador guardado."
+            return RedirectResponse(f"/oportunidades/{nro_sicop}/oferta", status_code=303)
+        try:
+            oferta = oferta_economica.leer(datos)
+        except oferta_economica.OfertaError as exc:
+            return _render_oferta(request, conn, nro_sicop, datos, 400, error=str(exc))
+        contenido = oferta_economica.pdf(oferta_economica.html(oferta, ahora.date()), datos["procedimiento"])
+        with transaccion(conn):
+            historial.registrar(conn, quien, "generar_oferta", nro_sicop)
+    nombre = f"oferta_economica_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
+    return Response(contenido, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)

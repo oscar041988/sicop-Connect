@@ -8,7 +8,9 @@
   `python -m app.cli oferta economica --datos OFERTA.yaml` arma el PDF (carta, tabla con el monto en letras,
   condiciones, desglose que cuadra y fórmula de reajuste), sin IA; una persona lo firma y lo sube a SICOP. Con los
   datos de Tarrazú (solo local) reproduce la oferta ganadora al céntimo. 32 pruebas (datos SINTÉTICOS).
-  **Siguiente:** el formulario en el panel del cartel.
+  **Formulario en el panel (hecho):** «Oferta económica» en el cartel, solo para quien entra al expediente; sale
+  lleno con lo del cartel y `config/oferta.yaml`; borrador guardado (migración **0041**); «Descargar PDF». 5 pruebas.
+  **Siguiente:** la respuesta técnica (etapa 2).
 
 - **Oferta ganadora de Hermatix revisada (2026-11-09, autorización de Oscar comunicada por Ivania).** Licitación
   Reducida 2025LD-000058-0002900001 (Tarrazú, videovigilancia con IA para la flotilla): pliego, estudio de mercado y

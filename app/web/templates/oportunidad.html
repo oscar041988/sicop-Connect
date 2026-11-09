@@ -98,7 +98,8 @@
 
   <p class="cf-enlaces">
     {% if seg and puede_entrar %}<a href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
-    <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>{% endif %}
+    <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>
+    <a href="/oportunidades/{{ c.nro_sicop }}/oferta">Oferta económica</a>{% endif %}
     {% if vigente %}<a href="/oportunidades/{{ c.nro_sicop }}/reporte" title="Máximo 3 páginas">Reporte PDF</a>{% endif %}
     <a href="https://www.sicop.go.cr/app/module/bid/public/tenders" target="_blank" rel="noopener"
        title="Búscalo con el número {{ c.nro_sicop }} (no hay un enlace directo estable)">Ver en SICOP ↗</a>

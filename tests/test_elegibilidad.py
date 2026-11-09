@@ -211,7 +211,7 @@ def test_0033_se_aplica_sobre_una_base_con_respuestas(tmp_path):
                      " estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES (1, ?, 'r', 'p',"
                      " 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,))
         conn.commit()
-    assert apply_migrations(base) == ["0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql"]
+    assert apply_migrations(base) == ["0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT count(*) FROM eligibility_answers").fetchone() == (1,)
         assert elegibilidad.calcular(conn, NRO, ANA, AHORA) == 1

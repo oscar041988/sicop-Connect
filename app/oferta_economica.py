@@ -325,3 +325,91 @@ def guardar(contenido: bytes, carpeta: Path, procedimiento: str, momento) -> Pat
         ruta = destino / f"{base}_{n}.pdf"
     ruta.write_bytes(contenido)
     return ruta
+
+
+# --- Panel: valores iniciales, formulario y borrador -----------------------------------------------------------------
+
+CONFIG = PROJECT_ROOT / "config" / "oferta.yaml"
+
+
+def configuracion(ruta: Path = CONFIG) -> dict:
+    """Los valores iniciales de Hermatix (config/oferta.yaml): empresa, lugar, condiciones y nombres del desglose."""
+    import yaml
+    try:
+        datos = yaml.safe_load(ruta.read_text(encoding="utf-8")) or {}
+    except FileNotFoundError:
+        return {}
+    return datos if isinstance(datos, dict) else {}
+
+
+def valores_iniciales(compra, tipo_procedimiento: str | None, config: dict | None = None) -> dict:
+    """Una oferta nueva para el cartel: procedimiento, institución, objeto y líneas salen del cartel; la empresa y los
+    textos generales, de config/oferta.yaml. Los precios y los porcentajes quedan vacíos: los escribe una persona."""
+    config = configuracion() if config is None else config
+    monedas = {linea.estimado.moneda for linea in compra.lineas if linea.estimado is not None}
+    return {
+        "procedimiento": compra.nro_procedimiento or "", "tipo_procedimiento": tipo_procedimiento or "",
+        "institucion": compra.institucion or "", "destinatario": config.get("destinatario", ""),
+        "objeto": compra.descripcion or "", "lugar": config.get("lugar", "San José"), "fecha": "", "partida": "1",
+        "empresa": dict(config.get("empresa") or {}),
+        "representante": {"nombre": "", "cargo": (config.get("representante") or {}).get("cargo", ""),
+                          "calidades": "", "cedula": ""},
+        "moneda": monedas.pop() if len(monedas) == 1 else "CRC", "meses": "",
+        "lineas": [{"numero": linea.numero_linea, "cantidad": linea.cantidad,
+                    "descripcion": linea.nombre_catalogo or "", "precio_unitario": ""} for linea in compra.lineas],
+        "iva": {"tasa": "13"},
+        "condiciones": dict(config.get("condiciones") or {}),
+        "desglose": {clave: {"nombre": (config.get("desglose") or {}).get(clave, clave), "porcentaje": ""}
+                     for clave in RUBROS},
+    }
+
+
+def desde_formulario(f) -> dict:
+    """Los campos del formulario del panel (un MultiDict de Starlette) en el formato del YAML. Las filas de línea vacías
+    se ignoran; lo demás lo revisa leer()."""
+    def campo(nombre: str) -> str:
+        return str(f.get(nombre) or "").strip()
+
+    filas = zip(f.getlist("lin_numero"), f.getlist("lin_cantidad"), f.getlist("lin_descripcion"),
+                f.getlist("lin_precio"))
+    lineas = [{"numero": n.strip(), "cantidad": c.strip(), "descripcion": d.strip(), "precio_unitario": p.strip()}
+              for n, c, d, p in filas if any(x.strip() for x in (c, d, p))]
+    iva = {"tasa": campo("iva_tasa")} if campo("iva_modo") != "exento" else {"exento": campo("iva_exento")}
+    return {
+        "procedimiento": campo("procedimiento"), "tipo_procedimiento": campo("tipo_procedimiento"),
+        "institucion": campo("institucion"), "destinatario": campo("destinatario"), "objeto": campo("objeto"),
+        "lugar": campo("lugar"), "fecha": campo("fecha"), "partida": campo("partida"),
+        "empresa": {"nombre": campo("empresa_nombre"), "cedula_juridica": campo("empresa_cedula")},
+        "representante": {"nombre": campo("rep_nombre"), "cargo": campo("rep_cargo"),
+                          "calidades": campo("rep_calidades"), "cedula": campo("rep_cedula")},
+        "moneda": campo("moneda") or "CRC", "meses": campo("meses") or None, "lineas": lineas, "iva": iva,
+        "condiciones": {"garantia": campo("cond_garantia"), "entrega": campo("cond_entrega"),
+                        "forma_pago": campo("cond_forma_pago"), "validez": campo("cond_validez")},
+        "desglose": {clave: {"nombre": campo(f"des_{clave}_nombre"), "porcentaje": campo(f"des_{clave}_pct")}
+                     for clave in RUBROS},
+    }
+
+
+def borrador(conn, nro_sicop: str) -> tuple[dict, str, str] | None:
+    """(datos, quién lo guardó, cuándo) del borrador del cartel, o None si no hay."""
+    import json
+    fila = conn.execute("SELECT datos_json, actualizado_por_nombre, actualizado_en FROM ofertas_borrador"
+                        " WHERE nro_sicop = ?", (nro_sicop,)).fetchone()
+    return (json.loads(fila[0]), fila[1], fila[2]) if fila else None
+
+
+def guardar_borrador(conn, nro_sicop: str, datos: dict, quien, ahora) -> None:
+    """Reemplaza el borrador del cartel y lo anota en el historial (sin montos: el detalle solo dice el cartel)."""
+    import json
+
+    from app import historial
+    from app.database import transaccion
+    with transaccion(conn):
+        conn.execute(
+            "INSERT INTO ofertas_borrador (nro_sicop, datos_json, actualizado_por, actualizado_por_nombre,"
+            " actualizado_en) VALUES (?, ?, ?, ?, ?) ON CONFLICT (nro_sicop) DO UPDATE SET datos_json ="
+            " excluded.datos_json, actualizado_por = excluded.actualizado_por, actualizado_por_nombre ="
+            " excluded.actualizado_por_nombre, actualizado_en = excluded.actualizado_en",
+            (nro_sicop, json.dumps(datos, ensure_ascii=False), quien.user_id, quien.nombre,
+             ahora.isoformat(timespec="seconds")))
+        historial.registrar(conn, quien, "guardar_oferta", nro_sicop)

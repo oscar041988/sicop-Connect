@@ -191,6 +191,12 @@ queda en `EXPORTS_DIR/ofertas/<procedimiento>/` (fuera de Git) y nunca se sobres
 de la oferta ganadora de Tarrazú (solo en local), la app da los mismos montos, el mismo monto en letras y el mismo
 desglose al céntimo. 32 pruebas en `tests/test_oferta_economica.py`.
 
-**Siguiente:** llenar la oferta desde el panel del cartel (formulario, con el procedimiento, la institución y el objeto
-tomados del cartel), en vez de escribir el YAML a mano.
+**Formulario en el panel (hecho, 2026-11-09):** en el cartel, «Oferta económica» (junto a «Abrir expediente»).
+Lo ven y lo llenan solo quienes entran al expediente (su encargado y los administradores), porque trae precios.
+Sale lleno con lo del cartel (procedimiento, tipo, institución, objeto y líneas con su cantidad) y con
+`config/oferta.yaml` (empresa, lugar, condiciones y nombres del desglose); los precios y los porcentajes, vacíos.
+«Guardar borrador» lo guarda (migración 0041, un borrador por cartel); «Descargar PDF» lo guarda, lo revisa y
+entrega el PDF. Si un dato no sirve, vuelve el formulario con lo escrito y el motivo. El historial anota quién guardó
+y quién generó el PDF, sin montos. 5 pruebas en `tests/test_oferta_panel.py`.
 
+**Siguiente:** la respuesta técnica punto por punto (etapa 2).
