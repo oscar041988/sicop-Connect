@@ -4,6 +4,14 @@
 
 ## Último resultado
 
+- **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
+  `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas
+  (rutas relativas: revisado, sirve en el servidor; ~600 MB sin las grabaciones); el ciclo de las 8:00 pasa al
+  servidor y se apaga la tarea de Windows; **enriquecimiento e IA en pausa** hasta la fase 2 (envío PC → servidor
+  con token, decisión del 27/10). Texto nuevo del PR en `docs/PR_DESARROLLO.md` (102 commits sobre `main`).
+  Nada se ejecutó en el servidor. **Suite con Python 3.12** (entorno limpio): resultado pendiente.
+  - **Pendiente · Oscar:** unir el PR, los valores de la sección 0 de la guía y el día del cambio.
+
 - **Ayuda al día con el detalle del cartel rediseñado (2026-11-09, pedido de Ivania).** `ayuda capturas` de todas
   las misiones dio 148 de 159: las 11 que faltaban eran de las misiones 04, 06 y 09, que todavía describían la
   página anterior al rediseño del 6/11. Reescritas: **04** (franja: institución, etiquetas, título, «¿Podemos
