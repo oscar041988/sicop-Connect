@@ -75,18 +75,17 @@ def test_el_registro_lo_ve_solo_un_administrador(web):
     assert 'href="/asistente/registro"' not in c["ivania"].get("/oportunidades").text
 
 
-def test_aviso_del_perfil_en_el_panel(web):
+def test_sin_aviso_del_perfil_en_el_panel(web):
+    """Decisión de Ivania (2026-11-09): un documento por vencer no se avisa en el panel; se ve solo en «Perfil»."""
     db_path, _, settings, c, _ = web
     oscar = c["oscar"]
-    assert "Perfil de Hermatix:" not in oscar.get("/oportunidades").text
     with closing(connect(db_path)) as conn:
         poliza = perfil.crear(conn, "poliza", "Póliza SINTÉTICA de riesgos", ANA, AHORA)
         vence = (perfil.hoy() + timedelta(days=10)).isoformat()
         perfil.nueva_version(conn, settings.profile_docs_dir, poliza, perfil.Datos(valor="Póliza", vence_el=vence),
                              None, 1024, ANA, AHORA)
-    pagina = " ".join(oscar.get("/oportunidades").text.split())
-    assert "Perfil de Hermatix:</strong> 1 elemento vencido o por vencer (Póliza SINTÉTICA de riesgos)" in pagina
-    assert 'href="/perfil">Revisar el perfil' in pagina
+    pagina = oscar.get("/oportunidades").text
+    assert "Perfil de Hermatix:" not in pagina and "Revisar el perfil" not in pagina
 
 
 def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_esta_en_la_constancia(web):

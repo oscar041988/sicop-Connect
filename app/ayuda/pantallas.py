@@ -126,7 +126,6 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Iniciar sesión", "el título «Iniciar sesión»"): Objetivo(selector="h1"),
     ("Iniciar sesión", "el ojito de «Contraseña»"): Objetivo(selector=".btn-mostrar"),
     # Asistente de elegibilidad: perfil, lista de verificación y asistente
-    ("Perfil", "el cuadro «Revisar pronto»"): Objetivo(selector=".aviso-perfil"),
     ("Perfil", "una fila"): Objetivo(selector="table.lista tbody tr"),
     ("Perfil", "el estado"): Objetivo(selector="table.lista .estado-perfil"),
     ("Elemento del perfil", "el estado"): Objetivo(selector=".ficha .estado-perfil"),

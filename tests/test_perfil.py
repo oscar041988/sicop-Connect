@@ -190,7 +190,8 @@ def test_la_administradora_agrega_con_documento_y_la_encargada_lo_ve_y_descarga(
     assert r.status_code == 303
     url = r.headers["location"]
     html = encargada.get("/perfil").text
-    assert "Póliza de riesgos del trabajo" in html and "Por vencer" in html and "Revisar pronto" in html
+    assert "Póliza de riesgos del trabajo" in html and "Por vencer" in html
+    assert "Revisar pronto" not in html                            # sin cuadro de aviso (Ivania, 2026-11-09)
     assert 'action="/perfil"' not in html                          # la encargada no ve los formularios
     item = int(url.rsplit("/", 1)[1])
     with closing(connect(db)) as conn:

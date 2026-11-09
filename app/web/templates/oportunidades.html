@@ -1,11 +1,5 @@
 {% extends "base.html" %}
 {% block contenido %}
-{% if avisos_perfil %}{# Asistente, lección 5: documentos del perfil vencidos o por vencer #}
-<p class="aviso-etapa aviso-perfil-panel"><strong>Perfil de Hermatix:</strong>
-  {{ avisos_perfil | length }} elemento{{ "s" if avisos_perfil | length != 1 }} vencido{{ "s" if avisos_perfil | length != 1 }}
-  o por vencer ({% for e in avisos_perfil[:3] %}{{ e.titulo }}{% if not loop.last %}, {% endif %}{% endfor %}{% if avisos_perfil | length > 3 %}…{% endif %}).
-  <a href="/perfil">Revisar el perfil</a></p>
-{% endif %}
 {# Chips de estado de la revisión + búsqueda (diseño del prototipo de Hermatix) #}
 <div class="tools">
   {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos"), ("ofertada", "Ofertada"), ("no_se_oferta", "No se oferta")] %}

@@ -183,11 +183,10 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
         sin_evaluar = panel.importado_sin_evaluar(conn)
         seguimientos = seguimiento.de_carteles(conn, [f.nro_sicop for f in resultado.filas])
-        avisos_perfil = perfil.avisos(perfil.listar(conn))       # asistente, lección 5: vencidos o por vencer
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
-        "seguimientos": seguimientos, "avisos_perfil": avisos_perfil,
+        "seguimientos": seguimientos,
         "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
@@ -1535,9 +1534,9 @@ def _render_perfil(request: Request, conn, status_code: int = 200, **contexto) -
     es_admin = seguridad.es_admin(request)
     elementos = perfil.listar(conn)
     return PLANTILLAS.TemplateResponse(request, "perfil.html", {
-        "seccion": "perfil", "elementos": elementos, "avisos": perfil.avisos(elementos), "TIPOS": perfil.TIPOS,
+        "seccion": "perfil", "elementos": elementos, "TIPOS": perfil.TIPOS,
         "sugerencias": perfil.sugerencias(conn) if es_admin else {}, "es_admin": es_admin,
-        "dias_aviso": perfil.AVISO_DIAS, "hecho": request.session.pop("hecho_perfil", None), "formulario": {},
+        "hecho": request.session.pop("hecho_perfil", None), "formulario": {},
         **contexto}, status_code=status_code)
 
 

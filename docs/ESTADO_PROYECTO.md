@@ -4,6 +4,12 @@
 
 ## Último resultado
 
+- **Sin avisos de vencimiento del perfil (2026-11-09, Ivania: «no necesitamos que notifique eso»).** Se quitaron el
+  cuadro «Revisar pronto» de «Perfil» y la línea «Perfil de Hermatix: N elementos vencidos o por vencer… Revisar el
+  perfil» de la lista de carteles (`perfil.avisos` ya no existe). Cada elemento conserva su estado («Por vencer»,
+  «Vencido») en la tabla, y el asistente lo sigue usando igual. Misión de ayuda 21 sin ese paso (capturas
+  regeneradas). 139 pruebas de perfil, asistente, panel y ayuda pasan.
+
 - **Ciclo diario de Windows: corre tarde si se perdió las 8:00 (2026-11-09, decisión de Ivania).** Del 3 al 6/11
   no salió ningún aviso (18 «nueva» quedaron preparados): 3/11 despertó a las 8:02; 4/11 sesión abierta después
   de las 8:00; 5/11 `database is locked` (otro programa escribía en `sicop.db`; la app espera 5 s); 6/11 Windows

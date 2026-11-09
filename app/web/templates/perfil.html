@@ -9,20 +9,6 @@
     {% if not es_admin %}Solo los administradores cargan o cambian los datos.{% endif %}</p>
   {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
-
-  {% if avisos %}
-  <div class="aviso-perfil">
-    <strong>Revisar pronto:</strong>
-    <ul>
-      {% for e in avisos %}
-      <li><a href="/perfil/{{ e.id }}">{{ e.titulo }}</a>:
-        {% if e.estado == "vencido" %}venció el {{ e.vigente.vence_el | dia }}{% else %}vence el
-        {{ e.vigente.vence_el | dia }} (en {{ e.dias }} día{{ "s" if e.dias != 1 }}){% endif %}</li>
-      {% endfor %}
-    </ul>
-    <small>Se avisa {{ dias_aviso }} días antes de que venza.</small>
-  </div>
-  {% endif %}
 </section>
 
 {% for tipo, nombre in TIPOS.items() %}

@@ -10,21 +10,18 @@ Cargar o cambiar datos es solo para administradores.
 
 1. Haz clic en «Perfil», en el menú de arriba.
    [captura: Perfil · resaltar «Perfil» en el menú]
-2. Mira el cuadro «Revisar pronto», arriba.
-   [captura: Perfil · resaltar el cuadro «Revisar pronto»]
-   Dice qué venció o qué vence en 30 días o menos.
 
 ### Leer los elementos
 
-3. Baja a las tablas. Hay una por tipo: Experiencia, Permiso, Póliza…
+2. Baja a las tablas. Hay una por tipo: Experiencia, Permiso, Póliza…
    [captura: Perfil · resaltar una fila]
-4. Lee cada fila de izquierda a derecha.
+3. Lee cada fila de izquierda a derecha.
    - «Elemento»: qué es.
    - «Dato»: lo que tiene Hermatix, por ejemplo «8 años».
    - «Estado»: si sirve hoy.
    - «Vence»: hasta cuándo vale.
    - «Documento»: «Ver» lo abre y «Descargar» lo guarda.
-5. Mira el color del estado.
+4. Mira el color del estado.
    [captura: Perfil · resaltar el estado]
    - «Vigente»: sirve.
    - «Por vencer»: vence en 30 días o menos. Renuévalo pronto.
@@ -33,23 +30,23 @@ Cargar o cambiar datos es solo para administradores.
 
 ### Agregar un elemento (administradores)
 
-6. Baja hasta «Agregar elemento», al final.
+5. Baja hasta «Agregar elemento», al final.
    [captura: Perfil · resaltar «Agregar elemento»]
-7. Elige el «Tipo».
-8. Escribe el «Título». Por ejemplo: «Póliza de riesgos del trabajo (INS)».
-9. Llena lo que tengas: «Dato», «Número», «Vence el» o el documento.
+6. Elige el «Tipo».
+7. Escribe el «Título». Por ejemplo: «Póliza de riesgos del trabajo (INS)».
+8. Llena lo que tengas: «Dato», «Número», «Vence el» o el documento.
    Si todavía no tienes nada, déjalo vacío. Queda «Pendiente».
-10. Haz clic en «Agregar».
+9. Haz clic en «Agregar».
 
 ### Cambiar un elemento (administradores)
 
-11. Haz clic en el nombre del elemento, en la tabla.
-12. Mira su página. Arriba dice el estado y el dato de hoy.
+10. Haz clic en el nombre del elemento, en la tabla.
+11. Mira su página. Arriba dice el estado y el dato de hoy.
     [captura: Elemento del perfil · resaltar el estado]
-13. Baja hasta «Reemplazar o actualizar».
+12. Baja hasta «Reemplazar o actualizar».
     [captura: Elemento del perfil · resaltar «Reemplazar o actualizar»]
-14. Escribe los datos nuevos o sube el documento nuevo.
-15. Haz clic en «Guardar».
+13. Escribe los datos nuevos o sube el documento nuevo.
+14. Haz clic en «Guardar».
     Lo anterior no se borra. Queda en «Historial de versiones», más abajo.
 
 **Dónde quedaste:** en la página de un elemento del perfil.

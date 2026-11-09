@@ -157,11 +157,6 @@ def obtener(conn: sqlite3.Connection, item_id: int, dia: date | None = None) -> 
     return _elemento(conn, fila, dia or hoy()) if fila else None
 
 
-def avisos(elementos: list[Elemento]) -> list[Elemento]:
-    """Los vencidos y los que vencen en AVISO_DIAS días o menos, del más urgente al menos."""
-    return sorted((e for e in elementos if e.estado in ("vencido", "por_vencer")), key=lambda e: e.dias)
-
-
 def versiones(conn: sqlite3.Connection, item_id: int) -> list[Version]:
     """El historial del elemento, de la versión más nueva a la más vieja."""
     return [_version(f) for f in conn.execute(f"{_VERSION} WHERE item_id = ? ORDER BY id DESC", (item_id,))]
