@@ -1,53 +1,59 @@
 # ¿Cómo veo la información de SICOP y los documentos?
 
-**Para qué sirve:** para ver las fechas oficiales y leer el pliego y los anexos sin entrar a SICOP.
+**Para qué sirve:** para ver las fechas oficiales y las condiciones, y leer el pliego y los anexos sin entrar a SICOP.
 
-**Antes de empezar:** estás en el cartel, en «Resumen ejecutivo». Ahí terminó la misión anterior.
+**Antes de empezar:** estás en el cartel, en la pestaña «Resumen». Ahí terminó la misión anterior.
 
-### Leer la información de SICOP
+### Ver las condiciones
 
-1. Baja hasta «Información de SICOP».
-   [captura: Cartel · resaltar «Información de SICOP»]
-2. Lee la línea gris de abajo. Dice el día en que la app consultó SICOP.
+1. Haz clic en la pestaña «Condiciones», debajo de las cuatro cifras.
+   [captura: Cartel · resaltar la pestaña «Condiciones»]
+2. Lee la línea gris de arriba.
+   [captura: Cartel · resaltar el estado del concurso]
+   Dice el día en que la app consultó SICOP y en qué estado está el concurso en SICOP.
 3. Mira si hay un aviso que dice que el cierre cambió. Si lo hay, vale la fecha de SICOP.
    [captura: Cartel · resaltar el aviso del cierre]
-4. Mira «Estado del concurso». Dice en qué va el concurso en SICOP.
-   [captura: Cartel · resaltar «Estado del concurso»]
-5. Mira «Recepción de ofertas». Dice cuándo cierra la entrega de ofertas.
-6. Mira «Apertura y aclaraciones». Dice hasta cuándo puedes hacer preguntas.
-7. Mira «Monto estimado». Dice cuánto calcula gastar la institución.
-8. Lee «Garantías y contrato», si aparece. Dice qué garantías piden y cómo es el contrato.
-   [captura: Cartel · resaltar «Garantías y contrato»]
-9. Lee «Criterios de evaluación», si aparece. Dice cómo eligen al ganador.
+4. Lee las filas: «Reajuste de precios», «Multas», «Cláusula penal», «Criterios de evaluación», «Garantías»,
+   «Anticipo» y «Prórroga».
+   [captura: Cartel · resaltar la fila «Garantías»]
+   Cada una dice lo corto. «Leer texto completo del pliego» abre el texto entero.
+5. Mira los cuatro datos de abajo.
+   [captura: Cartel · resaltar las fechas de SICOP]
+   - «Recepción de ofertas»: cuándo cierra la entrega de ofertas.
+   - «Apertura y aclaraciones»: hasta cuándo puedes hacer preguntas.
+   - «Monto estimado»: cuánto calcula gastar la institución.
+   - «Comprador»: la institución, su cédula y el día en que publicó el cartel.
 
 ### Ver y descargar los documentos
 
-10. Baja hasta «Documentos».
-    [captura: Cartel · resaltar «Documentos»]
-    El título dice cuántos documentos se guardaron. Por ejemplo, «3 guardados de 4».
-11. Lee la columna «Documento». Dice el nombre y el tipo de cada archivo.
-12. Haz clic en «Ver» para abrir un documento en otra pestaña.
-    [captura: Cartel · resaltar «Ver» de un documento]
-13. Cierra esa pestaña cuando termines. Vuelves al cartel.
-14. Haz clic en «Descargar» para guardar el documento en tu computadora.
+6. Haz clic en la pestaña «Documentos».
+   [captura: Cartel · resaltar la pestaña «Documentos»]
+   El título dice cuántos documentos se guardaron. Por ejemplo, «3 guardados de 4».
+7. Lee cada fila.
+   [captura: Cartel · resaltar un documento]
+   Arriba, el nombre del documento. Abajo, en gris, el archivo, su tamaño y si la app pudo leer su texto.
+8. Haz clic en «Abrir» para ver un documento en otra pestaña.
+   [captura: Cartel · resaltar «Abrir» de un documento]
+9. Cierra esa pestaña cuando termines. Vuelves al cartel.
+10. Haz clic en «Descargar» para guardar el documento en tu computadora.
     [captura: Cartel · resaltar «Descargar» de un documento]
     Queda en tu carpeta Descargas.
 
-**Dónde quedaste:** en el cartel, en «Documentos». Debajo sigue «Por qué aparece».
+**Dónde quedaste:** en el cartel, en la pestaña «Documentos». Debajo sigue «Por qué aparece».
 
 ## ¿Y si…?
 
-**¿Y si dice «Todavía no se consultó en SICOP.»?**
+**¿Y si «Condiciones» dice «Todavía no se consultó en SICOP»?**
 La app lo consulta sola cada mañana. Vuelve mañana o búscalo en SICOP con su número.
 
-**¿Y si no aparece la tabla «Documentos»?**
+**¿Y si «Documentos» dice «Sin documentos de SICOP para este cartel»?**
 La app todavía no bajó los documentos de ese cartel. Vuelve mañana.
 
-**¿Y si un documento no tiene botón «Ver»?**
-Ese tipo de archivo no se puede abrir aquí. Usa «Descargar».
+**¿Y si un documento solo tiene «Abrir»?**
+Ese tipo de archivo no se muestra aquí: «Abrir» lo descarga.
 
 **¿Y si un documento no tiene ningún botón?**
-No se pudo guardar. La columna «Texto» dice por qué. Búscalo en SICOP.
+No se pudo guardar. La línea gris dice por qué. Búscalo en SICOP.
 
 **¿Y si dice que la información se borró al cierre?**
 Pasa si nadie marcó el cartel «Interesa» ni le dio seguimiento. Búscalo en SICOP con su número.

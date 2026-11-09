@@ -8,15 +8,16 @@
 
 1. Sube al inicio del cartel. Puedes presionar la tecla «Inicio» del teclado.
    El botón está arriba, por eso hay que subir.
-2. Busca el botón «Dar seguimiento», debajo del cuadro del plazo.
+2. Busca el botón verde «Dar seguimiento», arriba a la derecha, al lado de «¿Podemos participar?».
    [captura: Cartel · resaltar «Dar seguimiento»]
-3. Lee la frase gris al lado del botón.
-   Dice que el cartel pasa a la página «Seguimiento» y que un administrador asigna el encargado.
+3. Antes de hacer clic, ten en cuenta lo que pasa: el cartel pasa a la página «Seguimiento» y un administrador
+   le asigna el encargado.
 4. Haz clic en «Dar seguimiento».
-   La página baja sola hasta «Asistente de elegibilidad». Lo verás en la misión 23.
-5. Mira la etiqueta nueva arriba del título, al inicio: «En seguimiento · sin encargado · preparando».
-   [captura: Cartel · resaltar la etiqueta «En seguimiento»]
-   Dice quién es el encargado y en qué etapa va la oferta.
+   Se abre sola la pestaña «Requisitos», en «Asistente de elegibilidad». Lo verás en la misión 23.
+5. Mira las etiquetas de arriba a la derecha. Ahora dicen la etapa (al empezar, «Etapa: Preparando») y el
+   encargado, o «Sin encargado» mientras no lo asignen.
+   [captura: Cartel · resaltar las etiquetas de seguimiento]
+   En lugar de «Dar seguimiento», el botón verde ahora abre el asistente.
 
 ### Verlo en la página «Seguimiento»
 

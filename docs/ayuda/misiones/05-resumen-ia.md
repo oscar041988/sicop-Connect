@@ -2,7 +2,7 @@
 
 **Para qué sirve:** para saber en dos minutos qué piden en el cartel, sin leer todo el pliego.
 
-**Antes de empezar:** estás en el cartel, en los cuatro datos. Ahí terminó la misión anterior.
+**Antes de empezar:** estás en el cartel, en las cuatro cifras. Ahí terminó la misión anterior.
 
 ### Mirar el resumen en el cartel
 

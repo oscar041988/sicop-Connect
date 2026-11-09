@@ -4,6 +4,15 @@
 
 ## Último resultado
 
+- **Ayuda al día con el detalle del cartel rediseñado (2026-11-09, pedido de Ivania).** `ayuda capturas` de todas
+  las misiones dio 148 de 159: las 11 que faltaban eran de las misiones 04, 06 y 09, que todavía describían la
+  página anterior al rediseño del 6/11. Reescritas: **04** (franja: institución, etiquetas, título, «¿Podemos
+  participar?», «Dar seguimiento» y «Decidir», las cuatro cifras, enlaces), **06** (pestañas «Condiciones» y
+  «Documentos», con `?paso=` en las capturas) y **09** (pasos 2 a 5: el botón verde, la pestaña «Requisitos» y las
+  etiquetas de etapa y encargado). Misión 05: empieza «en las cuatro cifras». Claves nuevas en
+  `app/ayuda/pantallas.py`. Capturas: 04 7/7, 06 9/9, 09 4/4 (todas las misiones completas); 51 pruebas de ayuda
+  pasan.
+
 - **Revisión reglas vs IA (2026-11-09, pedido de Ivania): `docs/revision_reglas_vs_ia_20261109.md`.** 41 carteles
   con resumen, 10 desacuerdos; 2 se habían avisado por correo con la IA diciendo descartar.
   - **A1 hecho:** `20261002824` (cámaras fotográficas y de videoconferencia, UNA) salía Media por «CAMARAS» en el
