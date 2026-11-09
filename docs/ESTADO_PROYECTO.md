@@ -9,7 +9,7 @@
   oferta económica en `data/ofertas/` (fuera de Git). Análisis completo con precios **solo en local**
   (`data/ofertas/analisis_oferta_tarrazu.md`); lo aprendido, sin precios ni datos personales, en
   `DECISION_PROPUESTA.md` §9. No está en la base (adjudicaciones de jul–oct 2026). **Falta:** oferta técnica y
-  anexos, acta con puntajes, una oferta perdida y capturas de SICOP.
+  anexos, acta con puntajes y capturas de SICOP (Hermatix no ha perdido concursos: no hay oferta perdida).
 
 - **Fase 2 · envío del enriquecimiento al servidor (2026-11-09, diseño y paso 1): `docs/ENVIO_ENRIQUECIMIENTO.md`.**
   Decisiones de Ivania: la cola de IA corre en el servidor (no usa navegador); la PC pide la cola al servidor y

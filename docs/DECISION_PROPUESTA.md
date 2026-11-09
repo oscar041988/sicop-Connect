@@ -48,6 +48,19 @@ para concursar.
 | Gestor de documentos (expediente, encargado, etapas) | Dónde se arma la oferta y quién la tiene a cargo; etapas «preparando · enviada · ganada · perdida» |
 | Página «Competencia» (adjudicaciones) | A quién se le adjudicó, y por cuánto, en carteles parecidos |
 
+**Alcance (Ivania, 2026-11-09): la app formula los archivos de la oferta; una persona los sube a SICOP.** Nada
+se presenta desde la app. Con lo aprendido en Tarrazú (sección 9), los archivos que formularía son:
+
+| Archivo | Qué lleva | Cómo se arma |
+|---|---|---|
+| Carta de presentación | Empresa, representante, procedimiento, declaración del Registro de Proveedores (art. 29 LGCP) | Plantilla de Hermatix + datos del cartel |
+| Oferta económica | Tabla de precios (línea, cantidad, unitario, mensual o total, IVA), **monto en letras**, «Última línea» | La app calcula; el precio lo aprueba una persona |
+| Desglose del precio | Rubros en montos y porcentajes que cuadran (mano de obra, insumos o equipos, gastos, utilidad) | La app calcula |
+| Fórmula de reajuste | La fórmula con los porcentajes del desglose | Plantilla + los porcentajes |
+| Condiciones generales | Garantía, entrega, forma de pago, validez, aceptación del pliego | Plantilla + lo que pide el pliego |
+| Respuesta técnica (matriz de cumplimiento) | Cada especificación del pliego ↔ lo que ofrece Hermatix ↔ la ficha que lo prueba | Etapa 2; las fichas de los productos |
+| Índice de documentos | Qué documento de admisibilidad va (perfil, autenticado por notario o no) y si está vigente | Lista de verificación + perfil |
+
 **Lo nuevo, por etapas** (cada una se aprueba y se prueba antes de la siguiente):
 
 1. **Paquete de documentos:** la app junta lo que pide el cartel y ya está en el perfil (personería, CCSS,
@@ -61,13 +74,13 @@ para concursar.
 4. **Tabla de precios (borrador):** con los costos y márgenes de Hermatix y los precios adjudicados en carteles
    parecidos. La aprueba una persona.
 5. **Revisión final y entrega:** una lista para revisar antes de subir a SICOP, quién firma y el paquete
-   descargable. Después del concurso se registra el resultado (ganada o perdida y el puntaje) para aprender.
+   descargable (los archivos de la tabla de arriba). **La persona** los sube a SICOP. Después del concurso se registra el resultado (ganada o perdida y el puntaje) para aprender.
 
 ## 4. Lo que se necesita para empezar
 
 | Qué | Para qué | ¿Ya está? | Quién lo entrega |
 |---|---|---|---|
-| **Una o dos ofertas reales ya presentadas en SICOP**, una ganada y una perdida, con capturas de cada pantalla del formulario de oferta | Conocer los campos y adjuntos que pide SICOP sin inventarlos | **Parcial:** pliego y oferta económica de una ganada (Tarrazú, 2025; sección 9). Faltan la oferta técnica, una perdida y las capturas | Oscar |
+| **Una o dos ofertas reales ya presentadas en SICOP**, con capturas de cada pantalla del formulario de oferta. Hermatix no ha perdido concursos (Ivania, 2026-11-09): para comparar sirven otras ganadas o las ofertas públicas de otras empresas en concursos de sus familias | Conocer los campos y adjuntos que pide SICOP sin inventarlos | **Parcial:** pliego y oferta económica de una ganada (Tarrazú, 2025; sección 9). Faltan la oferta técnica y las capturas | Oscar |
 | **El acta de adjudicación de esas ofertas**, con el puntaje de cada oferente | Saber por qué se ganó o se perdió | Parcial (hay adjudicaciones en «Competencia») | **[por decidir · Oscar]** |
 | **Documentos legales**: personería jurídica, cédula jurídica, CCSS y FODESAF al día, declaraciones juradas que siempre se piden | Adjuntarlos sin buscarlos | Parcial (están en el «Perfil») | **[por decidir · Oscar]** |
 | **Fichas técnicas** de cada producto (FleetMatix, Fenova IA, PassengerIQ, MoveOn, SmartTags, FleetRun, Osmia IoT, BodyCams) y las certificaciones de los fabricantes | La respuesta técnica (etapa 2) | No | **[por decidir · Oscar]** |
@@ -138,7 +151,9 @@ familia videotelemática), que ganó Hermatix. El análisis completo, con precio
 **Cómo es la oferta económica de Hermatix:** carta de presentación con la declaración del Registro de Proveedores
 (art. 29 LGCP) · tabla de precios (línea, cantidad, precio unitario mensual, mensual, anual, IVA, total en letras,
 «Última línea») · condiciones generales (garantía, entrega, pago, validez, aceptación del pliego) · descripción del
-equipo y de las funciones ADAS y DSM · desglose del precio en 4 rubros (montos y porcentajes) · firma.
+equipo y de las funciones ADAS y DSM · desglose del precio en 4 rubros (montos y porcentajes) · **fórmula de
+reajuste de precios** (con los mismos porcentajes y los índices de mano de obra, insumos y gastos) · firma. No trae la
+respuesta punto por punto ni los documentos de admisibilidad: fueron en otros archivos de la oferta en SICOP.
 
 **Lo que esto le dice a la app:**
 1. **La app puede armar sola** (sin IA, la app calcula): la tabla de precios con el **monto en letras**, el desglose
@@ -151,5 +166,5 @@ equipo y de las funciones ADAS y DSM · desglose del precio en 4 rubros (montos 
    que la oferta económica no menciona.
 4. **Señalar inconsistencias del pliego** («sesenta (10) dispositivos») y pedir la aclaración a tiempo.
 
-**Falta** para seguir: la oferta técnica y sus anexos, el acta de adjudicación con los puntajes, una oferta
-perdida y las capturas de SICOP.
+**Falta** para seguir: la oferta técnica y sus anexos, el acta de adjudicación con los puntajes y las capturas de
+SICOP. (Hermatix no ha perdido concursos; para comparar, otras ofertas ganadas.)
