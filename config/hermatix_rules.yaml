@@ -51,6 +51,7 @@ familias:
       "tapizado",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   videotelematica:
@@ -76,6 +77,7 @@ familias:
       "intraoral",                  # cámaras dentales (20261001749, CCSS; Ivania, 2026-10-20)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   seguridad_vial:
@@ -100,6 +102,7 @@ familias:
       "aire acondicionado",                     # no "ac" solo: aparece dentro de "vacunas", "acceso"
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   transporte_corporativo:
@@ -120,6 +123,7 @@ familias:
       "transporte de muestras", "viaticos", "boletos aereos",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   rastreo_activos:
@@ -150,6 +154,7 @@ familias:
       "impresora termica",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   iot_frio:
@@ -186,6 +191,7 @@ familias:
       "de mano",                    # aparato de mano: no interesa nunca, aunque tenga pantalla (Ivania, 2026-10-09)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   camaras_corporales:
@@ -207,6 +213,7 @@ familias:
       "videoconferencia",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   conteo_pasajeros:
@@ -233,6 +240,7 @@ familias:
       "pick-up", "suv", "microbus",
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]
 
   mantenimiento_flotas:
@@ -261,4 +269,5 @@ familias:
       "asesoria rfid",                          # (sin rastreo)
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
+      "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
     ]

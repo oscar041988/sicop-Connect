@@ -3,7 +3,7 @@
 `golden_set.csv` es la «hoja de respuestas» con la que se mide si las reglas de detección aciertan
 (guía, sección 16.5). **Las etiquetas son de Hermatix (Oscar), no de Claude.**
 
-- **Datos: REALES.** 37 carteles públicos de `Detalle de pliegos de condiciones.csv` (2026-10-07; `20261001749`,
+- **Datos: REALES.** 38 carteles públicos de `Detalle de pliegos de condiciones.csv` (2026-10-07; `20261001749`,
   de la descarga del 2026-10-19; los tres últimos, de la del 2026-10-28 o posteriores). El título es el texto exacto del cartel (puede traer espacios duros, NBSP). Sin
   datos confidenciales.
 - Origen de las etiquetas: reunión de Oscar con Ivania, 2026-10-08 (las registró Ivania). `20261001749` (CCSS,
@@ -11,7 +11,8 @@
   `20260800923` (consultoría para la terminal de contenedores de Moín): falso positivo identificado por Ivania y
   agregado el 2026-10-28. `20261003260` (diseño y construcción de paradas de autobús en San José): falso positivo
   identificado por Ivania y agregado el 2026-10-30. `20261001885` (basureros hospitalarios, INS): falso positivo
-  identificado por Ivania y agregado el 2026-10-30.
+  identificado por Ivania y agregado el 2026-10-30. `20261100575` (construcción de paradas en Siquirres): falso
+  positivo identificado por Ivania y agregado el 2026-11-09.
 - Formato: UTF-8 con BOM, separador `;`, CRLF.
 
 ## Columnas
