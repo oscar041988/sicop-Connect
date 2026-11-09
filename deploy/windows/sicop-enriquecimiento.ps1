@@ -8,7 +8,12 @@
 # Cada corrida se agrega a data\logs\enriquecimiento-AAAA-MM.log con su fecha, la salida y el codigo de salida.
 # Codigo de salida: el de enrich run si no es 0 (1 = algun FALLO, 2 = CAPTCHA o bloqueo u otra corrida); si no, el
 # de ia cola (1 = algun resumen fallido o cola detenida por la clave o el saldo).
+# Fase 2 (docs/ENVIO_ENRIQUECIMIENTO.md): con -Remoto corre SOLO "enrich remoto" (la base esta en el servidor; la
+# cola de IA corre alli, sicop-ia-cola.timer). Se usa desde el dia de la actualizacion del servidor. Codigos de
+# enrich remoto: 0 = ok o sin cola, 1 = algun FALLO o el servidor no respondio, 2 = CAPTCHA u otra corrida.
 # (Sin tildes a proposito: Windows PowerShell 5.1 lee mal los .ps1 en UTF-8 sin BOM.)
+
+param([switch] $Remoto)
 
 $ErrorActionPreference = 'Stop'
 $proyecto = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -47,6 +52,10 @@ function Ejecutar([string[]] $argumentos) {
     Add-Content -Path $log -Value $bloque -Encoding UTF8
     Remove-Item -Path $salida, $errores -ErrorAction SilentlyContinue
     return $codigo
+}
+
+if ($Remoto) {
+    exit (Ejecutar @('enrich', 'remoto'))
 }
 
 $codigoEnriquecimiento = Ejecutar @('enrich', 'run')

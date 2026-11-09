@@ -29,8 +29,11 @@
     run` se niega. Cambios chicos: `ya_guardados` en `consultar_uno`/`descargar_documentos`, grabaciones a
     conservar que manda el servidor. 5 pruebas (2 de punta a punta con el SICOP simulado). Suite del paso 2:
     973 passed.
-  - **Siguiente:** paso 4, la tarea de Windows (`enrich remoto`, sin `ia cola`), la ayuda y una prueba con la
-    app corriendo en la PC como servidor de prueba.
+  - **Paso 4 hecho — fase 2 lista:** `sicop-enriquecimiento.ps1 -Remoto`, la bitácora del servidor señala que el
+    video de una consulta remota está en la PC, misión 18, `ACTUALIZACION_SERVIDOR.md` §11 (token y activación).
+    **Prueba real:** app de la PC como servidor de prueba (copia de la base) + `enrich remoto --max 1` con SICOP real:
+    `20261100801`, 7 documentos guardados, reevaluado Baja → Media; base real sin tocar.
+  - **Pendiente:** probarlo contra el servidor real, con Oscar (§11 de la guía).
 
 - **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
   `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas

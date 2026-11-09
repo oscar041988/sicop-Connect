@@ -230,6 +230,7 @@ class Consulta:
     run_id: int | None
     revisada_por: str | None = None
     revisada_en: str | None = None
+    origen: str = "local"          # «remoto»: la consultó la PC (fase 2) y el video quedó en la PC, no aquí
 
     @property
     def por_revisar(self) -> bool:
@@ -237,8 +238,10 @@ class Consulta:
 
 
 _CONSULTA = ("SELECT c.id, c.iniciada_en, c.nro_sicop, c.resultado, c.motivo, c.duracion_s, c.documentos_guardados,"
-             "       c.documentos_fallo, c.grabacion, c.es_reintento, c.run_id, r.nombre, r.revisada_en"
-             " FROM enrich_consultas c LEFT JOIN enrich_revisiones r ON r.consulta_id = c.id")
+             "       c.documentos_fallo, c.grabacion, c.es_reintento, c.run_id, r.nombre, r.revisada_en,"
+             "       coalesce(e.origen, 'local')"
+             " FROM enrich_consultas c LEFT JOIN enrich_revisiones r ON r.consulta_id = c.id"
+             " LEFT JOIN enrich_runs e ON e.id = c.run_id")
 
 
 def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False) -> dict:

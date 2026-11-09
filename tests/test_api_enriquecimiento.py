@@ -178,3 +178,17 @@ def test_envio_que_pasa_el_tope_se_rechaza(servidor, monkeypatch):
     r = _enviar(cliente, corrida, _consulta(), _archivos(GPS))
     assert r.status_code == 413
     assert _sql(settings, "SELECT count(*) FROM tender_details") == [(0,)]
+
+
+def test_en_la_bitacora_la_consulta_remota_dice_que_el_video_esta_en_la_pc(servidor):
+    from contextlib import closing
+
+    from app import fichas_panel
+    from app.database import connect
+    settings, cliente = servidor
+    corrida = cliente.post("/api/enriquecimiento/corridas", headers=_cab()).json()["corrida"]
+    consulta_id = _enviar(cliente, corrida, _consulta(), _archivos(GPS)).json()["consulta"]
+    with closing(connect(settings.database_path)) as conn:
+        c = fichas_panel.consulta(conn, consulta_id)
+    assert c.origen == "remoto" and c.grabacion == f"2026-10-27/{GPS}/090000"
+    assert fichas_panel.archivos_grabacion(settings.recordings_dir, c) == (None, [])   # el video no está aquí

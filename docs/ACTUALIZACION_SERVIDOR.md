@@ -252,9 +252,25 @@ sudo systemctl start sicop-web.service
 
 Y en Windows, `Enable-ScheduledTask` para las dos tareas: la PC vuelve a ser la principal, con su base intacta.
 
-## Fase 2 (pendiente)
+## 11. Enriquecimiento desde la PC (fase 2, `docs/ENVIO_ENRIQUECIMIENTO.md`)
 
-- **Envío PC → servidor con token** para el enriquecimiento (decisión del 27/10): `docs/ENVIO_ENRIQUECIMIENTO.md`.
-  Hasta entonces queda en pausa. La cola de IA ya corre en el servidor.
+Construido el 2026-11-09. Se puede hacer el mismo día, después del paso 10, o días después. Hasta entonces el
+enriquecimiento queda en pausa (pasos 1 y 7).
+
+1. 🐧 **El token.** El administrador lo genera en el servidor, sin mostrarlo:
+   `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`, y lo agrega a `app.env` como
+   `ENRICH_TOKEN=…`. Después, `sudo systemctl restart sicop-web.service`. Sin token, las direcciones
+   `/api/enriquecimiento/…` no existen.
+2. 🐧 **Comprobar** desde el servidor que pide el token (sin token: 401):
+   `curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8000/api/enriquecimiento/corridas` → `401`.
+3. 🪟 **La PC:** el `.env`, una corrida supervisada con `--max 1` y la tarea con `-Remoto`, como dice
+   `deploy/windows/README.md`, sección «Fase 2». El token pasa del servidor a la PC **en persona** (nunca por correo,
+   chat ni Claude).
+4. **Verificar** en el panel: «Bitácora» con la corrida (origen remoto; el video está en la PC) y el cartel con su
+   ficha y sus documentos. A las 10:45, la cola de IA lo resume.
+
+## Pendiente
+
+- La fase 2 se probó con la app de la PC haciendo de servidor; contra el servidor real se prueba en el paso 11.
 - Activar la obtención automática (§9.9), si Oscar lo decide.
 - Después de unos días bien, borrar `/opt/sicop-connect-02b569b` y `sicop-02b569b.db` (con un respaldo guardado).

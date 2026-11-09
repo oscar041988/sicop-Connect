@@ -201,3 +201,35 @@ El resumen queda en `data\exports\resumen-enriquecimiento-<n>.txt` mientras los 
 
 `ENRICH_ENABLED=false` en `.env` (la tarea sigue corriendo pero no consulta) o
 `Disable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"`.
+
+### Fase 2: la PC consulta y el servidor guarda (`enrich remoto`)
+
+Desde la actualización del servidor, la base principal está allá (`docs/ACTUALIZACION_SERVIDOR.md`). La misma tarea
+pasa a correr `enrich remoto`: pide la cola al servidor, consulta SICOP con la ventana visible y manda cada cartel
+(`docs/ENVIO_ENRIQUECIMIENTO.md`). La cola de IA ya no corre aquí: la hace el servidor a las 10:45.
+
+1. En el `.env` de la PC (lo edita Ivania; el token se copia en persona, nunca por chat):
+   ```ini
+   ENRICH_ENABLED=true
+   ENRICH_SERVER_URL=https://sicop.hermatix.com
+   ENRICH_TOKEN=          # el mismo de /etc/sicop-connect/app.env del servidor
+   ```
+   Con `ENRICH_SERVER_URL`, `enrich run` se niega a correr: nada escribe ya en la base local.
+2. Una corrida supervisada, con un solo cartel:
+   ```powershell
+   cd C:\Users\User\sicop-connect
+   .\.venv\Scripts\Activate.ps1
+   python -m app.cli enrich remoto --max 1
+   ```
+   Lo esperado: «Corrida #N en el servidor…», la consulta con la ventana y «Enviado al servidor: nueva · K
+   documento(s) guardado(s)». En el panel del servidor, «Bitácora» muestra la corrida (el video queda en esta PC).
+3. La tarea, con `-Remoto` (sin cambiar el horario de las 10:00):
+   ```powershell
+   $proyecto = "C:\Users\User\sicop-connect"
+   $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+       -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-enriquecimiento.ps1`" -Remoto" `
+       -WorkingDirectory $proyecto
+   Set-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento" -Action $accion
+   Enable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
+   ```
+   **Volver atrás** (la PC sola con su base): quitar `-Remoto` del mismo modo y vaciar `ENRICH_SERVER_URL`.

@@ -68,10 +68,13 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
    `ENRICH_SERVER_URL` (solo `https://`, o `http://127.0.0.1` para probar) y `ENRICH_TOKEN`; con
    `ENRICH_SERVER_URL`, `enrich run` se niega (no escribe en la base local). 5 pruebas en
    `tests/test_enriquecimiento_pc.py` (dos de punta a punta con el SICOP simulado).
-4. **Cierre:** la tarea de Windows de las 10:00 pasa a `enrich remoto` (sin `ia cola`, que ya corre en el servidor),
-   misión de ayuda, `ACTUALIZACION_SERVIDOR.md`
-   y prueba completa con un servidor local de prueba (la app corriendo en la PC con otra base).
+4. **Cierre** (hecho, 2026-11-09): `deploy/windows/sicop-enriquecimiento.ps1 -Remoto` (solo `enrich remoto`;
+   `deploy/windows/README.md`, «Fase 2»); la bitácora del servidor dice que el video de una consulta remota está en
+   la PC (`enrich_runs.origen`); misión de ayuda 18; `ACTUALIZACION_SERVIDOR.md` §11 (token y activación).
+   **Prueba real (9/11):** la app de la PC como servidor de prueba (puerto 8765, copia de la base) y `enrich remoto
+   --max 1` con SICOP real: `20261100801` consultado en 108 s, 7 documentos guardados en el «servidor» (92 páginas
+   de texto), reevaluado de Baja a Media, el video en la «PC», la base real sin tocar.
 
 ## Pendiente
 
-- Probarlo contra el servidor real el día de la actualización (o después), con Oscar.
+- Probarlo contra el servidor real (`ACTUALIZACION_SERVIDOR.md` §11), con Oscar.

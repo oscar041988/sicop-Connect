@@ -62,6 +62,11 @@ SICOP pidió comprobar que es una persona, o no dejó entrar. Mira el video y av
 **¿Y si dice que está «desactivado»?**
 La consulta diaria está apagada. Se enciende en el servidor: pregúntale a Oscar.
 
+**¿Y si la grabación dice que la consultó la PC del enriquecimiento?**
+La consulta a SICOP la hace una computadora de Hermatix con el navegador abierto, y manda la ficha y los documentos
+aquí. El video y las capturas se quedan en esa computadora: pídeselos a quien la usa, con la carpeta que dice la
+página.
+
 **¿Y si no hay ninguna corrida?**
 La consulta diaria todavía no ha corrido. Revisa mañana después de las 10:00.
 
