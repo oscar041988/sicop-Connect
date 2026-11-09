@@ -289,6 +289,10 @@ Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`,
   PDF). Un resumen anterior a v6 muestra la justificación corta y avisa que se genere de nuevo. Migración 0039: el
   CHECK de `ia_reports.paginas` pasa a 1–3. Prompt v7 (mismo día, Ivania): la explicación no menciona documentos
   que no se pudieron leer ni otras limitaciones del expediente.
+- **La 3.ª página muestra más (Ivania, 2026-11-09):** topes nuevos (14 filas de «Qué piden», 5 especificaciones, 18
+  requerimientos, 8 criterios, 5 riesgos, 6 plazos, 10 fuentes, textos de hasta 300 caracteres). Si no cabe en 3,
+  se rehace con los de antes (`LIMITES_MEDIOS`) y luego con los cortos. Medido con los 35 carteles reales con
+  resumen y una explicación de 250 palabras: 31 en 3 páginas, 4 en 2, ninguno pasó de 3.
 - **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
   partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
 - **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo

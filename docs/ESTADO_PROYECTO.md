@@ -19,6 +19,11 @@
     al final «el documento de decisión inicial no tiene texto leído»; Ivania pidió quitarlo → **prompt v7** (v6 +
     no mencionar documentos sin leer ni limitaciones del expediente). v7: resumen #59 (0.022 USD), sin esa frase;
     reporte de 2 páginas. Ese cartel queda con el resumen v7 en el panel.
+  - **La 3.ª página muestra más (Ivania, 9/11):** topes por sección más grandes (18 requerimientos en vez de 10, 14
+    filas de «Qué piden» en vez de 8, textos de 300 caracteres…); si no cabe en 3, reintenta con los de antes y
+    luego con los cortos. Medido con los 35 carteles reales (explicación de 250 palabras simulada): 31 en 3
+    páginas, 4 en 2, ninguno pasó de 3. Siquirres sigue en 2 (cartel corto). Arregladas también 6 pruebas con la
+    lista fija de migraciones (faltaba la 0039).
   - **Pendiente:** activar con `IA_PROMPT_VERSION=v7` en el `.env` (Ivania), después de mostrarle el reporte a
     Oscar. Con v7, la cola de las 10:00 rehace los resúmenes abiertos dentro del tope diario (10 por día, 1.00 USD).
 

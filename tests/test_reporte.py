@@ -123,12 +123,14 @@ def test_no_encontrado_escapado_y_limites(base):
     with closing(connect(db)) as conn:
         _guardar_resumen(conn, _resumen(n_reqs=25, n_lineas=12))
         d = reporte.datos(conn, NRO, AHORA)
+        medio = reporte.datos(conn, NRO, AHORA, reporte.LIMITES_MEDIOS)    # el primer reintento
     html = reporte.html(d)
     assert "<dt>Vigencia del contrato</dt><dd>no encontrado" in html              # se ve, no queda vacío
     assert "&lt;script&gt;" in html and "<script>alert(1)" not in html            # texto, no código
     assert "con ñ y tildes: camión" in html and 'charset="utf-8"' in html
-    assert len(d["reqs"]) == 10 and d["mas_reqs"] == 15 and "y 15 más en el panel" in html
-    assert d["reqs"][0]["excluyente"] and len(d["piden"]) == 8 and "y 4 más en el panel" in html
+    assert len(d["reqs"]) == 18 and d["mas_reqs"] == 7 and "y 7 más en el panel" in html   # topes para 3 páginas
+    assert d["reqs"][0]["excluyente"] and len(d["piden"]) == 12 and d["mas_piden"] == 0
+    assert len(medio["reqs"]) == 10 and medio["mas_reqs"] == 15 and len(medio["piden"]) == 8
     assert reporte.PIE in reporte._pie_pdf(NRO)
 
 

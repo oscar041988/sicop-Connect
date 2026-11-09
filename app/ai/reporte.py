@@ -46,9 +46,13 @@ ENCAJES = ("alta", "media", "baja", "ninguno")
 
 MAX_PAGINAS = 3
 MAX_EXPLICACION = 1800   # caracteres: unas 250 palabras con holgura; es un tope de seguridad, no un recorte normal
-# Máximos por sección: el primer juego y, si el PDF pasa de MAX_PAGINAS, uno más corto.
-LIMITES = {"que_piden": 8, "especificaciones": 3, "requerimientos": 10, "criterios": 5, "riesgos": 3,
-           "otros_plazos": 4, "fuentes": 6, "caracteres": 200}
+# Máximos por sección. LIMITES aprovecha hasta 3 páginas (Ivania, 2026-11-09: medido con los 35 carteles reales con
+# resumen y una explicación de 250 palabras, ninguno pasó de 3). Si el PDF pasa de MAX_PAGINAS se rehace con
+# LIMITES_MEDIOS (los de cuando el máximo era 2 páginas) y, si tampoco, con LIMITES_CORTOS.
+LIMITES = {"que_piden": 14, "especificaciones": 5, "requerimientos": 18, "criterios": 8, "riesgos": 5,
+           "otros_plazos": 6, "fuentes": 10, "caracteres": 300}
+LIMITES_MEDIOS = {"que_piden": 8, "especificaciones": 3, "requerimientos": 10, "criterios": 5, "riesgos": 3,
+                  "otros_plazos": 4, "fuentes": 6, "caracteres": 200}
 LIMITES_CORTOS = {"que_piden": 6, "especificaciones": 2, "requerimientos": 7, "criterios": 4, "riesgos": 3,
                   "otros_plazos": 3, "fuentes": 4, "caracteres": 140}
 TIPOS = {"legal": "Legal", "tecnico": "Técnico", "técnico": "Técnico", "financiero": "Financiero",
@@ -285,7 +289,7 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
     if (not forzar and anterior and anterior.ia_summary_id == res.id and anterior.cumple_huella == cumple_huella
             and anterior.ruta.is_file()):
         return Reporte(**{**anterior.__dict__, "reutilizado": True})
-    for limites in (LIMITES, LIMITES_CORTOS):
+    for limites in (LIMITES, LIMITES_MEDIOS, LIMITES_CORTOS):
         contenido = pdf(html(datos(conn, nro_sicop, ahora, limites)), nro_sicop)
         paginas = contar_paginas(contenido)
         if 1 <= paginas <= MAX_PAGINAS:
