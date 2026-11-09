@@ -269,6 +269,11 @@ def _resumen_de_ejemplo() -> dict:
                              "cita": "[DOC 1 · pág. 1]"}],
         "recomendacion": "dar_seguimiento",
         "justificacion": "EJEMPLO: encaja con el producto de GPS y el plazo alcanza.",
+        "explicacion_recomendacion": (
+            "EJEMPLO: el cartel pide el servicio de rastreo GPS de la flotilla, que es lo que hace FleetMatix "
+            "[DOC 1 · pág. 1]. Lo que decide es qué piden, y eso se alinea con Hermatix.\n"
+            "Falta confirmar si piden un técnico en planilla [DOC 1 · pág. 1]; no impide dar seguimiento, pero "
+            "conviene preguntarlo antes de ofertar."),
     }
 
 

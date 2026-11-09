@@ -295,3 +295,19 @@ def test_comando_resumir_con_otra_version_del_prompt_solo_para_ese_cartel(db, tm
     assert main(["ia", "resumir", "--nro", NRO, "--prompt", "../otro"], settings) == 1
     assert "IA_PROMPT_VERSION debe ser" in capsys.readouterr().err
     assert len(_filas(db)) == 1
+
+
+def test_v6_explicacion_de_la_recomendacion_en_el_esquema_y_el_texto():
+    """Oscar (2026-11-09): la explicación detallada va en el resumen (prompt v6) y el esquema la exige."""
+    assert "explicacion_recomendacion" in resumen.ESQUEMA["required"]
+    assert "explicacion_recomendacion" in resumen.cargar_prompt("v6")
+    assert "explicacion_recomendacion" not in resumen.cargar_prompt("v5")        # v5 no se tocó
+    datos = resumen.normalizar({"recomendacion": "descartar", "justificacion": "No se alinea (SINTÉTICO).",
+                                "explicacion_recomendacion": "Piden obra civil, no tecnología (SINTÉTICO)."})
+    r = resumen.Resultado(1, NRO, "ok", False, "2026-11-09", "modelo-simulado", "v6", "a" * 64, datos)
+    texto = resumen.legible(r)
+    assert "== POR QUÉ SE RECOMIENDA ==\nPiden obra civil, no tecnología (SINTÉTICO)." in texto
+    viejo = {k: v for k, v in datos.items() if k != "explicacion_recomendacion"}   # guardado antes de v6
+    assert resumen.normalizar({})["explicacion_recomendacion"] == resumen.NO
+    assert "== POR QUÉ SE RECOMIENDA ==\nno encontrado" in resumen.legible(
+        resumen.Resultado(2, NRO, "ok", False, "2026-10-30", "modelo-simulado", "v5", "a" * 64, viejo))

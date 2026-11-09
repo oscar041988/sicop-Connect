@@ -1,4 +1,4 @@
-"""Reporte de cartel Hermatix en PDF, máximo 2 páginas (Reporte con IA, lección 4).
+"""Reporte de cartel Hermatix en PDF, máximo 3 páginas (Reporte con IA, lección 4; explicación al final, prompt v6).
 
 Base SINTÉTICA de tests/test_panel.py; resúmenes INVENTADOS guardados directo en ia_summaries (nunca se llama a
 OpenAI). El PDF se hace con el Chromium de Playwright, como en la app.
@@ -25,14 +25,18 @@ NRO = "00000000001"
 ANA = Quien(None, "Ana Sintética")
 AHORA = datetime(2026, 10, 1, 15, 0, tzinfo=timezone.utc)
 NO = "no encontrado"
+EXPLICACION = ("Piden el monitoreo GPS de la flotilla municipal, que es lo que hace FleetMatix [DOC 1 · pág. 3]. "
+               "SINTÉTICO. " * 12 + "\n\n" + "El plazo de entrega es de 30 días hábiles [DOC 1 · pág. 2]. "
+               + "Texto SINTÉTICO de la explicación. " * 15)
 
 
 def _dato(valor, cita="[DOC 1 · pág. 2]"):
     return {"valor": valor, "cita": cita}
 
 
-def _resumen(n_reqs=5, n_lineas=2, texto="Compra SINTÉTICA de monitoreo GPS para la flotilla municipal."):
-    return {
+def _resumen(n_reqs=5, n_lineas=2, texto="Compra SINTÉTICA de monitoreo GPS para la flotilla municipal.",
+             explicacion=EXPLICACION, recomendacion="dar_seguimiento"):
+    datos = {
         "de_que_trata": texto,
         "que_piden": [{"linea": str(i + 1), "bien_o_servicio": f"Servicio SINTÉTICO {i + 1} con ñ y tildes: camión",
                        "cantidad": "10", "especificaciones_clave": [f"Especificación {j}" for j in range(5)],
@@ -50,9 +54,12 @@ def _resumen(n_reqs=5, n_lineas=2, texto="Compra SINTÉTICA de monitoreo GPS par
         "criterios_de_evaluacion": [{"criterio": "Precio", "peso": "100 %", "cita": "[DOC 1 · pág. 5]"}],
         "encaje_hermatix": {"familia": "gps_flotas", "producto": "FleetMatix", "por_que": "Pide rastreo GPS."},
         "riesgos_y_dudas": [{"riesgo": "Ninguno sintético", "cita": NO}],
-        "recomendacion": "dar_seguimiento",
+        "recomendacion": recomendacion,
         "justificacion": "Pide exactamente lo que ofrece Hermatix (SINTÉTICO).",
     }
+    if explicacion is not None:                       # None: resumen anterior al prompt v6, sin el campo
+        datos["explicacion_recomendacion"] = explicacion
+    return datos
 
 
 def _guardar_resumen(conn, datos, nro=NRO):
@@ -81,15 +88,16 @@ def _texto_pdf(contenido: bytes) -> bytes:
     return contenido
 
 
-def test_cartel_corto_y_cartel_largo_caben_en_2_paginas(base):
+def test_cartel_corto_y_cartel_largo_caben_en_3_paginas(base):
     db, settings = base
     with closing(connect(db)) as conn:
         _guardar_resumen(conn, _resumen(n_reqs=3, n_lineas=1))
         corto = reporte.generar(conn, settings, NRO, ANA, AHORA)
         largo_texto = "Texto SINTÉTICO muy largo. " * 200
-        _guardar_resumen(conn, _resumen(n_reqs=120, n_lineas=40, texto=largo_texto))
+        _guardar_resumen(conn, _resumen(n_reqs=120, n_lineas=40, texto=largo_texto, explicacion="Muy larga. " * 400))
         largo = reporte.generar(conn, settings, NRO, ANA, AHORA)
-    assert 1 <= corto.paginas <= 2 and 1 <= largo.paginas <= 2
+    assert reporte.MAX_PAGINAS == 3
+    assert 1 <= corto.paginas <= 3 and 1 <= largo.paginas <= 3
     assert reporte.contar_paginas(largo.ruta.read_bytes()) == largo.paginas
     assert corto.ruta.is_file() and largo.ruta.is_file() and corto.ruta != largo.ruta   # el anterior no se borra
 
@@ -161,7 +169,7 @@ def test_en_el_panel_reporte_pdf_descarga_el_archivo(base):
     assert iniciar_sesion(cliente, "ana@ejemplo.test").status_code == 303
     r = cliente.get(f"/oportunidades/{NRO}/reporte")
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
-    assert r.content.startswith(b"%PDF") and 1 <= reporte.contar_paginas(r.content) <= 2
+    assert r.content.startswith(b"%PDF") and 1 <= reporte.contar_paginas(r.content) <= reporte.MAX_PAGINAS
     assert re.search(r'filename="reporte_00000000001_\d{8}-\d{6}\.pdf"', r.headers["content-disposition"])
     assert cliente.get("/oportunidades/00000000002/reporte").status_code == 404     # sin resumen
 
@@ -173,3 +181,36 @@ def test_en_el_panel_reporte_pdf_descarga_el_archivo(base):
     (None, "(sin título)")])
 def test_el_titulo_casi_todo_en_mayusculas_sale_todo_en_mayusculas(descripcion, esperado):
     assert reporte.titulo(descripcion) == esperado
+
+
+@pytest.mark.parametrize("clave, titulo", [("dar_seguimiento", "Dar seguimiento"),
+                                           ("revisar_requisitos", "Revisar requisitos"), ("descartar", "Descartar")])
+def test_al_final_explica_por_que_se_recomienda(base, clave, titulo):
+    """Oscar (2026-11-09): media página al final con el porqué de la recomendación, para las tres."""
+    db, _ = base
+    with closing(connect(db)) as conn:
+        _guardar_resumen(conn, _resumen(recomendacion=clave))
+        d = reporte.datos(conn, NRO, AHORA)
+    html = reporte.html(d)
+    assert len(d["explicacion"]) == 2                                   # los dos párrafos se conservan
+    assert d["explicacion"][0].startswith("Piden el monitoreo GPS")
+    assert f"<h2>Por qué se recomienda: {titulo}</h2>" in html and f'class="explicacion rec-{clave}"' in html
+    assert html.index("Por qué se recomienda") > html.index("Riesgos y dudas")          # al final del reporte
+    assert "La decisión es del encargado." in html and "anterior a la explicación" not in html
+
+
+def test_resumen_anterior_a_v6_sin_explicacion(base):
+    db, _ = base
+    with closing(connect(db)) as conn:
+        _guardar_resumen(conn, _resumen(explicacion=None))
+        d = reporte.datos(conn, NRO, AHORA)
+    html = reporte.html(d)
+    assert d["explicacion"] == []
+    assert "Pide exactamente lo que ofrece Hermatix (SINTÉTICO)." in html.split("Por qué se recomienda")[1]
+    assert "anterior a la explicación detallada" in html
+
+
+def test_la_explicacion_tiene_tope():
+    assert reporte._explicacion(NO) == [] and reporte._explicacion(None) == []
+    larga = reporte._explicacion("palabra " * 1000)
+    assert len(larga) == 1 and len(larga[0]) <= reporte.MAX_EXPLICACION and larga[0].endswith("…")

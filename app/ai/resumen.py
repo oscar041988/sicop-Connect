@@ -93,6 +93,10 @@ ESQUEMA = _objeto(
     riesgos_y_dudas=_lista(_objeto(riesgo=_texto("Lo que podría impedir ofertar"), cita=_CITA)),
     recomendacion={"type": "string", "enum": list(RECOMENDACIONES)},
     justificacion=_texto("Una o dos frases con datos del expediente; la decisión final es del encargado"),
+    # Desde el prompt v6 (Oscar, 2026-11-09): media página al final del reporte PDF. Un resumen anterior no lo trae
+    # y normalizar() lo deja en «no encontrado».
+    explicacion_recomendacion=_texto("Entre 150 y 250 palabras: por qué se recomienda esto, con los datos del "
+                                     "expediente y sus citas, y qué tendría que cambiar para recomendar otra cosa"),
 )
 FORMATO = {"type": "json_schema", "name": "resumen_cartel", "schema": ESQUEMA, "strict": True}
 
@@ -315,7 +319,7 @@ def _con_cita(texto: str, cita: str) -> str:
 
 
 def legible(res: Resultado) -> str:
-    """El resumen como texto, para revisarlo con Oscar. No es el reporte de 2 páginas (lección 4)."""
+    """El resumen como texto, para revisarlo con Oscar. No es el reporte PDF (lección 4)."""
     lineas = [f"RESUMEN DEL CARTEL {res.nro_sicop} · generado con IA · PRELIMINAR",
               f"Estado: {ESTADOS[res.estado]} · prompt {res.prompt_version} · modelo {res.modelo}"
               f" · resumen #{res.id}{' (ya existía: no se llamó a OpenAI)' if res.reutilizado else ''}",
@@ -358,5 +362,6 @@ def legible(res: Resultado) -> str:
     lineas += ["", "== RIESGOS Y DUDAS =="]
     lineas += [_con_cita(f"- {x['riesgo']}", x["cita"]) for x in d["riesgos_y_dudas"]] or [f"- {NO}"]
     lineas += ["", "== RECOMENDACIÓN PRELIMINAR (la decisión es del encargado) ==",
-               f"{RECOMENDACIONES.get(d['recomendacion'], NO)}: {d['justificacion']}"]
+               f"{RECOMENDACIONES.get(d['recomendacion'], NO)}: {d['justificacion']}",
+               "", "== POR QUÉ SE RECOMIENDA ==", d.get("explicacion_recomendacion") or NO]
     return "\n".join(lineas) + "\n"

@@ -4,6 +4,20 @@
 
 ## Último resultado
 
+- **Reporte PDF: «Por qué se recomienda» al final (2026-11-09, pedido de Oscar por Ivania).** Media página que
+  explica en detalle la recomendación preliminar (las tres: dar seguimiento, revisar requisitos, descartar), con
+  citas y, si es descartar, qué tendría que pedir el cartel para que valiera la pena. Decisiones de Ivania: para las
+  tres recomendaciones y **hasta 3 páginas** (`DECISION_IA.md` regla 9).
+  - La escribe el modelo en la misma llamada del resumen: prompt nuevo **`resumen_cartel_v6.md`** (v5 sin tocar),
+    campo `explicacion_recomendacion` en el esquema. Reporte: `MAX_PAGINAS = 3`, tope de 1 800 caracteres, párrafos
+    conservados, color según la recomendación. Migración **0039**: CHECK de `ia_reports.paginas` 1–3.
+  - Un resumen anterior a v6 muestra la justificación corta y avisa que se genere de nuevo.
+  - Pruebas con IA simulada: `test_reporte.py` (3 nuevas), `test_ia_resumen.py` (1 nueva). Revisado en un PDF de
+    MUESTRA con la base de EJEMPLO.
+  - **Pendiente:** activar con `IA_PROMPT_VERSION=v6` en el `.env` (Ivania). Sugerido, como con v3–v5: probar en 3
+    carteles reales y mostrárselos a Oscar. Con v6, la cola de las 10:00 rehace los resúmenes abiertos dentro del
+    tope diario (10 por día, 1.00 USD).
+
 - **Borrador `docs/DECISION_PROPUESTA.md` (2026-11-09, pedido de Oscar por Ivania): la app arma la oferta para
   SICOP.** Sin aprobar: no se construye nada hasta que Oscar lo acepte.
   - Límites: no se puede asegurar ganar todos los concursos; la oferta la sube y firma con firma digital la persona

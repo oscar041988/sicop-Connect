@@ -46,6 +46,9 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
 9. El reporte tiene **máximo 2 páginas** y se entiende **sin conocer el proyecto ni SICOP**: alguien nuevo en
    Hermatix lo lee y sabe qué piden, qué falta y qué hacer (pedido explícito de Oscar en la reunión, comunicado por
    Ivania el 2026-10-29). Se aplica en el prompt (lección 3) y en el diseño (lección 4).
+   **Cambio del 2026-11-09 (Oscar, por Ivania): hasta 3 páginas.** Al final va «Por qué se recomienda»: unos media
+   página que explican en detalle la recomendación (las tres: dar seguimiento, revisar requisitos y descartar), con
+   citas. La escribe el modelo en el mismo resumen (prompt v6, campo `explicacion_recomendacion`); migración 0039.
 7. Las pruebas automáticas usan siempre un **modelo simulado** (no gastan dinero).
 8. Con la IA apagada (`AI_MODE=none`), el sistema funciona igual que antes.
 

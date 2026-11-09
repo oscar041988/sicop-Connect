@@ -1,7 +1,7 @@
 # ¿Cómo leo y descargo el Reporte de cartel?
 
 **Para qué sirve:** para entender en 2 minutos qué pide un cartel y compartirlo o imprimirlo. Es un PDF de
-máximo 2 páginas con la identidad de Hermatix.
+máximo 3 páginas con la identidad de Hermatix.
 
 **Antes de empezar:** el cartel debe tener su resumen con IA (misión 05).
 
@@ -23,6 +23,8 @@ máximo 2 páginas con la identidad de Hermatix.
      «Sin evaluar» quiere decir que nadie lo ha revisado todavía.
    - «y N más en el panel»: el reporte muestra los más importantes; el resto está en el cartel.
    - Cada cita [DOC n · pág. p] dice dónde comprobarlo en el pliego.
+8. Al final, lee «Por qué se recomienda»: media página que explica la recomendación con los datos del pliego.
+   Si recomienda descartar, dice qué tendría que pedir el cartel para que valiera la pena.
 
 **Dónde quedaste:** con el PDF descargado, listo para compartir o imprimir.
 
@@ -33,6 +35,9 @@ El cartel todavía no tiene resumen con IA. La cola de las 10:00 lo hace cuando 
 
 **¿Y si dice «no encontrado»?**
 El pliego no trae ese dato. No es un error: la IA no inventa lo que no está.
+
+**¿Y si «Por qué se recomienda» solo trae una frase?**
+El resumen es anterior a la explicación detallada. Sale completa cuando se hace un resumen nuevo del cartel.
 
 **¿Y si el reporte tiene datos viejos?**
 Se hace de nuevo cuando hay un resumen nuevo o cambia algún «¿Cumple?». Los reportes anteriores no se borran.

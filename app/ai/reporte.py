@@ -1,12 +1,14 @@
-"""Reporte de cartel Hermatix en PDF, máximo 2 páginas (Reporte con IA, lección 4; DECISION_IA.md regla 9).
+"""Reporte de cartel Hermatix en PDF, máximo 3 páginas (Reporte con IA, lección 4; DECISION_IA.md regla 9).
 
 * La IA no escribe el reporte, lo alimenta: el diseño, el orden, los límites y los KPI de SICOP (monto estimado por
   moneda, líneas, unidades, cierre y días para el cierre, estado, tipo de procedimiento, encaje de las reglas) los
   pone la app desde la base, igual que el panel. Del resumen (ia_summaries) salen solo los textos y los KPI del
   pliego, cada uno con su cita; «no encontrado» se muestra así.
 * Cada sección tiene un máximo; si hay más, se muestran los primeros (los requerimientos excluyentes primero) y
-  «y N más en el panel». Si aun así no cabe en 2 páginas, se vuelve a armar con límites más chicos; si tampoco,
-  error: nunca se guarda un reporte de 3 páginas.
+  «y N más en el panel». Si aun así no cabe en MAX_PAGINAS, se vuelve a armar con límites más chicos; si tampoco,
+  error: nunca se guarda un reporte más largo.
+* Al final, «Por qué se recomienda»: la explicación detallada del resumen (prompt v6; Oscar, 2026-11-09), unos
+  media página. Por eso el máximo pasó de 2 a 3 páginas. Un resumen anterior a v6 no la trae y el reporte lo dice.
 * PDF con el Chromium de Playwright (page.pdf), que la app ya usa: sin librerías nuevas. El archivo queda en
   REPORTS_DIR/<nro>/ (fuera de Git, en el respaldo) y su registro en ia_reports (migración 0036): un reporte nuevo
   nunca borra el anterior, y si no cambiaron el resumen ni los estados «¿Cumple?» se reutiliza el último.
@@ -42,7 +44,9 @@ NO = ia_resumen.NO
 PIE = "Generado con IA a partir de datos públicos de SICOP · verificar con el pliego"
 ENCAJES = ("alta", "media", "baja", "ninguno")
 
-# Máximos por sección: el primer juego y, si el PDF pasa de 2 páginas, uno más corto.
+MAX_PAGINAS = 3
+MAX_EXPLICACION = 1800   # caracteres: unas 250 palabras con holgura; es un tope de seguridad, no un recorte normal
+# Máximos por sección: el primer juego y, si el PDF pasa de MAX_PAGINAS, uno más corto.
 LIMITES = {"que_piden": 8, "especificaciones": 3, "requerimientos": 10, "criterios": 5, "riesgos": 3,
            "otros_plazos": 4, "fuentes": 6, "caracteres": 200}
 LIMITES_CORTOS = {"que_piden": 6, "especificaciones": 2, "requerimientos": 7, "criterios": 4, "riesgos": 3,
@@ -82,6 +86,20 @@ def _limitar(lista: list, maximo: int) -> tuple[list, int]:
     """(los primeros `maximo`, cuántos quedan fuera)."""
     lista = list(lista or [])
     return lista[:maximo], max(0, len(lista) - maximo)
+
+
+def _explicacion(texto) -> list[str]:
+    """Los párrafos de la explicación detallada de la recomendación, sin pasar de MAX_EXPLICACION caracteres; [] si
+    el resumen no la trae (anterior al prompt v6)."""
+    if not isinstance(texto, str) or texto.strip() in ("", NO):
+        return []
+    parrafos, quedan = [], MAX_EXPLICACION
+    for linea in texto.splitlines():
+        if quedan <= 1 or not linea.strip():
+            continue
+        parrafos.append(_corto(linea, quedan))
+        quedan -= len(parrafos[-1])
+    return parrafos
 
 
 def titulo(descripcion: str | None) -> str:
@@ -178,6 +196,7 @@ def datos(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime, limites: di
         "de_que_trata": _corto(r.get("de_que_trata"), n * 2),
         "recomendacion": ia_resumen.RECOMENDACIONES.get(r.get("recomendacion"), NO),
         "recomendacion_clave": r.get("recomendacion"), "justificacion": _corto(r.get("justificacion"), n),
+        "explicacion": _explicacion(r.get("explicacion_recomendacion")),
         "encaje": f"{_corto(encaje.get('producto'), 60)} — {_corto(encaje.get('por_que'), n)}",
         "piden": piden, "mas_piden": mas_piden,
         "reqs": [{"tipo": TIPOS.get(str(q.get("tipo")).lower(), _corto(q.get("tipo"), 20).capitalize()), "requisito": _corto(q.get("requisito"), n),
@@ -269,10 +288,11 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
     for limites in (LIMITES, LIMITES_CORTOS):
         contenido = pdf(html(datos(conn, nro_sicop, ahora, limites)), nro_sicop)
         paginas = contar_paginas(contenido)
-        if 1 <= paginas <= 2:
+        if 1 <= paginas <= MAX_PAGINAS:
             break
     else:
-        raise ReporteError(f"El reporte del cartel {nro_sicop} no cabe en 2 páginas ({paginas}): no se guardó.")
+        raise ReporteError(f"El reporte del cartel {nro_sicop} no cabe en {MAX_PAGINAS} páginas ({paginas}):"
+                           " no se guardó.")
     momento = ahora.astimezone(HORA_CR)
     base = f"{nro_sicop}/reporte_{nro_sicop}_{momento:%Y%m%d-%H%M%S}"
     relativa, n = f"{base}.pdf", 1

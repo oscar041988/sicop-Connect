@@ -338,7 +338,7 @@ def marcar_cumple(request: Request, nro_sicop: str, clave: str = Form(""), estad
 
 @router.get("/oportunidades/{nro_sicop}/reporte")
 def descargar_reporte(request: Request, nro_sicop: str) -> Response:
-    """Reporte de cartel Hermatix en PDF, máximo 2 páginas (Reporte con IA, lección 4). Lo genera si el resumen
+    """Reporte de cartel Hermatix en PDF, máximo 3 páginas (Reporte con IA, lección 4). Lo genera si el resumen
     cambió desde el último; si no, entrega el último. Nunca borra los anteriores."""
     if (error := _base_no_lista(request)) is not None:
         return error

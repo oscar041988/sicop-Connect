@@ -292,7 +292,7 @@ def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
 
 
 def ia_reporte_cmd(settings: Settings, nro_sicop: str, forzar: bool = False) -> int:
-    """Reporte con IA, lección 4: el Reporte de cartel Hermatix en PDF (máximo 2 páginas) del resumen vigente."""
+    """Reporte con IA, lección 4: el Reporte de cartel Hermatix en PDF (máximo 3 páginas) del resumen vigente."""
     if not ia_expediente.nro_valido(nro_sicop):
         print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
         return 1
@@ -1318,7 +1318,7 @@ def build_parser() -> argparse.ArgumentParser:
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ir.add_argument("--prompt", metavar="VERSION",
                     help="Usar esta versión del prompt (v3…) solo para este cartel, sin cambiar IA_PROMPT_VERSION")
-    irp = ia_sub.add_parser("reporte", help="Reporte de cartel Hermatix en PDF, máximo 2 páginas (lección 4)")
+    irp = ia_sub.add_parser("reporte", help="Reporte de cartel Hermatix en PDF, máximo 3 páginas (lección 4)")
     irp.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
     irp.add_argument("--nuevo", action="store_true", help="Generar otro aunque el resumen no haya cambiado")
     ic =ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"

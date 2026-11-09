@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <title>Reporte de cartel {{ d.nro }}</title>
-{# Reporte de cartel Hermatix (Reporte con IA, lección 4): 2 páginas como máximo, para imprimir a PDF con Playwright.
+{# Reporte de cartel Hermatix (Reporte con IA, lección 4): 3 páginas como máximo, para imprimir a PDF con Playwright.
    Orden: encabezado, KPI de SICOP (los calcula la app), recomendación, de qué trata, qué piden, garantías del pliego,
-   requerimientos, plazos, criterios, riesgos y fuentes. Sin salto de página fijo: el contenido fluye y la app
-   comprueba que no pase de 2 páginas (app/ai/reporte.py). Todo el texto va escapado. #}
+   requerimientos, plazos, criterios, riesgos, por qué se recomienda (prompt v6; Oscar, 2026-11-09) y fuentes. Sin
+   salto de página fijo: el contenido fluye y la app comprueba que no pase de 3 páginas (app/ai/reporte.py). Todo el
+   texto va escapado. #}
 <style>
   @page { size: Letter; }
   :root { --azul: #103050; --verde: #1e7a4e; --verde-bg: #e3f3ea; --linea: #d6e0ea; --mut: #5a6b7b;
@@ -34,6 +35,12 @@
   ul { margin: 0; padding-left: 14px; }
   .cita { color: var(--mut); font-size: 7.6pt; white-space: nowrap; }
   .mas { color: var(--mut); font-style: italic; font-size: 8pt; margin-top: 2px; }
+  .explicacion { margin-top: 4px; border-left: 4px solid var(--verde); background: var(--verde-bg); border-radius: 0 8px 8px 0;
+                 padding: 7px 10px; break-inside: avoid; }
+  .explicacion.rec-revisar_requisitos { border-color: var(--aviso); background: var(--aviso-bg); }
+  .explicacion.rec-descartar { border-color: var(--no); background: var(--no-bg); }
+  .explicacion p { margin: 0 0 5px; }
+  .explicacion small { color: var(--mut); }
   .recomendacion { margin-top: 9px; border-radius: 8px; padding: 7px 10px; background: var(--verde-bg); color: var(--verde); }
   .recomendacion.rec-revisar_requisitos { background: var(--aviso-bg); color: var(--aviso); }
   .recomendacion.rec-descartar { background: var(--no-bg); color: var(--no); }
@@ -141,6 +148,13 @@
     {% if d.mas_riesgos %}<div class="mas">y {{ d.mas_riesgos }} más en el panel</div>{% endif %}
     {% else %}<p class="vacio">{{ d.NO }}</p>{% endif %}
   </div>
+</div>
+
+<h2>Por qué se recomienda: {{ d.recomendacion }}</h2>
+<div class="explicacion rec-{{ d.recomendacion_clave }}">
+  {% for parrafo in d.explicacion %}<p>{{ parrafo }}</p>{% else %}<p>{{ d.justificacion }}</p>
+  <small>Este resumen es anterior a la explicación detallada: genera el resumen de nuevo para verla.</small>{% endfor %}
+  {% if d.explicacion %}<small>Recomendación preliminar generada con IA. La decisión es del encargado.</small>{% endif %}
 </div>
 
 <h2>Fuentes</h2>
