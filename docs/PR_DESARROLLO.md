@@ -10,7 +10,7 @@ ayuda y detalle del cartel rediseñado
 
 ## Qué trae esta rama
 
-**114 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
+**115 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
 en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACTUALIZACION_SERVIDOR.md`**.
 
 ### Gestor de documentos (pasos 1B a 5)
@@ -40,7 +40,7 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 - Formulario en el cartel con borrador (0041), solo para quien entra al expediente. Si falta un precio, lo dice
   junto al botón.
 - **Respuesta técnica**, primera parte sin IA: matriz de cumplimiento (pide · ofrece · prueba · ¿Cumple?) con
-  borrador (0042) y PDF.
+  borrador (0042) y PDF, con el mismo diseño que la oferta económica.
 - Comando: `python -m app.cli oferta economica --datos OFERTA.yaml`.
 
 ### Ayuda dentro de la app

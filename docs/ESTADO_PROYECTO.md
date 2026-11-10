@@ -10,8 +10,12 @@
   condiciones, «DESGLOSE DE PRECIO», «Fórmula Matemática» y firma. No salen las páginas del equipo (esperan las fichas
   técnicas). Además, sin precio en una línea, el aviso dice «Falta el precio unitario de la línea 1.» y se repite junto
   a los botones (antes parecía que el botón no hacía nada). `DECISION_PROPUESTA.md` §10. Suite: **1030 passed**.
-  **Pendiente · Ivania:** escribir los precios del cartel 20261001587 y descargar el PDF desde el panel. La migración
-  0042 ya está aplicada en la base local.
+  ~~Pendiente · Ivania: escribir los precios del cartel 20261001587 y descargar el PDF desde el panel~~ **hecho
+  (Ivania, 2026-11-10): «se ve igual, me gusta el diseño».** La migración 0042 ya está aplicada en la base local.
+  **La respuesta técnica también pasa a ese diseño** (membrete, título centrado, tabla azul, firma centrada; pedido de
+  Ivania, 2026-11-10). No hay oferta técnica de Tarrazú para copiarla: se compara cuando Oscar la mande.
+  ~~Pendiente · Ivania: descargar la respuesta técnica desde el panel y revisarla~~ **hecho (Ivania, 2026-11-10):
+  «me gustó, se ve bien».**
 
 - **Lista de verificación sin página propia (2026-11-09, pedido de Ivania: «ya sabemos que camina»).** Se quitaron el
   botón «Lista de verificación para el asistente», la página `/oportunidades/{nro}/verificacion` y sus acciones

@@ -226,7 +226,11 @@ fila por especificación con «el cartel pide · dónde lo dice · Hermatix ofre
   marcar. La persona agrega las demás del pliego.
 - **Documento que lo prueba:** sugiere los documentos del perfil y los archivos del expediente; se puede escribir otro.
 - **PDF** (`app/respuesta_tecnica.py`, plantilla `respuesta_tecnica.html`): encabezado, conteo por estado, la tabla y
-  la firma. «No cumple» y «Sin marcar» salen tal cual: no se esconde ninguna fila.
+  la firma. «No cumple» y «Sin marcar» salen tal cual: no se esconde ninguna fila. **Desde el 2026-11-10 (pedido de
+  Ivania), con el mismo diseño que la oferta económica:** membrete de Hermatix en cada hoja, Times New Roman, fecha y
+  destinatario en negrita, título centrado («Respuesta Técnica · MATRIZ DE CUMPLIMIENTO», objeto y procedimiento),
+  tabla con encabezado azul y firma centrada con la cédula jurídica de `config/oferta.yaml`. Cuando llegue la oferta
+  técnica de Tarrazú, se compara con ella.
 - Borrador por cartel (migración **0042**); el historial anota quién guardó y quién generó el PDF. Pruebas en
   `tests/test_respuesta_tecnica.py` (datos SINTÉTICOS).
 

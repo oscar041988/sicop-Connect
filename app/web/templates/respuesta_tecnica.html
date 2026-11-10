@@ -3,45 +3,60 @@
 <head>
 <meta charset="utf-8">
 <title>Respuesta técnica {{ d.procedimiento }}</title>
-{# Respuesta técnica: matriz de cumplimiento (app/respuesta_tecnica.py; DECISION_PROPUESTA.md, etapa 2). Una fila por
-   especificación del pliego, con su estado: lo que no se cumple sale marcado, no se esconde. La firma digital la pone
-   una persona antes de subirla a SICOP. Todo el texto va escapado. #}
+{# Respuesta técnica: matriz de cumplimiento (app/respuesta_tecnica.py; DECISION_PROPUESTA.md, etapa 2). Mismo diseño
+   que la oferta económica (el de la oferta que ganó en Tarrazú): membrete en cada hoja (lo pone oferta_economica.pdf),
+   Times New Roman, título centrado, tabla con encabezado azul y firma centrada. Una fila por especificación del
+   pliego, con su estado: lo que no se cumple sale marcado, no se esconde. La firma digital la pone una persona antes
+   de subirla a SICOP. Todo el texto va escapado. #}
 <style>
   @page { size: Letter; }
-  :root { --azul: #103050; --verde: #1e7a4e; --rojo: #a3291f; --ambar: #8a5a00; --linea: #cfd8e1; --mut: #55606b;
-          --fondo: #f1f4f7; }
+  :root { --azul: #003056; --verde: #1e7a4e; --rojo: #e00000; --ambar: #8a5a00; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: "Cambria", "Georgia", "Times New Roman", serif; font-size: 10pt; line-height: 1.4;
-         color: #111a22; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .logo { height: 40px; margin-bottom: 14px; }
-  p { margin: 0 0 8px; }
-  .fecha { text-align: right; margin-bottom: 14px; }
-  h2 { font-size: 13pt; color: var(--azul); margin: 0 0 10px; text-transform: uppercase; letter-spacing: .03em; }
-  .ref { margin: 0 0 14px; }
-  .ref b { color: var(--azul); }
-  .conteo { margin: 0 0 10px; color: var(--mut); }
-  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  body { margin: 0; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.3; color: #000;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  p { margin: 0 0 10px; }
+  .fecha { text-align: right; font-weight: 700; margin: 10px 0 26px; }
+  .destino { font-weight: 700; margin-bottom: 26px; }
+  .destino p { margin: 0; }
+  .titulo { text-align: center; font-weight: 700; margin: 0 0 26px; }
+  .titulo p { margin: 0; }
+  .titulo .grande { font-size: 14pt; }
+  .conteo { margin: 0 0 14px; }
+
+  table { width: 100%; border-collapse: collapse; }
   thead { display: table-header-group; }          /* el encabezado se repite en cada hoja */
   tr { break-inside: avoid; }
-  th, td { border: 1px solid var(--linea); padding: 5px 7px; vertical-align: top; text-align: left; }
-  th { background: var(--fondo); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .02em; color: var(--mut); }
-  td.n { white-space: nowrap; width: 3.2em; }
-  td.estado { white-space: nowrap; font-weight: 700; }
+  th, td { border: 1px solid #000; padding: 6px 7px; vertical-align: top; text-align: left; }
+  th { background: var(--azul); color: #fff; font-weight: 700; text-align: center; vertical-align: middle; }
+  td.n { white-space: nowrap; width: 3.4em; text-align: center; }
+  td.estado { white-space: nowrap; font-weight: 700; text-align: center; }
   .cumple { color: var(--verde); }
   .no_cumple { color: var(--rojo); }
   .revisar, .sin { color: var(--ambar); }
-  .cita, .nota { display: block; font-size: 8.5pt; color: var(--mut); }
-  .firma { margin-top: 60px; width: 60%; margin-left: auto; margin-right: auto; text-align: center; break-inside: avoid; }
-  .firma .linea { border-top: 1px solid #111a22; margin-bottom: 6px; }
+  .cita, .nota { display: block; font-size: 9pt; font-style: italic; margin-top: 3px; }
+
+  .firma { margin: 90px auto 0; width: 2.6in; text-align: center; line-height: 1.5; break-inside: avoid; }
+  .firma .linea { border-top: 1px solid #000; margin-bottom: 2px; }
   .firma p { margin: 0; }
 </style>
 </head>
 <body>
-{% if logo %}<img class="logo" src="{{ logo }}" alt="{{ d.empresa }}">{% endif %}
-<p class="fecha">San José, {{ fecha }}</p>
-<h2>Respuesta técnica · matriz de cumplimiento</h2>
-<p class="ref"><b>Procedimiento:</b> {{ d.procedimiento }}{% if d.institucion %}<br><b>Institución:</b> {{ d.institucion }}{% endif %}
-  {% if d.objeto %}<br><b>Objeto:</b> {{ d.objeto }}{% endif %}<br><b>Oferente:</b> {{ d.empresa }}</p>
+<p class="fecha">{{ lugar }}, {{ fecha }}.</p>
+
+{% if d.institucion %}
+<div class="destino">
+  <p>Señores</p>
+  <p>{{ d.institucion }}</p>
+</div>
+{% endif %}
+
+<div class="titulo">
+  <p class="grande">Respuesta Técnica</p>
+  <p>MATRIZ DE CUMPLIMIENTO</p>
+  {% if d.objeto %}<p>“{{ d.objeto | upper }}”</p>{% endif %}
+  <p>Procedimiento N° {{ d.procedimiento }}</p>
+</div>
+
 <p class="conteo">{{ filas | length }} especificaciones:{% for t, n in conteo.items() %} {{ t }} {{ n }}{% if not loop.last %} ·{% endif %}{% endfor %}.</p>
 
 <table>
@@ -61,8 +76,9 @@
 
 <div class="firma">
   <div class="linea"></div>
+  <p>Representante Legal</p>
   <p>{{ d.empresa }}</p>
-  <p>Representante legal</p>
+  {% if cedula_juridica %}<p>Cédula jurídica: {{ cedula_juridica }}</p>{% endif %}
 </div>
 </body>
 </html>

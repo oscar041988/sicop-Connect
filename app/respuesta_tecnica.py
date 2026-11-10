@@ -12,7 +12,6 @@ la matriz valía 25 de 100 puntos. La app FORMULA el PDF; una persona lo revisa,
 
 from __future__ import annotations
 
-import base64
 import json
 from dataclasses import dataclass
 from datetime import date
@@ -123,15 +122,20 @@ def conteo(filas: list[Fila]) -> dict[str, int]:
 
 
 def html(datos: dict, filas: list[Fila], hoy: date) -> str:
+    """Mismo diseño que la oferta económica; el lugar y la cédula jurídica salen de config/oferta.yaml (la cédula, solo
+    si la empresa de la matriz es la de la configuración)."""
     entorno = Environment(loader=FileSystemLoader(oferta_economica.PLANTILLAS), autoescape=select_autoescape(["html"]))
-    logo = oferta_economica.LOGO
-    logo = "data:image/png;base64," + base64.b64encode(logo.read_bytes()).decode("ascii") if logo.is_file() else ""
+    config = oferta_economica.configuracion()
+    empresa = config.get("empresa") or {}
+    cedula = _limpio(empresa.get("cedula_juridica")) if _limpio(empresa.get("nombre")) == datos.get("empresa") else ""
     return entorno.get_template("respuesta_tecnica.html").render(
-        d=datos, filas=filas, conteo=conteo(filas), logo=logo, fecha=oferta_economica.fecha_larga(hoy))
+        d=datos, filas=filas, conteo=conteo(filas), fecha=oferta_economica.fecha_larga(hoy),
+        lugar=_limpio(config.get("lugar")) or "San José", cedula_juridica=cedula)
 
 
 def pdf(contenido_html: str, procedimiento: str) -> bytes:
-    return oferta_economica.pdf(contenido_html, procedimiento, titulo="Respuesta técnica", membrete=False)
+    """Con el membrete de Hermatix en cada hoja, como la oferta económica."""
+    return oferta_economica.pdf(contenido_html, procedimiento, titulo="Respuesta técnica")
 
 
 # --- Panel: borrador y sugerencias -----------------------------------------------------------------------------------
