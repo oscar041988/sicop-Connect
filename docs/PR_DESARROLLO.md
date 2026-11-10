@@ -1,16 +1,16 @@
 # Pull request de `desarrollo` → `main`
 
-> Texto para pegar en GitHub al abrir el PR (título y cuerpo). Actualizado el 2026-11-09. El PR anterior (#4,
+> Texto para pegar en GitHub al abrir el PR (título y cuerpo). Actualizado el 2026-11-10. El PR anterior (#4,
 > unido el 29/10) llevó `main` a `7f5c558`.
 
-**Título:** Rama desarrollo: gestor de documentos, Reporte con IA, asistente de elegibilidad, ayuda y detalle del
-cartel rediseñado
+**Título:** Rama desarrollo: gestor de documentos, Reporte con IA, asistente de elegibilidad, oferta económica,
+ayuda y detalle del cartel rediseñado
 
 ---
 
 ## Qué trae esta rama
 
-**102 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
+**114 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
 en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACTUALIZACION_SERVIDOR.md`**.
 
 ### Gestor de documentos (pasos 1B a 5)
@@ -29,6 +29,19 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 - Perfil de Hermatix con documentos confidenciales (0029, 0035), lista de verificación con IA (0030), preguntas
   al encargado (0031–0032, 0034), resultado por requisito y constancia descargable (0033).
 - Interruptor `ASSISTANT_ENABLED`. Los documentos de Hermatix no se mandan a la IA (`ASSISTANT_SEND_DOCUMENTS=false`).
+- La lista de verificación ya no tiene página propia (9/11): «Empezar el asistente» la genera con IA si falta.
+
+### Propuestas (DECISION_PROPUESTA.md, aprobado por Oscar el 9/11)
+- **Oferta económica en PDF**, sin IA: carta, tabla de precios con el monto en letras, condiciones, desglose que
+  cuadra al céntimo y fórmula de reajuste. Con los datos de Tarrazú da los mismos montos que la oferta ganadora.
+- **Mismo diseño que la oferta de Tarrazú** (10/11): membrete de Hermatix en cada hoja, tabla con encabezado azul,
+  «Monto en Letras», «DESGLOSE DE PRECIO», «Fórmula Matemática» y firma. Faltan las páginas del equipo (esperan las
+  fichas técnicas).
+- Formulario en el cartel con borrador (0041), solo para quien entra al expediente. Si falta un precio, lo dice
+  junto al botón.
+- **Respuesta técnica**, primera parte sin IA: matriz de cumplimiento (pide · ofrece · prueba · ¿Cumple?) con
+  borrador (0042) y PDF.
+- Comando: `python -m app.cli oferta economica --datos OFERTA.yaml`.
 
 ### Ayuda dentro de la app
 - 25 misiones paso a paso con capturas automáticas (base de EJEMPLO), botón «?» en cada pantalla, glosario y
@@ -47,7 +60,8 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 - Tarea de Windows del ciclo: corre tarde si se perdió las 8:00.
 
 ### Documentos nuevos
-- `docs/DECISION_PROPUESTA.md` (borrador, **sin aprobar**): que la app arme la oferta para SICOP.
+- `docs/DECISION_PROPUESTA.md` (**aprobado por Oscar el 9/11**): que la app arme la oferta para SICOP; una persona
+  la firma y la sube.
 - `docs/revision_reglas_vs_ia_20261109.md`: desacuerdos entre las reglas y la IA.
 
 ## Qué cambia al actualizar el servidor (`docs/ACTUALIZACION_SERVIDOR.md`)
@@ -63,9 +77,10 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 - [ ] Aprobar el Reporte PDF con la explicación y activar el prompt **v8**.
 - [ ] ¿Le interesan a Hermatix los sensores IoT en general, no solo de frío y temperatura?
       (`docs/revision_reglas_vs_ia_20261109.md`, caso A2).
-- [ ] La sección 6 de `docs/DECISION_PROPUESTA.md`.
-- [ ] Fase 2 (en construcción): la PC manda el enriquecimiento al servidor con un token (`ENRICH_TOKEN`). Ya
-      están las direcciones del servidor; falta el comando de la PC.
+- [ ] La sección 6 de `docs/DECISION_PROPUESTA.md`: el uso de la IA para la segunda parte de la respuesta técnica.
+- [ ] Mandar las fichas técnicas de los productos, la oferta técnica de Tarrazú y las plantillas de Hermatix.
+- [ ] Fase 2 (lista, `docs/ENVIO_ENRIQUECIMIENTO.md`): la PC manda el enriquecimiento al servidor con un token
+      (`ENRICH_TOKEN`); se activa al actualizar el servidor.
 
 ## Pruebas
 - Suite completa con **Python 3.14** y con **Python 3.12** (el del servidor, entorno limpio con
