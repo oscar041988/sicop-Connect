@@ -211,7 +211,8 @@ correo dice «todavía no está… se ve en el panel». Con `AI_MODE=none` el co
 ## 6. Lista de verificación (asistente de elegibilidad, lección 2; 2026-11-02)
 
 Aprobado por Oscar en `docs/DECISION_IA.md` §7. Código: `app/ai/verificacion.py`; prompt versionado
-`config/prompts/lista_verificacion_v1.md`; pantalla `/oportunidades/{nro}/verificacion`; terminal
+`config/prompts/lista_verificacion_v1.md`; sin pantalla propia desde el 2026-11-09 (se genera al «Empezar el
+asistente», pedido de Ivania); terminal
 `python -m app.cli ia verificar --nro N`.
 
 - **Se envía:** los requerimientos del último resumen ok o revisar, numerados (R1, R2…, con tipo, excluyente y

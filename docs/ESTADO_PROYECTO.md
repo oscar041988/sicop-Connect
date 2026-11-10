@@ -4,13 +4,32 @@
 
 ## Último resultado
 
+- **Oferta económica con el diseño de Tarrazú (2026-11-10, pedido de Ivania).** El PDF que descarga el panel (y el
+  comando) copia el formato de la oferta ganadora: membrete de Hermatix en cada hoja (imágenes en
+  `app/web/static/membrete-*.png`), Times New Roman, tabla de precios con encabezado azul y «Monto en Letras»,
+  condiciones, «DESGLOSE DE PRECIO», «Fórmula Matemática» y firma. No salen las páginas del equipo (esperan las fichas
+  técnicas). Además, sin precio en una línea, el aviso dice «Falta el precio unitario de la línea 1.» y se repite junto
+  a los botones (antes parecía que el botón no hacía nada). `DECISION_PROPUESTA.md` §10. Suite: **1030 passed**.
+  **Pendiente · Ivania:** escribir los precios del cartel 20261001587 y descargar el PDF desde el panel. La migración
+  0042 ya está aplicada en la base local.
+
+- **Lista de verificación sin página propia (2026-11-09, pedido de Ivania: «ya sabemos que camina»).** Se quitaron el
+  botón «Lista de verificación para el asistente», la página `/oportunidades/{nro}/verificacion` y sus acciones
+  (generar, corregir, agregar, quitar, volver a poner, elegir perfil). La lista sigue por dentro: **«Empezar el
+  asistente» la genera con IA si el cartel no la tiene** (necesita el resumen con IA). Ya no se corrigen requisitos a
+  mano; `python -m app.cli ia verificar` sigue para volver a generarla. Misión de ayuda 22 retirada (21 sigue con la
+  23; la 23 actualizada). Sin migración: las tablas y lo ya guardado no se tocan.
+
 - **Propuestas: la oferta económica (2026-11-09, DECISION_PROPUESTA.md aprobado por Oscar, comunicado por Ivania).**
   `python -m app.cli oferta economica --datos OFERTA.yaml` arma el PDF (carta, tabla con el monto en letras,
   condiciones, desglose que cuadra y fórmula de reajuste), sin IA; una persona lo firma y lo sube a SICOP. Con los
   datos de Tarrazú (solo local) reproduce la oferta ganadora al céntimo. 32 pruebas (datos SINTÉTICOS).
   **Formulario en el panel (hecho):** «Oferta económica» en el cartel, solo para quien entra al expediente; sale
   lleno con lo del cartel y `config/oferta.yaml`; borrador guardado (migración **0041**); «Descargar PDF». 5 pruebas.
-  **Siguiente:** la respuesta técnica (etapa 2).
+  **Respuesta técnica, primera parte sin IA (hecha):** «Respuesta técnica» en el cartel: matriz de cumplimiento
+  (pide · ofrece · prueba · ¿Cumple?), filas iniciales del resumen con IA marcadas con su origen, borrador (migración
+  **0042**) y PDF. `DECISION_PROPUESTA.md` §11. Suite: 1031 passed. ~~`migrate`~~ (hecho: 0042 en la base local).
+  **Pendiente · Ivania:** probarla en el panel. **Pendiente · Oscar:** la oferta técnica de Tarrazú, fichas técnicas y la decisión sobre la IA (segunda parte).
 
 - **Oferta ganadora de Hermatix revisada (2026-11-09, autorización de Oscar comunicada por Ivania).** Licitación
   Reducida 2025LD-000058-0002900001 (Tarrazú, videovigilancia con IA para la flotilla): pliego, estudio de mercado y

@@ -3,17 +3,18 @@
 **Para qué sirve:** para reunir lo que tiene Hermatix frente a cada requisito del cartel.
 El asistente pregunta uno por uno y no supone nada.
 
-**Antes de empezar:** el cartel debe tener su lista de verificación (misión 22) y estar en seguimiento.
+**Antes de empezar:** el cartel debe tener «Resumen ejecutivo» y estar en seguimiento.
 Lo usan su encargado y los administradores.
 
 ### Empezar
 
 1. Ve a la página del cartel.
-2. Baja hasta «Asistente de elegibilidad», debajo del enlace de la lista.
+2. Baja hasta «Asistente de elegibilidad».
    [captura: Asistente · resaltar la sección «Asistente de elegibilidad»]
    Si acabas de hacer clic en «Dar seguimiento», la página ya bajó hasta aquí.
 3. Haz clic en «Empezar el asistente».
    Solo la primera vez. Después sigue donde quedó.
+   La primera vez la IA saca los requisitos del pliego. Tarda un poco: lee el pliego completo.
 
 ### Ver cuánto falta
 
@@ -88,11 +89,11 @@ Lo usan su encargado y los administradores.
 
 ## ¿Y si…?
 
-**¿Y si no veo el asistente ni el botón «Lista de verificación para el asistente»?**
+**¿Y si no veo el asistente?**
 El asistente está apagado. Pídele a un administrador que lo encienda.
 
 **¿Y si no veo «Empezar el asistente»?**
-Puede faltar la lista de verificación. Hay un enlace para ir a ella. También puede ser que no seas el encargado.
+Puede que no seas el encargado del cartel, o que el cartel no esté en seguimiento.
 
 **¿Y si dice «Lo usan … y los administradores»?**
 Solo lo usan el encargado del cartel y los administradores. Pide que te asignen el cartel (misión 14).

@@ -65,4 +65,4 @@ Se aceptan solo PDF, PNG o JPG. El mensaje dice qué pasó.
 **¿Quién ve los documentos?**
 Los dos niveles. Cada vez que alguien ve o descarga uno, queda anotado en la página del elemento.
 
-**Sigue con:** [¿Cómo reviso la lista de verificación de un cartel?](22-lista-verificacion.md)
+**Sigue con:** [¿Cómo respondo el asistente de elegibilidad?](23-asistente.md)

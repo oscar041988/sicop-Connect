@@ -87,6 +87,14 @@ def test_un_dato_malo_vuelve_al_formulario_sin_perder_lo_escrito(clientes, db):
     assert _acciones(db, "generar_oferta") == 0 and _acciones(db, "guardar_oferta") == 1
 
 
+def test_sin_precio_lo_dice_junto_al_boton(clientes, db):
+    oscar = clientes["oscar"]
+    _dar_seguimiento(oscar)
+    r = _enviar(oscar, "pdf", lin_precio=["", ""])
+    assert r.status_code == 400 and r.text.count("Falta el precio unitario de la línea 1.") == 2   # arriba y abajo
+    assert 'id="error-oferta"' in r.text and _acciones(db, "generar_oferta") == 0
+
+
 def test_sin_token_csrf_no_guarda(clientes, db):
     oscar = clientes["oscar"]
     _dar_seguimiento(oscar)

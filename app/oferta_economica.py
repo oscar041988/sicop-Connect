@@ -25,6 +25,9 @@ from app.config import PROJECT_ROOT
 
 PLANTILLAS = PROJECT_ROOT / "app" / "web" / "templates"
 LOGO = PROJECT_ROOT / "app" / "web" / "static" / "logo-hermatix.png"
+# Membrete de Hermatix, tomado de la oferta que ganó en Tarrazú (2025): logo con franja azul arriba, franjas abajo.
+CABECERA = PROJECT_ROOT / "app" / "web" / "static" / "membrete-cabecera.png"
+PIE = PROJECT_ROOT / "app" / "web" / "static" / "membrete-pie.png"
 CENTIMO = Decimal("0.01")
 CIEN = Decimal("100")
 MONEDAS = {"CRC": ("colón", "colones", "₡"), "USD": ("dólar estadounidense", "dólares estadounidenses", "US$")}
@@ -128,6 +131,8 @@ def monto_en_letras(monto: Decimal, moneda: str) -> str:
 
 def decimal(valor, campo: str) -> Decimal:
     """Un monto o una cantidad como Decimal (nunca float); el error dice qué campo está mal."""
+    if valor is None or not str(valor).strip():
+        raise OfertaError(f"Falta {campo}.")
     try:
         d = Decimal(str(valor).replace(" ", "").replace(",", ""))
     except (InvalidOperation, ValueError):
@@ -142,6 +147,11 @@ def formato(monto: Decimal, moneda: str) -> str:
     simbolo = MONEDAS[moneda][2]
     entero, dec = f"{monto.quantize(CENTIMO, ROUND_HALF_UP):,.2f}".split(".")
     return f"{simbolo}{entero.replace(',', ' ')},{dec}"
+
+
+def formato_punto(monto: Decimal, moneda: str) -> str:
+    """₡27.030,00: punto de miles y coma decimal, como la tabla de precios de la oferta de Tarrazú."""
+    return formato(monto, moneda).replace(" ", ".")
 
 
 def numero_corto(n: Decimal) -> str:
@@ -230,8 +240,8 @@ def leer(datos: dict) -> Oferta:
     for i, l in enumerate(crudas, 1):
         if not isinstance(l, dict) or not str(l.get("descripcion", "")).strip():
             raise OfertaError(f"La línea {i} necesita «descripcion», «cantidad» y «precio_unitario».")
-        cantidad = decimal(l.get("cantidad"), f"cantidad de la línea {i}")
-        precio = decimal(l.get("precio_unitario"), f"precio_unitario de la línea {i}")
+        cantidad = decimal(l.get("cantidad"), f"la cantidad de la línea {i}")
+        precio = decimal(l.get("precio_unitario"), f"el precio unitario de la línea {i}")
         if cantidad <= 0 or precio < 0:
             raise OfertaError(f"La línea {i}: la cantidad tiene que ser mayor que 0 y el precio no puede ser negativo.")
         lineas.append(Linea(str(l.get("numero", i)), cantidad, str(l["descripcion"]).strip(), precio))
@@ -285,28 +295,44 @@ def html(oferta: Oferta, hoy: date) -> str:
     fecha = d.get("fecha")
     fecha = fecha if isinstance(fecha, date) else (date.fromisoformat(str(fecha)) if fecha else hoy)
     return entorno.get_template("oferta_economica.html").render(
-        o=oferta, d=d, logo=logo, fecha=fecha_larga(fecha), f=lambda m: formato(m, oferta.moneda), q=numero_corto,
+        o=oferta, d=d, logo=logo, fecha=fecha_larga(fecha), f=lambda m: formato(m, oferta.moneda),
+        fp=lambda m: formato_punto(m, oferta.moneda), q=numero_corto,
         letras=monto_en_letras(oferta.total, oferta.moneda), MONEDA=MONEDAS[oferta.moneda])
 
 
-def pdf(contenido_html: str, procedimiento: str) -> bytes:
-    """Imprime a PDF tamaño carta con el Chromium de Playwright, como el Reporte de cartel."""
+def pdf(contenido_html: str, procedimiento: str, titulo: str = "Oferta económica", membrete: bool = True) -> bytes:
+    """Imprime a PDF tamaño carta con el Chromium de Playwright, como el Reporte de cartel. Con membrete (la oferta
+    económica), cada hoja lleva arriba el logo con la franja azul y abajo las franjas, como la oferta que ganó en
+    Tarrazú. Sin membrete (la respuesta técnica, app/respuesta_tecnica.py), un pie con su título y la página."""
     from playwright.sync_api import sync_playwright
 
-    pie = ('<div style="width:100%;font-size:7.5pt;color:#5a6b7b;padding:0 14mm;display:flex;'
-           'justify-content:space-between;font-family:Arial,sans-serif">'
-           f'<span>Oferta económica · Procedimiento {_escapar(procedimiento)}</span>'
-           '<span>Página <span class="pageNumber"></span> de <span class="totalPages"></span></span></div>')
+    if membrete:
+        cabecera = (f'<div style="width:100%;margin:0;padding:0"><img src="{_imagen(CABECERA)}" '
+                    'style="display:block;width:100%"></div>')
+        pie = (f'<div style="width:100%;margin:0;padding:0;align-self:flex-end"><img src="{_imagen(PIE)}" '
+               'style="display:block;width:100%"></div>')
+        margen = {"top": "37mm", "bottom": "26mm", "left": "25mm", "right": "26mm"}
+    else:
+        cabecera = "<span></span>"
+        pie = ('<div style="width:100%;font-size:7.5pt;color:#5a6b7b;padding:0 14mm;display:flex;'
+               'justify-content:space-between;font-family:Arial,sans-serif">'
+               f'<span>{_escapar(titulo)} · Procedimiento {_escapar(procedimiento)}</span>'
+               '<span>Página <span class="pageNumber"></span> de <span class="totalPages"></span></span></div>')
+        margen = {"top": "14mm", "bottom": "18mm", "left": "16mm", "right": "16mm"}
     with sync_playwright() as p:
         navegador = p.chromium.launch()
         try:
             pagina = navegador.new_page()
             pagina.set_content(contenido_html, wait_until="load")
             return pagina.pdf(format="Letter", print_background=True, display_header_footer=True,
-                              header_template="<span></span>", footer_template=pie,
-                              margin={"top": "14mm", "bottom": "18mm", "left": "16mm", "right": "16mm"})
+                              header_template=cabecera, footer_template=pie, margin=margen)
         finally:
             navegador.close()
+
+
+def _imagen(ruta: Path) -> str:
+    """Una imagen como data URI: el encabezado y el pie de Chromium no cargan archivos."""
+    return "data:image/png;base64," + base64.b64encode(ruta.read_bytes()).decode("ascii") if ruta.is_file() else ""
 
 
 def _escapar(texto: str) -> str:

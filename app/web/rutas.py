@@ -42,7 +42,7 @@ from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
                  expediente_descarga, exportar, fichas_panel, historial, oferta_economica, panel, perfil, reintentos,
-                 resumen,
+                 respuesta_tecnica, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
@@ -417,6 +417,75 @@ def _guardar_oferta(request: Request, nro_sicop: str, form) -> Response:
                     headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 
+# --- Respuesta técnica: matriz de cumplimiento (DECISION_PROPUESTA.md, etapa 2) ---------------------------------------
+# Mismo acceso que la oferta económica. Sin IA: si el cartel tiene resumen con IA, sus especificaciones clave son las
+# filas iniciales (marcadas «del resumen con IA»); la persona las revisa contra el pliego y agrega las que falten.
+
+def _render_respuesta(request: Request, conn, nro_sicop: str, datos: dict, status_code: int = 200,
+                      **contexto) -> Response:
+    d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
+    filas = [respuesta_tecnica.Fila(**{c: str(fi.get(c) or "") for c in respuesta_tecnica.Fila.__dataclass_fields__})
+             for fi in datos.get("filas") or []]
+    return PLANTILLAS.TemplateResponse(request, "respuesta_form.html", {
+        "seccion": "seguimiento", "c": d.compra, "m": datos, "guardado": respuesta_tecnica.borrador(conn, nro_sicop),
+        "conteo": respuesta_tecnica.conteo(filas), "sugerencias": respuesta_tecnica.sugerencias_prueba(conn, nro_sicop),
+        "hay_resumen": any(fi.origen == "resumen" for fi in filas),
+        "ESTADOS": respuesta_tecnica.ESTADOS, "ORIGENES": respuesta_tecnica.ORIGENES,
+        "hecho": request.session.pop("hecho_respuesta", None), **contexto}, status_code=status_code)
+
+
+@router.get("/oportunidades/{nro_sicop}/respuesta-tecnica", response_class=HTMLResponse)
+def ver_respuesta_tecnica(request: Request, nro_sicop: str) -> Response:
+    """La matriz de cumplimiento: el borrador guardado o, si no hay, las filas que salen del resumen o del cartel."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        guardado = respuesta_tecnica.borrador(conn, nro_sicop)
+        if guardado is not None:
+            datos = guardado[0]
+        else:
+            d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
+            vigente = next((r for r in ia_resumen.del_cartel(conn, nro_sicop) if r.datos), None) \
+                if _ia_encendida() else None
+            datos = respuesta_tecnica.valores_iniciales(d.compra, vigente.datos if vigente else None)
+        return _render_respuesta(request, conn, nro_sicop, datos)
+
+
+@router.post("/oportunidades/{nro_sicop}/respuesta-tecnica", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+async def guardar_respuesta_tecnica(request: Request, nro_sicop: str) -> Response:
+    """«Guardar borrador» la guarda; «Descargar PDF» la guarda, la revisa y entrega el PDF. Si un dato no sirve, el
+    formulario vuelve con lo escrito y el motivo."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    form = await request.form()
+    return await run_in_threadpool(_guardar_respuesta_tecnica, request, nro_sicop, form)
+
+
+def _guardar_respuesta_tecnica(request: Request, nro_sicop: str, form) -> Response:
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        datos = respuesta_tecnica.desde_formulario(form)
+        quien, ahora = _quien(request), datetime.now(HORA_CR)
+        respuesta_tecnica.guardar_borrador(conn, nro_sicop, datos, quien, ahora)
+        if form.get("accion") != "pdf":
+            request.session["hecho_respuesta"] = "Borrador guardado."
+            return RedirectResponse(f"/oportunidades/{nro_sicop}/respuesta-tecnica", status_code=303)
+        try:
+            filas = respuesta_tecnica.leer(datos)
+        except respuesta_tecnica.MatrizError as exc:
+            return _render_respuesta(request, conn, nro_sicop, datos, 400, error=str(exc))
+        contenido = respuesta_tecnica.pdf(respuesta_tecnica.html(datos, filas, ahora.date()), datos["procedimiento"])
+        with transaccion(conn):
+            historial.registrar(conn, quien, "generar_respuesta_tecnica", nro_sicop)
+    nombre = f"respuesta_tecnica_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
+    return Response(contenido, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
+
+
 @router.get("/oportunidades/{nro_sicop}", response_class=HTMLResponse)
 def oportunidad(request: Request, nro_sicop: str, pregunta: int | None = None) -> Response:
     """El detalle del cartel. ?pregunta=<requisito> muestra esa pregunta del asistente («Cambiar» una respuesta)."""
@@ -531,13 +600,19 @@ def _redactar_mensaje(r) -> str:
 @router.post("/oportunidades/{nro_sicop}/asistente/empezar", response_class=HTMLResponse,
              dependencies=[Depends(verificar_csrf)])
 def empezar_asistente(request: Request, nro_sicop: str) -> Response:
-    """Abre la conversación (o la retoma) y pide a la IA las preguntas, una vez por cartel."""
+    """Abre la conversación (o la retoma) y pide a la IA las preguntas, una vez por cartel. Si el cartel todavía no
+    tiene lista de verificación, primero la genera con IA (pedido de Ivania, 2026-11-09: sin la página aparte)."""
     if (error := _base_no_lista(request)) is not None:
         return error
     settings = load_settings()
     with closing(connect(settings.database_path)) as conn:
         if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
             return negado
+        try:
+            if not verificacion.listar(conn, nro_sicop):
+                verificacion.generar(conn, settings, nro_sicop, _quien(request))
+        except verificacion.VerificacionError as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         try:
             asistente.empezar(conn, nro_sicop, _quien(request), _ahora())
         except asistente.AsistenteInvalido as exc:
@@ -1730,143 +1805,3 @@ def ver_documento_perfil(request: Request, item_id: int, version_id: int) -> Res
         return hallado
     ruta, v = hallado
     return _archivo(ruta, v.archivo_nombre, perfil.MIME[v.archivo_extension], en_linea=True)
-
-
-# --- Lista de verificación del cartel (asistente de elegibilidad, lección 2): la usan los dos niveles -------------
-
-def _render_verificacion(request: Request, conn, nro_sicop: str, status_code: int = 200, **contexto) -> Response:
-    datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora()) \
-        if SOLO_DIGITOS.match(nro_sicop) else None
-    if datos is None:
-        return _no_encontrado(request, f"No hay un cartel con Número SICOP {nro_sicop}.")
-    settings = load_settings()
-    generacion = verificacion.ultima_generacion(conn, nro_sicop)
-    # [DOC n] → documento, solo si el expediente sigue siendo el que leyó la IA (si no, citas sin enlace).
-    actual = ia_expediente.armar_expediente(conn, nro_sicop, settings.ia_max_input_tokens) if generacion else None
-    numerados = ia_expediente.numeracion(conn, nro_sicop) \
-        if generacion and actual is not None and actual.huella == generacion.huella else None
-    resumen_id, reqs = verificacion.requerimientos(conn, nro_sicop)
-    return PLANTILLAS.TemplateResponse(request, "verificacion.html", {
-        "d": datos, "items": verificacion.listar(conn, nro_sicop),
-        "quitados": verificacion.listar(conn, nro_sicop, activos=False), "generacion": generacion,
-        "con_resumen": resumen_id is not None and bool(reqs), "ia_encendida": _ia_encendida(),
-        "perfil": perfil.listar(conn), "EVIDENCIAS": verificacion.EVIDENCIAS, "TIPOS_REQ": verificacion.TIPOS,
-        "NO_INDICADO": verificacion.NO_INDICADO,
-        "citar": lambda texto: citas.enlazar(texto, nro_sicop, numerados),
-        "hecho": request.session.pop("hecho_verificacion", None), "formulario": {}, **contexto,
-    }, status_code=status_code)
-
-
-def _volver_verificacion(request: Request, nro_sicop: str, mensaje: str, ancla: str = "") -> Response:
-    request.session["hecho_verificacion"] = mensaje
-    return RedirectResponse(f"/oportunidades/{nro_sicop}/verificacion{ancla}", status_code=303)
-
-
-def _cambios(requisito: str, tipo: str, tipo_evidencia: str, minimo: str, minimo_numero: str, minimo_fecha: str,
-             unidad: str, excluyente: str) -> verificacion.Cambios:
-    return verificacion.Cambios(requisito, tipo, tipo_evidencia, minimo, minimo_numero, minimo_fecha, unidad,
-                                excluyente == "1")
-
-
-@router.get("/oportunidades/{nro_sicop}/verificacion", response_class=HTMLResponse)
-def pagina_verificacion(request: Request, nro_sicop: str) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    with closing(connect(load_settings().database_path)) as conn:
-        return _render_verificacion(request, conn, nro_sicop)
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/generar", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def generar_verificacion(request: Request, nro_sicop: str) -> Response:
-    """Genera (o vuelve a generar) la lista con IA. Lo que corrigió, agregó o quitó una persona no se toca."""
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    settings = load_settings()
-    with closing(connect(settings.database_path)) as conn:
-        if not SOLO_DIGITOS.match(nro_sicop):
-            return _no_encontrado(request, "El Número SICOP solo lleva dígitos.")
-        try:
-            g = verificacion.generar(conn, settings, nro_sicop, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _render_verificacion(request, conn, nro_sicop, 400, error=str(exc))
-    return _volver_verificacion(request, nro_sicop, f"Lista generada: {g.items} requisitos. Revísala contra el pliego.")
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/agregar", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def agregar_verificacion(request: Request, nro_sicop: str, requisito: str = Form(""), tipo: str = Form(""),
-                         tipo_evidencia: str = Form(""), minimo: str = Form(""), minimo_numero: str = Form(""),
-                         minimo_fecha: str = Form(""), unidad: str = Form(""), excluyente: str = Form("")) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    cambios = _cambios(requisito, tipo, tipo_evidencia, minimo, minimo_numero, minimo_fecha, unidad, excluyente)
-    with closing(connect(load_settings().database_path)) as conn:
-        existe = SOLO_DIGITOS.match(nro_sicop) and conn.execute(
-            "SELECT 1 FROM tenders WHERE nro_sicop = ?", (nro_sicop,)).fetchone()
-        if not existe:
-            return _no_encontrado(request, f"No hay un cartel con Número SICOP {nro_sicop}.")
-        try:
-            verificacion.agregar(conn, nro_sicop, cambios, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _render_verificacion(request, conn, nro_sicop, 400, error_agregar=str(exc),
-                                        formulario=cambios.__dict__)
-    return _volver_verificacion(request, nro_sicop, "Requisito agregado.")
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/{item_id}/corregir", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def corregir_verificacion(request: Request, nro_sicop: str, item_id: int, requisito: str = Form(""),
-                          tipo: str = Form(""), tipo_evidencia: str = Form(""), minimo: str = Form(""),
-                          minimo_numero: str = Form(""), minimo_fecha: str = Form(""), unidad: str = Form(""),
-                          excluyente: str = Form("")) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    cambios = _cambios(requisito, tipo, tipo_evidencia, minimo, minimo_numero, minimo_fecha, unidad, excluyente)
-    with closing(connect(load_settings().database_path)) as conn:
-        try:
-            verificacion.corregir(conn, nro_sicop, item_id, cambios, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _render_verificacion(request, conn, nro_sicop, 400, error=str(exc))
-    return _volver_verificacion(request, nro_sicop, "Requisito corregido: volver a generar no lo cambia.",
-                                f"#item-{item_id}")
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/{item_id}/quitar", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def quitar_verificacion(request: Request, nro_sicop: str, item_id: int) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    with closing(connect(load_settings().database_path)) as conn:
-        try:
-            verificacion.quitar(conn, nro_sicop, item_id, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _no_encontrado(request, str(exc))
-    return _volver_verificacion(request, nro_sicop, "Requisito quitado (sigue abajo, en «Quitados»).")
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/{item_id}/volver", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def volver_verificacion(request: Request, nro_sicop: str, item_id: int) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    with closing(connect(load_settings().database_path)) as conn:
-        try:
-            verificacion.volver_a_poner(conn, nro_sicop, item_id, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _no_encontrado(request, str(exc))
-    return _volver_verificacion(request, nro_sicop, "Requisito de vuelta en la lista.", f"#item-{item_id}")
-
-
-@router.post("/oportunidades/{nro_sicop}/verificacion/{item_id}/perfil", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-def perfil_verificacion(request: Request, nro_sicop: str, item_id: int, perfil_item_id: str = Form("")) -> Response:
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    elegido = int(perfil_item_id) if perfil_item_id.isdigit() else None
-    with closing(connect(load_settings().database_path)) as conn:
-        try:
-            verificacion.elegir_perfil(conn, nro_sicop, item_id, elegido, _quien(request))
-        except verificacion.VerificacionError as exc:
-            return _render_verificacion(request, conn, nro_sicop, 400, error=str(exc))
-    return _volver_verificacion(request, nro_sicop, "Elemento del perfil confirmado.", f"#item-{item_id}")

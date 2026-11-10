@@ -45,7 +45,7 @@
   <fieldset class="bloque-oferta"><legend>Precios</legend>
     <label>Moneda<select name="moneda">{% for m in MONEDAS %}<option value="{{ m }}"{% if o.moneda == m %} selected{% endif %}>{{ m }}</option>{% endfor %}</select></label>
     <label>Meses (vacío si es precio único)<input type="number" name="meses" min="1" max="120" value="{{ o.meses or '' }}"
-      placeholder="12 si es arrendamiento mensual"></label>
+      placeholder="Ej.: 12"></label>
     <div class="ancho tabla-lineas">
       <table>
         <thead><tr><th>Línea</th><th>Cantidad</th><th>Descripción</th><th>Precio unitario{% if o.meses %} mensual{% endif %}</th></tr></thead>
@@ -54,7 +54,7 @@
         <tr><td><input type="text" name="lin_numero" maxlength="10" value="{{ l.numero or '' }}" aria-label="Línea"></td>
           <td><input type="text" name="lin_cantidad" maxlength="15" value="{{ l.cantidad or '' }}" aria-label="Cantidad" inputmode="decimal"></td>
           <td><input type="text" name="lin_descripcion" maxlength="400" value="{{ l.descripcion or '' }}" aria-label="Descripción"></td>
-          <td><input type="text" name="lin_precio" maxlength="20" value="{{ l.precio_unitario or '' }}" aria-label="Precio unitario" inputmode="decimal" placeholder="27030.00"></td></tr>
+          <td><input type="text" name="lin_precio" maxlength="20" value="{{ l.precio_unitario or '' }}" aria-label="Precio unitario" inputmode="decimal" placeholder="Escribe el precio"></td></tr>
         {% endfor %}
         </tbody>
       </table>
@@ -86,6 +86,8 @@
       la fórmula de reajuste.</small>
   </fieldset>
 
+  {# El formulario es largo: el error se repite junto a los botones, donde está quien presionó «Descargar PDF». #}
+  {% if error %}<p class="error" id="error-oferta" tabindex="-1">No se generó el PDF: {{ error }} Lo que escribiste quedó guardado.</p>{% endif %}
   <div class="acciones-oferta">
     <button type="submit" name="accion" value="pdf">Descargar PDF</button>
     <button type="submit" name="accion" value="guardar" class="btn o">Guardar borrador</button>

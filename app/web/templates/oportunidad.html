@@ -61,7 +61,7 @@
       {% else %}
       <div>
         <p class="cf-pregunta">¿Podemos participar?</p>
-        {% if con_asis %}<p class="cf-desglose">Todavía no tiene lista de verificación.</p>
+        {% if con_asis %}<p class="cf-desglose">Todavía sin requisitos: salen al «Empezar el asistente».</p>
         {% elif not asistente_activo %}<p class="cf-desglose">— · El asistente de elegibilidad está apagado.</p>
         {% elif not seg %}<p class="cf-desglose">— · Para usar el asistente, primero «Dar seguimiento» al cartel.</p>
         {% else %}<p class="cf-desglose">— · El asistente de este cartel lo usan {{ seg.encargado or "su encargado (todavía sin asignar)" }}
@@ -99,7 +99,8 @@
   <p class="cf-enlaces">
     {% if seg and puede_entrar %}<a href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
     <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>
-    <a href="/oportunidades/{{ c.nro_sicop }}/oferta">Oferta económica</a>{% endif %}
+    <a href="/oportunidades/{{ c.nro_sicop }}/oferta">Oferta económica</a>
+    <a href="/oportunidades/{{ c.nro_sicop }}/respuesta-tecnica">Respuesta técnica</a>{% endif %}
     {% if vigente %}<a href="/oportunidades/{{ c.nro_sicop }}/reporte" title="Máximo 3 páginas">Reporte PDF</a>{% endif %}
     <a href="https://www.sicop.go.cr/app/module/bid/public/tenders" target="_blank" rel="noopener"
        title="Búscalo con el número {{ c.nro_sicop }} (no hay un enlace directo estable)">Ver en SICOP ↗</a>
@@ -190,17 +191,16 @@
       {% endfor %}
     </ul>
     {% elif not asistente_activo %}
-    <p class="vacio">El asistente de elegibilidad está apagado: la lista de verificación no se muestra.</p>
+    <p class="vacio">El asistente de elegibilidad está apagado: los requisitos no se muestran.</p>
     {% elif not seg %}
-    <p class="vacio">La lista de verificación se usa con el asistente: primero «Dar seguimiento» al cartel.</p>
+    <p class="vacio">Los requisitos salen con el asistente: primero «Dar seguimiento» al cartel.</p>
     {% elif not puede_entrar %}
     <p class="vacio">—</p>
     {% else %}
-    <p class="vacio">Este cartel todavía no tiene lista de verificación.</p>
+    <p class="vacio">Todavía sin requisitos: salen al «Empezar el asistente».</p>
     {% endif %}
-    {% if asistente_activo %}{# ASSISTANT_ENABLED (asistente, lección 5) #}
-    <p class="enlace-verificacion"><a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/verificacion">Lista de verificación para el asistente</a>
-      <small class="sub">Cada requisito del pliego, con qué lo demuestra y su mínimo.</small></p>
+    {% if asistente_activo %}{# ASSISTANT_ENABLED (asistente, lección 5). La lista de verificación ya no tiene página:
+       se genera al «Empezar el asistente» (pedido de Ivania, 2026-11-09). #}
     {% include "_asistente.html" %}
     {% endif %}
   </section>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Respuesta técnica · {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+{# Respuesta técnica: matriz de cumplimiento de un cartel (DECISION_PROPUESTA.md, etapa 2; app/respuesta_tecnica.py).
+   La ven y la llenan quienes entran al expediente. Sin IA: las filas del resumen con IA llevan su origen para
+   distinguirlas. La app formula el PDF; una persona lo firma con firma digital y lo sube a SICOP. Todo va escapado. #}
+<p class="migas"><a href="/oportunidades/{{ c.nro_sicop }}">← Volver al cartel</a></p>
+<section>
+  <h1>Respuesta técnica</h1>
+  <p class="sub">{{ c.descripcion or c.nro_sicop }} · {{ c.institucion or "" }}</p>
+  <p class="sub">Una fila por cada especificación del pliego: <strong>qué pide el cartel, qué ofrece Hermatix y qué
+    documento lo prueba</strong>. Lo que no se cumple se marca «No cumple» y sale así en el PDF: no se esconde.
+    <strong>Revisa el PDF, fírmalo con firma digital y súbelo a SICOP.</strong></p>
+  {% if hay_resumen %}<p class="sub">Las filas marcadas «del resumen con IA» son solo las especificaciones que más pesan:
+    revísalas contra el pliego y <strong>agrega las que falten</strong>.</p>{% endif %}
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">No se generó el PDF: {{ error }} Lo que escribiste quedó guardado.</p>{% endif %}
+  {% if guardado %}<p class="sub">Borrador guardado por {{ guardado[1] }} el {{ guardado[2] | fecha }}.</p>{% endif %}
+  {% if conteo %}<p class="sub">{% for t, n in conteo.items() %}{{ t }}: {{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+</section>
+
+<form class="revision oferta" method="post" action="/oportunidades/{{ c.nro_sicop }}/respuesta-tecnica">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <fieldset class="bloque-oferta"><legend>El concurso</legend>
+    <label>Procedimiento N.°<input type="text" name="procedimiento" maxlength="60" value="{{ m.procedimiento }}"></label>
+    <label>Oferente<input type="text" name="empresa" maxlength="150" value="{{ m.empresa }}"></label>
+    <label>Institución<input type="text" name="institucion" maxlength="200" value="{{ m.institucion }}"></label>
+    <label class="ancho">Objeto (como dice el pliego)<textarea name="objeto" rows="2" maxlength="600">{{ m.objeto }}</textarea></label>
+  </fieldset>
+
+  <fieldset class="bloque-oferta"><legend>Matriz de cumplimiento</legend>
+    <div class="ancho tabla-lineas matriz">
+      <table>
+        <thead><tr><th>Línea</th><th>El cartel pide</th><th>Hermatix ofrece</th><th>Documento que lo prueba</th><th>¿Cumple?</th></tr></thead>
+        <tbody>
+        {% for fi in (m.filas or []) + [{}, {}, {}] %}
+        <tr><td><input type="text" name="fil_linea" maxlength="10" value="{{ fi.linea or '' }}" aria-label="Línea"></td>
+          <td><textarea name="fil_pide" rows="2" maxlength="1000" aria-label="El cartel pide">{{ fi.pide or '' }}</textarea>
+            <input type="text" name="fil_cita" maxlength="120" value="{{ fi.cita or '' }}" aria-label="Dónde lo dice el pliego"
+              placeholder="Dónde lo dice (DOC, pág.)">
+            <input type="hidden" name="fil_origen" value="{{ fi.origen or '' }}">
+            {% if ORIGENES.get(fi.origen) %}<small class="origen">{{ ORIGENES[fi.origen] }}</small>{% endif %}</td>
+          <td><textarea name="fil_ofrece" rows="2" maxlength="1000" aria-label="Hermatix ofrece">{{ fi.ofrece or '' }}</textarea>
+            <input type="text" name="fil_nota" maxlength="500" value="{{ fi.nota or '' }}" aria-label="Nota" placeholder="Nota (opcional)"></td>
+          <td><input type="text" name="fil_prueba" maxlength="300" value="{{ fi.prueba or '' }}" list="pruebas"
+              aria-label="Documento que lo prueba" placeholder="Ficha técnica, pág. 4"></td>
+          <td><select name="fil_estado" aria-label="¿Cumple?"><option value="">Sin marcar</option>
+            {% for k, t in ESTADOS.items() %}<option value="{{ k }}"{% if fi.estado == k %} selected{% endif %}>{{ t }}</option>{% endfor %}
+          </select></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <datalist id="pruebas">{% for s in sugerencias %}<option value="{{ s }}">{% endfor %}</datalist>
+      <small>Al guardar aparecen tres filas vacías más para seguir agregando. Las filas vacías no se usan.</small>
+    </div>
+  </fieldset>
+
+  <div class="acciones-oferta">
+    <button type="submit" name="accion" value="pdf">Descargar PDF</button>
+    <button type="submit" name="accion" value="guardar" class="btn o">Guardar borrador</button>
+  </div>
+</form>
+{% endblock %}

@@ -14,8 +14,6 @@ solo_admin:
 pantallas:
   - ruta: /oportunidades/*/resumen
     mision: 05-resumen-ia
-  - ruta: /oportunidades/*/verificacion
-    mision: 22-lista-verificacion
   - ruta: /oportunidades/*/asistente/resultados/*
     mision: 24-resultado
   - ruta: /oportunidades/*

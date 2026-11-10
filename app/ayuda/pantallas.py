@@ -35,7 +35,6 @@ PANTALLAS: dict[str, str] = {
     "Correo": "/ayuda-ejemplo/correo",
     "Perfil": "/perfil",
     "Elemento del perfil": "/perfil/{perfil}",
-    "Lista de verificación": "/oportunidades/{principal}/verificacion",
     "Asistente": "/oportunidades/{seguido}",       # en seguimiento, con el asistente empezado
     "Revisión rápida": "/oportunidades/{sin_encargado}",   # asistente sin ampliar, excluyentes respondidos
     "Resultado": "/oportunidades/{seguido}",       # el mismo cartel, con un resultado ya calculado
@@ -142,8 +141,6 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Perfil", "una fila"): Objetivo(selector="table.lista tbody tr"),
     ("Perfil", "el estado"): Objetivo(selector="table.lista .estado-perfil"),
     ("Elemento del perfil", "el estado"): Objetivo(selector=".ficha .estado-perfil"),
-    ("Lista de verificación", "el botón de generar"): Objetivo(selector=".generar-lista button"),
-    ("Lista de verificación", "un requisito"): Objetivo(selector=".item-verificacion"),
     ("Asistente", "la sección «Asistente de elegibilidad»"): Objetivo(selector="#asistente"),
     ("Asistente", "el avance"): Objetivo(selector=".asistente .avance", url="/oportunidades/{sin_encargado}"),
     ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),

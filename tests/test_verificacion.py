@@ -247,28 +247,31 @@ def test_la_propuesta_de_perfil_por_palabras_del_titulo(base):
 
 # --- Pantalla -----------------------------------------------------------------------------------------------------
 
-def test_la_encargada_ve_corrige_y_todo_sale_escapado(base, monkeypatch):
+def test_empezar_el_asistente_genera_la_lista_y_ya_no_hay_pagina(base, monkeypatch):
+    """Pedido de Ivania (2026-11-09): la lista ya no tiene página; «Empezar el asistente» la genera si falta."""
+    from app import seguimiento
     db, _ = base
-    _generar(db)
     monkeypatch.setenv("DATABASE_PATH", str(db))
+    monkeypatch.setenv("ASSISTANT_ENABLED", "true")
+    monkeypatch.setenv("AI_MODE", "none")                     # las preguntas no van a OpenAI
+    original = verificacion.generar
+    monkeypatch.setattr(verificacion, "generar", lambda conn, settings, nro, quien: original(
+        conn, _settings(db), nro, quien, cliente=OpenAISimulado(), dormir=lambda s: None))   # OpenAI SIMULADO
     with closing(connect(db)) as conn:
-        usuarios.crear_usuario(conn, "encargada@ejemplo.test", "Encargada Sintética", CONTRASENA)
-        item = _por_texto(verificacion.listar(conn, NRO), "Aportar patente")
+        admin = usuarios.crear_usuario(conn, "admin@ejemplo.test", "Admin Sintético", CONTRASENA, usuarios.ADMIN)
+        seguimiento.abrir(conn, NRO, Quien(admin, "Admin Sintético"), datetime.now(HORA_CR))
+        assert verificacion.listar(conn, NRO) == []
     cliente = TestClient(app)
-    assert iniciar_sesion(cliente, "encargada@ejemplo.test").status_code == 303
-    html = cliente.get(f"/oportunidades/{NRO}/verificacion").text
-    assert "Lista de verificación" in html and "al menos 3 años" in html
-    assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
-    r = cliente.post(f"/oportunidades/{NRO}/verificacion/{item.id}/corregir", follow_redirects=False, data={
-        "csrf_token": token_csrf(html), "requisito": item.requisito, "tipo": "legal", "tipo_evidencia": "fecha",
-        "minimo": "vigente al cierre", "minimo_numero": "", "minimo_fecha": "", "unidad": "", "excluyente": "1"})
+    assert iniciar_sesion(cliente, "admin@ejemplo.test").status_code == 303
+    html = cliente.get(f"/oportunidades/{NRO}").text
+    assert "Lista de verificación para el asistente" not in html and "Primero la IA saca los requisitos" in html
+    assert cliente.get(f"/oportunidades/{NRO}/verificacion").status_code == 404
+    r = cliente.post(f"/oportunidades/{NRO}/asistente/empezar", data={"csrf_token": token_csrf(html)},
+                     follow_redirects=False)
     assert r.status_code == 303
     with closing(connect(db)) as conn:
-        corregido = _por_texto(verificacion.listar(conn, NRO), "Aportar patente")
-        assert (corregido.tipo_evidencia, corregido.excluyente, corregido.editado) == ("fecha", True, True)
-        assert conn.execute("SELECT actor FROM audit_log WHERE accion = 'corregir_item_verificacion'").fetchone() == \
-            ("Encargada Sintética",)
-    assert "Lista de verificación para el asistente" in cliente.get(f"/oportunidades/{NRO}").text
+        assert len(verificacion.listar(conn, NRO)) == 4
+        assert conn.execute("SELECT COUNT(*) FROM eligibility_sessions").fetchone()[0] == 1
 
 
 def test_el_comando_ia_verificar(base, capsys):
@@ -278,11 +281,6 @@ def test_el_comando_ia_verificar(base, capsys):
     assert ia_verificar_cmd(_settings(db), NRO, cliente=OpenAISimulado()) == 0
     salida = capsys.readouterr().out
     assert "4 requisitos" in salida and "EXCLUYENTE · Acreditar" in salida and "mínimo: al menos 3 años" in salida
-
-
-def test_sin_sesion_va_al_login(db):  # noqa: F811
-    r = TestClient(app).get(f"/oportunidades/{NRO}/verificacion", follow_redirects=False)
-    assert r.status_code == 303 and "/login" in r.headers["location"]
 
 
 # --- Migración 0030 -----------------------------------------------------------------------------------------------
@@ -303,7 +301,7 @@ def test_0030_conserva_ia_usage_y_las_referencias_de_los_resumenes(tmp_path):
         conn.execute("INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, estado, motivo, ia_usage_id,"
                      " creado_en) VALUES (?, 'v1', 'm', ?, 'fallido', 'prueba', 1, 't')", (NRO, "a" * 64))
         conn.commit()
-    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql"]
+    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, proposito FROM ia_usage").fetchall() == [(1, "resumen")]
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []

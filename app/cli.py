@@ -287,7 +287,7 @@ def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
     for i in items:
         excluyente = "EXCLUYENTE · " if i.excluyente else ""
         print(f"  - {excluyente}{i.requisito[:90]} → {i.evidencia_texto} · mínimo: {i.minimo}")
-    print(f"Revísala en el panel: /oportunidades/{nro_sicop}/verificacion")
+    print(f"El asistente pregunta sobre ella en el panel: /oportunidades/{nro_sicop}")
     return 0
 
 

@@ -199,4 +199,37 @@ Sale lleno con lo del cartel (procedimiento, tipo, institución, objeto y línea
 entrega el PDF. Si un dato no sirve, vuelve el formulario con lo escrito y el motivo. El historial anota quién guardó
 y quién generó el PDF, sin montos. 5 pruebas en `tests/test_oferta_panel.py`.
 
-**Siguiente:** la respuesta técnica punto por punto (etapa 2).
+**Diseño igual a la oferta de Tarrazú (2026-11-10, pedido de Ivania):** el PDF copia el formato de la oferta ganadora.
+Cada hoja lleva el **membrete de Hermatix** (logo con la franja azul arriba; franjas verde, gris y azul abajo), tomado
+de ese PDF (`app/web/static/membrete-cabecera.png` y `membrete-pie.png`; lo pone `oferta_economica.pdf` como
+encabezado y pie de Chromium). Times New Roman; carta con la fecha en negrita a la derecha, destinatario en negrita,
+referencia centrada con el objeto en mayúsculas y cuerpo justificado; tabla de precios con encabezado azul, «Por
+unidad» / «Mensual», filas «Sub Total anual», «Total, IVA» y «Total anual» con la etiqueta en azul, «*****Última
+Línea********» y el recuadro «Monto en Letras»; montos con punto de miles (₡27.030,00); condiciones con «Nota:» en
+rojo; «DESGLOSE DE PRECIO»; «Fórmula Matemática» con llaves y fracciones; firma centrada. **Diferencias:** no salen
+las páginas de descripción del equipo (son de cada cartel: esperan las fichas técnicas), la firma no lleva «Sr.» y,
+si la oferta está exenta, el motivo del IVA va debajo de la tabla. La respuesta técnica no lleva membrete.
+
+**Aviso sin precio (2026-11-10):** «Descargar PDF» con una línea sin precio decía `«precio_unitario de la línea 1» no
+es un número: ''` y solo arriba del formulario. Ahora dice «Falta el precio unitario de la línea 1.» y el aviso se
+repite junto a los botones. 1 prueba más en `tests/test_oferta_panel.py`.
+
+## 11. Construido: la respuesta técnica, primera parte sin IA (2026-11-09)
+
+Pedido de Ivania: hacer la etapa 2 en dos partes. **Primera parte (hecha), sin IA:** en el cartel, «Respuesta técnica»
+(junto a «Oferta económica»; mismo acceso: su encargado y los administradores). Es la **matriz de cumplimiento**: una
+fila por especificación con «el cartel pide · dónde lo dice · Hermatix ofrece · documento que lo prueba · ¿Cumple?»
+(Cumple · No cumple · Revisar · Sin marcar) y una nota.
+
+- **Filas iniciales:** si el cartel tiene resumen con IA, sus especificaciones clave, marcadas «del resumen con IA:
+  revisar contra el pliego» (son solo las que más pesan); si no, una fila por línea del cartel. Todas empiezan sin
+  marcar. La persona agrega las demás del pliego.
+- **Documento que lo prueba:** sugiere los documentos del perfil y los archivos del expediente; se puede escribir otro.
+- **PDF** (`app/respuesta_tecnica.py`, plantilla `respuesta_tecnica.html`): encabezado, conteo por estado, la tabla y
+  la firma. «No cumple» y «Sin marcar» salen tal cual: no se esconde ninguna fila.
+- Borrador por cartel (migración **0042**); el historial anota quién guardó y quién generó el PDF. Pruebas en
+  `tests/test_respuesta_tecnica.py` (datos SINTÉTICOS).
+
+**Segunda parte (espera a Oscar):** que la IA saque **todas** las especificaciones del pliego con su cita (sección 6,
+uso de IA para la oferta) y las fichas técnicas de los productos (sección 4). Falta también la oferta técnica de
+Tarrazú para comparar el formato.

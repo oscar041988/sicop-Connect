@@ -91,8 +91,8 @@ def test_html_escapado_con_ultima_linea_letras_y_formula():
     from datetime import date
     o = oe.leer(_datos(objeto="Objeto <script>alert(1)</script> SINTÉTICO"))
     html = " ".join(oe.html(o, date(2026, 11, 9)).split())
-    assert "&lt;script&gt;" in html and "<script>alert(1)" not in html
-    assert "Última línea" in html and "Dos millones cuatrocientos mil colones exactos." in html
+    assert "&lt;SCRIPT&gt;" in html and "<script" not in html.lower()          # el objeto va en mayúsculas
+    assert "Última Línea" in html and "Dos millones cuatrocientos mil colones exactos." in html
     assert "PV = PC" in html and "9 de noviembre de 2026" in html
     assert "Registro Electrónico Oficial de Proveedores" in html
 
@@ -110,7 +110,7 @@ def test_comando_genera_el_pdf(tmp_path, capsys, monkeypatch):
     import pdfplumber
     with pdfplumber.open(pdf) as doc:
         texto = " ".join(p.extract_text() or "" for p in doc.pages)
-    assert "₡2 400 000,00" in texto and "Desglose del precio" in texto
+    assert "₡2.400.000,00" in texto and "DESGLOSE DE PRECIO" in texto and "Última Línea" in texto
 
 
 def test_comando_con_datos_malos_no_hace_pdf(tmp_path, capsys):

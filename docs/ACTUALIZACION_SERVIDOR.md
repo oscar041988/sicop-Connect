@@ -8,7 +8,7 @@ del día ya salió) y con tiempo para revertir. Nada de esto se ha ejecutado tod
 | | Hoy en el servidor | Después |
 |---|---|---|
 | Código | `02b569b` (15/10) | lo unido a `main` desde `desarrollo` (219 commits) |
-| Esquema de la base | 0007 | **0041** |
+| Esquema de la base | 0007 | **0042** |
 | Base de datos | la del servidor (vieja) | **la base local de Ivania** (decisión de Ivania, 2026-11-09): trae todo lo hecho desde el 21/10 |
 | Ciclo de las 8:00 (avisos) | — | **en el servidor** (`sicop-cycle.timer`); se apaga la tarea de Windows |
 | Enriquecimiento de las 10:00 (navegador) | tarea de Windows | **en pausa** hasta la fase 2 (`docs/ENVIO_ENRIQUECIMIENTO.md`) |
@@ -198,7 +198,7 @@ sudo cp /opt/sicop-connect/deploy/systemd/sicop-* /etc/systemd/system/
 sudo systemd-analyze verify /etc/systemd/system/sicop-*.service /etc/systemd/system/sicop-*.timer
 sudo systemctl daemon-reload
 sudo systemctl start sicop-migrate.service
-sudo journalctl -u sicop-migrate.service -n 20 --no-pager    # la base local llega en 0039: aplica la 0040 y la 0041
+sudo journalctl -u sicop-migrate.service -n 20 --no-pager    # la base local llega en 0039: aplica de la 0040 a la 0042
 ```
 
 Con el patrón de `systemd-run` (§9.5):

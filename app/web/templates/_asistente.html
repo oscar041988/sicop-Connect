@@ -13,16 +13,14 @@
   {% if a.hecho %}<p class="hecho">{{ a.hecho }}</p>{% endif %}
   {% if a.error %}<p class="error">{{ a.error }}</p>{% endif %}
 
-  {% if not a.pasos and not a.info %}
-  <p class="vacio">Este cartel todavía no tiene lista de verificación: el asistente pregunta sobre ella.
-    <a href="/oportunidades/{{ c.nro_sicop }}/verificacion">Ir a la lista de verificación</a>.</p>
-  {% elif not a.sesion %}
+  {% if not a.sesion %}
   <form method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/empezar">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit">Empezar el asistente</button>
   </form>
-  <small class="sub">{% if a.ia %}La IA redacta las preguntas una sola vez: solo lee la lista de verificación, nunca el
-    perfil ni tus archivos.{% else %}La IA está apagada: las preguntas las arma la app.{% endif %}</small>
+  <small class="sub">{% if not a.pasos and not a.info %}Primero la IA saca los requisitos del pliego (tarda un poco: lee
+    el pliego completo). {% endif %}{% if a.ia %}La IA redacta las preguntas una sola vez: solo lee los requisitos del
+    cartel, nunca el perfil ni tus archivos.{% else %}La IA está apagada: las preguntas las arma la app.{% endif %}</small>
   {% else %}
   {% set av = a.avance %}
   {% if not a.ampliada %}

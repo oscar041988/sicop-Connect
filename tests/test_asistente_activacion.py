@@ -28,15 +28,14 @@ def test_apagado_no_aparece_y_sus_direcciones_no_responden(web, monkeypatch):
     db_path, ids, _, c, u = web
     _seguido(db_path, u)
     oscar = c["oscar"]
-    assert "Lista de verificación para el asistente" in oscar.get(f"/oportunidades/{NRO}").text
+    assert 'id="asistente"' in oscar.get(f"/oportunidades/{NRO}").text
     token_antes = _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")              # con el asistente encendido
     assert token_antes.status_code == 303
     monkeypatch.setenv("ASSISTANT_ENABLED", "false")
     pagina = oscar.get(f"/oportunidades/{NRO}").text
-    assert "Lista de verificación para el asistente" not in pagina and 'id="asistente"' not in pagina
-    for ruta in (f"/oportunidades/{NRO}/verificacion", f"/oportunidades/{NRO}/asistente/resultados/1"):
-        r = oscar.get(ruta)
-        assert r.status_code == 404 and "ASSISTANT_ENABLED=false" in r.text
+    assert 'id="asistente"' not in pagina
+    r = oscar.get(f"/oportunidades/{NRO}/asistente/resultados/1")
+    assert r.status_code == 404 and "ASSISTANT_ENABLED=false" in r.text
     r = _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "1"})
     assert r.status_code == 404
     with closing(connect(db_path)) as conn:                                              # no se borró nada

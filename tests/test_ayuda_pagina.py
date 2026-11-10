@@ -43,7 +43,7 @@ def clientes(db, monkeypatch):  # noqa: F811
 def test_el_indice_tiene_las_25_misiones_en_orden_y_toda_mision_se_abre(clientes):
     admin, _ = clientes
     nombres = [m.nombre for m in pagina.todas()]
-    assert len(nombres) == 25 and nombres == sorted(nombres)
+    assert len(nombres) == 24 and nombres == sorted(nombres)
     html = admin.get("/ayuda").text
     assert "¿Cómo se usa?" in html and 'id="glosario"' in html
     for nombre in nombres:
@@ -148,7 +148,6 @@ def test_cada_mision_del_mapa_existe():
     ("/competencia", "11-competencia"), ("/cargar", "12-cargar-archivo"), ("/usuarios", "13-usuarios"),
     ("/destinatarios", "15-destinatarios"), ("/avisos", "16-avisos"), ("/calidad", "17-calidad"),
     ("/bitacora", "18-bitacora"), ("/perfil", "21-perfil"),
-    (f"/oportunidades/{NRO}/verificacion", "22-lista-verificacion"),
 ])
 def test_cada_pantalla_tiene_su_boton_de_ayuda(clientes, url, mision):
     admin, _ = clientes

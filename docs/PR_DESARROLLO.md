@@ -10,7 +10,7 @@ cartel rediseñado
 
 ## Qué trae esta rama
 
-**102 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0041**. Todo se construyó y se probó
+**102 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
 en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACTUALIZACION_SERVIDOR.md`**.
 
 ### Gestor de documentos (pasos 1B a 5)
@@ -52,7 +52,7 @@ en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACT
 
 ## Qué cambia al actualizar el servidor (`docs/ACTUALIZACION_SERVIDOR.md`)
 - [ ] Respaldo de la base del servidor y de las unidades de systemd.
-- [ ] La base del servidor se reemplaza por **la base local de Ivania** (esquema 0039; `migrate` aplica la 0040 y la 0041)
+- [ ] La base del servidor se reemplaza por **la base local de Ivania** (esquema 0039; `migrate` aplica de la 0040 a la 0042)
       con sus carpetas de datos.
 - [ ] `pip install -r requirements.lock.txt`: se suman `playwright`, `openpyxl`, `pdfplumber` y `openai`.
 - [ ] Carpetas nuevas en `/var/lib/sicop-connect` y variables nuevas en `app.env` (la clave de OpenAI, Oscar).

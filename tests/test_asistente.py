@@ -485,7 +485,7 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
                              " tipo_evidencia, estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES"
                              " (1, ?, 'r', 'p', 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,)).lastrowid
         conn.commit()
-    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql"]
+    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, estado, valor_si_no FROM eligibility_answers").fetchall() == [
             (antes, "respondido", 1)]
