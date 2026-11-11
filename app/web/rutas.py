@@ -43,8 +43,8 @@ from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, oferta_economica, panel, perfil, propuesta,
-                 reintentos, resumen,
+                 expediente_descarga, exportar, fichas_panel, historial, oferta_cambios, oferta_economica, panel,
+                 perfil, propuesta, reintentos, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
@@ -374,13 +374,16 @@ async def generar_oferta(request: Request, nro_sicop: str) -> Response:
     EXPORTS_DIR/ofertas/ (nunca sobrescribe)."""
     if (error := _base_no_lista(request)) is not None:
         return error
-    formato = str((await request.form()).get("formato") or "pdf")
+    formulario = await request.form()
+    formato = str(formulario.get("formato") or "pdf")
     if formato not in TIPOS_OFERTA:
         formato = "pdf"
-    return await run_in_threadpool(_generar_oferta, request, nro_sicop, formato)
+    version = str(formulario.get("version") or "")          # una versión anterior (paso 4); vacío = la última
+    return await run_in_threadpool(_generar_oferta, request, nro_sicop, formato,
+                                   int(version) if version.isdigit() else None)
 
 
-def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf") -> Response:
+def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf", version: int | None = None) -> Response:
     settings = load_settings()
     ahora = datetime.now(HORA_CR)
     with closing(connect(settings.database_path)) as conn:
@@ -388,7 +391,7 @@ def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf") -> R
             return negado
         armar = propuesta.armar_word if formato == "docx" else propuesta.armar
         try:
-            armada = armar(conn, settings, nro_sicop, _quien(request), ahora)
+            armada = armar(conn, settings, nro_sicop, _quien(request), ahora, version=version)
         except propuesta.PropuestaError as exc:
             request.session["error_oferta"] = str(exc)
             return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
@@ -506,7 +509,43 @@ def _contexto_chat(conn, settings, pasos, sesion, actual, ahora: datetime) -> di
             # El dato del perfil de la pregunta de ahora se confirma con un clic, como siempre (no va a la IA).
             "perfil": actual if actual is not None and actual.perfil is not None and actual.respuesta is None else None,
             "gasto": ia_cola.costo_de_hoy(conn, ahora.astimezone(HORA_CR).date()), "tope": settings.ia_max_daily_cost,
-            "lee_archivos": settings.assistant_send_documents, "limite_mb": settings.assistant_doc_max_mb}
+            "lee_archivos": settings.assistant_send_documents, "limite_mb": settings.assistant_doc_max_mb,
+            # Paso 4: los cambios que propuso la IA (con «Aplicar» y «No») y las versiones de la oferta.
+            "propuestas": {p.mensaje_id: p for p in oferta_cambios.propuestas(conn, sesion.nro_sicop)},
+            "versiones": oferta_cambios.versiones(conn, sesion.nro_sicop)}
+
+
+# Paso 4 (DECISION_IA.md §10): un cambio a la oferta se aplica solo con el clic de una persona (Ivania, 2026-11-11).
+
+@router.post("/oportunidades/{nro_sicop}/asistente/propuestas/{propuesta_id}/aplicar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def aplicar_propuesta(request: Request, nro_sicop: str, propuesta_id: int) -> Response:
+    return _decidir_propuesta(request, nro_sicop, propuesta_id, True)
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/propuestas/{propuesta_id}/rechazar", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def rechazar_propuesta(request: Request, nro_sicop: str, propuesta_id: int) -> Response:
+    return _decidir_propuesta(request, nro_sicop, propuesta_id, False)
+
+
+def _decidir_propuesta(request: Request, nro_sicop: str, propuesta_id: int, aplicar: bool) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            base = propuesta.preparar(conn, settings, nro_sicop, _quien(request), _ahora(), con_cambios=False)
+            nueva = oferta_cambios.decidir(conn, nro_sicop, propuesta_id, aplicar, base.bloques, base.anexos,
+                                           _quien(request), _ahora())
+        except (oferta_cambios.CambioInvalido, propuesta.PropuestaError) as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+        p = next(x for x in oferta_cambios.propuestas(conn, nro_sicop) if x.id == propuesta_id)
+        ia_chat.anotar(conn, nro_sicop, f"Aplicado · versión {nueva.numero}: {p.descripcion}" if nueva
+                       else f"No aplicado: {p.descripcion}", _ahora())
+    return RedirectResponse(f"/oportunidades/{nro_sicop}#chat", status_code=303)
 
 
 def _asistente_permitido(request: Request, conn, nro_sicop: str) -> Response | None:

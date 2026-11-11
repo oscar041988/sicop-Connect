@@ -321,7 +321,19 @@ documento, en otro formato, para poder editarlo a mano si hace falta.
      `chat_asistente_v2.md` (trato de usted; «lo subo después» / «no lo tenemos» / «no sé» avanzan; la IA recibe la
      PREGUNTA ACTUAL), la pregunta dice cómo avanzar, no se repite entera y muestra como máximo 2 citas seguidas.
      4 pruebas nuevas (15 en total).
-4. Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).
+4. ~~Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).~~ **Hecho
+   (2026-11-11):** `app/oferta_cambios.py`, migración **0045** (`oferta_versiones`, `oferta_propuestas`), prompt
+   `config/prompts/chat_oferta_v1.md` (se agrega al del chat solo cuando ya hay una oferta).
+   - La primera vez que se arma la oferta queda como **versión 1**. En el chat la IA recibe las secciones (S1, S2…,
+     con su respuesta y si están en rojo) y los anexos, y **propone** cambios de la lista cerrada: cambiar la
+     respuesta, marcar «cumple»/«acepta», quitar/volver a poner/agregar/mover una sección, quitar/volver a poner un
+     anexo. La app los valida y los muestra con **«Aplicar»** y **«No»** (decisión de Ivania, 2026-11-11: nada cambia
+     sin el clic de una persona). «Aplicar» crea la versión siguiente; las anteriores se conservan y se pueden
+     descargar (PDF o Word). La portada dice «Versión N».
+   - Nunca: precios, el texto del pliego, una sección en rojo (no se cambia, no se marca, no se quita) ni un anexo
+     pendiente. Una sección se reconoce por número y título: si el pliego cambia y un cambio ya no la encuentra, sale
+     en la portada como pendiente.
+   - Pruebas con IA SIMULADA: `tests/test_oferta_cambios.py` (8).
 5. «Oferta terminada» y el borrado de datos personales (10.4).
 6. Medir el costo con Oscar y ajustar el tope.
 

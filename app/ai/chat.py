@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from app import asistente, historial
+from app import asistente, historial, oferta_cambios
 from app.ai import cliente as ia_cliente
 from app.ai import verificacion
 from app.ai.cola import costo_de_hoy
@@ -54,8 +54,19 @@ ESQUEMA = _objeto(
                      "documento: «»"),
         vence_el=_texto("AAAA-MM-DD si se sabe hasta cuándo vale el documento; si no, «»"),
         usa_archivo={"type": "boolean", "description": "true solo si el archivo de este mensaje prueba este requisito"},
+    )),
+    cambios=_lista(_objeto(
+        accion={"type": "string", "enum": [*oferta_cambios.ACCIONES, ""],
+                "description": "El cambio a la oferta que pidió la persona; «» si no pidió ninguno"},
+        seccion=_texto("La sección: S1, S2…; si no aplica, «»"),
+        antes_de=_texto("Para mover o agregar: la sección de destino (S1, S2…); si no aplica, «»"),
+        anexo=_texto("El anexo: A2.1, A3.2…; si no aplica, «»"),
+        tipo={"type": "string", "enum": ["cumple", "acepta", ""], "description": "Solo para marcar"},
+        titulo=_texto("Solo para agregar una sección: su título; si no, «»"),
+        texto=_texto("La respuesta nueva o el texto de la sección agregada, tal como lo pidió la persona; si no, «»"),
     )))
 FORMATO = {"type": "json_schema", "name": "chat_asistente", "schema": ESQUEMA, "strict": True}
+VERSION_OFERTA = "v1"           # config/prompts/chat_oferta_<v>.md: las reglas extra cuando ya hay una oferta
 
 
 class ChatInvalido(ValueError):
@@ -72,8 +83,11 @@ class Mensaje:
     creado_en: str
 
 
-def cargar_prompt() -> str:
-    return (PROMPTS_DIR / f"chat_asistente_{VERSION}.md").read_text(encoding="utf-8")
+def cargar_prompt(con_oferta: bool = False) -> str:
+    base = (PROMPTS_DIR / f"chat_asistente_{VERSION}.md").read_text(encoding="utf-8")
+    if not con_oferta:
+        return base
+    return base + "\n\n" + (PROMPTS_DIR / f"chat_oferta_{VERSION_OFERTA}.md").read_text(encoding="utf-8")
 
 
 # --- Lectura -------------------------------------------------------------------------------------------------------
@@ -156,12 +170,12 @@ def _momento(ahora: datetime) -> str:
 
 
 def _guardar(conn: sqlite3.Connection, session_id: int, rol: str, texto: str, ahora: datetime,
-             quien: Quien | None = None, archivo: str | None = None, uso_id: int | None = None) -> None:
+             quien: Quien | None = None, archivo: str | None = None, uso_id: int | None = None) -> int:
     with transaccion(conn):
-        conn.execute("INSERT INTO asistente_chat (session_id, rol, texto, archivo_nombre, autor_id, autor_nombre,"
+        return conn.execute("INSERT INTO asistente_chat (session_id, rol, texto, archivo_nombre, autor_id, autor_nombre,"
                      " ia_usage_id, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                      (session_id, rol, texto[:6000], archivo, quien.user_id if quien else None,
-                      quien.nombre if quien else None, uso_id, _momento(ahora)))
+                      quien.nombre if quien else None, uso_id, _momento(ahora))).lastrowid
 
 
 # --- Lo que va a la IA ---------------------------------------------------------------------------------------------
@@ -190,12 +204,27 @@ def _texto_archivo(datos: bytes, nombre: str) -> str:
     return contenido[:LARGO_ARCHIVO] + (" […recortado]" if len(contenido) > LARGO_ARCHIVO else "")
 
 
+def _oferta(p) -> str:
+    """La oferta de ahora para la IA: secciones S1, S2… (título, si está en rojo y su respuesta) y anexos A2.1…"""
+    lineas = [f"OFERTA ACTUAL (versión {p.version or 1}):"]
+    for n, b in enumerate(oferta_cambios.secciones(p.bloques), start=1):
+        respuesta = " ".join(b.respuesta) if b.respuesta is not None else f"(sección agregada) {b.texto}"
+        lineas.append(f"S{n} · {(b.numero + '. ') if b.numero else ''}{b.titulo or 'sin título'} · en rojo: "
+                      f"{'sí' if b.pendiente else 'no'} · respuesta: {respuesta[:300]}")
+    for a in p.anexos:
+        lineas.append(f"A{a.numero} · {a.titulo} · {'PENDIENTE: ' + a.pendiente if a.pendiente else 'adjunto'}")
+    return "\n".join(lineas)
+
+
 def texto_para_ia(compra, pasos: list[asistente.Paso], anteriores: list[Mensaje], texto: str,
-                  archivo: tuple[bytes, str] | None, con_texto_archivo: bool) -> str:
+                  archivo: tuple[bytes, str] | None, con_texto_archivo: bool, oferta=None) -> str:
     actual = asistente.siguiente(pasos)
     numero = next((n for n, p in enumerate(pasos, start=1) if p is actual), None)
     partes = [f"CARTEL: {compra.nro_sicop} · {compra.descripcion or 'sin objeto'}", "", _requisitos(pasos), "",
-              f"PREGUNTA ACTUAL: {f'R{numero}' if numero else 'ninguna (todo respondido)'}", "", "CONVERSACIÓN:"]
+              f"PREGUNTA ACTUAL: {f'R{numero}' if numero else 'ninguna (todo respondido)'}", ""]
+    if oferta is not None:
+        partes += [_oferta(oferta), ""]
+    partes.append("CONVERSACIÓN:")
     for m in anteriores[-CONVERSACION:]:
         extra = f" [archivo: {m.archivo_nombre}]" if m.archivo_nombre else ""
         partes.append(f"{ROLES[m.rol]}: {m.texto}{extra}")
@@ -299,12 +328,13 @@ def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: 
         _guardar(conn, sesion.id, "app", motivo + sin_archivo, ahora)
         return
     visibles = asistente.visibles(pasos, sesion)
+    oferta = oferta_actual(conn, settings, nro_sicop, quien, ahora)
     entrada = texto_para_ia(detalle_compra(conn, nro_sicop), visibles, anteriores, texto, archivo,
-                            settings.assistant_send_documents)
+                            settings.assistant_send_documents, oferta)
     extra = {"dormir": dormir} if dormir is not None else {}
     try:
-        r = ia_cliente.pedir(conn, settings, cargar_prompt(), entrada, "chat", nro_sicop, cliente=cliente,
-                             formato=FORMATO, **extra)
+        r = ia_cliente.pedir(conn, settings, cargar_prompt(oferta is not None), entrada, "chat", nro_sicop,
+                             cliente=cliente, formato=FORMATO, **extra)
         datos = normalizar(json.loads(r.texto), ESQUEMA) if r.resultado == "ok" else None
     except (ia_cliente.IaApagada, ia_cliente.IaConfiguracion) as exc:
         _guardar(conn, sesion.id, "app", f"{exc}{sin_archivo}", ahora)
@@ -328,9 +358,62 @@ def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: 
                       "Dígalo y súbalo otra vez.")
     if lineas:
         _guardar(conn, sesion.id, "app", "\n".join(lineas), ahora)
-    _guardar(conn, sesion.id, "app", _sin_repetir(siguiente_mensaje(asistente.recorrido(conn, nro_sicop, dia),
-                                                                    asistente.sesion(conn, nro_sicop)), anteriores),
-             ahora)
+    if oferta is not None:
+        _proponer(conn, sesion.id, nro_sicop, oferta, datos["cambios"], ahora)
+    siguiente = _sin_repetir(siguiente_mensaje(asistente.recorrido(conn, nro_sicop, dia),
+                                               asistente.sesion(conn, nro_sicop)), anteriores)
+    if siguiente:
+        _guardar(conn, sesion.id, "app", siguiente, ahora)
+
+
+def anotar(conn: sqlite3.Connection, nro_sicop: str, texto: str, ahora: datetime) -> None:
+    """Un mensaje de la app en el chat del cartel (p. ej. «Aplicado · versión 2: …»)."""
+    sesion = asistente.sesion(conn, nro_sicop)
+    if sesion is not None:
+        _guardar(conn, sesion.id, "app", texto, ahora)
+
+
+def oferta_actual(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime):
+    """La oferta de ahora (con los cambios de su última versión), solo si ya se armó alguna vez; si no, None."""
+    from app import propuesta
+    if oferta_cambios.ultima(conn, nro_sicop) is None:
+        return None
+    try:
+        return propuesta.preparar(conn, settings, nro_sicop, quien, ahora)
+    except propuesta.PropuestaError:
+        return None
+
+
+def _proponer(conn: sqlite3.Connection, session_id: int, nro_sicop: str, oferta, pedidos: list[dict],
+              ahora: datetime) -> None:
+    """Cada cambio que pidió la persona: si se puede, queda como propuesta con «Aplicar» y «No»; si no, se dice por
+    qué. La oferta NO cambia aquí (decisión de Ivania, 2026-11-11: siempre con el clic de una persona)."""
+    secciones = {f"S{n}": oferta_cambios.clave(b)
+                 for n, b in enumerate(oferta_cambios.secciones(oferta.bloques), start=1)}
+    anexos = {f"A{a.numero}": oferta_cambios.clave_anexo(a) for a in oferta.anexos}
+    for x in pedidos:
+        if x["accion"] in (NO, ""):
+            continue
+        cambio = {"accion": x["accion"]}
+        if _vacio(x["seccion"]):
+            cambio["seccion"] = secciones.get(_vacio(x["seccion"]).upper(), _vacio(x["seccion"]))
+        if _vacio(x["antes_de"]):
+            cambio["antes_de"] = secciones.get(_vacio(x["antes_de"]).upper(), _vacio(x["antes_de"]))
+        if _vacio(x["anexo"]):
+            cambio["anexo"] = anexos.get(_vacio(x["anexo"]).upper(), _vacio(x["anexo"]))
+        if x["accion"] == "marcar":
+            cambio["tipo"] = _vacio(x["tipo"])
+        if x["accion"] == "agregar_seccion":
+            cambio["titulo"] = _vacio(x["titulo"])
+        if x["accion"] in ("cambiar_respuesta", "agregar_seccion"):
+            cambio["texto"] = _vacio(x["texto"])
+        try:
+            descripcion = oferta_cambios.validar(cambio, oferta.bloques, oferta.anexos, [])
+        except oferta_cambios.CambioInvalido as exc:
+            _guardar(conn, session_id, "app", f"Ese cambio no se puede hacer: {exc}.", ahora)
+            continue
+        mensaje_id = _guardar(conn, session_id, "app", f"Cambio propuesto: {descripcion}", ahora)
+        oferta_cambios.proponer(conn, nro_sicop, cambio, descripcion, mensaje_id, ahora)
 
 
 def _sin_repetir(nuevo: str, anteriores: list[Mensaje]) -> str:
@@ -340,4 +423,6 @@ def _sin_repetir(nuevo: str, anteriores: list[Mensaje]) -> str:
     if ultima is not None and nuevo.startswith("Pregunta ") and nuevo in ultima:
         numero = nuevo.split(":", 1)[0]                   # «Pregunta 1 de 8»
         return f"Seguimos con la {numero[0].lower()}{numero[1:]} (arriba)."
+    if not nuevo.startswith("Pregunta ") and any(m.rol == "app" and m.texto == nuevo for m in anteriores):
+        return ""                                         # «Ya están respondidos todos…» se dice una sola vez
     return nuevo

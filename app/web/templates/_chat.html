@@ -16,7 +16,27 @@
       <span class="autor">{% if m.rol == "persona" %}{{ m.autor_nombre }}{% elif m.rol == "asistente" %}Asistente (IA){% else %}SICOP CONNECT{% endif %}
         <small>· {{ m.creado_en | fecha }}</small></span>
       <div class="burbuja">{% if m.rol == "persona" %}{{ m.texto }}{% else %}{{ citar(m.texto) }}{% endif %}
-        {% if m.archivo_nombre %}<span class="chat-adjunto">{{ m.archivo_nombre }}</span>{% endif %}</div>
+        {% if m.archivo_nombre %}<span class="chat-adjunto">{{ m.archivo_nombre }}</span>{% endif %}
+        {% set pr = ch.propuestas.get(m.id) %}
+        {% if pr %}
+        <div class="chat-cambio {{ pr.estado }}">
+          {% if pr.estado == "pendiente" %}
+          <span class="sub">Solo se aplica si usted lo confirma. Crea una versión nueva; la anterior se guarda.</span>
+          <div class="chat-cambio-botones">
+            <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/propuestas/{{ pr.id }}/aplicar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit">Aplicar</button>
+            </form>
+            <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/propuestas/{{ pr.id }}/rechazar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn o">No</button>
+            </form>
+          </div>
+          {% else %}
+          <span class="sub">{{ "Aplicado" if pr.estado == "aplicada" else "No aplicado" }} por {{ pr.decidido_por }}, {{ pr.decidido_en | fecha }}</span>
+          {% endif %}
+        </div>
+        {% endif %}</div>
     </li>
     {% endfor %}
   </ol>
@@ -43,6 +63,35 @@
       <button type="submit" name="formato" value="pdf">Pedir la oferta completa (PDF)</button>
       <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
     </form>
+  </div>
+  {% endif %}
+
+  {% if ch.versiones %}
+  {% set ultima = ch.versiones[-1] %}
+  <div class="chat-versiones">
+    <strong>Oferta · versión {{ ultima.numero }}</strong>
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" name="formato" value="pdf">Descargar la última (PDF)</button>
+      <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
+    </form>
+    <span class="sub">Pida cambios en el chat («en la sección 3 que diga…», «quite la sección de visita»): cada cambio
+      se aplica solo con su clic y crea una versión nueva. Nunca precios ni el texto del pliego.</span>
+    <details>
+      <summary>Versiones ({{ ch.versiones | length }})</summary>
+      <ol class="historial">
+        {% for v in ch.versiones | reverse %}
+        <li><strong>Versión {{ v.numero }}</strong> · {{ v.descripcion }}
+          <small class="sub">· {{ v.creado_por }}, {{ v.creado_en | fecha }}</small>
+          <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="version" value="{{ v.numero }}">
+            <button type="submit" name="formato" value="pdf" class="btn o">PDF</button>
+            <button type="submit" name="formato" value="docx" class="btn o">Word</button>
+          </form></li>
+        {% endfor %}
+      </ol>
+    </details>
   </div>
   {% endif %}
 

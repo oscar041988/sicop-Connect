@@ -168,6 +168,7 @@ def _portada(doc, p: Preparada) -> None:
     empresa = d.get("empresa") or {}
     for texto in ("Oferente", empresa.get("nombre", ""), f"Cédula Jurídica {empresa.get('cedula_juridica', '')}"):
         _parrafo(doc, texto, negrita=True, color=AZUL, tam=14, alinear=centro)
+    _parrafo(doc, f"Versión {p.version or 1}", tam=10, alinear=centro, antes=18)
     if p.pendientes:
         caja = _parrafo(doc, f"BORRADOR: hay {len(p.pendientes)} punto(s) sin resolver. No firmar ni subir a SICOP "
                              "todavía.", negrita=True, color=ROJO, tam=12, antes=26, despues=4)

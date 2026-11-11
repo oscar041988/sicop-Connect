@@ -7,6 +7,16 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Corregir la oferta desde el chat (2026-11-11; `DECISION_IA.md` §10, paso 4).** Con la oferta armada (versión 1),
+  en el chat se piden cambios («en la sección 3 que diga…», «quite la sección de visita»): la IA los propone y la
+  app los muestra con **«Aplicar» / «No»**; cada «Aplicar» crea una versión nueva (las anteriores se guardan y se
+  descargan en PDF o Word; la portada dice «Versión N»). Lista cerrada: respuestas, marcar cumple/acepta, quitar,
+  volver a poner, agregar y mover secciones, quitar y volver a poner anexos. Nunca precios, pliego, secciones en rojo
+  ni anexos pendientes. `app/oferta_cambios.py`, prompt `chat_oferta_v1.md`, migración **0045**. 8 pruebas nuevas
+  (IA SIMULADA). **Pendiente · Ivania:** respaldo y `migrate` (0045) con el panel cerrado; probarlo: armar la oferta
+  de un cartel con el asistente respondido y pedir un cambio en el chat. **Siguiente:** paso 5, «Oferta terminada» y
+  el borrado de los datos personales (`DECISION_IA.md` §10.4).
+
 - **El asistente como chat (2026-11-11; `DECISION_IA.md` §10, paso 3 de §10.7).** En el cartel, con
   `ASSISTANT_CHAT=true` y la IA encendida, el asistente es un chat como la maqueta: la persona contesta con sus
   palabras y sube archivos; la IA propone las respuestas y **la app las guarda con las reglas de siempre** (un

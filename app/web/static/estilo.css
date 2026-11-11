@@ -705,3 +705,13 @@ form.en-linea { display: inline; margin-left: 8px; }
 .chat-redactar textarea { width: 100%; resize: vertical; }
 .chat-acciones { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-end; justify-content: space-between; }
 .chat-archivo { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; min-width: 0; }
+/* Paso 4: cambios propuestos a la oferta («Aplicar» / «No») y sus versiones. */
+.chat-cambio { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--azul-bg); white-space: normal;
+               display: flex; flex-direction: column; gap: 6px; }
+.chat-cambio.aplicada { background: var(--g1); }
+.chat-cambio.rechazada { background: var(--no-bg); }
+.chat-cambio-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+.chat-versiones { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--line);
+                  border-radius: 12px; padding: 12px 14px; }
+.chat-versiones .historial form { display: inline-flex; gap: 6px; margin-left: 6px; }
+.chat-versiones .historial .btn { padding: 4px 10px; font-size: .82rem; }

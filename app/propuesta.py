@@ -34,7 +34,7 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from app import asistente, elegibilidad, historial, oferta_economica, perfil
+from app import asistente, elegibilidad, historial, oferta_cambios, oferta_economica, perfil
 from app.ai import oferta as ia_oferta
 from app.ai import resumen as ia_resumen
 from app.compras import detalle_compra
@@ -68,6 +68,7 @@ class Bloque:
     respuesta: list[str] | None = None
     pendiente: bool = False
     inicio: int = 0                       # índice de la página donde empieza (para ubicar los requisitos)
+    agregada: bool = False                # la agregó una persona desde el chat (app/oferta_cambios.py)
 
 
 @dataclass
@@ -102,6 +103,7 @@ class Preparada:
     procedimiento: str
     motivo_ia: str | None
     hoy: object                           # la fecha de la oferta (hora de Costa Rica)
+    version: int | None = None            # la versión de la oferta (app/oferta_cambios.py); None = todavía ninguna
 
     @property
     def presentes(self) -> list[Anexo]:
@@ -373,9 +375,11 @@ def _hojas(imprimir, plantilla, hojas: list[dict], procedimiento: str, **context
 
 
 def preparar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
-             cliente=None, dormir=None, tarifas: dict | None = None) -> Preparada:
+             cliente=None, dormir=None, tarifas: dict | None = None, version: int | None = None,
+             con_cambios: bool = True) -> Preparada:
     """Junta todo lo de la oferta del cartel. Lanza PropuestaError si no se puede (sin cartel o sin pliego).
-    No escribe nada: el historial lo anota quien la entrega (armar o armar_word)."""
+    Aplica los cambios de la última versión (o de «version»; con_cambios=False, ninguno: la oferta tal como la arma
+    la app). No escribe nada: el historial lo anota quien la entrega (armar o armar_word)."""
     compra = detalle_compra(conn, nro_sicop)
     if compra is None:
         raise PropuestaError(f"No hay un cartel con Número SICOP {nro_sicop}.")
@@ -413,8 +417,17 @@ def preparar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien
             a.ruta, a.pendiente = None, "el PDF no se pudo abrir (¿protegido?): adjuntarlo a mano"
     pendientes += [f"Anexo {a.numero} · {a.titulo}: {a.pendiente}." for a in lista if a.pendiente]
 
+    # Los cambios pedidos en el chat (DECISION_IA.md §10, paso 4): uno que ya no se puede aplicar va a la portada.
+    elegida = None
+    if con_cambios:
+        elegida = oferta_cambios.version(conn, nro_sicop, version) if version else oferta_cambios.ultima(conn, nro_sicop)
+        if version and elegida is None:
+            raise PropuestaError(f"La oferta de este cartel no tiene versión {version}.")
+        if elegida is not None and elegida.cambios:
+            bloques, lista, avisos = oferta_cambios.aplicar(bloques, lista, elegida.cambios)
+            pendientes += avisos
     return Preparada(compra, datos, bloques, lista, pendientes, oferta, precio_pendiente,
-                     datos["procedimiento"] or nro_sicop, motivo_ia, hoy)
+                     datos["procedimiento"] or nro_sicop, motivo_ia, hoy, elegida.numero if elegida else None)
 
 
 def _anotar(conn: sqlite3.Connection, quien: Quien, nro_sicop: str, p: Preparada, accion: str) -> None:
@@ -423,24 +436,31 @@ def _anotar(conn: sqlite3.Connection, quien: Quien, nro_sicop: str, p: Preparada
         a.registrar()
     with transaccion(conn):
         historial.registrar(conn, quien, accion,
-                            f"{nro_sicop}: {len(p.presentes)} anexo(s), {len(p.pendientes)} pendiente(s)")
+                            f"{nro_sicop}: {len(p.presentes)} anexo(s), {len(p.pendientes)} pendiente(s)"
+                            + (f", versión {p.version}" if p.version else ""))
+    if p.version is None:                                  # la primera vez queda como versión 1
+        oferta_cambios.asegurar_primera(conn, nro_sicop, quien, datetime.now(HORA_CR))
+        p.version = 1
 
 
 def armar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
-          cliente=None, dormir=None, imprimir=oferta_economica.pdf, tarifas: dict | None = None) -> Armada:
-    """Arma la oferta completa del cartel en PDF. Lanza PropuestaError si no se puede (sin cartel o sin pliego).
-    cliente, dormir, imprimir y tarifas solo se cambian en las pruebas (IA SIMULADA, tarifario SINTÉTICO)."""
-    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas)
+          cliente=None, dormir=None, imprimir=oferta_economica.pdf, tarifas: dict | None = None,
+          version: int | None = None) -> Armada:
+    """Arma la oferta completa del cartel en PDF (la última versión, o «version»). Lanza PropuestaError si no se
+    puede (sin cartel o sin pliego). cliente, dormir, imprimir y tarifas solo se cambian en las pruebas."""
+    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas,
+                 version=version)
     contenido = _pdf(p, imprimir)
     _anotar(conn, quien, nro_sicop, p, "generar_oferta")
     return Armada(contenido, p.procedimiento, p.pendientes, p.motivo_ia)
 
 
 def armar_word(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
-               cliente=None, dormir=None, tarifas: dict | None = None) -> Armada:
+               cliente=None, dormir=None, tarifas: dict | None = None, version: int | None = None) -> Armada:
     """La misma oferta en Word (.docx). No necesita Chromium: lo escribe python-docx."""
     from app import propuesta_word
-    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas)
+    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas,
+                 version=version)
     contenido = propuesta_word.documento(p)
     _anotar(conn, quien, nro_sicop, p, "generar_oferta_word")
     return Armada(contenido, p.procedimiento, p.pendientes, p.motivo_ia)
@@ -452,7 +472,7 @@ def _pdf(p: Preparada, imprimir) -> bytes:
     entorno = _entorno()
     principal = entorno.get_template("propuesta.html").render(
         d=datos, c=p.compra, bloques=p.bloques, anexos=lista, GRUPOS=GRUPOS, pendientes=p.pendientes,
-        oferta=oferta, precio_pendiente=precio_pendiente)
+        oferta=oferta, precio_pendiente=precio_pendiente, version=p.version)
     # Plan del documento después de la parte principal: hojas propias (título de cada anexo, imagen, precio
     # pendiente), la oferta económica y los PDF adjuntos, en el orden del listado de anexos.
     presentes = p.presentes

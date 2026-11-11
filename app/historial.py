@@ -48,6 +48,8 @@ ACCIONES = {
     "guardar_oferta": "Guardó el borrador de la oferta económica",
     "generar_oferta": "Generó la oferta en PDF",
     "generar_oferta_word": "Generó la oferta en Word",
+    "aplicar_cambio_oferta": "Aplicó un cambio a la oferta (versión nueva)",
+    "rechazar_cambio_oferta": "No aplicó un cambio que propuso el asistente",
     "adjuntar_documento_oferta": "Adjuntó un documento del asistente o del perfil a la oferta",
     "guardar_respuesta_tecnica": "Guardó el borrador de la respuesta técnica",
     "generar_respuesta_tecnica": "Generó la respuesta técnica en PDF",

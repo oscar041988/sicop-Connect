@@ -23,6 +23,7 @@
   .portada .proc { font-size: 14pt; font-style: italic; margin-bottom: 34px; }
   .portada .objeto { font-size: 12.5pt; margin: 0 auto 40px; max-width: 150mm; }
   .portada .oferente { font-size: 14pt; font-variant: small-caps; margin: 0 0 10px; }
+  .portada .version { font-size: 10pt; font-weight: 400; color: #555; margin-top: 18px; }
   .borrador { border: 2px solid var(--rojo); color: var(--rojo); padding: 8px 12px; margin: 26px 0 0; text-align: left;
               font-weight: 400; font-size: 10pt; break-inside: avoid; }
   .borrador strong { display: block; font-size: 12pt; margin-bottom: 4px; }
@@ -56,6 +57,7 @@
   <p class="oferente">Oferente</p>
   <p class="oferente">{{ d.empresa.nombre }}</p>
   <p class="oferente">Cédula Jurídica {{ d.empresa.cedula_juridica }}</p>
+  <p class="version">Versión {{ version or 1 }}</p>
   {% if pendientes %}
   <div class="borrador">
     <strong>BORRADOR: hay {{ pendientes | length }} punto(s) sin resolver. No firmar ni subir a SICOP todavía.</strong>
