@@ -12,3 +12,4 @@ openpyxl>=3.1  # A5: exportar a Excel con los identificadores como texto
 pdfplumber>=0.11  # Enriquecimiento, lección 3: texto de los PDF de las fichas (sin OCR)
 openai>=3.40  # Reporte con IA, lección 2: SDK oficial de la API de OpenAI (solo se usa con AI_MODE=openai)
 anthropic>=2.8  # DECISION_IA.md §8: SDK oficial de la API de Anthropic (solo se usa con AI_MODE=anthropic)
+python-docx>=1.2  # DECISION_IA.md §10.6 bis: la oferta completa también en Word (.docx)

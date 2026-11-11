@@ -29,7 +29,7 @@ SICOP ──► 1. Llegan los carteles (8:00) ──► 2. Correo diario ──�
 | 6 | Se le da seguimiento y se asigna encargado | Equipo · administrador |
 | 7 | El asistente dice si Hermatix cumple los requisitos | Encargado o administrador |
 | 8 | Se trabaja el expediente: archivos, notas y etapa | Encargado o administrador |
-| 9 | El botón «Oferta» arma la oferta completa en PDF | Encargado o administrador |
+| 9 | El botón «Oferta» arma la oferta completa en PDF («Oferta en Word»: la misma, en .docx) | Encargado o administrador |
 | 10 | Una persona firma con firma digital y sube la oferta a SICOP | Fuera de la app |
 
 **Dos niveles de usuario:**
@@ -197,6 +197,11 @@ Nada se borra: archivos, notas, etapas y encargados quedan en el historial.
 En el cartel, el botón **«Oferta»** (solo el encargado y los administradores, porque trae precios). No hay
 formulario: un clic y en unos segundos se descarga la oferta completa en un solo PDF, con la forma de la oferta
 ganadora de NAVSAT y el membrete de Hermatix. Una copia queda en `EXPORTS_DIR/ofertas/<procedimiento>/`.
+
+Al lado, **«Oferta en Word»** descarga **el mismo documento en Word (.docx)**, por si hay que retocar algo a mano
+(pedido de Oscar, 2026-11-11). Trae lo mismo y en el mismo orden; lo que está en rojo en el PDF también lo está en el
+Word. Los documentos adjuntos van como imágenes de cada página: para subir a SICOP, el original sigue siendo el que
+va dentro del PDF.
 
 > **La app formula la oferta; una persona la revisa, la firma con firma digital y la sube a SICOP.**
 > La app no inventa precios ni sube nada a SICOP.

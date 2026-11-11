@@ -107,9 +107,10 @@
   {# Oferta completa con un botón (app/propuesta.py): como la de NAVSAT, sin formulario. Lo pendiente sale en rojo. #}
   <form class="cf-oferta" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit">Oferta</button>
-    <small>Arma la oferta completa en PDF: el pliego respondido, la oferta económica y los documentos del asistente.
-      Tarda unos segundos. Revísala, fírmala con firma digital y súbela a SICOP.</small>
+    <button type="submit" name="formato" value="pdf">Oferta</button>
+    <button type="submit" name="formato" value="docx" class="btn o">Oferta en Word</button>
+    <small>Arma la oferta completa en PDF o en Word (el mismo documento): el pliego respondido, la oferta económica y
+      los documentos del asistente. Tarda unos segundos. Revísala, fírmala con firma digital y súbela a SICOP.</small>
   </form>
   {% if error_oferta %}<p class="error">{{ error_oferta }}</p>{% endif %}
   {% endif %}

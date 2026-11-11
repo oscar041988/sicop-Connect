@@ -287,6 +287,10 @@ descarga y guarda una copia en `EXPORTS_DIR/ofertas/<procedimiento>/oferta_<fech
 - **Siempre pendiente por ahora:** la ficha técnica del equipo ofertado (anexo 3), hasta que Oscar decida cómo se
   elige el equipo de cada cartel con las fichas Hero.
 - Pruebas: `tests/test_propuesta.py` (datos SINTÉTICOS, IA SIMULADA).
+- **También en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis):** botón «Oferta en Word». El mismo
+  documento en .docx (`app/propuesta_word.py`, `python-docx`): `propuesta.preparar()` junta los datos una sola vez
+  y de ahí salen el PDF y el Word. Los adjuntos van como imagen de cada página. Historial «generar_oferta_word»;
+  copia en `EXPORTS_DIR/ofertas/<procedimiento>/oferta_<fecha>.docx`. Pruebas: `tests/test_propuesta_word.py`.
 
 **Pendiente · Oscar:** llenar `config/tarifario.yaml` y los datos del representante en `config/oferta.yaml`; decidir
 cómo se elige la ficha técnica de cada cartel.

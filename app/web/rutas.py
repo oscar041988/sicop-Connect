@@ -360,28 +360,40 @@ def descargar_reporte(request: Request, nro_sicop: str) -> Response:
 # que falta sale en rojo. La ven quienes entran al expediente (su encargado y los administradores): trae precios.
 # La app formula el PDF; una persona lo revisa, lo firma con firma digital y lo sube a SICOP.
 
+# La misma oferta sale también en Word (.docx) con «formato=docx» (Oscar, por Ivania, 2026-11-11; DECISION_IA.md
+# §10.6 bis): mismo contenido, otro formato (app/propuesta_word.py).
+TIPOS_OFERTA = {"pdf": "application/pdf",
+                "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+
+
 @router.post("/oportunidades/{nro_sicop}/oferta", dependencies=[Depends(verificar_csrf)])
 async def generar_oferta(request: Request, nro_sicop: str) -> Response:
-    """Arma la oferta completa y la entrega en PDF; guarda una copia en EXPORTS_DIR/ofertas/ (nunca sobrescribe)."""
+    """Arma la oferta completa y la entrega en PDF (o en Word con formato=docx); guarda una copia en
+    EXPORTS_DIR/ofertas/ (nunca sobrescribe)."""
     if (error := _base_no_lista(request)) is not None:
         return error
-    return await run_in_threadpool(_generar_oferta, request, nro_sicop)
+    formato = str((await request.form()).get("formato") or "pdf")
+    if formato not in TIPOS_OFERTA:
+        formato = "pdf"
+    return await run_in_threadpool(_generar_oferta, request, nro_sicop, formato)
 
 
-def _generar_oferta(request: Request, nro_sicop: str) -> Response:
+def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf") -> Response:
     settings = load_settings()
     ahora = datetime.now(HORA_CR)
     with closing(connect(settings.database_path)) as conn:
         if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
             return negado
+        armar = propuesta.armar_word if formato == "docx" else propuesta.armar
         try:
-            armada = propuesta.armar(conn, settings, nro_sicop, _quien(request), ahora)
+            armada = armar(conn, settings, nro_sicop, _quien(request), ahora)
         except propuesta.PropuestaError as exc:
             request.session["error_oferta"] = str(exc)
             return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
-    oferta_economica.guardar(armada.contenido, settings.exports_dir, armada.procedimiento, ahora, prefijo="oferta")
-    nombre = f"oferta_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
-    return Response(armada.contenido, media_type="application/pdf",
+    oferta_economica.guardar(armada.contenido, settings.exports_dir, armada.procedimiento, ahora, prefijo="oferta",
+                             extension=f".{formato}")
+    nombre = f"oferta_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.{formato}"
+    return Response(armada.contenido, media_type=TIPOS_OFERTA[formato],
                     headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 

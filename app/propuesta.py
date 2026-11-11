@@ -16,6 +16,9 @@ Quién hace qué:
   precios, y los montos, el desglose y el monto en letras los calcula la app.
 * Los documentos de Hermatix nunca van a la IA: se adjuntan aquí, en la PC, y cada uno queda en el historial.
 La app FORMULA la oferta; una persona la revisa, la firma con firma digital y la sube a SICOP.
+
+La misma oferta sale también en Word (.docx, app/propuesta_word.py; Oscar, 2026-11-11, DECISION_IA.md §10.6 bis):
+preparar() junta los datos una sola vez y de ahí salen los dos formatos, así que dicen lo mismo.
 """
 
 from __future__ import annotations
@@ -84,6 +87,25 @@ class Armada:
     procedimiento: str
     pendientes: list[str] = field(default_factory=list)
     motivo_ia: str | None = None
+
+
+@dataclass
+class Preparada:
+    """Todo lo que lleva la oferta, antes de pasarla a PDF o a Word."""
+    compra: object
+    datos: dict                           # los de la oferta económica: empresa, representante, líneas, procedimiento…
+    bloques: list[Bloque]
+    anexos: list[Anexo]
+    pendientes: list[str]
+    oferta: object                        # oferta_economica.Oferta, o None si falta algún precio
+    precio_pendiente: str | None
+    procedimiento: str
+    motivo_ia: str | None
+    hoy: object                           # la fecha de la oferta (hora de Costa Rica)
+
+    @property
+    def presentes(self) -> list[Anexo]:
+        return [a for a in self.anexos if a.ruta is not None]
 
 
 # --- El pliego sección por sección ---------------------------------------------------------------------------------
@@ -350,10 +372,10 @@ def _hojas(imprimir, plantilla, hojas: list[dict], procedimiento: str, **context
     return [(imprimir(plantilla.render(hojas=[h], **contexto), procedimiento), 0) for h in hojas]
 
 
-def armar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
-          cliente=None, dormir=None, imprimir=oferta_economica.pdf, tarifas: dict | None = None) -> Armada:
-    """Arma la oferta completa del cartel. Lanza PropuestaError si no se puede (sin cartel o sin pliego).
-    cliente, dormir, imprimir y tarifas solo se cambian en las pruebas (IA SIMULADA, tarifario SINTÉTICO)."""
+def preparar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
+             cliente=None, dormir=None, tarifas: dict | None = None) -> Preparada:
+    """Junta todo lo de la oferta del cartel. Lanza PropuestaError si no se puede (sin cartel o sin pliego).
+    No escribe nada: el historial lo anota quien la entrega (armar o armar_word)."""
     compra = detalle_compra(conn, nro_sicop)
     if compra is None:
         raise PropuestaError(f"No hay un cartel con Número SICOP {nro_sicop}.")
@@ -391,14 +413,49 @@ def armar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Q
             a.ruta, a.pendiente = None, "el PDF no se pudo abrir (¿protegido?): adjuntarlo a mano"
     pendientes += [f"Anexo {a.numero} · {a.titulo}: {a.pendiente}." for a in lista if a.pendiente]
 
-    procedimiento = datos["procedimiento"] or nro_sicop
+    return Preparada(compra, datos, bloques, lista, pendientes, oferta, precio_pendiente,
+                     datos["procedimiento"] or nro_sicop, motivo_ia, hoy)
+
+
+def _anotar(conn: sqlite3.Connection, quien: Quien, nro_sicop: str, p: Preparada, accion: str) -> None:
+    """Cada documento adjuntado queda en el historial (y en los accesos del perfil), y la oferta generada también."""
+    for a in p.presentes:
+        a.registrar()
+    with transaccion(conn):
+        historial.registrar(conn, quien, accion,
+                            f"{nro_sicop}: {len(p.presentes)} anexo(s), {len(p.pendientes)} pendiente(s)")
+
+
+def armar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
+          cliente=None, dormir=None, imprimir=oferta_economica.pdf, tarifas: dict | None = None) -> Armada:
+    """Arma la oferta completa del cartel en PDF. Lanza PropuestaError si no se puede (sin cartel o sin pliego).
+    cliente, dormir, imprimir y tarifas solo se cambian en las pruebas (IA SIMULADA, tarifario SINTÉTICO)."""
+    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas)
+    contenido = _pdf(p, imprimir)
+    _anotar(conn, quien, nro_sicop, p, "generar_oferta")
+    return Armada(contenido, p.procedimiento, p.pendientes, p.motivo_ia)
+
+
+def armar_word(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
+               cliente=None, dormir=None, tarifas: dict | None = None) -> Armada:
+    """La misma oferta en Word (.docx). No necesita Chromium: lo escribe python-docx."""
+    from app import propuesta_word
+    p = preparar(conn, settings, nro_sicop, quien, ahora, cliente=cliente, dormir=dormir, tarifas=tarifas)
+    contenido = propuesta_word.documento(p)
+    _anotar(conn, quien, nro_sicop, p, "generar_oferta_word")
+    return Armada(contenido, p.procedimiento, p.pendientes, p.motivo_ia)
+
+
+def _pdf(p: Preparada, imprimir) -> bytes:
+    datos, lista, oferta, precio_pendiente = p.datos, p.anexos, p.oferta, p.precio_pendiente
+    procedimiento, hoy = p.procedimiento, p.hoy
     entorno = _entorno()
     principal = entorno.get_template("propuesta.html").render(
-        d=datos, c=compra, bloques=bloques, anexos=lista, GRUPOS=GRUPOS, pendientes=pendientes,
+        d=datos, c=p.compra, bloques=p.bloques, anexos=lista, GRUPOS=GRUPOS, pendientes=p.pendientes,
         oferta=oferta, precio_pendiente=precio_pendiente)
     # Plan del documento después de la parte principal: hojas propias (título de cada anexo, imagen, precio
     # pendiente), la oferta económica y los PDF adjuntos, en el orden del listado de anexos.
-    presentes = [a for a in lista if a.ruta is not None]
+    presentes = p.presentes
     hojas, plan = [], []
 
     def hoja(**h):
@@ -424,11 +481,4 @@ def armar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Q
             partes.append((contenido_hoja, [pagina]))
         else:
             partes.append((valor, None))
-    contenido = unir(partes)
-
-    for a in presentes:
-        a.registrar()
-    with transaccion(conn):
-        historial.registrar(conn, quien, "generar_oferta",
-                            f"{nro_sicop}: {len(presentes)} anexo(s), {len(pendientes)} pendiente(s)")
-    return Armada(contenido, procedimiento, pendientes, motivo_ia)
+    return unir(partes)

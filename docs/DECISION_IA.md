@@ -152,10 +152,10 @@ título, DOC y página, las primeras palabras copiadas tal cual) y si la respues
   diario (`IA_MAX_DAILY_COST`).
 - Pruebas con IA SIMULADA (`tests/test_propuesta.py`), regla 7.
 
-## 10. Propuesta: el asistente como chat y la oferta corregida conversando (pedido de Oscar, comunicado por Ivania, 2026-11-11)
+## 10. Ampliación: el asistente como chat y la oferta corregida conversando (pedido de Oscar, comunicado por Ivania, 2026-11-11)
 
-**BORRADOR, PENDIENTE DE OSCAR.** Redactado por Ivania con Claude el 2026-11-11. No se construye nada hasta que Oscar
-lo apruebe. Lo marcado **[por decidir · Oscar]** se llena cuando él lo diga.
+**APROBADO por Oscar el 2026-11-11 (comunicado por Ivania), después de ver la maqueta.** Redactado por Ivania con
+Claude el mismo día. Lo marcado **[a confirmar · Oscar]** se precisa mientras se construye.
 
 ### 10.1 Qué pide Oscar
 
@@ -220,8 +220,17 @@ esos documentos a la IA: no»), solo para el chat.
   (misma huella antes y después; la app lo comprueba).
 - Se activa con `ASSISTANT_SEND_DOCUMENTS=true`; hoy ese camino no existe y se construye con el chat.
 - Sigue sin enviarse: contraseñas, usuarios ni datos que no estén en el documento subido.
-- **[por decidir · Oscar]:** los documentos pueden traer **datos personales** (p. ej. cédula y firma del
-  representante en una certificación): ¿se envían tal cual o se tapan antes?
+- **Datos personales (decidido por Oscar, comunicado por Ivania, 2026-11-11):** mientras se trabaja la oferta, los
+  documentos se envían a la IA **tal cual**. Cuando la oferta está **terminada** (todo listo y el encargado ya no
+  pide más cambios), el sistema **borra automáticamente los datos personales**. Propuesta para precisar
+  **[a confirmar · Oscar]**:
+  - «Terminada» = el encargado pulsa **«Oferta terminada»** en el chat (la app no lo adivina). Después el chat queda
+    cerrado; para otro cambio se abre una oferta nueva.
+  - Se borran: el texto que la IA leyó de los documentos y los datos personales escritos en la conversación
+    (cédulas, teléfonos, correos, firmas), que quedan como «[dato personal borrado]». Los mensajes no se borran
+    (regla «nunca borrar revisiones humanas»): solo se tapa el dato.
+  - Se conservan: la oferta final (PDF y Word) y los archivos originales adjuntos, porque son la oferta que se
+    presenta en SICOP.
 - **[a confirmar · Oscar]:** ¿sigue valiendo que los documentos reales se guarden **solo en el servidor** (§7)?
   Mientras tanto, en la laptop se prueba con documentos **SINTÉTICOS** (de prueba).
 
@@ -231,8 +240,10 @@ Un chat **reenvía toda la conversación** en cada mensaje: el décimo mensaje c
 envía el pliego (ya está en el resumen). Con el tope actual de **1.00 USD al día** (`IA_MAX_DAILY_COST`) no alcanza
 para conversar con varios carteles.
 
-- Tope **por día** (decidido por Oscar, 2026-11-11), sin tope por cartel. Monto en USD: **[por decidir · Oscar]**;
-  se propone fijarlo después de medir el costo real (último punto).
+- Tope **por día** (decidido por Oscar, 2026-11-11), sin tope por cartel. Monto **durante las pruebas: 5 USD al día**
+  (Oscar lo dejó a criterio de Claude, 2026-11-11): con el modelo de OpenAI actual un cartel cuesta ≈ 1 USD (la
+  mitad que Sonnet 5.5), así que alcanza para 3 carteles de prueba más los resúmenes. El monto definitivo se fija
+  con el costo medido y el modelo elegido.
 - Al llegar al tope, el chat avisa «presupuesto del día agotado» y no llama a la IA; lo ya hecho no se pierde.
 - Cada mensaje se anota en `ia_usage` con el propósito `chat`, para ver cuánto gasta cada cartel.
 - Antes de construir, se mide el costo real en 3 carteles con conversaciones de prueba y se le muestra a Oscar.
@@ -260,19 +271,37 @@ Precios por millón de tokens según la documentación de Anthropic (confirmar e
 
 ### 10.6 Anthropic u OpenAI
 
-El cambio a Anthropic ya está aprobado (§8) pero todavía no está en la app (`app/ai/cliente.py` solo tiene OpenAI).
-Se propone hacer el chat ya con las dos opciones (`AI_MODE`). La API de Anthropic guarda en caché la parte que no
-cambia (pliego e instrucciones), y eso baja el costo de cada mensaje. Modelo y fecha del cambio: **[por decidir ·
-Oscar]** (sigue pendiente de §8).
+`AI_MODE=anthropic` ya está en la app (§8, 2026-11-11). La API de Anthropic guarda en caché la parte que no cambia
+(pliego e instrucciones), y eso baja el costo de cada mensaje.
+
+**Decidido por Oscar (comunicado por Ivania, 2026-11-11):** las pruebas del chat se hacen **con OpenAI**, para
+gastar primero el saldo que queda. El modelo de Anthropic lo dice Oscar **después de las pruebas**.
+
+### 10.6 bis La oferta también en Word
+
+**Pedido de Oscar (comunicado por Ivania, 2026-11-11):** además del PDF, la oferta sale en **Word (.docx)**: el mismo
+documento, en otro formato, para poder editarlo a mano si hace falta.
+
+- Mismo contenido y misma estructura que el PDF: portada, secciones, anexos, oferta económica y documentos. Lo que
+  está en rojo o dice «BORRADOR» en el PDF sale igual en el Word.
+- Los documentos adjuntos (PDF de Hermatix) no se pueden meter como PDF dentro de un Word: van **como imagen de
+  cada página** (130 dpi), así el Word es el mismo documento completo. El archivo original solo se lee, nunca se
+  cambia, y el PDF de la oferta lo sigue llevando tal cual. **[a confirmar · Oscar]**
+- Necesita una dependencia nueva, `python-docx` (escribe archivos de Word desde Python, sin Word instalado). Se
+  justifica por este pedido; se agrega con el mismo cuidado que `anthropic` (entorno limpio y ruedas para Linux).
+- No depende del chat: se puede construir antes, sobre la oferta de hoy (`DECISION_PROPUESTA.md` §12).
 
 ### 10.7 Orden de construcción (una tarea a la vez, en local)
 
 1. Este documento aprobado por Oscar.
-2. Anthropic en `app/ai/cliente.py`, junto a OpenAI (§8).
+2. ~~Anthropic en `app/ai/cliente.py`, junto a OpenAI (§8)~~ **hecho (2026-11-11).**
+2 bis. ~~La oferta también en Word (10.6 bis)~~ **hecho (2026-11-11):** botón «Oferta en Word»
+   (`app/propuesta_word.py`, `python-docx` 1.2.0), sin migración.
 3. El chat de elegibilidad en el cartel, con subida de archivos y «Ya está listo» → botón «Oferta». Reemplaza a las
    preguntas actuales; las respuestas ya guardadas no se tocan.
 4. Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).
-5. Medir el costo con Oscar y ajustar el tope.
+5. «Oferta terminada» y el borrado de datos personales (10.4).
+6. Medir el costo con Oscar y ajustar el tope.
 
 ### 10.8 Riesgos
 
@@ -284,8 +313,12 @@ Oscar]** (sigue pendiente de §8).
 
 ### 10.9 Aceptación
 
-- [ ] Oscar leyó esta sección y acepta las reglas de 10.3 (fecha: ____).
+- [x] Oscar leyó esta sección y acepta las reglas de 10.3 (fecha: 2026-11-11, comunicado por Ivania).
 - [x] Qué hace el chat y qué puede cambiar (10.3.1) y quién corrige la oferta (10.3.9): Oscar, 2026-11-11.
 - [x] Documentos a la IA (10.4: sí, sin modificarlos) y tipo de tope (10.5: por día): Oscar, 2026-11-11.
-- [ ] Decididas: datos personales en los documentos y dónde se guardan (10.4), monto del tope diario (10.5),
-  modelo de Anthropic (10.6).
+- [x] Oscar vio la maqueta del chat y le gustó (comunicado por Ivania, 2026-11-11):
+  https://claude.ai/artifact/49wN3PpodRhAaamFwnEPtQ (datos SINTÉTICOS).
+- [x] Datos personales (10.4: tal cual mientras se trabaja; se borran al terminar la oferta), tope durante las
+  pruebas (10.5: 5 USD al día), pruebas con OpenAI (10.6) y oferta también en Word (10.6 bis): Oscar, 2026-11-11.
+- [ ] Faltan: precisar «terminada» y qué se borra (10.4), dónde se guardan los documentos reales (10.4), los
+  adjuntos en el Word (10.6 bis) y el modelo de Anthropic después de las pruebas (10.6).

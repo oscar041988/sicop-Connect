@@ -46,6 +46,7 @@ ACCIONES = {
     "generar_reporte": "Generó el Reporte de cartel en PDF",
     "guardar_oferta": "Guardó el borrador de la oferta económica",
     "generar_oferta": "Generó la oferta en PDF",
+    "generar_oferta_word": "Generó la oferta en Word",
     "adjuntar_documento_oferta": "Adjuntó un documento del asistente o del perfil a la oferta",
     "guardar_respuesta_tecnica": "Guardó el borrador de la respuesta técnica",
     "generar_respuesta_tecnica": "Generó la respuesta técnica en PDF",

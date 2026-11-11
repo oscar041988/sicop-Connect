@@ -7,6 +7,15 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **La oferta también en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis).** Junto a «Oferta», el
+  botón **«Oferta en Word»** descarga el mismo documento en .docx: portada, pliego respondido, anexos, oferta
+  económica y los adjuntos (como imagen de cada página; los originales no cambian). `app/propuesta_word.py`;
+  `propuesta.preparar()` junta los datos una sola vez para los dos formatos. Dependencia nueva `python-docx` 1.2.0
+  (+ `lxml`; entorno limpio comprobado, ruedas para Linux). Sin migración. 4 pruebas nuevas
+  (`tests/test_propuesta_word.py`). §10 marcada **aprobada** (Oscar, 11/11).
+  **Pendiente · Ivania:** probar «Oferta en Word» en un cartel y abrirlo en Word. **En el servidor**, con el PR:
+  `pip install -r requirements.lock.txt`.
+
 - **Anthropic en la app, junto a OpenAI (2026-11-11, DECISION_IA.md §8; paso 2 de §10.7).** `AI_MODE=anthropic`
   en `app/ai/cliente.py` con el SDK oficial `anthropic` 2.8.0 (dependencia nueva, aprobada en §8; entorno limpio:
   solo se suman anthropic y docstring_parser). Configuración `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` y
@@ -29,9 +38,12 @@ cambios desde el 29/10; espera que Oscar una el PR)
   corrigen encargados y administradores, cada uno en los carteles que tiene a cargo.
   La IA lee los documentos subidos sin modificarlos; tope de gasto por día.
   Estimación en §10.5 (3 carteles al día): se recomienda Sonnet 5.5 y 8 USD al día (≈ 130 USD al mes).
-  **Pendiente · Oscar:** aprobar §10; datos personales en los documentos; monto del tope diario; modelo.
-  Maqueta del chat para mostrarle (datos SINTÉTICOS, fuera de Git): https://claude.ai/artifact/49wN3PpodRhAaamFwnEPtQ
-  (privada: compartirla con Oscar desde «Compartir»). Ivania: «está perfecto, dejarlo así» (11/11).
+  Maqueta del chat (datos SINTÉTICOS, fuera de Git): https://claude.ai/artifact/49wN3PpodRhAaamFwnEPtQ.
+  **Oscar la vio y le gustó (11/11).** Decidió además: datos personales tal cual mientras se trabaja y borrado
+  automático al terminar la oferta; la oferta también en Word (.docx); pruebas con OpenAI (gastar el saldo), tope
+  de 5 USD al día durante las pruebas; el modelo de Anthropic, después de las pruebas.
+  **Pendiente · Oscar:** precisar «terminada» y qué se borra; dónde se guardan los documentos reales; adjuntos en
+  el Word; saldo que queda en OpenAI (en `ia_usage` hay ≈ 3.56 USD estimados del 29/10 al 9/11).
 
 - **Oferta completa con un botón, como la de NAVSAT (2026-11-10, pedido de Oscar por Ivania).** En el cartel, el
   botón «Oferta» arma un solo PDF:
