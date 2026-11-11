@@ -7,6 +7,11 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **El chat ya no repite la pregunta (2026-11-11).** Prompt `chat_asistente_v3.md`: si la respuesta llega por
+  partes, la IA la junta, la anota y nombra una sola vez lo que falta; «guarde lo que le dije» anota lo dicho. Desde
+  la segunda vuelta sin avanzar, la app dice cómo seguir. **Pendiente · Ivania:** probarlo respondiendo por partes
+  una pregunta que pida dos cosas.
+
 - **Oferta más sobria y chat abajo (2026-11-11).** Pedido de Oscar: la oferta (PDF y Word, también la económica)
   lleva solo el logo de Hermatix con su nombre arriba a la izquierda, sin franjas ni pie de color; títulos en negro,
   encabezados de tabla en gris claro; el rojo queda solo para lo pendiente. El título del cartel ya no se sale de la

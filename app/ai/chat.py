@@ -37,7 +37,8 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v2"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta
+VERSION = "v3"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
+                                # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
@@ -120,6 +121,7 @@ def pocas_citas(texto: str) -> str:
 AYUDA_DOCUMENTO = (" Si lo tiene pero lo sube después, diga «lo subo después»; si Hermatix no lo tiene, «no lo "
                    "tenemos»; si no sabe, «no sé».")
 AYUDA = " Si no sabe, diga «no sé» y seguimos con la siguiente."
+ATASCADO = "«guarde lo que le dije» (o «no sé»)"
 
 
 def pregunta(paso: asistente.Paso) -> str:
@@ -422,7 +424,11 @@ def _sin_repetir(nuevo: str, anteriores: list[Mensaje]) -> str:
     ultima = next((m.texto for m in reversed(anteriores) if m.rol == "app" and "Pregunta " in m.texto), None)
     if ultima is not None and nuevo.startswith("Pregunta ") and nuevo in ultima:
         numero = nuevo.split(":", 1)[0]                   # «Pregunta 1 de 8»
-        return f"Seguimos con la {numero[0].lower()}{numero[1:]} (arriba)."
+        seguimos = f"Seguimos con la {numero[0].lower()}{numero[1:]} (arriba)."
+        # Ya van dos vueltas sin avanzar (prueba de Ivania, 2026-11-11: la misma pregunta 4 veces): cómo seguir.
+        if any(m.rol == "app" and m.texto.startswith(seguimos) for m in anteriores[-4:]):
+            seguimos += f" Si ya dijo lo que sabe, escriba {ATASCADO} y seguimos."
+        return seguimos
     if not nuevo.startswith("Pregunta ") and any(m.rol == "app" and m.texto == nuevo for m in anteriores):
         return ""                                         # «Ya están respondidos todos…» se dice una sola vez
     return nuevo

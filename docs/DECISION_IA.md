@@ -321,6 +321,12 @@ documento, en otro formato, para poder editarlo a mano si hace falta.
      `chat_asistente_v2.md` (trato de usted; «lo subo después» / «no lo tenemos» / «no sé» avanzan; la IA recibe la
      PREGUNTA ACTUAL), la pregunta dice cómo avanzar, no se repite entera y muestra como máximo 2 citas seguidas.
      4 pruebas nuevas (15 en total).
+     Segunda prueba (cartel de cámaras corporales, 11/11): la pregunta 11 pedía dos cosas (dónde se guardan los
+     datos y cómo se exportan); Ivania respondió por partes y la IA hizo la misma pregunta 4 veces con otras
+     palabras, porque solo anotaba lo del mensaje nuevo. **Corregido:** prompt `chat_asistente_v3.md` (junta la
+     respuesta por partes, anota lo que ya se respondió y nombra una vez lo que falta; «guarde lo que le dije»
+     anota lo dicho; si después se agrega algo, anota todo junto) y, desde la segunda vuelta sin avanzar, la app
+     dice cómo seguir: «guarde lo que le dije» o «no sé».
 4. ~~Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).~~ **Hecho
    (2026-11-11):** `app/oferta_cambios.py`, migración **0045** (`oferta_versiones`, `oferta_propuestas`), prompt
    `config/prompts/chat_oferta_v1.md` (se agrega al del chat solo cuando ya hay una oferta).

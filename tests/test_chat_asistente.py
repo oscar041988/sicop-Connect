@@ -182,11 +182,14 @@ def test_la_misma_pregunta_no_se_repite_entera(lista):
     db, ids, settings = lista
     settings = _con_ia(settings)
     _empezar(db)
-    for texto in ("XSaaa", "No entiendo"):                       # nada se guarda: la pregunta sigue siendo la 1
+    for texto in ("XSaaa", "No entiendo", "Otra vez"):           # nada se guarda: la pregunta sigue siendo la 1
         _enviar(db, settings, texto, IaSimulada({"mensaje": "¿Me aclara?", "respuestas": []}))
     preguntas = [m.texto for m in _mensajes(db) if m.rol == "app"]
     assert preguntas[0].startswith("Hola.") and "Pregunta 1 de 2" in preguntas[0]
-    assert preguntas[1:] == ["Seguimos con la pregunta 1 de 2 (arriba)."] * 2
+    # La primera vez, solo «seguimos»; desde la segunda vuelta sin avanzar, también cómo salir de ahí.
+    seguimos = "Seguimos con la pregunta 1 de 2 (arriba)."
+    assert preguntas[1:] == [seguimos] + [f"{seguimos} Si ya dijo lo que sabe, escriba «guarde lo que le dije» (o "
+                                          "«no sé») y seguimos."] * 2
     # Cuando se responde, la pregunta nueva sí sale entera.
     _enviar(db, settings, "Sí", IaSimulada({"mensaje": "Gracias.", "respuestas": [_r("R1", valor="sí")]}))
     assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")
@@ -217,11 +220,20 @@ def test_en_el_chat_se_ven_como_maximo_dos_citas_seguidas():
 
 
 def test_el_prompt_v2_trata_de_usted_y_la_v1_no_cambia():
-    assert ia_chat.VERSION == "v2"
-    v2 = ia_chat.cargar_prompt()
+    v2 = (ia_chat.PROMPTS_DIR / "chat_asistente_v2.md").read_text(encoding="utf-8")
     assert "Trata siempre de usted" in v2 and "PREGUNTA ACTUAL" in v2 and "«lo subo después»" in v2
     v1 = (ia_chat.PROMPTS_DIR / "chat_asistente_v1.md").read_text(encoding="utf-8")
     assert "Trata siempre de usted" not in v1
+
+
+def test_el_prompt_v3_junta_la_respuesta_por_partes_y_no_vuelve_a_preguntar():
+    assert ia_chat.VERSION == "v3"
+    v3 = " ".join(ia_chat.cargar_prompt().split())
+    v2 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v2.md").read_text(encoding="utf-8").split())
+    for texto in ("llega por partes", "júntalas", "Nunca vuelvas a preguntar lo que ya respondió",
+                  "«guarde lo que le dije»", "anótalo otra vez con todo junto"):
+        assert texto in v3 and texto not in v2
+    assert "Trata siempre de usted" in v3 and "«lo subo después»" in v3          # lo de v2 sigue
 
 
 def test_ya_esta_lista_cuando_todo_tiene_respuesta(lista):
