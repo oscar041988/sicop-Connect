@@ -30,6 +30,8 @@ cambios desde el 29/10; espera que Oscar una el PR)
   La IA lee los documentos subidos sin modificarlos; tope de gasto por día.
   Estimación en §10.5 (3 carteles al día): se recomienda Sonnet 5.5 y 8 USD al día (≈ 130 USD al mes).
   **Pendiente · Oscar:** aprobar §10; datos personales en los documentos; monto del tope diario; modelo.
+  Maqueta del chat para mostrarle (datos SINTÉTICOS, fuera de Git): https://claude.ai/artifact/49wN3PpodRhAaamFwnEPtQ
+  (privada: compartirla con Oscar desde «Compartir»). Ivania: «está perfecto, dejarlo así» (11/11).
 
 - **Oferta completa con un botón, como la de NAVSAT (2026-11-10, pedido de Oscar por Ivania).** En el cartel, el
   botón «Oferta» arma un solo PDF:
@@ -49,7 +51,7 @@ cambios desde el 29/10; espera que Oscar una el PR)
   iguales antes y después; `integrity_check` ok y `foreign_key_check` vacío.
   ~~Subir el respaldo al Drive~~ **hecho (Claude, 10/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261110-160213`
   (7 archivos, ≈431 MB; tamaños iguales y huella del `.db` igual al manifiesto).
-  **Pendiente · Ivania:** probar «Oferta» en un cartel con pliego y asistente.
+  ~~Pendiente · Ivania: probar «Oferta» en un cartel con pliego y asistente~~ **hecho (Ivania, 2026-11-11).**
   **Pendiente · Oscar:** llenar el tarifario y los datos del representante (`config/oferta.yaml`); decidir cómo se
   elige la ficha técnica de cada cartel.
 
@@ -67,7 +69,8 @@ cambios desde el 29/10; espera que Oscar una el PR)
   `OBTAIN_REQUEST_HOUR=06:30,14:00`); la primera vuelta real (`obtain auto`, solicitud #4, 15:00) encontró el aviso
   de bloqueo de SICOP con ID de soporte: FALLO «control no automatizable», una alerta a `OBTAIN_ALERT_TO`, sin
   reintento. **No se creó la tarea «SICOP CONNECT - obtencion».** `DECISION_OBTENCION.md` §8.
-  **Pendiente · Ivania:** volver a poner `SOURCE_MODE=manual` en el `.env` y seguir pidiendo el reporte a mano.
+  ~~Pendiente · Ivania: volver a poner `SOURCE_MODE=manual` en el `.env`~~ **hecho (Ivania, 2026-11-11)**; el reporte
+  se sigue pidiendo a mano.
   **Pendiente · Oscar:** decidir si se consulta a SICOP con el ID de soporte.
 
 - **Enriquecimiento del 10/11 caído por «database is locked» (revisado y arreglado, 2026-11-10).** A las 10:00:47 se
