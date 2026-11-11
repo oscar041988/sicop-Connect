@@ -18,7 +18,9 @@ cambios desde el 29/10; espera que Oscar una el PR)
   enriquecimiento #13 «ok»):** respaldo `C:\Users\User\respaldos-sicop\sicop_20261111-103948` (esquema 0043,
   integridad ok); `doctor`: 0044. Conteos iguales antes y después (carteles 15015, revisiones 8, resúmenes 70, uso
   de IA 107, respuestas 103, borradores 2, historial 562, documentos 242, sesiones 4); `integrity_check` ok y
-  `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude, 11/11):** `G:Mi unidadsicop-respaldossicop_20261111-103948` (7 archivos, ≈390 MB; tamaños iguales y huella del `.db` igual al manifiesto). **Pendiente · Ivania:** en el `.env`: `ASSISTANT_CHAT=true`,
+  `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude, 11/11):**
+  `G:\Mi unidad\sicop-respaldos\sicop_20261111-103948` (7 archivos, ≈390 MB; tamaños iguales y huella del `.db`
+  igual al manifiesto). **Pendiente · Ivania:** en el `.env`: `ASSISTANT_CHAT=true`,
   `IA_MAX_DAILY_COST=5.00` y, si se quiere que la IA lea los archivos, `ASSISTANT_SEND_DOCUMENTS=true`; probarlo en
   un cartel con documentos SINTÉTICOS. **Siguiente:** paso 4, corregir la oferta desde el chat.
 
