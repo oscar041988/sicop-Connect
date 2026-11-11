@@ -11,6 +11,7 @@
   cartel ni subidos); misma estructura para todas (Tarrazú + NAVSAT), cambia solo si se pide y solo en esa oferta;
   corrigen encargados y administradores, cada uno en los carteles que tiene a cargo.
   La IA lee los documentos subidos sin modificarlos; tope de gasto por día.
+  Estimación en §10.5 (3 carteles al día): se recomienda Sonnet 5.5 y 8 USD al día (≈ 130 USD al mes).
   **Pendiente · Oscar:** aprobar §10; datos personales en los documentos; monto del tope diario; modelo.
 
 - **Oferta completa con un botón, como la de NAVSAT (2026-11-10, pedido de Oscar por Ivania).** En el cartel, el

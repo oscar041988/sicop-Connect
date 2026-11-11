@@ -226,6 +226,27 @@ para conversar con varios carteles.
 - Cada mensaje se anota en `ia_usage` con el propósito `chat`, para ver cuánto gasta cada cartel.
 - Antes de construir, se mide el costo real en 3 carteles con conversaciones de prueba y se le muestra a Oscar.
 
+**Estimación (Ivania con Claude, 2026-11-11; ESTIMADA, no medida).** Base real: en `ia_usage`, un pliego que lee la
+IA tiene en promedio ≈ 27 000 tokens de entrada (64 resúmenes) y un resumen cuesta ≈ 0.04 USD con el modelo de
+OpenAI. Supuestos por cartel: ≈ 50 000 tokens fijos (pliego, documentos subidos e instrucciones), ≈ 30 mensajes de
+conversación, la oferta generada y 2 rondas de correcciones; con caché (el pliego se cobra completo la primera vez
+y después a una décima parte). Escenario: **3 carteles al día**, 22 días hábiles al mes.
+
+| Modelo de Anthropic | Por cartel | 3 carteles al día | Al mes |
+|---|---|---|---|
+| Claude Haiku 5.5 (el más barato) | ≈ 0.10 USD | ≈ 0.30 USD | ≈ 7 USD |
+| **Claude Sonnet 5.5** | **≈ 2 USD** | **≈ 6 USD** | **≈ 130 USD** |
+| Claude Opus 5.5 (el más capaz) | ≈ 4 USD | ≈ 12 USD | ≈ 260 USD |
+
+Precios por millón de tokens según la documentación de Anthropic (confirmar en la cuenta antes de decidir): Sonnet
+5.5, 2 USD de entrada y 10 de salida; Opus 5.5, 4 y 20; Haiku 5.5, 0.10 y 0.50.
+
+- **Recomendación: Claude Sonnet 5.5 con un tope de 8 USD al día** (≈ 6 USD de chat + 1 USD de los resúmenes de
+  hoy + margen). Opus cuesta el doble; Haiku arriesga la calidad de una oferta que se presenta a una institución.
+  Si en la medición Sonnet se equivoca, se compara con Opus. Lo decide Oscar.
+- Sin caché cada cartel costaría ≈ 4 veces más. La caché dura unos minutos: si el chat queda quieto media hora, el
+  siguiente mensaje vuelve a pagar el pliego completo (incluido en el margen).
+
 ### 10.6 Anthropic u OpenAI
 
 El cambio a Anthropic ya está aprobado (§8) pero todavía no está en la app (`app/ai/cliente.py` solo tiene OpenAI).
