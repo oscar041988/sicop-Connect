@@ -41,8 +41,8 @@ from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, oferta_economica, panel, perfil, reintentos,
-                 respuesta_tecnica, resumen,
+                 expediente_descarga, exportar, fichas_panel, historial, oferta_economica, panel, perfil, propuesta,
+                 reintentos, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
@@ -235,7 +235,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
     asistente_activo = _asistente_encendido()
     return PLANTILLAS.TemplateResponse(request, "oportunidad.html", {
         "d": datos, "version": version, "aviso": _aviso_reglas(version, panel.importado_sin_evaluar(conn)), "error": error,
-        "seg": seg, "puede_entrar": puede,
+        "seg": seg, "puede_entrar": puede, "error_oferta": request.session.pop("error_oferta", None),
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "formulario": formulario or {},
         # Enriquecimiento (lección 4, entrega 4B): la ficha más reciente de SICOP y sus documentos.
@@ -354,135 +354,34 @@ def descargar_reporte(request: Request, nro_sicop: str) -> Response:
     return FileResponse(r.ruta, media_type="application/pdf", filename=r.ruta.name)
 
 
-# --- Oferta económica (DECISION_PROPUESTA.md, aprobado por Oscar el 2026-11-09) ---------------------------------------
-# La llenan y la descargan quienes entran al expediente del cartel (su encargado y los administradores): trae precios.
-# La app formula el PDF; una persona lo firma con firma digital y lo sube a SICOP.
+# --- Oferta completa con un botón (Oscar, por Ivania, 2026-11-10; DECISION_PROPUESTA.md §12) -------------------------
+# Como la oferta de NAVSAT: portada, pliego respondido sección por sección, listado de anexos, oferta económica y los
+# documentos del asistente adjuntos (app/propuesta.py). Sin formulario: los precios salen de config/tarifario.yaml y lo
+# que falta sale en rojo. La ven quienes entran al expediente (su encargado y los administradores): trae precios.
+# La app formula el PDF; una persona lo revisa, lo firma con firma digital y lo sube a SICOP.
 
-def _render_oferta(request: Request, conn, nro_sicop: str, datos: dict, status_code: int = 200,
-                   **contexto) -> Response:
-    d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
-    guardado = oferta_economica.borrador(conn, nro_sicop)
-    return PLANTILLAS.TemplateResponse(request, "oferta_form.html", {
-        "seccion": "seguimiento", "c": d.compra, "o": datos, "guardado": guardado,
-        "RUBROS": oferta_economica.RUBROS, "MONEDAS": oferta_economica.MONEDAS,
-        "hecho": request.session.pop("hecho_oferta", None), **contexto}, status_code=status_code)
-
-
-@router.get("/oportunidades/{nro_sicop}/oferta", response_class=HTMLResponse)
-def ver_oferta(request: Request, nro_sicop: str) -> Response:
-    """El formulario de la oferta económica: el borrador guardado o, si no hay, los datos que salen del cartel."""
+@router.post("/oportunidades/{nro_sicop}/oferta", dependencies=[Depends(verificar_csrf)])
+async def generar_oferta(request: Request, nro_sicop: str) -> Response:
+    """Arma la oferta completa y la entrega en PDF; guarda una copia en EXPORTS_DIR/ofertas/ (nunca sobrescribe)."""
     if (error := _base_no_lista(request)) is not None:
         return error
-    with closing(connect(load_settings().database_path)) as conn:
+    return await run_in_threadpool(_generar_oferta, request, nro_sicop)
+
+
+def _generar_oferta(request: Request, nro_sicop: str) -> Response:
+    settings = load_settings()
+    ahora = datetime.now(HORA_CR)
+    with closing(connect(settings.database_path)) as conn:
         if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
             return negado
-        guardado = oferta_economica.borrador(conn, nro_sicop)
-        if guardado is not None:
-            datos = guardado[0]
-        else:
-            d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
-            datos = oferta_economica.valores_iniciales(d.compra, d.tipo_procedimiento)
-        return _render_oferta(request, conn, nro_sicop, datos)
-
-
-@router.post("/oportunidades/{nro_sicop}/oferta", response_class=HTMLResponse, dependencies=[Depends(verificar_csrf)])
-async def guardar_oferta(request: Request, nro_sicop: str) -> Response:
-    """«Guardar borrador» lo guarda; «Descargar PDF» lo guarda, lo revisa y entrega el PDF. Si un dato no sirve, el
-    formulario vuelve con lo escrito y el error (nunca se pierde lo que se llenó)."""
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    form = await request.form()
-    return await run_in_threadpool(_guardar_oferta, request, nro_sicop, form)
-
-
-def _guardar_oferta(request: Request, nro_sicop: str, form) -> Response:
-    with closing(connect(load_settings().database_path)) as conn:
-        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
-            return negado
-        datos = oferta_economica.desde_formulario(form)
-        quien, ahora = _quien(request), datetime.now(HORA_CR)
-        oferta_economica.guardar_borrador(conn, nro_sicop, datos, quien, ahora)
-        if form.get("accion") != "pdf":
-            request.session["hecho_oferta"] = "Borrador guardado."
-            return RedirectResponse(f"/oportunidades/{nro_sicop}/oferta", status_code=303)
         try:
-            oferta = oferta_economica.leer(datos)
-        except oferta_economica.OfertaError as exc:
-            return _render_oferta(request, conn, nro_sicop, datos, 400, error=str(exc))
-        contenido = oferta_economica.pdf(oferta_economica.html(oferta, ahora.date()), datos["procedimiento"])
-        with transaccion(conn):
-            historial.registrar(conn, quien, "generar_oferta", nro_sicop)
-    nombre = f"oferta_economica_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
-    return Response(contenido, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
-
-
-# --- Respuesta técnica: matriz de cumplimiento (DECISION_PROPUESTA.md, etapa 2) ---------------------------------------
-# Mismo acceso que la oferta económica. Sin IA: si el cartel tiene resumen con IA, sus especificaciones clave son las
-# filas iniciales (marcadas «del resumen con IA»); la persona las revisa contra el pliego y agrega las que falten.
-
-def _render_respuesta(request: Request, conn, nro_sicop: str, datos: dict, status_code: int = 200,
-                      **contexto) -> Response:
-    d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
-    filas = [respuesta_tecnica.Fila(**{c: str(fi.get(c) or "") for c in respuesta_tecnica.Fila.__dataclass_fields__})
-             for fi in datos.get("filas") or []]
-    return PLANTILLAS.TemplateResponse(request, "respuesta_form.html", {
-        "seccion": "seguimiento", "c": d.compra, "m": datos, "guardado": respuesta_tecnica.borrador(conn, nro_sicop),
-        "conteo": respuesta_tecnica.conteo(filas), "sugerencias": respuesta_tecnica.sugerencias_prueba(conn, nro_sicop),
-        "hay_resumen": any(fi.origen == "resumen" for fi in filas),
-        "ESTADOS": respuesta_tecnica.ESTADOS, "ORIGENES": respuesta_tecnica.ORIGENES,
-        "hecho": request.session.pop("hecho_respuesta", None), **contexto}, status_code=status_code)
-
-
-@router.get("/oportunidades/{nro_sicop}/respuesta-tecnica", response_class=HTMLResponse)
-def ver_respuesta_tecnica(request: Request, nro_sicop: str) -> Response:
-    """La matriz de cumplimiento: el borrador guardado o, si no hay, las filas que salen del resumen o del cartel."""
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    with closing(connect(load_settings().database_path)) as conn:
-        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
-            return negado
-        guardado = respuesta_tecnica.borrador(conn, nro_sicop)
-        if guardado is not None:
-            datos = guardado[0]
-        else:
-            d = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), _ahora())
-            vigente = next((r for r in ia_resumen.del_cartel(conn, nro_sicop) if r.datos), None) \
-                if _ia_encendida() else None
-            datos = respuesta_tecnica.valores_iniciales(d.compra, vigente.datos if vigente else None)
-        return _render_respuesta(request, conn, nro_sicop, datos)
-
-
-@router.post("/oportunidades/{nro_sicop}/respuesta-tecnica", response_class=HTMLResponse,
-             dependencies=[Depends(verificar_csrf)])
-async def guardar_respuesta_tecnica(request: Request, nro_sicop: str) -> Response:
-    """«Guardar borrador» la guarda; «Descargar PDF» la guarda, la revisa y entrega el PDF. Si un dato no sirve, el
-    formulario vuelve con lo escrito y el motivo."""
-    if (error := _base_no_lista(request)) is not None:
-        return error
-    form = await request.form()
-    return await run_in_threadpool(_guardar_respuesta_tecnica, request, nro_sicop, form)
-
-
-def _guardar_respuesta_tecnica(request: Request, nro_sicop: str, form) -> Response:
-    with closing(connect(load_settings().database_path)) as conn:
-        if (negado := _expediente_permitido(request, conn, nro_sicop)) is not None:
-            return negado
-        datos = respuesta_tecnica.desde_formulario(form)
-        quien, ahora = _quien(request), datetime.now(HORA_CR)
-        respuesta_tecnica.guardar_borrador(conn, nro_sicop, datos, quien, ahora)
-        if form.get("accion") != "pdf":
-            request.session["hecho_respuesta"] = "Borrador guardado."
-            return RedirectResponse(f"/oportunidades/{nro_sicop}/respuesta-tecnica", status_code=303)
-        try:
-            filas = respuesta_tecnica.leer(datos)
-        except respuesta_tecnica.MatrizError as exc:
-            return _render_respuesta(request, conn, nro_sicop, datos, 400, error=str(exc))
-        contenido = respuesta_tecnica.pdf(respuesta_tecnica.html(datos, filas, ahora.date()), datos["procedimiento"])
-        with transaccion(conn):
-            historial.registrar(conn, quien, "generar_respuesta_tecnica", nro_sicop)
-    nombre = f"respuesta_tecnica_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
-    return Response(contenido, media_type="application/pdf",
+            armada = propuesta.armar(conn, settings, nro_sicop, _quien(request), ahora)
+        except propuesta.PropuestaError as exc:
+            request.session["error_oferta"] = str(exc)
+            return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
+    oferta_economica.guardar(armada.contenido, settings.exports_dir, armada.procedimiento, ahora, prefijo="oferta")
+    nombre = f"oferta_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.pdf"
+    return Response(armada.contenido, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 

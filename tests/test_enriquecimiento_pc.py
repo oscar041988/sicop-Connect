@@ -87,7 +87,13 @@ def test_al_dia_siguiente_no_vuelve_a_bajar_lo_que_el_servidor_ya_tiene(servidor
     _remoto(pc_settings, archivos, reloj)
     contar = "SELECT count(*) FROM tender_documents WHERE nro_sicop = ?"
     antes = {nro: _sql(settings, contar, (nro,)) for nro in (GPS, SANTA_ANA)}
-    reloj["ahora"] = HORA + timedelta(days=1)                 # al día siguiente vuelve a la cola lo que cierra pronto
+    reloj["ahora"] = HORA + timedelta(days=1)                 # al día siguiente, con sus documentos: no vuelve
+    assert _remoto(pc_settings, archivos, reloj).estado == "sin_cola"
+    for nro in (GPS, SANTA_ANA):                              # SICOP los modificó: vuelven a la cola
+        _sql(settings, "INSERT INTO raw_snapshots (import_id, entity, natural_key, content_hash, payload, captured_at)"
+                       " VALUES (1, 'cartel', ?, ?, '{}', ?)", (nro, f"modificado-{nro}",
+                                                                (HORA + timedelta(hours=12)).isoformat()))
+    reloj["ahora"] = HORA + timedelta(days=2)
     corrida = _remoto(pc_settings, archivos, reloj)
 
     assert corrida.consultas and corrida.estado == "ok"

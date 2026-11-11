@@ -214,7 +214,11 @@ si la oferta está exenta, el motivo del IVA va debajo de la tabla. La respuesta
 es un número: ''` y solo arriba del formulario. Ahora dice «Falta el precio unitario de la línea 1.» y el aviso se
 repite junto a los botones. 1 prueba más en `tests/test_oferta_panel.py`.
 
-## 11. Construido: la respuesta técnica, primera parte sin IA (2026-11-09)
+## 11. Construido: la respuesta técnica, primera parte sin IA (2026-11-09) — reemplazada por la sección 12
+
+> El 2026-11-10 la respuesta técnica (con su formulario, su PDF y el campo «Sección del pliego») se quitó: la oferta
+> completa de la sección 12 la reemplaza, con el pliego respondido sección por sección. Lo de abajo queda como
+> historia de la decisión.
 
 Pedido de Ivania: hacer la etapa 2 en dos partes. **Primera parte (hecha), sin IA:** en el cartel, «Respuesta técnica»
 (junto a «Oferta económica»; mismo acceso: su encargado y los administradores). Es la **matriz de cumplimiento**: una
@@ -231,9 +235,58 @@ fila por especificación con «el cartel pide · dónde lo dice · Hermatix ofre
   destinatario en negrita, título centrado («Respuesta Técnica · MATRIZ DE CUMPLIMIENTO», objeto y procedimiento),
   tabla con encabezado azul y firma centrada con la cédula jurídica de `config/oferta.yaml`. Cuando llegue la oferta
   técnica de Tarrazú, se compara con ella.
+- **Comparada con la respuesta que presentó Hermatix en Tarrazú (2026-11-10).** Ivania pegó en `data/ofertas/` (fuera
+  de Git) los documentos de la oferta. La respuesta técnica es «Contratación Tarrazu Se Cumple» (Word): **no es una
+  tabla**, sino el pliego **punto por punto**, con cada sección en negrita (Objeto, Plazo, Forma de pago,
+  Admisibilidad, Garantía, Especificaciones técnicas, Aspectos de evaluación…). Bajo cada punto va «Respuesta Hermatix:
+  Se entiende, se acepta y se cumple.», o «Se entiende y se acepta.» cuando solo se aporta documentación. El PDF de
+  la app pasa a esa forma: cada fila tiene **«Sección del pliego»** (campo nuevo, sin migración: va en el borrador),
+  las filas se agrupan por sección y «Cumple» escribe esa frase, seguida de lo que ofrece Hermatix y el documento que
+  lo prueba. «No cumple», «Revisar» y «Sin marcar» salen tal cual y en rojo, para que nadie firme sin verlos. El
+  formulario del panel sigue siendo la matriz. El PDF de 33 páginas con el nombre del objeto es una copia del pliego.
+  «Propuesta Proyecto…» es una cotización comercial con precios (solo en local). El ZIP trae también documentos
+  personales (planillas, CV, declaraciones juradas, personería) que **no se leyeron**.
 - Borrador por cartel (migración **0042**); el historial anota quién guardó y quién generó el PDF. Pruebas en
   `tests/test_respuesta_tecnica.py` (datos SINTÉTICOS).
 
-**Segunda parte (espera a Oscar):** que la IA saque **todas** las especificaciones del pliego con su cita (sección 6,
-uso de IA para la oferta) y las fichas técnicas de los productos (sección 4). Falta también la oferta técnica de
-Tarrazú para comparar el formato.
+**Segunda parte:** reemplazada por la sección 12 (el formulario y su PDF se quitaron el 2026-11-10).
+
+## 12. Construido: la oferta completa con un botón, como la de NAVSAT (2026-11-10)
+
+**Pedido de Oscar (comunicado por Ivania):** que la oferta sea como la de **NAVSAT** (IAFA, 2026LD-000056-0010400001,
+ganada por esa empresa; en `data/ofertas/`, fuera de Git; no se copió nada de sus precios ni de sus datos), que los
+documentos subidos en el asistente vayan **adjuntos** y que **no haya formulario**: un botón y la oferta sale.
+
+**Cómo es la de NAVSAT:** un solo PDF. Portada (institución, OFERTA, tipo y número de procedimiento, objeto, oferente y
+cédula jurídica) · el **pliego completo copiado** sección por sección, con «Respuesta Sección 01 – Llamado a Cotizar ·
+Entendemos, aceptamos y cumplimos con lo requerido» en cursiva al final de cada una · «Listado de Anexos» en 4 grupos
+(1 Oferta económica · 2 Documentación legal · 3 Propuesta técnica · 4 Certificaciones empresariales) · cada anexo con
+su página de título y el documento.
+
+**Lo construido** (`app/propuesta.py`, `app/ai/oferta.py`, plantillas `propuesta.html` y `propuesta_anexos.html`,
+migración **0043**): en el cartel, el botón **«Oferta»** (solo para quien entra al expediente) arma ese PDF, lo
+descarga y guarda una copia en `EXPORTS_DIR/ofertas/<procedimiento>/oferta_<fecha>.pdf` (nunca sobrescribe).
+- **El pliego:** lo copia la app del texto original (DOC del pliego y especificaciones). La IA solo marca dónde empieza
+  cada sección y si la respuesta es «cumple» o «acepta» (`DECISION_IA.md` §9). Con la IA apagada, una sola sección.
+- **Las respuestas** (decisión de Ivania): cada requisito del asistente va a la sección del pliego donde lo cita; si
+  algo no cumple, falta o hay que revisar, esa sección **no dice «cumplimos»**: sale en rojo con lo que falta, y la
+  portada dice «BORRADOR: hay N puntos sin resolver. No firmar ni subir a SICOP todavía», con la lista.
+- **Los precios** (decisión de Ivania): salen de **`config/tarifario.yaml`**, que llena y aprueba Oscar una vez, por
+  producto de Hermatix (el de la familia con mejor encaje del cartel). Cambia la regla 3: el precio lo aprueba Oscar
+  en el tarifario. Sin tarifa sale «PRECIO PENDIENTE» en rojo, sin total ni monto en letras. El anexo 1.1 es la oferta
+  económica de la sección 10 (diseño de Tarrazú), calculada por la app.
+- **Los anexos:** los archivos que se subieron en el asistente (o el documento vigente del perfil, si se confirmó desde
+  el perfil), agrupados por el tipo del elemento del perfil. Los PDF se pegan tal cual; las imágenes, en una página.
+  Los que faltan quedan en el listado como «PENDIENTE». Cada documento adjuntado queda en el historial
+  («adjuntar_documento_oferta»), y se ve también en los accesos del perfil. Nunca van a la IA.
+- **Representante legal:** sus datos están ahora en `config/oferta.yaml` (vacíos hasta que Oscar los llene: mientras
+  tanto, pendiente en la portada).
+- **Se quitaron** los formularios «Oferta económica» y «Respuesta técnica» con su PDF (y `app/respuesta_tecnica.py`).
+  Los borradores ya guardados (tablas 0041 y 0042) quedan en la base sin usarse. Sigue el comando
+  `python -m app.cli oferta economica --datos OFERTA.yaml`.
+- **Siempre pendiente por ahora:** la ficha técnica del equipo ofertado (anexo 3), hasta que Oscar decida cómo se
+  elige el equipo de cada cartel con las fichas Hero.
+- Pruebas: `tests/test_propuesta.py` (datos SINTÉTICOS, IA SIMULADA).
+
+**Pendiente · Oscar:** llenar `config/tarifario.yaml` y los datos del representante en `config/oferta.yaml`; decidir
+cómo se elige la ficha técnica de cada cartel.

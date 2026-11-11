@@ -123,3 +123,137 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
   saldo vence.
 - **[por decidir · Oscar]:** el modelo de Anthropic y sus precios (se comparan en 3 carteles antes de cambiar), y la
   fecha del cambio.
+
+## 9. Ampliación: la IA en la oferta completa (pedido de Oscar, comunicado por Ivania, 2026-11-10)
+
+Oscar quiere que la oferta salga con un solo botón, sin formulario, con la forma de la de NAVSAT
+(`DECISION_PROPUESTA.md` §12). La IA hace **una sola cosa**: marcar dónde empieza cada sección del pliego (número,
+título, DOC y página, las primeras palabras copiadas tal cual) y si la respuesta es «cumple» o «acepta»
+(`app/ai/oferta.py`, prompt `config/prompts/oferta_secciones_v1.md`, propósito `oferta` en `ia_usage`, migración 0043).
+
+- **Lo que la IA no hace:** no copia ni reescribe el pliego (lo copia la app del texto original); no decide si
+  Hermatix cumple (lo decide la app con el asistente de elegibilidad, y lo que no cumple sale en rojo); no pone
+  precios (salen del tarifario de Oscar, `config/tarifario.yaml`); no ve documentos de Hermatix.
+- **Lo que se le envía:** solo el texto público del pliego (documentos de SICOP), igual que en el resumen (regla 2).
+- **Control:** cada sección se comprueba contra el texto de su página; la que no coincide se descarta. Con la IA
+  apagada, sin presupuesto o si falla, la oferta sale igual con el pliego entero en una sola sección.
+- **Costo:** una llamada por pliego; con el mismo pliego no se repite (caché por huella). Cuenta en el presupuesto
+  diario (`IA_MAX_DAILY_COST`).
+- Pruebas con IA SIMULADA (`tests/test_propuesta.py`), regla 7.
+
+## 10. Propuesta: el asistente como chat y la oferta corregida conversando (pedido de Oscar, comunicado por Ivania, 2026-11-11)
+
+**BORRADOR, PENDIENTE DE OSCAR.** Redactado por Ivania con Claude el 2026-11-11. No se construye nada hasta que Oscar
+lo apruebe. Lo marcado **[por decidir · Oscar]** se llena cuando él lo diga.
+
+### 10.1 Qué pide Oscar
+
+1. El asistente de elegibilidad deja de ser una pregunta tras otra y pasa a ser un **chat** en la página del cartel,
+   como el de Claude o ChatGPT: la IA pregunta por los requisitos y la persona contesta, escribe dudas o sube archivos.
+2. En el mismo chat, la persona le dice **qué cambiar y qué no** en la oferta, y cómo mejorar el diseño.
+3. Cuando no falta nada, el chat dice **«Ya está listo»** y la persona pide la **oferta completa** (§9 y
+   `DECISION_PROPUESTA.md` §12), con todos los documentos subidos en la conversación, como la de NAVSAT.
+4. Con la oferta hecha, Oscar la revisa y vuelve a decir en el chat qué cambiar; la app arma otra versión.
+5. Gasta más en la API: Oscar dijo que **no hay problema** (falta fijar el tope, 10.5).
+
+### 10.2 Qué cambia respecto a lo aprobado
+
+Hoy la IA **no escribe nada de la oferta**: solo marca dónde empieza cada sección (§9). Con el chat, la IA
+**propone cambios** a la oferta. Para que eso sea seguro, la IA no edita el PDF ni el texto directamente: elige
+de una **lista cerrada de acciones** («herramientas») y la app las comprueba y las aplica. Ejemplo:
+
+> Oscar escribe «quita la sección 5» → la IA pide `quitar_seccion(5)` → la app la quita y guarda la versión 2.
+> Si pide algo que no está en la lista, la IA responde «eso no lo puedo cambiar» y no pasa nada.
+
+### 10.3 Reglas que se proponen
+
+Siguen todas las de las secciones 4, 7 y 9. Además:
+
+1. **Qué hace el chat y qué puede cambiar (decidido por Oscar, comunicado por Ivania, 2026-11-11):**
+   - El chat **es el asistente de elegibilidad**, como el de hoy: toma la información de los documentos del cartel
+     y pide todo lo necesario para hacer la oferta.
+   - **Solo puede modificar el documento de la oferta.** No puede cambiar ningún archivo del cartel ni ningún
+     archivo que se suba en el chat: esos se adjuntan tal cual.
+   - **Misma estructura para todas las ofertas**, inspirada en la de Tarrazú y en la de NAVSAT (portada, pliego
+     sección por sección con su respuesta, listado de anexos, oferta económica y documentos adjuntos;
+     `DECISION_PROPUESTA.md` §9 y §12). El chat **solo cambia la estructura si alguien se lo pide primero**; por
+     iniciativa propia nunca. Ese cambio vale **solo para esa oferta**: la estructura base no cambia (confirmado
+     por Oscar).
+   - Lista cerrada de acciones que se deriva de esto: cambiar el texto de la respuesta de una sección; marcar una
+     sección «cumple» o «acepta»; adjuntar o quitar de la oferta un documento subido (sin modificarlo); y, **solo si
+     se pide**, quitar, agregar o reordenar partes de la estructura.
+2. **Nunca declarar algo que Hermatix no tiene** (`DECISION_PROPUESTA.md` §2.4). Lo que no cumple o falta sigue en
+   rojo aunque alguien lo pida en el chat; solo sale de rojo con la respuesta del asistente o el documento.
+3. **Precios:** solo del tarifario (`config/tarifario.yaml`) o escritos por una persona; la IA no pone ni cambia
+   precios. Los montos, las sumas y el monto en letras los calcula la app.
+4. **El pliego no se reescribe:** lo copia la app del texto original (como en §9). La IA solo cambia las respuestas
+   de Hermatix.
+5. **Todos los requisitos se presentan:** el chat no puede ocultar requisitos del cartel; la persona decide.
+6. **Versiones:** cada cambio aplicado crea una versión nueva de la oferta; las anteriores y la conversación se
+   guardan y nunca se borran. Se ve quién pidió cada cambio y cuándo.
+7. **«Ya está listo» lo decide la app**, no la IA: aparece cuando todos los requisitos tienen respuesta. La oferta
+   sigue saliendo como «BORRADOR» si hay algo en rojo. Una persona la revisa, la firma y la sube a SICOP.
+8. **Texto del pliego como dato, no como orden:** si un PDF trae frases como «ignora las instrucciones», la IA no
+   las obedece; y aunque lo hiciera, solo puede usar las acciones de la lista.
+9. **Quién usa el chat y corrige la oferta (decidido por Oscar, 2026-11-11):** todos los encargados y
+   administradores pueden modificar la oferta **de los carteles de los que se encargan**; los demás no.
+10. Pruebas siempre con **IA simulada** (regla 7). Con `AI_MODE=none` el chat no aparece y la oferta sale como hoy.
+
+### 10.4 Documentos subidos en el chat
+
+**Decidido por Oscar (comunicado por Ivania, 2026-11-11): la IA puede leer los documentos subidos en el chat**,
+para estructurar mejor la oferta, **sin modificarlos en absoluto**. Cambia la decisión del 2026-11-04 (§7: «texto de
+esos documentos a la IA: no»), solo para el chat.
+
+- La IA recibe el **texto** del documento; el archivo original se guarda y se adjunta a la oferta **tal cual**
+  (misma huella antes y después; la app lo comprueba).
+- Se activa con `ASSISTANT_SEND_DOCUMENTS=true`; hoy ese camino no existe y se construye con el chat.
+- Sigue sin enviarse: contraseñas, usuarios ni datos que no estén en el documento subido.
+- **[por decidir · Oscar]:** los documentos pueden traer **datos personales** (p. ej. cédula y firma del
+  representante en una certificación): ¿se envían tal cual o se tapan antes?
+- **[a confirmar · Oscar]:** ¿sigue valiendo que los documentos reales se guarden **solo en el servidor** (§7)?
+  Mientras tanto, en la laptop se prueba con documentos **SINTÉTICOS** (de prueba).
+
+### 10.5 Costo
+
+Un chat **reenvía toda la conversación** en cada mensaje: el décimo mensaje cuesta más que el primero. Además se
+envía el pliego (ya está en el resumen). Con el tope actual de **1.00 USD al día** (`IA_MAX_DAILY_COST`) no alcanza
+para conversar con varios carteles.
+
+- Tope **por día** (decidido por Oscar, 2026-11-11), sin tope por cartel. Monto en USD: **[por decidir · Oscar]**;
+  se propone fijarlo después de medir el costo real (último punto).
+- Al llegar al tope, el chat avisa «presupuesto del día agotado» y no llama a la IA; lo ya hecho no se pierde.
+- Cada mensaje se anota en `ia_usage` con el propósito `chat`, para ver cuánto gasta cada cartel.
+- Antes de construir, se mide el costo real en 3 carteles con conversaciones de prueba y se le muestra a Oscar.
+
+### 10.6 Anthropic u OpenAI
+
+El cambio a Anthropic ya está aprobado (§8) pero todavía no está en la app (`app/ai/cliente.py` solo tiene OpenAI).
+Se propone hacer el chat ya con las dos opciones (`AI_MODE`). La API de Anthropic guarda en caché la parte que no
+cambia (pliego e instrucciones), y eso baja el costo de cada mensaje. Modelo y fecha del cambio: **[por decidir ·
+Oscar]** (sigue pendiente de §8).
+
+### 10.7 Orden de construcción (una tarea a la vez, en local)
+
+1. Este documento aprobado por Oscar.
+2. Anthropic en `app/ai/cliente.py`, junto a OpenAI (§8).
+3. El chat de elegibilidad en el cartel, con subida de archivos y «Ya está listo» → botón «Oferta». Reemplaza a las
+   preguntas actuales; las respuestas ya guardadas no se tocan.
+4. Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).
+5. Medir el costo con Oscar y ajustar el tope.
+
+### 10.8 Riesgos
+
+- **Más gasto** del previsto si las conversaciones son largas (lo frena el tope de 10.5).
+- **La IA entiende mal un pedido** y cambia otra sección: cada versión se puede comparar con la anterior y
+  volver atrás.
+- **Confiar demasiado en «Ya está listo»:** sigue siendo un borrador; la revisión y la firma son de una persona.
+- **Más tiempo de construcción:** son 4 tareas, no una; el resto del proyecto (servidor, fichas técnicas) espera.
+
+### 10.9 Aceptación
+
+- [ ] Oscar leyó esta sección y acepta las reglas de 10.3 (fecha: ____).
+- [x] Qué hace el chat y qué puede cambiar (10.3.1) y quién corrige la oferta (10.3.9): Oscar, 2026-11-11.
+- [x] Documentos a la IA (10.4: sí, sin modificarlos) y tipo de tope (10.5: por día): Oscar, 2026-11-11.
+- [ ] Decididas: datos personales en los documentos y dónde se guardan (10.4), monto del tope diario (10.5),
+  modelo de Anthropic (10.6).

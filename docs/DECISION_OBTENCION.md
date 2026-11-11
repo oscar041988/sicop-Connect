@@ -245,6 +245,16 @@ Lectura (Claude, para que Oscar decida):
   persona y SICOP no los bloqueó; si Oscar prefiere no automatizar nada, `SOURCE_MODE=manual` y no se toca código.
 - **Pendiente · Oscar:** decidir con esta respuesta. Hasta entonces sigue sin reintentarse la descarga automática.
 
+**SICOP bloqueó también la solicitud (2026-11-10, 15:00).** Ivania pidió activar en su PC la solicitud automática
+(06:30 y 14:00; descarga a mano), porque tener el correo «Envío de reporte» en Gmail sirve aunque el ZIP se baje a
+mano. La primera vuelta real (`obtain auto`, solicitud #4) no llegó a pedir el reporte: la página pública de reportes
+mostró el aviso de bloqueo con un ID de soporte (guardado en el motivo de la solicitud #4). La app se detuvo con FALLO
+«control no automatizable» y mandó **una** alerta a `OBTAIN_ALERT_TO` (regla 2). El 22/10 la solicitud sí había
+pasado: el bloqueo ahora alcanza también la solicitud. **Con la regla 2:** no se reintenta, no se cambia el
+navegador ni nada para evitar el bloqueo, **no se creó la tarea de Windows** y se vuelve a `SOURCE_MODE=manual`. La
+solicitud se sigue haciendo a mano en SICOP. **Pendiente · Oscar:** decidir si se consulta a SICOP con este ID de
+soporte (por ejemplo, si una solicitud por día desde un programa es aceptable) o si la obtención queda manual.
+
 **Lección 4 (2026-10-22): `obtain auto` integra la obtención al ciclo** (`docs/OPERACION.md` 3.1). Aplica estas
 reglas así:
 - Regla 2: una solicitud fallida no se reintenta; se manda **una** alerta con el plan B (descarga a mano).
@@ -285,6 +295,21 @@ Guía: `docs/Guia_Enriquecimiento_Carteles_SICOP (2).docx`.
 | Peso del texto de los PDF en las reglas (entrega 4C) | La guía: «una señal solo en el PDF sube el encaje con su evidencia» | ☑ **decidido** (27/10, por Ivania): el PDF sube como máximo a **Media** (Alta solo con una señal alta en el título o en las líneas); si la familia no tiene ninguna señal en el título ni en las líneas, lo del PDF la deja como máximo en **Baja** (se ve en el detalle, no sale en los avisos); el contexto del PDF no cuenta. Motivo: en la base real, «trazabilidad» y «etiquetas» en el pliego de unos abarrotes los subían a Media — hecho, sin migración |
 
 - Fecha de la decisión: 2026-10-27 · Decidió: Oscar · Comentarios: ____
+
+**Cola sin repetir (2026-11-10, decisión de Ivania).** Reemplaza «los que cambiaron en los datos abiertos y los que
+cierran en ≤ 3 días» de la fila «Qué carteles se consultan». **Un cartel que ya tiene su ficha y sus documentos no se
+vuelve a buscar.** Solo entran:
+1. los **nunca enriquecidos**;
+2. los que **SICOP modificó después de la última ficha**, es decir, con una versión nueva del cartel en los datos
+   abiertos (`raw_snapshots`, que guarda cada versión una sola vez con la fecha en que apareció);
+3. los que en la consulta anterior **no pudieron guardar algún documento**, hasta 3 veces por cartel.
+
+Motivo: la regla anterior usaba `tenders.last_seen`, que cambia en **cada** carga aunque el cartel siga igual, así
+que cada cartel ya enriquecido volvía al día siguiente. En la base real, 44 de 173 consultas fueron a carteles que
+ya tenían documentos; 35 salieron «sin cambios». Con la regla nueva, la cola real del 10/11 bajó de 24 (casi todos
+repetidos) a 16 (15 nunca enriquecidos y 1 modificado por SICOP).
+**Cola vacía:** no se abre SICOP ni el navegador, la corrida queda «sin_cola» en la bitácora y, si tampoco hubo
+borrados al cierre, no se escribe el resumen. El borrado al cierre sigue igual.
 
 **Exploración manual (lección 1, Ivania, 2026-10-27):**
 - La búsqueda avanzada encontró el cartel por Número SICOP.

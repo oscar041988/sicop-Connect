@@ -45,7 +45,8 @@ ACCIONES = {
     "descargar_documento_asistente": "Descargó un documento de una respuesta del asistente",
     "generar_reporte": "Generó el Reporte de cartel en PDF",
     "guardar_oferta": "Guardó el borrador de la oferta económica",
-    "generar_oferta": "Generó la oferta económica en PDF",
+    "generar_oferta": "Generó la oferta en PDF",
+    "adjuntar_documento_oferta": "Adjuntó un documento del asistente o del perfil a la oferta",
     "guardar_respuesta_tecnica": "Guardó el borrador de la respuesta técnica",
     "generar_respuesta_tecnica": "Generó la respuesta técnica en PDF",
     "ampliar_asistente": "Abrió el resto de las preguntas del asistente (después de los excluyentes)",
@@ -59,12 +60,12 @@ DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")
 DE_SEGUIMIENTO = ("abrir_seguimiento", "asignar_encargado", "cambiar_etapa", "subir_archivo", "escribir_nota",
                   "descargar_expediente")
 DE_PERFIL = ("crear_elemento_perfil", "nueva_version_perfil", "marcar_pendiente_perfil")
-ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil")
+ACCESOS_PERFIL = ("ver_documento_perfil", "descargar_documento_perfil", "adjuntar_documento_oferta")
 DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "agregar_item_verificacion",
                    "quitar_item_verificacion")
 DE_ASISTENTE = ("empezar_asistente", "redactar_preguntas_asistente", "responder_asistente",
                 "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente",
-                "ampliar_asistente", "revisar_resultado", "calcular_resultado")
+                "ampliar_asistente", "revisar_resultado", "calcular_resultado", "adjuntar_documento_oferta")
 # Registro del asistente (lección 5, solo administradores): lista, preguntas, respuestas, documentos, resultado,
 # «¿Cumple?» del resumen y el perfil con sus accesos.
 REGISTRO_ASISTENTE = DE_VERIFICACION + DE_ASISTENTE + ("marcar_cumple_linea",) + DE_PERFIL + ACCESOS_PERFIL

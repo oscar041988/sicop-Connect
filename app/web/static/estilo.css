@@ -533,6 +533,9 @@ form.en-linea { display: inline; margin-left: 8px; }
 .cf-cifras dd small { display: block; font-weight: 400; font-size: .8rem; }
 .cf-cifras dd.cf-cerrado { color: var(--rojo); }
 .cf-enlaces { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .9rem; font-weight: 600; }
+/* Botón «Oferta» del cartel (app/propuesta.py): el botón y su explicación en una fila */
+.cf-oferta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 10px 0 0; }
+.cf-oferta small { flex: 1 1 260px; color: var(--mut, #55606b); }
 
 /* Pestañas: una fila, subrayado en la activa */
 .cartel-pasos { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }  /* minmax(0, 1fr): nunca más ancha que la pantalla */
@@ -674,26 +677,3 @@ form.en-linea { display: inline; margin-left: 8px; }
   .compacta .card h3 a { -webkit-line-clamp: 3; }
 }
 
-/* Oferta económica (oferta_form.html): secciones en dos columnas que pasan a una en el celular. */
-.revision.oferta { max-width: 900px; }
-.oferta .bloque-oferta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
-.oferta .bloque-oferta legend { grid-column: 1 / -1; font-size: .95rem; color: var(--g9); }
-.oferta .ancho { grid-column: 1 / -1; }
-.oferta .opcion { flex-direction: row; align-items: center; gap: 6px; }
-.oferta input[type="number"], .oferta input[type="date"] { border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
-.tabla-lineas { overflow-x: auto; }
-.tabla-lineas table { width: 100%; border-collapse: collapse; }
-.tabla-lineas th { text-align: left; font-size: .8rem; color: var(--mut); padding: 4px 6px; }
-.tabla-lineas td { padding: 3px 4px; }
-.tabla-lineas td input { width: 100%; min-width: 70px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
-.tabla-lineas td:nth-child(3) input { min-width: 220px; }
-.acciones-oferta { display: flex; gap: 10px; flex-wrap: wrap; }
-@media (max-width: 640px) { .oferta .bloque-oferta { grid-template-columns: minmax(0, 1fr); } }
-
-/* Respuesta técnica (respuesta_form.html): la matriz usa la tabla de la oferta, con textos más largos. */
-.matriz td { vertical-align: top; }
-.matriz td textarea { width: 100%; min-width: 200px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: inherit; }
-.matriz td textarea + input, .matriz td input + input { margin-top: 4px; }
-.matriz td:nth-child(3) input, .matriz td:nth-child(4) input { min-width: 180px; }
-.matriz td:first-child input { min-width: 50px; width: 60px; }
-.matriz .origen { display: block; font-size: .75rem; color: var(--mut); margin-top: 2px; }

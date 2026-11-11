@@ -15,7 +15,7 @@ from typing import Sequence
 
 from app import __version__
 from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
-from app.database import MigrationError, apply_migrations, check_database, connect
+from app.database import MigrationError, apply_migrations, check_database, connect, espera_de_tarea
 from app.historial import TERMINAL as QUIEN_TERMINAL
 from app.compras import Compra, detalle_compra
 from app.ai import cliente as ia_cliente
@@ -1446,9 +1446,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _es_tarea_programada(args) -> bool:
+    """Los comandos que corren las tareas programadas (deploy/windows, deploy/systemd): esperan más a la base ocupada."""
+    return ((args.command == "run-cycle") or (args.command == "enrich" and args.enrich_command in ("run", "remoto"))
+            or (args.command == "ia" and args.ia_command == "cola")
+            or (args.command == "obtain" and args.obtain_command == "auto"))
+
+
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     args = build_parser().parse_args(argv)
     settings = settings or load_settings()
+    if _es_tarea_programada(args):
+        with espera_de_tarea():
+            return _ejecutar(args, settings)
+    return _ejecutar(args, settings)
+
+
+def _ejecutar(args, settings: Settings) -> int:
     if args.command == "doctor":
         return doctor(settings)
     if args.command == "migrate":

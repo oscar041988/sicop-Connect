@@ -98,13 +98,21 @@
 
   <p class="cf-enlaces">
     {% if seg and puede_entrar %}<a href="/seguimiento/{{ c.nro_sicop }}">Abrir expediente</a>
-    <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>
-    <a href="/oportunidades/{{ c.nro_sicop }}/oferta">Oferta económica</a>
-    <a href="/oportunidades/{{ c.nro_sicop }}/respuesta-tecnica">Respuesta técnica</a>{% endif %}
+    <a href="/seguimiento/{{ c.nro_sicop }}/descargar">Expediente ZIP</a>{% endif %}
     {% if vigente %}<a href="/oportunidades/{{ c.nro_sicop }}/reporte" title="Máximo 3 páginas">Reporte PDF</a>{% endif %}
     <a href="https://www.sicop.go.cr/app/module/bid/public/tenders" target="_blank" rel="noopener"
        title="Búscalo con el número {{ c.nro_sicop }} (no hay un enlace directo estable)">Ver en SICOP ↗</a>
   </p>
+  {% if seg and puede_entrar %}
+  {# Oferta completa con un botón (app/propuesta.py): como la de NAVSAT, sin formulario. Lo pendiente sale en rojo. #}
+  <form class="cf-oferta" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit">Oferta</button>
+    <small>Arma la oferta completa en PDF: el pliego respondido, la oferta económica y los documentos del asistente.
+      Tarda unos segundos. Revísala, fírmala con firma digital y súbela a SICOP.</small>
+  </form>
+  {% if error_oferta %}<p class="error">{{ error_oferta }}</p>{% endif %}
+  {% endif %}
   {% if seg and not puede_entrar %}
   <p class="cf-desglose">Lo abrió {{ seg.abierto_por }} el {{ seg.abierto_en | fecha }}. El expediente lo ven
     {% if seg.encargado %}{{ seg.encargado }}{% else %}su encargado (todavía sin asignar){% endif %} y los administradores.</p>

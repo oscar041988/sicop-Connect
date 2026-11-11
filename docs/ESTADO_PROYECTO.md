@@ -4,6 +4,73 @@
 
 ## Último resultado
 
+- **Borrador: el asistente como chat (2026-11-11, pedido de Oscar por Ivania).** Chat en el cartel que pregunta los
+  requisitos, recibe archivos, dice «Ya está listo» y arma la oferta completa; Oscar la corrige conversando y cada
+  cambio crea una versión. La IA solo usa una lista cerrada de acciones. `DECISION_IA.md` §10. Sin código todavía.
+  Decidido por Oscar (11/11): el chat es el asistente de elegibilidad, solo modifica la oferta (nunca archivos del
+  cartel ni subidos); misma estructura para todas (Tarrazú + NAVSAT), cambia solo si se pide y solo en esa oferta;
+  corrigen encargados y administradores, cada uno en los carteles que tiene a cargo.
+  La IA lee los documentos subidos sin modificarlos; tope de gasto por día.
+  **Pendiente · Oscar:** aprobar §10; datos personales en los documentos; monto del tope diario; modelo.
+
+- **Oferta completa con un botón, como la de NAVSAT (2026-11-10, pedido de Oscar por Ivania).** En el cartel, el
+  botón «Oferta» arma un solo PDF:
+  - portada;
+  - el pliego copiado sección por sección, con «Respuesta Sección NN»;
+  - el listado de anexos;
+  - el anexo 1.1 con la oferta económica (diseño de Tarrazú);
+  - los documentos del asistente adjuntos.
+
+  La IA solo marca dónde empieza cada sección (`DECISION_IA.md` §9). Lo que no cumple, falta o está sin precio sale
+  en rojo, y la portada dice «BORRADOR». Los precios salen de `config/tarifario.yaml`. Se quitaron los formularios
+  «Oferta económica» y «Respuesta técnica». Migración **0043**. `DECISION_PROPUESTA.md` §12. Pruebas en
+  `tests/test_propuesta.py`.
+  ~~Respaldo y `migrate` (0043)~~ **hecho (Claude a pedido de Ivania, 2026-11-10, panel cerrado):** respaldo
+  `C:\Users\User\respaldos-sicop\sicop_20261110-160213` (esquema 0042, integridad ok); `doctor`: 0043. Revisiones
+  8, resúmenes 70, uso de IA 107, respuestas 103, constancias 8, perfil 3/4, borradores 2 y 1, historial 562,
+  iguales antes y después; `integrity_check` ok y `foreign_key_check` vacío.
+  ~~Subir el respaldo al Drive~~ **hecho (Claude, 10/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261110-160213`
+  (7 archivos, ≈431 MB; tamaños iguales y huella del `.db` igual al manifiesto).
+  **Pendiente · Ivania:** probar «Oferta» en un cartel con pliego y asistente.
+  **Pendiente · Oscar:** llenar el tarifario y los datos del representante (`config/oferta.yaml`); decidir cómo se
+  elige la ficha técnica de cada cartel.
+
+- **Enriquecimiento sin repetir carteles (2026-11-10, pedido de Ivania).** Un cartel que ya tiene su ficha y sus
+  documentos ya no se vuelve a buscar. Antes volvía cada día, porque `last_seen` cambia en cada carga: 44 de 173
+  consultas fueron repetidas y 35 de ellas salieron «sin cambios». Ahora solo entran los nunca enriquecidos, los que
+  SICOP modificó después de la última ficha (`raw_snapshots`) y los que no pudieron guardar algún documento (hasta 3
+  veces). Se quitó «cierra en 3 días». Con la cola vacía no se abre SICOP ni se escribe el resumen.
+  `DECISION_OBTENCION.md` §9. Cola real del 10/11: de 24 a 16 (15 nunca enriquecidos y 1 modificado). Pruebas en
+  `tests/test_enriquecimiento.py` (3 nuevas, 2 cambiadas) y `tests/test_enriquecimiento_pc.py` (1 cambiada).
+  **Corrida #12 cerrada a mano:** «con_fallos», 2 consultados y 1 FALLO, con el motivo en la bitácora.
+
+- **Solicitud automática del reporte: SICOP la bloqueó (2026-11-10, pedido de Ivania).** Nunca estuvo activa en la
+  PC: las solicitudes de 06:30 y 14:00 eran para el servidor. Ivania cambió el `.env` (`SOURCE_MODE=auto`,
+  `OBTAIN_REQUEST_HOUR=06:30,14:00`); la primera vuelta real (`obtain auto`, solicitud #4, 15:00) encontró el aviso
+  de bloqueo de SICOP con ID de soporte: FALLO «control no automatizable», una alerta a `OBTAIN_ALERT_TO`, sin
+  reintento. **No se creó la tarea «SICOP CONNECT - obtencion».** `DECISION_OBTENCION.md` §8.
+  **Pendiente · Ivania:** volver a poner `SOURCE_MODE=manual` en el `.env` y seguir pidiendo el reporte a mano.
+  **Pendiente · Oscar:** decidir si se consulta a SICOP con el ID de soporte.
+
+- **Enriquecimiento del 10/11 caído por «database is locked» (revisado y arreglado, 2026-11-10).** A las 10:00:47 se
+  subió un ZIP en «Cargar archivo» (11 390 carteles, 85 029 líneas y la evaluación de 14 830): la base quedó ocupada
+  más de 2 min. `enrich run` (cartel 3 de 20) y `ia cola` (primer cartel) esperaron los 30 s de siempre y se
+  cayeron. No fue SICOP. **Arreglo:** las tareas programadas (`run-cycle`, `enrich run`/`remoto`, `ia cola`,
+  `obtain auto`) esperan hasta **10 min** a que la base se libere (`ESPERA_TAREAS_S`, `app/database.py`); el panel
+  sigue en 30 s. 1 prueba nueva en `tests/test_migraciones.py`. **Quedó en la base:** la corrida #12 decía
+  «en_curso» (~~pendiente~~ cerrada a mano, ver arriba), y la cola de IA hizo la llamada del
+  cartel 20261100871 pero no pudo anotar su uso (ese costo no figura en el presupuesto del día). **Consejo:** subir
+  el ZIP antes de las 10:00 o después de las 10:30.
+
+- ~~**Respuesta técnica como la de Tarrazú (2026-11-10, pedido de Ivania).**~~ **Reemplazada el mismo día por la
+  oferta completa (arriba): el formulario y su PDF se quitaron sin llegar a Git.** La respuesta que presentó Hermatix
+  («Contratación Tarrazu Se Cumple», en `data/ofertas/`, fuera de Git) va punto por punto por sección del pliego, con
+  «Respuesta Hermatix: Se entiende, se acepta y se cumple.». El PDF de la app pasa a esa forma: campo nuevo **«Sección
+  del pliego»** por fila (sin migración), filas agrupadas por sección y los pendientes («No cumple», «Revisar», «Sin
+  marcar») en rojo. `DECISION_PROPUESTA.md` §11. 2 pruebas nuevas; 55 pruebas de propuestas pasan.
+  **Pendiente · Ivania:** revisarla en el panel. **Siguiente (propuesto):** páginas del equipo con las fichas Hero
+  (necesita la decisión de Oscar sobre cómo se elige el equipo de cada cartel) y el análisis de la oferta de NAVSAT.
+
 - **Oferta económica con el diseño de Tarrazú (2026-11-10, pedido de Ivania).** El PDF que descarga el panel (y el
   comando) copia el formato de la oferta ganadora: membrete de Hermatix en cada hoja (imágenes en
   `app/web/static/membrete-*.png`), Times New Roman, tabla de precios con encabezado azul y «Monto en Letras»,

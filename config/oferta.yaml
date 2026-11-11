@@ -1,12 +1,16 @@
-# Valores iniciales de la oferta económica (app/oferta_economica.py). Lo edita Hermatix. Solo datos públicos de la
-# empresa y textos generales: los precios y los porcentajes del desglose los escribe una persona en cada oferta, y el
-# nombre y la cédula del representante legal se escriben en cada oferta (no se guardan aquí).
+# Datos de Hermatix para la oferta (app/oferta_economica.py y app/propuesta.py). Lo edita Hermatix.
+# Desde el 2026-11-10 la oferta sale con un solo botón, sin formulario (Oscar, por Ivania): por eso aquí van también
+# los datos del representante legal que firma. Si quedan vacíos, la oferta sale con «[PENDIENTE]» en rojo.
+# Los precios y los porcentajes del desglose están en config/tarifario.yaml.
 empresa:
   nombre: Hermatix M2M Communication S.A.
   cedula_juridica: 3-102-705192
 lugar: San José
 destinatario: Proveeduría Institucional
 representante:
+  nombre: ""          # nombre completo de quien firma la oferta
+  cedula: ""          # su cédula de identidad
+  calidades: ""       # p. ej. «mayor, casado, vecino de San José»
   cargo: representante legal
 condiciones:
   garantia: Durante todo el período contractual.

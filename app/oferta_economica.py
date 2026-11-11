@@ -302,8 +302,8 @@ def html(oferta: Oferta, hoy: date) -> str:
 
 def pdf(contenido_html: str, procedimiento: str, titulo: str = "Oferta económica", membrete: bool = True) -> bytes:
     """Imprime a PDF tamaño carta con el Chromium de Playwright, como el Reporte de cartel. Con membrete (la oferta
-    económica), cada hoja lleva arriba el logo con la franja azul y abajo las franjas, como la oferta que ganó en
-    Tarrazú. Sin membrete (la respuesta técnica, app/respuesta_tecnica.py), un pie con su título y la página."""
+    económica y la oferta completa, app/propuesta.py), cada hoja lleva arriba el logo con la franja azul y abajo las
+    franjas, como la oferta que ganó en Tarrazú. Sin membrete, un pie con su título y la página."""
     from playwright.sync_api import sync_playwright
 
     if membrete:
@@ -339,12 +339,13 @@ def _escapar(texto: str) -> str:
     return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def guardar(contenido: bytes, carpeta: Path, procedimiento: str, momento) -> Path:
-    """EXPORTS_DIR/ofertas/<procedimiento>/oferta_economica_<AAAAMMDD-HHMMSS>.pdf; nunca sobrescribe."""
+def guardar(contenido: bytes, carpeta: Path, procedimiento: str, momento, prefijo: str = "oferta_economica") -> Path:
+    """EXPORTS_DIR/ofertas/<procedimiento>/<prefijo>_<AAAAMMDD-HHMMSS>.pdf; nunca sobrescribe. La oferta completa del
+    botón «Oferta» (app/propuesta.py) usa el prefijo «oferta»."""
     seguro = "".join(c if c.isalnum() or c in "-_" else "_" for c in procedimiento)[:80] or "sin_procedimiento"
     destino = carpeta / "ofertas" / seguro
     destino.mkdir(parents=True, exist_ok=True)
-    base, n = f"oferta_economica_{momento:%Y%m%d-%H%M%S}", 1
+    base, n = f"{prefijo}_{momento:%Y%m%d-%H%M%S}", 1
     ruta = destino / f"{base}.pdf"
     while ruta.exists():
         n += 1

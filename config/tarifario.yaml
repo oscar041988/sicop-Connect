@@ -1,0 +1,24 @@
+# Tarifario de Hermatix para la oferta con un botón (app/propuesta.py; decisión de Oscar, por Ivania, 2026-11-10).
+# Lo llena y lo aprueba Oscar una sola vez; la app NO inventa precios. Un producto sin tarifa sale en la oferta con
+# «PRECIO PENDIENTE» en rojo (sin total ni monto en letras).
+#
+# La clave de cada producto es la de config/hermatix_rules.yaml (producto: …): fleetmatix, fenova_ia, moveon,
+# smarttags, osmia_iot, bodycams, passengeriq, fleetrun. La oferta usa el producto de la familia con mejor encaje del
+# cartel; cada línea del cartel se cotiza como cantidad × precio.
+#
+# Por producto:
+#   moneda: CRC o USD (una sola moneda por oferta)
+#   precio: precio por unidad (Decimal, sin separador de miles: 27030.00)
+#   periodo: mensual (arrendamiento o servicio por mes) o unico (precio único)
+#   iva: 13 (la tasa) o «exento: <motivo>»
+#   desglose: los cuatro porcentajes de la fórmula de reajuste; tienen que sumar 100
+#
+# Ejemplo (NO es un precio real; quitar el «#» y poner los de Hermatix):
+# fenova_ia:
+#   moneda: CRC
+#   precio: "0.00"
+#   periodo: mensual
+#   iva: 13
+#   desglose: {mano_de_obra: 25, insumos: 25, gastos_administrativos: 25, utilidad: 25}
+
+productos: {}

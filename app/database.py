@@ -21,6 +21,23 @@ SIN_LLAVES_FORANEAS = "-- migracion: sin llaves foraneas"
 # Segundos que una conexión espera si otro programa está escribiendo (el panel, el enriquecimiento) antes de fallar con
 # «database is locked». Con los 5 s de Python, el ciclo del 2026-11-05 a las 8:00 se detuvo.
 ESPERA_BASE_OCUPADA_S = 30
+# Las tareas programadas (ciclo, enriquecimiento, cola de IA, obtención) esperan más: nadie las mira, y una carga
+# grande en «Cargar archivo» ocupa la base unos minutos. El 2026-11-10 a las 10:00, una carga de 11 390 carteles
+# tuvo la base ocupada más de 2 min y el enriquecimiento y la cola de IA se cayeron a los 30 s.
+ESPERA_TAREAS_S = 600
+_espera_s = ESPERA_BASE_OCUPADA_S
+
+
+@contextmanager
+def espera_de_tarea():
+    """Dentro del bloque, las conexiones nuevas esperan ESPERA_TAREAS_S; al salir, vuelve la espera normal. Lo usan
+    los comandos de las tareas programadas (app/cli.py); el panel no."""
+    global _espera_s
+    anterior, _espera_s = _espera_s, ESPERA_TAREAS_S
+    try:
+        yield
+    finally:
+        _espera_s = anterior
 
 
 class MigrationError(Exception):
@@ -76,7 +93,7 @@ def transaccion(conn: sqlite3.Connection):
 def connect(path: Path) -> sqlite3.Connection:
     """Conexión con claves foráneas activas, transacciones explícitas y espera ante la base ocupada."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, isolation_level=None, timeout=ESPERA_BASE_OCUPADA_S)
+    conn = sqlite3.connect(path, isolation_level=None, timeout=_espera_s)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
