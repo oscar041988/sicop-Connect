@@ -27,7 +27,7 @@ import base64
 import io
 import re
 import sqlite3
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 
@@ -116,9 +116,33 @@ def _patron(inicio: str) -> re.Pattern:
     return re.compile(r"\s+".join(re.escape(p) for p in inicio.split()))
 
 
+# Texto vertical del PDF (una etiqueta girada, un sello, un diagrama): al extraerlo sale letra por letra, una línea
+# corta tras otra («G / re / r / g / a / is…»), y en la oferta ocupaba páginas enteras (prueba de Ivania, 2026-11-11).
+# Se quita un tramo de al menos VERTICAL_LINEAS líneas seguidas de hasta VERTICAL_LARGO caracteres, casi todas con
+# letras: en la base real (11/11) los 51 tramos así eran ilegibles; una lista de números («1 / 2 / 3…») se queda.
+VERTICAL_LINEAS, VERTICAL_LARGO = 6, 4
+_SOLO_CIFRAS = re.compile(r"[\d.,%$₡:/()-]+")
+
+
+def sin_texto_vertical(texto: str) -> str:
+    lineas, quedan, i = texto.split("\n"), [], 0
+    while i < len(lineas):
+        j = i
+        while j < len(lineas) and 0 < len(lineas[j].strip()) <= VERTICAL_LARGO:
+            j += 1
+        tramo = [linea.strip() for linea in lineas[i:j]]
+        if len(tramo) >= VERTICAL_LINEAS and sum(not _SOLO_CIFRAS.fullmatch(t) for t in tramo) >= 0.8 * len(tramo):
+            i = j                                          # tramo vertical: no se copia
+            continue
+        quedan.extend(lineas[i:max(j, i + 1)])
+        i = max(j, i + 1)
+    return "\n".join(quedan)
+
+
 def cortar(paginas: list[ia_oferta.Pagina], secciones: list[ia_oferta.Seccion]) -> list[Bloque]:
     """El pliego en bloques: lo que hay antes de la primera sección (sin respuesta) y cada sección hasta la siguiente.
-    Sin secciones, el pliego entero es un solo bloque."""
+    Sin secciones, el pliego entero es un solo bloque. El texto vertical (letra por letra) no se copia."""
+    paginas = [replace(p, texto=sin_texto_vertical(p.texto)) for p in paginas]
     completo, desde, indice = "", {}, {}
     for i, p in enumerate(paginas):
         desde[(p.doc, p.pagina)] = len(completo)

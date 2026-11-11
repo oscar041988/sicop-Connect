@@ -249,6 +249,21 @@ def test_las_secciones_se_comprueban_contra_el_texto():
     assert bloques[0].texto.endswith("(SINTÉTICO).") and "ASPECTOS" not in bloques[0].texto
 
 
+def test_el_texto_vertical_no_se_copia_a_la_oferta():
+    # Una etiqueta girada del PDF (SINTÉTICA), como salió en el pliego de cámaras corporales: letra por letra.
+    vertical = "\n".join("G re r g a is b t a r c o i ó d n".split())
+    pagina = f"10. Entrega de la información (SINTÉTICO).\n{vertical}\nAl finalizar el contrato, el proveedor..."
+    limpio = propuesta.sin_texto_vertical(pagina)
+    assert limpio == "10. Entrega de la información (SINTÉTICO).\nAl finalizar el contrato, el proveedor..."
+    # Se quedan: una lista de números, pocas líneas cortas y las líneas normales.
+    numeros = "Cantidades:\n1\n2\n3\n4\n5\n6\n7"
+    assert propuesta.sin_texto_vertical(numeros) == numeros
+    pocas = "Sí\nNo\nN/A\nTexto normal"
+    assert propuesta.sin_texto_vertical(pocas) == pocas
+    paginas = [ia_oferta.Pagina(1, "pliego.pdf", 1, pagina)]
+    assert "\nre\n" not in propuesta.cortar(paginas, [])[0].texto
+
+
 @pytest.mark.parametrize("texto, meses", [("1 año", 12), ("24 meses", 24), ("un año", 12), ("doce meses", 12),
                                           ("no encontrado", None), ("hasta 4 años", 48), ("", None)])
 def test_meses_del_contrato(texto, meses):

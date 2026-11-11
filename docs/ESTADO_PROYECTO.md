@@ -7,6 +7,11 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Sin texto vertical en la oferta (2026-11-11).** El texto girado de los PDF (etiquetas, sellos, diagramas) salía
+  letra por letra en el PDF y el Word de la oferta («G / re / r / g…»). `propuesta.sin_texto_vertical` salta los
+  tramos de 6 o más líneas seguidas de hasta 4 caracteres, casi todas con letras (en la base real: 51 tramos, todos
+  ilegibles). La oferta de `20261001587` pasó de 81 a 35 páginas sin perder contenido. 1077 pruebas pasan.
+
 - **Resúmenes con IA: segunda oportunidad a las 14:00 (2026-11-11).** El 10/11 y el 11/11 no hubo resúmenes: la
   tarea de las 10:00 falló (10/11 «database is locked» por una carga en el panel; 11/11 faltaba `migrate` 0044) y
   nadie la repetía. Nueva tarea «SICOP CONNECT - resumenes IA» (`sicop-enriquecimiento.ps1 -SoloIa`, lunes a
