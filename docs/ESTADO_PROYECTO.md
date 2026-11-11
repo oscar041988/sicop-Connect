@@ -13,7 +13,12 @@ cambios desde el 29/10; espera que Oscar una el PR)
   descargan en PDF o Word; la portada dice «Versión N»). Lista cerrada: respuestas, marcar cumple/acepta, quitar,
   volver a poner, agregar y mover secciones, quitar y volver a poner anexos. Nunca precios, pliego, secciones en rojo
   ni anexos pendientes. `app/oferta_cambios.py`, prompt `chat_oferta_v1.md`, migración **0045**. 8 pruebas nuevas
-  (IA SIMULADA). **Pendiente · Ivania:** respaldo y `migrate` (0045) con el panel cerrado; probarlo: armar la oferta
+  (IA SIMULADA). ~~Respaldo y `migrate` (0045)~~ **hecho (Claude a pedido de Ivania, 11/11, panel cerrado):** respaldo
+  `C:\Users\User\respaldos-sicop\sicop_20261111-113040` (esquema 0044, integridad ok); `doctor`: 0045; conteos iguales
+  antes y después (carteles 15015, revisiones 8, resúmenes 70, uso de IA 113, respuestas 103, historial 569,
+  sesiones 5); `integrity_check` ok y `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude,
+  11/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261111-113040` (7 archivos, ≈390 MB; tamaños iguales y huella del
+  `.db` igual al manifiesto). **Pendiente · Ivania:** probarlo: armar la oferta
   de un cartel con el asistente respondido y pedir un cambio en el chat. **Siguiente:** paso 5, «Oferta terminada» y
   el borrado de los datos personales (`DECISION_IA.md` §10.4).
 
