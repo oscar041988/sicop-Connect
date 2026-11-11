@@ -176,6 +176,54 @@ def test_mensaje_vacio_y_sin_empezar_no_se_aceptan(lista):
         _enviar(db, settings, "   ", IaSimulada())
 
 
+# --- Lo que salió de la prueba de Ivania con la IA real (2026-11-11) -----------------------------------------------
+
+def test_la_misma_pregunta_no_se_repite_entera(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    for texto in ("XSaaa", "No entiendo"):                       # nada se guarda: la pregunta sigue siendo la 1
+        _enviar(db, settings, texto, IaSimulada({"mensaje": "¿Me aclara?", "respuestas": []}))
+    preguntas = [m.texto for m in _mensajes(db) if m.rol == "app"]
+    assert preguntas[0].startswith("Hola.") and "Pregunta 1 de 2" in preguntas[0]
+    assert preguntas[1:] == ["Seguimos con la pregunta 1 de 2 (arriba)."] * 2
+    # Cuando se responde, la pregunta nueva sí sale entera.
+    _enviar(db, settings, "Sí", IaSimulada({"mensaje": "Gracias.", "respuestas": [_r("R1", valor="sí")]}))
+    assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")
+
+
+def test_la_pregunta_dice_como_avanzar_y_la_ia_sabe_cual_es_la_actual(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _ampliar(db)
+    pasos = {p.item.id: p for p in _pasos(db)}
+    assert ia_chat.pregunta(pasos[ids["patente"]]).endswith(ia_chat.AYUDA_DOCUMENTO)
+    assert ia_chat.pregunta(pasos[ids["anos"]]).endswith(ia_chat.AYUDA)
+    simulado = IaSimulada({"mensaje": "Entendido.", "respuestas": [_r("R1", estado="no_se")]})
+    _enviar(db, settings, "no sé", simulado)
+    assert "PREGUNTA ACTUAL: R1" in simulado.llamadas[0]["input"]
+    assert _respuesta(db, ids["sicop"]).estado == "no_se"                    # avanza
+    assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 5:")
+
+
+def test_en_el_chat_se_ven_como_maximo_dos_citas_seguidas():
+    texto = ("Pide conservar 30 días [DOC 1 · pág. 2]; [DOC 1 · pág. 3]; [DOC 2 · pág. 3] [SICOP]. "
+             "Y la garantía [DOC 4 · pág. 1].")
+    assert ia_chat.pocas_citas(texto) == ("Pide conservar 30 días [DOC 1 · pág. 2]; [DOC 1 · pág. 3] (y 2 citas más). "
+                                          "Y la garantía [DOC 4 · pág. 1].")
+    assert ia_chat.pocas_citas("Solo dos [DOC 1 · pág. 2]; [DOC 1 · pág. 3].") == \
+        "Solo dos [DOC 1 · pág. 2]; [DOC 1 · pág. 3]."
+
+
+def test_el_prompt_v2_trata_de_usted_y_la_v1_no_cambia():
+    assert ia_chat.VERSION == "v2"
+    v2 = ia_chat.cargar_prompt()
+    assert "Trata siempre de usted" in v2 and "PREGUNTA ACTUAL" in v2 and "«lo subo después»" in v2
+    v1 = (ia_chat.PROMPTS_DIR / "chat_asistente_v1.md").read_text(encoding="utf-8")
+    assert "Trata siempre de usted" not in v1
+
+
 def test_ya_esta_lista_cuando_todo_tiene_respuesta(lista):
     db, ids, settings = lista
     with closing(connect(db)) as conn:

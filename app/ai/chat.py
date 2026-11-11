@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
@@ -36,7 +37,7 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v1"
+VERSION = "v2"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
@@ -83,15 +84,39 @@ def mensajes(conn: sqlite3.Connection, session_id: int) -> list[Mensaje]:
         " ORDER BY id", (session_id,))]
 
 
+# Una o más citas seguidas: «[DOC 1 · pág. 2]; [DOC 1 · pág. 3] [SICOP]…».
+_CITA = r"\[(?:DOC \d+ · pág\. \d+|SICOP)\]"
+_CITAS_SEGUIDAS = re.compile(rf"{_CITA}(?:\s*;?\s*{_CITA})+")
+MAX_CITAS = 2
+
+
+def pocas_citas(texto: str) -> str:
+    """En el chat, como máximo 2 citas seguidas y «(y N citas más)»: la lista completa sigue en «Respuestas dadas» y
+    en el resultado (prueba de Ivania, 2026-11-11: una pregunta traía 10 citas)."""
+    def recortar(m: re.Match) -> str:
+        citas = re.findall(_CITA, m.group(0))
+        if len(citas) <= MAX_CITAS:
+            return m.group(0)
+        resto = len(citas) - MAX_CITAS
+        return "; ".join(citas[:MAX_CITAS]) + f" (y {resto} {'cita más' if resto == 1 else 'citas más'})"
+    return _CITAS_SEGUIDAS.sub(recortar, texto)
+
+
+# Cómo avanzar sin la respuesta (prueba de Ivania, 2026-11-11: el chat se quedaba en la misma pregunta).
+AYUDA_DOCUMENTO = (" Si lo tiene pero lo sube después, diga «lo subo después»; si Hermatix no lo tiene, «no lo "
+                   "tenemos»; si no sabe, «no sé».")
+AYUDA = " Si no sabe, diga «no sé» y seguimos con la siguiente."
+
+
 def pregunta(paso: asistente.Paso) -> str:
     """La pregunta de un requisito, como la hace el asistente de siempre, y el dato del perfil si hay uno vigente."""
-    texto = paso.pregunta
+    texto = pocas_citas(paso.pregunta)
     if paso.perfil is not None:
         v = paso.perfil.vigente
         dato = " · ".join(x for x in (f"{v.numero} {v.unidad or ''}".strip() if v.numero else "", v.valor or "",
                                       v.archivo_nombre or "") if x)
         texto += f" En el perfil («{paso.perfil.titulo}») dice: {dato or 'sin dato'}. ¿Sigue siendo correcto?"
-    return texto
+    return texto + (AYUDA_DOCUMENTO if paso.item.tipo_evidencia == "documento" else AYUDA)
 
 
 def siguiente_mensaje(pasos: list[asistente.Paso], sesion: asistente.Sesion) -> str:
@@ -167,8 +192,10 @@ def _texto_archivo(datos: bytes, nombre: str) -> str:
 
 def texto_para_ia(compra, pasos: list[asistente.Paso], anteriores: list[Mensaje], texto: str,
                   archivo: tuple[bytes, str] | None, con_texto_archivo: bool) -> str:
+    actual = asistente.siguiente(pasos)
+    numero = next((n for n, p in enumerate(pasos, start=1) if p is actual), None)
     partes = [f"CARTEL: {compra.nro_sicop} · {compra.descripcion or 'sin objeto'}", "", _requisitos(pasos), "",
-              "CONVERSACIÓN:"]
+              f"PREGUNTA ACTUAL: {f'R{numero}' if numero else 'ninguna (todo respondido)'}", "", "CONVERSACIÓN:"]
     for m in anteriores[-CONVERSACION:]:
         extra = f" [archivo: {m.archivo_nombre}]" if m.archivo_nombre else ""
         partes.append(f"{ROLES[m.rol]}: {m.texto}{extra}")
@@ -301,5 +328,16 @@ def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: 
                       "Dígalo y súbalo otra vez.")
     if lineas:
         _guardar(conn, sesion.id, "app", "\n".join(lineas), ahora)
-    _guardar(conn, sesion.id, "app", siguiente_mensaje(asistente.recorrido(conn, nro_sicop, dia),
-                                                       asistente.sesion(conn, nro_sicop)), ahora)
+    _guardar(conn, sesion.id, "app", _sin_repetir(siguiente_mensaje(asistente.recorrido(conn, nro_sicop, dia),
+                                                                    asistente.sesion(conn, nro_sicop)), anteriores),
+             ahora)
+
+
+def _sin_repetir(nuevo: str, anteriores: list[Mensaje]) -> str:
+    """Si la pregunta siguiente es la misma que la app hizo la última vez, no se copia entera otra vez (prueba de
+    Ivania, 2026-11-11: se repetía completa después de cada mensaje)."""
+    ultima = next((m.texto for m in reversed(anteriores) if m.rol == "app" and "Pregunta " in m.texto), None)
+    if ultima is not None and nuevo.startswith("Pregunta ") and nuevo in ultima:
+        numero = nuevo.split(":", 1)[0]                   # «Pregunta 1 de 8»
+        return f"Seguimos con la {numero[0].lower()}{numero[1:]} (arriba)."
+    return nuevo

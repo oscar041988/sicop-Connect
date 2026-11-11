@@ -22,7 +22,12 @@ cambios desde el 29/10; espera que Oscar una el PR)
   `G:\Mi unidad\sicop-respaldos\sicop_20261111-103948` (7 archivos, ≈390 MB; tamaños iguales y huella del `.db`
   igual al manifiesto). **Pendiente · Ivania:** en el `.env`: `ASSISTANT_CHAT=true`,
   `IA_MAX_DAILY_COST=5.00` y, si se quiere que la IA lea los archivos, `ASSISTANT_SEND_DOCUMENTS=true`; probarlo en
-  un cartel con documentos SINTÉTICOS. **Siguiente:** paso 4, corregir la oferta desde el chat.
+  un cartel con documentos SINTÉTICOS. ~~Hecho (Ivania, 11/11, cartel 20261001587).~~ **Prueba con la IA real:**
+  no inventó nada, no usó un archivo que no correspondía y contestó la duda con la cita; 0.003–0.005 USD por mensaje
+  (≈ 0.10 USD por cartel). Corregido el mismo día: prompt `chat_asistente_v2.md` (usted; «lo subo después», «no lo
+  tenemos» y «no sé» avanzan), la pregunta no se repite entera y muestra como máximo 2 citas (`DECISION_IA.md`
+  §10.7). Archivos de prueba SINTÉTICOS en `data\pruebas\` (fuera de Git). **Pendiente · Ivania:** probar otra vez
+  (el panel toma los cambios solo). **Siguiente:** paso 4, corregir la oferta desde el chat.
 
 - **La oferta también en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis).** Junto a «Oferta», el
   botón **«Oferta en Word»** descarga el mismo documento en .docx: portada, pliego respondido, anexos, oferta

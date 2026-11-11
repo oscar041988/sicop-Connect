@@ -266,6 +266,10 @@ Precios por millón de tokens según la documentación de Anthropic (confirmar e
 - **Recomendación: Claude Sonnet 5.5 con un tope de 8 USD al día** (≈ 6 USD de chat + 1 USD de los resúmenes de
   hoy + margen). Opus cuesta el doble; Haiku arriesga la calidad de una oferta que se presenta a una institución.
   Si en la medición Sonnet se equivoca, se compara con Opus. Lo decide Oscar.
+- **Costo medido (2026-11-11, 4 mensajes reales con OpenAI):** 0.0026–0.0047 USD por mensaje (2 200–3 900
+  tokens de entrada, 75–160 de salida; 4–5 s). Un cartel de ≈ 30 mensajes: **≈ 0.10 USD**, diez veces menos que la
+  estimación de arriba, porque el chat no manda el pliego completo (solo sus requisitos con la cita). Al empezar el
+  asistente se gastan además ≈ 0.05 USD una vez (lista de verificación y preguntas).
 - Sin caché cada cartel costaría ≈ 4 veces más. La caché dura unos minutos: si el chat queda quieto media hora, el
   siguiente mensaje vuelve a pagar el pliego completo (incluido en el margen).
 
@@ -310,6 +314,13 @@ documento, en otro formato, para poder editarlo a mano si hace falta.
      caracteres). No va el pliego completo (sí sus requisitos con la cita) ni el perfil: el dato vigente del perfil
      se confirma con el botón «Sí, es correcto», como siempre. Por eso cuesta menos que la estimación de 10.5.
    - Pruebas con IA SIMULADA: `tests/test_chat_asistente.py` (11).
+   - **Primera prueba con la IA real (Ivania, 2026-11-11, cartel 20261001587, OpenAI):** no inventó nada («sí,
+     cumplimos» no cumplió un requisito de documento), leyó un archivo que no correspondía y no lo usó, y contestó
+     una duda con la cita. Faltaba: cómo avanzar sin la respuesta (se quedó en la pregunta 1), la pregunta se
+     repetía entera, traía 10 citas y mezclaba «vos» con «usted». **Corregido el mismo día:** prompt
+     `chat_asistente_v2.md` (trato de usted; «lo subo después» / «no lo tenemos» / «no sé» avanzan; la IA recibe la
+     PREGUNTA ACTUAL), la pregunta dice cómo avanzar, no se repite entera y muestra como máximo 2 citas seguidas.
+     4 pruebas nuevas (15 en total).
 4. Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).
 5. «Oferta terminada» y el borrado de datos personales (10.4).
 6. Medir el costo con Oscar y ajustar el tope.
