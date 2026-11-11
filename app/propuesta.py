@@ -247,7 +247,8 @@ def economica(conn: sqlite3.Connection, nro_sicop: str, compra, config: dict, ta
                                                           (config.get("representante") or {}).items()}}
     datos["fecha"] = hoy.isoformat()
     for linea in datos["lineas"]:
-        linea["descripcion"] = linea["descripcion"] or compra.descripcion or "Servicio"
+        # Sin espacios duros de SICOP (\xa0): con ellos la descripción no se parte y la tabla se sale de la hoja.
+        linea["descripcion"] = (linea["descripcion"] or compra.descripcion or "Servicio").replace("\xa0", " ")
     producto = producto_del_cartel(conn, nro_sicop)
     tarifa = tarifas.get(producto) if producto else None
     if not isinstance(tarifa, dict) or tarifa.get("precio") in (None, ""):

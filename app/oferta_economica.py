@@ -25,9 +25,11 @@ from app.config import PROJECT_ROOT
 
 PLANTILLAS = PROJECT_ROOT / "app" / "web" / "templates"
 LOGO = PROJECT_ROOT / "app" / "web" / "static" / "logo-hermatix.png"
-# Membrete de Hermatix, tomado de la oferta que ganó en Tarrazú (2025): logo con franja azul arriba, franjas abajo.
-CABECERA = PROJECT_ROOT / "app" / "web" / "static" / "membrete-cabecera.png"
-PIE = PROJECT_ROOT / "app" / "web" / "static" / "membrete-pie.png"
+# Membrete de Hermatix: solo el logo con el nombre, arriba a la izquierda, sin franjas de color (pedido de Oscar,
+# 2026-11-11). Recortado de membrete-cabecera.png, el de la oferta que ganó en Tarrazú (2025).
+MEMBRETE_LOGO = PROJECT_ROOT / "app" / "web" / "static" / "membrete-logo.png"
+MARGENES_MM = {"top": 30, "bottom": 20, "left": 25, "right": 26}
+ALTO_LOGO_MM = 12
 CENTIMO = Decimal("0.01")
 CIEN = Decimal("100")
 MONEDAS = {"CRC": ("colón", "colones", "₡"), "USD": ("dólar estadounidense", "dólares estadounidenses", "US$")}
@@ -302,16 +304,15 @@ def html(oferta: Oferta, hoy: date) -> str:
 
 def pdf(contenido_html: str, procedimiento: str, titulo: str = "Oferta económica", membrete: bool = True) -> bytes:
     """Imprime a PDF tamaño carta con el Chromium de Playwright, como el Reporte de cartel. Con membrete (la oferta
-    económica y la oferta completa, app/propuesta.py), cada hoja lleva arriba el logo con la franja azul y abajo las
-    franjas, como la oferta que ganó en Tarrazú. Sin membrete, un pie con su título y la página."""
+    económica y la oferta completa, app/propuesta.py), cada hoja lleva arriba a la izquierda el logo de Hermatix con
+    su nombre, sin franjas ni pie. Sin membrete, un pie con su título y la página."""
     from playwright.sync_api import sync_playwright
 
     if membrete:
-        cabecera = (f'<div style="width:100%;margin:0;padding:0"><img src="{_imagen(CABECERA)}" '
-                    'style="display:block;width:100%"></div>')
-        pie = (f'<div style="width:100%;margin:0;padding:0;align-self:flex-end"><img src="{_imagen(PIE)}" '
-               'style="display:block;width:100%"></div>')
-        margen = {"top": "37mm", "bottom": "26mm", "left": "25mm", "right": "26mm"}
+        cabecera = (f'<div style="width:100%;margin:0;padding:0 0 0 {MARGENES_MM["left"]}mm">'
+                    f'<img src="{_imagen(MEMBRETE_LOGO)}" style="display:block;height:{ALTO_LOGO_MM}mm"></div>')
+        pie = "<span></span>"
+        margen = {lado: f"{mm}mm" for lado, mm in MARGENES_MM.items()}
     else:
         cabecera = "<span></span>"
         pie = ('<div style="width:100%;font-size:7.5pt;color:#5a6b7b;padding:0 14mm;display:flex;'
@@ -378,7 +379,9 @@ def valores_iniciales(compra, tipo_procedimiento: str | None, config: dict | Non
     return {
         "procedimiento": compra.nro_procedimiento or "", "tipo_procedimiento": tipo_procedimiento or "",
         "institucion": compra.institucion or "", "destinatario": config.get("destinatario", ""),
-        "objeto": compra.descripcion or "", "lugar": config.get("lugar", "San José"), "fecha": "", "partida": "1",
+        # SICOP a veces separa las palabras con espacios duros (\xa0): el título no se partía y se salía de la hoja.
+        "objeto": (compra.descripcion or "").replace("\xa0", " "), "lugar": config.get("lugar", "San José"), "fecha": "",
+        "partida": "1",
         "empresa": dict(config.get("empresa") or {}),
         "representante": {"nombre": "", "cargo": (config.get("representante") or {}).get("cargo", ""),
                           "calidades": "", "cedula": ""},

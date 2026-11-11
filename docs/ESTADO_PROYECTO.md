@@ -7,6 +7,12 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Oferta más sobria y chat abajo (2026-11-11).** Pedido de Oscar: la oferta (PDF y Word, también la económica)
+  lleva solo el logo de Hermatix con su nombre arriba a la izquierda, sin franjas ni pie de color; títulos en negro,
+  encabezados de tabla en gris claro; el rojo queda solo para lo pendiente. El título del cartel ya no se sale de la
+  hoja (SICOP manda espacios duros). El chat del asistente abre en el último mensaje. Ivania probó el paso 4: la
+  versión 2 quedó guardada. 1075 pruebas pasan.
+
 - **Corregir la oferta desde el chat (2026-11-11; `DECISION_IA.md` §10, paso 4).** Con la oferta armada (versión 1),
   en el chat se piden cambios («en la sección 3 que diga…», «quite la sección de visita»): la IA los propone y la
   app los muestra con **«Aplicar» / «No»**; cada «Aplicar» crea una versión nueva (las anteriores se guardan y se

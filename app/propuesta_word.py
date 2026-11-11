@@ -30,13 +30,15 @@ from docx.shared import Mm, Pt, RGBColor
 from app import oferta_economica as oe
 from app.propuesta import GRUPOS, Preparada, titulo_es
 
-AZUL = RGBColor(0x00, 0x30, 0x56)          # el --azul del PDF
+# Sin tanto color (Oscar, 2026-11-11): títulos y respuestas en negro, encabezados de tabla en gris claro. El rojo
+# queda solo para lo pendiente, que hay que resolver antes de enviar la oferta.
+AZUL = RGBColor(0x00, 0x00, 0x00)          # el --azul del PDF, hoy negro
 ROJO = RGBColor(0xC0, 0x00, 0x00)
-AZUL_HEX, ROJO_HEX = "003056", "C00000"
+AZUL_HEX, ROJO_HEX = "E7E7E7", "C00000"    # AZUL_HEX: fondo de los encabezados de tabla
 CARTA = (Mm(215.9), Mm(279.4))
-MARGENES = {"top": Mm(37), "bottom": Mm(26), "left": Mm(25), "right": Mm(26)}   # los del PDF con membrete
-ANCHO_UTIL = Mm(215.9 - 25 - 26)
-ALTO_UTIL = Mm(279.4 - 37 - 26 - 12)       # un poco menos: el título del anexo comparte la primera hoja
+MARGENES = {lado: Mm(mm) for lado, mm in oe.MARGENES_MM.items()}   # los del PDF con membrete
+ANCHO_UTIL = Mm(215.9 - oe.MARGENES_MM["left"] - oe.MARGENES_MM["right"])
+ALTO_UTIL = Mm(279.4 - oe.MARGENES_MM["top"] - oe.MARGENES_MM["bottom"] - 12)       # un poco menos: el título del anexo comparte la primera hoja
 DPI_ADJUNTOS = 130                         # páginas de los PDF adjuntos: legibles sin hacer el .docx enorme
 # Caracteres que no caben en un .docx (XML): el texto de algunos PDF los trae.
 _NO_XML = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f￾￿]")
@@ -145,12 +147,11 @@ def _preparar_documento() -> Document:
     seccion.top_margin, seccion.bottom_margin = MARGENES["top"], MARGENES["bottom"]
     seccion.left_margin, seccion.right_margin = MARGENES["left"], MARGENES["right"]
     seccion.header_distance, seccion.footer_distance = Mm(8), Mm(6)
-    # Membrete de Hermatix en cada hoja, como el PDF (las mismas imágenes).
-    for parte, ruta in ((seccion.header, oe.CABECERA), (seccion.footer, oe.PIE)):
-        if Path(ruta).is_file():
-            p = parte.paragraphs[0]
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.add_run().add_picture(str(ruta), width=ANCHO_UTIL)
+    # Membrete de Hermatix en cada hoja, como el PDF: solo el logo con el nombre, arriba a la izquierda.
+    if Path(oe.MEMBRETE_LOGO).is_file():
+        p = seccion.header.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.add_run().add_picture(str(oe.MEMBRETE_LOGO), height=Mm(oe.ALTO_LOGO_MM))
     return doc
 
 
@@ -217,7 +218,7 @@ def _listado(doc, p: Preparada) -> None:
                           f"PENDIENTE: {a.pendiente}." if a.pendiente else None))
     t = _tabla(doc, len(filas) + 1, 3, [55, 30, 80])
     for celda, texto in zip(t.rows[0].cells, ("Sección", "No. Anexo", "Documento")):
-        _celda(celda, texto, negrita=True, color=RGBColor(0xFF, 0xFF, 0xFF), fondo=AZUL_HEX)
+        _celda(celda, texto, negrita=True, fondo=AZUL_HEX)
     for fila, (seccion, numero, documento, falta) in zip(t.rows[1:], filas):
         _celda(fila.cells[0], seccion)
         _celda(fila.cells[1], numero)
@@ -285,10 +286,9 @@ def _economica(doc, p: Preparada) -> None:
         periodo = f" por {o.meses} {'mes' if o.meses == 1 else 'meses'}"
     else:
         periodo = ""
-    blanco = RGBColor(0xFF, 0xFF, 0xFF)
     t = _tabla(doc, len(o.lineas) + 6, 5, [15, 20, 66, 30, 34])   # encabezado, líneas, 3 totales, última, letras
     for celda, texto in zip(t.rows[0].cells, ("Línea", "Cantidad", "Descripción", "Precio", "Precio")):
-        _celda(celda, texto, negrita=True, color=blanco, fondo=AZUL_HEX, alinear=centro)
+        _celda(celda, texto, negrita=True, fondo=AZUL_HEX, alinear=centro)
     for fila, linea in zip(t.rows[1:], o.lineas):
         _celda(fila.cells[0], linea.numero, alinear=centro)
         _celda(fila.cells[1], oe.numero_corto(linea.cantidad), alinear=centro)
@@ -302,7 +302,7 @@ def _economica(doc, p: Preparada) -> None:
     for i, (etiqueta, valor) in enumerate(totales):
         fila = t.rows[base + i]
         fila.cells[0].merge(fila.cells[2])
-        _celda(fila.cells[3], etiqueta, color=blanco, fondo=AZUL_HEX, alinear=centro)
+        _celda(fila.cells[3], etiqueta, fondo=AZUL_HEX, alinear=centro)
         _celda(fila.cells[4], valor, negrita=valor == "Exento", alinear=centro)
     ultima = t.rows[base + 3]
     ultima.cells[0].merge(ultima.cells[1])
@@ -331,7 +331,7 @@ def _economica(doc, p: Preparada) -> None:
     _parrafo(doc, "**Aceptamos el pliego de condiciones y por lo tanto cumplimos con lo establecido**", negrita=True,
              antes=18, despues=30)
     nota = _parrafo(doc, despues=30)
-    _run(nota, "Nota:", negrita=True, color=RGBColor(0xE0, 0x00, 0x00), subrayado=True)
+    _run(nota, "Nota:", negrita=True, subrayado=True)
     _run(nota, " El precio de nuestra oferta es en firme, definitivo y en plaza.", subrayado=True)
     _parrafo(doc, "DESGLOSE DE PRECIO", negrita=True, tam=14, alinear=centro, despues=18)
     _parrafo(doc, f"Estructura de Costos – Monto Total {fp(o.subtotal)}", negrita=True, despues=12)
@@ -380,9 +380,8 @@ def _precio_pendiente(doc, p: Preparada) -> None:
                   "config/tarifario.yaml.", negrita=True, color=ROJO, despues=12)
     lineas = p.datos.get("lineas") or []
     t = _tabla(doc, len(lineas) + 1, 4, [20, 25, 85, 35])
-    blanco = RGBColor(0xFF, 0xFF, 0xFF)
     for celda, texto in zip(t.rows[0].cells, ("Línea", "Cantidad", "Descripción", "Precio unitario")):
-        _celda(celda, texto, negrita=True, color=blanco, fondo=AZUL_HEX, alinear=WD_ALIGN_PARAGRAPH.CENTER)
+        _celda(celda, texto, negrita=True, fondo=AZUL_HEX, alinear=WD_ALIGN_PARAGRAPH.CENTER)
     for fila, linea in zip(t.rows[1:], lineas):
         _celda(fila.cells[0], str(linea.get("numero", "")), alinear=WD_ALIGN_PARAGRAPH.CENTER)
         _celda(fila.cells[1], str(linea.get("cantidad", "")), alinear=WD_ALIGN_PARAGRAPH.CENTER)

@@ -416,6 +416,12 @@
   var ancla = window.location.hash && document.getElementById(window.location.hash.slice(1));
   var panel = ancla && ancla.closest(".panel-paso");
   if (panel && panel.hidden) { mostrar(panel.dataset.paso, false); ancla.scrollIntoView(); }
+  /* El chat del asistente abre en el último mensaje, no en el primero (como cualquier chat). */
+  function chatAlFinal() {
+    document.querySelectorAll(".chat-mensajes").forEach(function (m) { m.scrollTop = m.scrollHeight; });
+  }
+  chatAlFinal();
+  document.querySelectorAll("a[data-paso]").forEach(function (a) { a.addEventListener("click", chatAlFinal); });
 })();
 </script>
 {% endblock %}
