@@ -299,6 +299,11 @@ verificar con el pliego»). Decisiones de Ivania del 30/10, provisionales hasta 
 | `ia cola` | La corrida automática (la tarea de las 10:00) |
 | `ia resumir --nro N` | Un cartel a mano (no cuenta en la cola, pero su costo sí cuenta en el del día) |
 
+**Segunda oportunidad a las 14:00** (desde el 2026-11-11, pedido de Ivania): la tarea «SICOP CONNECT - resumenes IA»
+corre solo `ia cola` (`sicop-enriquecimiento.ps1 -SoloIa`), de lunes a viernes. Si la de las 10:00 salió bien no
+gasta nada (salta lo resumido y respeta el tope del día); si falló (el 10/11 la base estaba ocupada por una carga en
+el panel y el 11/11 faltaba una migración), hace los resúmenes del día. Mismo registro, bloque «ia cola».
+
 **Qué entra en la cola:** carteles **Alta, Media o Baja** (los del panel), ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
 resumen de su expediente actual con la versión vigente del prompt. Alta → Media → Baja y, dentro de cada uno, el
 que cierra antes (Baja agregado por Ivania el 30/10). Si llega una ficha o un documento nuevo, el expediente cambia y el cartel vuelve a la cola; el

@@ -11,9 +11,13 @@
 # Fase 2 (docs/ENVIO_ENRIQUECIMIENTO.md): con -Remoto corre SOLO "enrich remoto" (la base esta en el servidor; la
 # cola de IA corre alli, sicop-ia-cola.timer). Se usa desde el dia de la actualizacion del servidor. Codigos de
 # enrich remoto: 0 = ok o sin cola, 1 = algun FALLO o el servidor no respondio, 2 = CAPTCHA u otra corrida.
+# Con -SoloIa corre SOLO "ia cola": la segunda oportunidad de los resumenes, tarea "SICOP CONNECT - resumenes IA"
+# a las 14:00, lunes a viernes (pedido de Ivania, 2026-11-11: el 10/11 la base estaba ocupada y el 11/11 faltaba
+# una migracion, y nadie lo volvia a intentar). Si la de las 10:00 salio bien no gasta nada: la cola salta lo ya
+# resumido y respeta IA_MAX_SUMMARIES_PER_DAY y IA_MAX_DAILY_COST del dia.
 # (Sin tildes a proposito: Windows PowerShell 5.1 lee mal los .ps1 en UTF-8 sin BOM.)
 
-param([switch] $Remoto)
+param([switch] $Remoto, [switch] $SoloIa)
 
 $ErrorActionPreference = 'Stop'
 $proyecto = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -56,6 +60,9 @@ function Ejecutar([string[]] $argumentos) {
 
 if ($Remoto) {
     exit (Ejecutar @('enrich', 'remoto'))
+}
+if ($SoloIa) {
+    exit (Ejecutar @('ia', 'cola'))
 }
 
 $codigoEnriquecimiento = Ejecutar @('enrich', 'run')

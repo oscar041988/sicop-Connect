@@ -7,6 +7,14 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Resúmenes con IA: segunda oportunidad a las 14:00 (2026-11-11).** El 10/11 y el 11/11 no hubo resúmenes: la
+  tarea de las 10:00 falló (10/11 «database is locked» por una carga en el panel; 11/11 faltaba `migrate` 0044) y
+  nadie la repetía. Nueva tarea «SICOP CONNECT - resumenes IA» (`sicop-enriquecimiento.ps1 -SoloIa`, lunes a
+  viernes 14:00); si la de las 10:00 salió bien no gasta nada. `ia cola` a mano el 11/11 a las 15:06: 10 de 22
+  (7 OK, 3 «incompleta · max_output_tokens», entre ellos el Alta `20261100871`), 0.51 USD; quedan 12. Los que salen
+  bien usan hasta 3872 de los 4000 tokens. **Pendiente · Ivania:** `IA_MAX_OUTPUT_TOKENS=8000` en `.env` y
+  `ia resumir --nro 20261100871`.
+
 - **El chat ya no repite la pregunta (2026-11-11).** Prompt `chat_asistente_v3.md`: si la respuesta llega por
   partes, la IA la junta, la anota y nombra una sola vez lo que falta; «guarde lo que le dije» anota lo dicho. Desde
   la segunda vuelta sin avanzar, la app dice cómo seguir. **Pendiente · Ivania:** probarlo respondiendo por partes

@@ -151,6 +151,21 @@ Corre aunque el enriquecimiento falle, y con `AI_MODE=none` no hace nada. Su sal
 propio bloque. Si el enriquecimiento salió bien, el código de la tarea es el de `ia cola` (`1` = algún resumen
 fallido o la cola se detuvo por la clave o el saldo). Detalle: `docs/OPERACION.md` §3.3.
 
+**Segunda oportunidad: tarea «SICOP CONNECT - resumenes IA»** (creada el 2026-11-11): el mismo script con `-SoloIa`
+a las **14:00, lunes a viernes**, con el mismo usuario y los mismos ajustes que la de las 10:00. Solo corre `ia cola`;
+si a las 10:00 todo salió bien, no gasta nada. Para crearla en otra computadora:
+
+```powershell
+$base = Get-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
+$accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-enriquecimiento.ps1`" -SoloIa" `
+    -WorkingDirectory $proyecto
+$horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 14:00
+Register-ScheduledTask -TaskName "SICOP CONNECT - resumenes IA" -Action $accion -Trigger $horario `
+    -Principal $base.Principal -Settings $base.Settings `
+    -Description "Segunda oportunidad de ia cola a las 14:00, lunes a viernes."
+```
+
 **Modo interactivo:** para que se vea la ventana, la tarea tiene que ser «**Ejecutar solo cuando el usuario haya
 iniciado sesión**». Si se elige «Ejecutar tanto si el usuario inició sesión como si no», el navegador corre
 escondido y no se puede supervisar. Además, en ese horario la computadora tiene que estar encendida, con la sesión
