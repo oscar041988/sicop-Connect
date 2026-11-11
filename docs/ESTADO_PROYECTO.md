@@ -7,6 +7,14 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Revisión obligatoria (2026-11-11, pedido de Oscar; decisiones de Ivania).**
+  - «Dar seguimiento» solo se puede con una revisión vigente «Interesa» o «Revisar requisitos». La ruta lo vuelve a
+    comprobar (`panel.falta_para_seguimiento`). Mientras no hay revisión, el botón dice «Revisar para dar seguimiento».
+  - Salir de un cartel sin revisión: los enlaces del panel llevan a la revisión con un aviso; «Atrás» o cerrar la
+    pestaña muestran el aviso del navegador. Formularios, descargas y páginas del mismo cartel no cuentan como salir.
+  - La revisión es una por cartel: si otra persona ya la hizo, no hace falta repetirla.
+  - 1 prueba nueva; los ayudantes de las pruebas de seguimiento registran antes la revisión.
+
 - **Sin texto vertical en la oferta (2026-11-11).** El texto girado de los PDF (etiquetas, sellos, diagramas) salía
   letra por letra en el PDF y el Word de la oferta («G / re / r / g…»). `propuesta.sin_texto_vertical` salta los
   tramos de 6 o más líneas seguidas de hasta 4 caracteres, casi todas con letras (en la base real: 51 tramos, todos

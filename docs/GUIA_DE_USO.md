@@ -141,10 +141,17 @@ de SICOP: si te equivocas, guarda otra y la nueva queda como «(vigente)».
 
 *Misiones 9 y 14*
 
-1. Arriba del cartel, haz clic en **«Dar seguimiento»**. Queda en la etapa «Preparando» y pasa a la página
+1. **Primero la revisión, que es obligatoria** (pedido de Oscar, 2026-11-11). En la sección «Revisión» del cartel,
+   elige «Interesa» o «Revisar requisitos» y pulsa «Guardar revisión». Mientras el cartel no tenga revisión, el
+   botón dice «Revisar para dar seguimiento» y lleva a esa sección. Con «No interesa» no se puede dar seguimiento.
+   La revisión es una por cartel: si otra persona ya la hizo, no hace falta repetirla.
+   - **Para salir de un cartel sin revisión** también hay que registrarla. Los enlaces del panel llevan a la
+     revisión con el aviso «Antes de salir de este cartel, registre la revisión». Si usas «Atrás» o cierras la
+     pestaña, el navegador pregunta si quieres salir.
+2. Arriba del cartel, haz clic en **«Dar seguimiento»**. Queda en la etapa «Preparando» y pasa a la página
    «Seguimiento» (menú de arriba).
-2. Un **administrador** abre el expediente → «Encargado» → «Asignar el encargado» → «Guardar».
-3. Al encargado le llega un correo en el próximo envío de las 8:00.
+3. Un **administrador** abre el expediente → «Encargado» → «Asignar el encargado» → «Guardar».
+4. Al encargado le llega un correo en el próximo envío de las 8:00.
 
 Solo el encargado y los administradores abren el expediente, el asistente y las ofertas de ese cartel.
 

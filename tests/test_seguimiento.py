@@ -71,7 +71,15 @@ def clientes(db, monkeypatch):
     return resultado
 
 
-def _dar_seguimiento(cliente, nro=NRO):
+def _revisar(cliente, nro=NRO, decision="interesa", motivo=""):
+    token = token_csrf(cliente.get(f"/oportunidades/{nro}").text)
+    return cliente.post(f"/oportunidades/{nro}/revision", data={"csrf_token": token, "decision": decision,
+                                                                "motivo": motivo}, follow_redirects=False)
+
+
+def _dar_seguimiento(cliente, nro=NRO, revisar=True):
+    if revisar:                     # la revisión es obligatoria antes de dar seguimiento (Oscar, 2026-11-11)
+        _revisar(cliente, nro)
     token = token_csrf(cliente.get(f"/oportunidades/{nro}").text)
     return cliente.post(f"/oportunidades/{nro}/seguimiento", data={"csrf_token": token}, follow_redirects=False)
 
@@ -163,6 +171,7 @@ def test_reimportar_y_reevaluar_no_toca_el_seguimiento(tmp_path):
 
 def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
     ana = clientes["ana"]
+    _revisar(ana)
     assert 'action="/oportunidades/00000000001/seguimiento"' in ana.get(f"/oportunidades/{NRO}").text
 
     respuesta = _dar_seguimiento(ana)
@@ -174,6 +183,29 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
     assert NRO in lista and "Sin encargado" in lista and "Lo abrió Ana" in lista
     assert f'href="/seguimiento/{NRO}"' not in lista  # sin encargado, solo entran los administradores
     assert _dar_seguimiento(ana).status_code == 303  # dos veces: no falla ni duplica
+
+
+def test_la_revision_es_obligatoria_antes_de_dar_seguimiento(clientes, db):
+    ana = clientes["ana"]
+    pagina = ana.get(f"/oportunidades/{NRO}").text
+    # Sin revisión: no hay botón, sino el enlace a la revisión, el aviso y el freno al salir del cartel.
+    assert 'action="/oportunidades/00000000001/seguimiento"' not in pagina
+    assert "Revisar para dar seguimiento" in pagina and 'id="revision-obligatoria"' in pagina
+    assert "beforeunload" in pagina
+    # Aunque se mande el formulario a mano, la ruta no deja: lo dice en la revisión.
+    sin_revision = _dar_seguimiento(ana, revisar=False)
+    assert sin_revision.status_code == 400 and "registre la revisión del cartel (es obligatoria)" in sin_revision.text
+    # «No interesa» tampoco deja.
+    _revisar(ana, decision="no_interesa", motivo="no_encaja")
+    no_interesa = _dar_seguimiento(ana, revisar=False)
+    assert no_interesa.status_code == 400 and "La revisión vigente dice «No interesa»" in no_interesa.text
+    pagina = ana.get(f"/oportunidades/{NRO}").text
+    assert "beforeunload" not in pagina and 'id="revision-obligatoria"' not in pagina   # ya tiene revisión
+    with closing(connect(db)) as conn:
+        assert seguimiento.estado(conn, NRO) is None
+    # Con «Revisar requisitos» sí; la revisión es una por cartel: Ivania no tiene que hacer otra.
+    _revisar(ana, decision="revisar_requisitos")
+    assert _dar_seguimiento(clientes["ivania"], revisar=False).status_code == 303
 
 
 def test_solo_un_administrador_asigna(clientes, db):

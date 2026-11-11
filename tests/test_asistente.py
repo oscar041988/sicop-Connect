@@ -374,6 +374,7 @@ def _post(cliente, ruta, datos=None, archivos=None):
 
 def test_dar_seguimiento_abre_el_asistente_en_la_misma_pagina(web):
     db, ids, _, c, u = web
+    _post(c["ivania"], f"/oportunidades/{NRO}/revision", {"decision": "interesa"})   # obligatoria antes
     r = _post(c["ivania"], f"/oportunidades/{NRO}/seguimiento")
     assert r.headers["location"] == f"/oportunidades/{NRO}#asistente"
     pagina = " ".join(c["ivania"].get(f"/oportunidades/{NRO}").text.split())

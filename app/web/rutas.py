@@ -80,7 +80,7 @@ PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
-    nombre_competidor=competencia.nombre_competidor, version_estatico=version_estatico,
+    falta_para_seguimiento=panel.falta_para_seguimiento, nombre_competidor=competencia.nombre_competidor, version_estatico=version_estatico,
     termino=ayuda.termino, ayuda_para=ayuda.ayuda_para,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
@@ -441,6 +441,8 @@ def dar_seguimiento(request: Request, nro_sicop: str) -> Response:
         return PLANTILLAS.TemplateResponse(request, "error.html", {
             "mensaje": "El Número SICOP solo lleva dígitos."}, status_code=404)
     with closing(connect(load_settings().database_path)) as conn:
+        if (falta := panel.falta_para_seguimiento(panel.decision_vigente(conn, nro_sicop))) is not None:
+            return _render_detalle(request, conn, nro_sicop, falta, status_code=400)
         try:
             seguimiento.abrir(conn, nro_sicop, _quien(request), _ahora())
         except seguimiento.SeguimientoInvalido as exc:

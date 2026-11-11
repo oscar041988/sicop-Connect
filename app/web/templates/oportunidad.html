@@ -73,10 +73,16 @@
     {# Una sola acción principal (verde): sin seguimiento, «Dar seguimiento»; con él, el asistente. #}
     <div class="cf-acciones" id="seguimiento">
       {% if not seg %}
+      {# La revisión es obligatoria antes de dar seguimiento (pedido de Oscar, 2026-11-11); la ruta lo vuelve a revisar. #}
+      {% set falta_seg = falta_para_seguimiento(d.revisiones[0].decision if d.revisiones else none) %}
+      {% if falta_seg %}
+      <a class="btn p" href="#revisiones" title="{{ falta_seg }}">Revisar para dar seguimiento</a>
+      {% else %}
       <form method="post" action="/oportunidades/{{ c.nro_sicop }}/seguimiento">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button type="submit">Dar seguimiento</button>
       </form>
+      {% endif %}
       {% elif con_asis %}
       <a class="btn p" href="?paso=requisitos#asistente" data-paso="requisitos">
         {% if asis.pasos and asis.sesion %}Continuar con el asistente{% else %}Abrir asistente{% endif %}</a>
@@ -342,6 +348,8 @@
   <section id="revisiones" class="revision-cartel">
     <h2>{{ termino("Revisión") }}</h2>
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    {% if not d.revisiones %}<p class="aviso-etapa" id="revision-obligatoria"{% if error %} hidden{% endif %}>La revisión es
+      obligatoria: regístrela antes de dar seguimiento o de salir de este cartel.</p>{% endif %}
     <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/revision">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <fieldset>
@@ -422,6 +430,38 @@
   }
   chatAlFinal();
   document.querySelectorAll("a[data-paso]").forEach(function (a) { a.addEventListener("click", chatAlFinal); });
+
+  /* Revisión obligatoria (pedido de Oscar, 2026-11-11): sin revisión, un enlace que sale del cartel lleva a la
+     revisión; «Atrás» o cerrar la pestaña muestran el aviso del navegador. Formularios, descargas y páginas del mismo
+     cartel no cuentan como salir. */
+  {% if not d.revisiones %}
+  var nro = {{ c.nro_sicop | tojson }}, salida = false;
+  function delCartel(href) {
+    var u = new URL(href, window.location.href);
+    return u.origin === window.location.origin &&
+      (u.pathname.indexOf("/oportunidades/" + nro) === 0 || u.pathname.indexOf("/seguimiento/" + nro) === 0);
+  }
+  function permitir() { salida = true; setTimeout(function () { salida = false; }, 1500); }
+  document.addEventListener("submit", permitir, true);
+  document.addEventListener("click", function (ev) {
+    var a = ev.target.closest && ev.target.closest("a[href]");
+    if (!a || ev.defaultPrevented) { return; }
+    if (a.target === "_blank" || delCartel(a.href)) { permitir(); return; }
+    ev.preventDefault();
+    var aviso = document.getElementById("revision-obligatoria"), seccion = document.getElementById("revisiones");
+    if (aviso) {
+      aviso.hidden = false;
+      aviso.className = "error";
+      aviso.textContent = "Antes de salir de este cartel, registre la revisión (es obligatoria).";
+    }
+    if (seccion) { seccion.scrollIntoView(); }
+    var primera = document.querySelector("form.revision input[name=decision]");
+    if (primera) { primera.focus(); }
+  });
+  window.addEventListener("beforeunload", function (ev) {
+    if (!salida) { ev.preventDefault(); ev.returnValue = ""; }
+  });
+  {% endif %}
 })();
 </script>
 {% endblock %}
