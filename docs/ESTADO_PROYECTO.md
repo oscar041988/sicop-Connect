@@ -1,6 +1,9 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-30 (ciclo de Windows con envío real; exclusión «elaboracion de planos»; gestor de documentos pasos 3, notas, migración 0028, y 4, descargar el expediente; rama `desarrollo`) · Gestor de documentos: los 5 pasos hechos y mostrados a Oscar · IA lección 5 (primera parte) · `desarrollo` en GitHub: `ee8f1b6` · `main` de GitHub: `7f5c558`
+Última actualización: 2026-11-11 (oferta completa con un botón, migración 0043; borrador del asistente como chat,
+`DECISION_IA.md` §10, con decisiones de Oscar y estimación de costo; rama `desarrollo`) · Base local en esquema
+0043 · Suite: 1027 passed · `desarrollo` en GitHub: `b31528f` (push del 11/11) · `main` de GitHub: `7f5c558` (sin
+cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
