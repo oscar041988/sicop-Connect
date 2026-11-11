@@ -14,7 +14,11 @@ cambios desde el 29/10; espera que Oscar una el PR)
   está lista la oferta» con los botones PDF y Word. `app/ai/chat.py`, `_chat.html`, prompt
   `chat_asistente_v1.md`, migración **0044**. `ASSISTANT_SEND_DOCUMENTS=true` ya no bloquea: decide si la IA lee
   el texto de los archivos del chat (Oscar, §10.4). 11 pruebas nuevas (IA SIMULADA). **No se probó con la IA real.**
-  **Pendiente · Ivania:** respaldo y `migrate` (0044) con el panel cerrado; en el `.env`: `ASSISTANT_CHAT=true`,
+  ~~Respaldo y `migrate` (0044)~~ **hecho (Claude a pedido de Ivania, 2026-11-11, panel cerrado y después del
+  enriquecimiento #13 «ok»):** respaldo `C:\Users\User\respaldos-sicop\sicop_20261111-103948` (esquema 0043,
+  integridad ok); `doctor`: 0044. Conteos iguales antes y después (carteles 15015, revisiones 8, resúmenes 70, uso
+  de IA 107, respuestas 103, borradores 2, historial 562, documentos 242, sesiones 4); `integrity_check` ok y
+  `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude, 11/11):** `G:Mi unidadsicop-respaldossicop_20261111-103948` (7 archivos, ≈390 MB; tamaños iguales y huella del `.db` igual al manifiesto). **Pendiente · Ivania:** en el `.env`: `ASSISTANT_CHAT=true`,
   `IA_MAX_DAILY_COST=5.00` y, si se quiere que la IA lea los archivos, `ASSISTANT_SEND_DOCUMENTS=true`; probarlo en
   un cartel con documentos SINTÉTICOS. **Siguiente:** paso 4, corregir la oferta desde el chat.
 
