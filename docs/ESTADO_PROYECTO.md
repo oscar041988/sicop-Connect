@@ -7,6 +7,17 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **El asistente como chat (2026-11-11; `DECISION_IA.md` §10, paso 3 de §10.7).** En el cartel, con
+  `ASSISTANT_CHAT=true` y la IA encendida, el asistente es un chat como la maqueta: la persona contesta con sus
+  palabras y sube archivos; la IA propone las respuestas y **la app las guarda con las reglas de siempre** (un
+  documento no se cumple sin el archivo); la app confirma lo guardado y hace la pregunta siguiente. Al final, «Ya
+  está lista la oferta» con los botones PDF y Word. `app/ai/chat.py`, `_chat.html`, prompt
+  `chat_asistente_v1.md`, migración **0044**. `ASSISTANT_SEND_DOCUMENTS=true` ya no bloquea: decide si la IA lee
+  el texto de los archivos del chat (Oscar, §10.4). 11 pruebas nuevas (IA SIMULADA). **No se probó con la IA real.**
+  **Pendiente · Ivania:** respaldo y `migrate` (0044) con el panel cerrado; en el `.env`: `ASSISTANT_CHAT=true`,
+  `IA_MAX_DAILY_COST=5.00` y, si se quiere que la IA lea los archivos, `ASSISTANT_SEND_DOCUMENTS=true`; probarlo en
+  un cartel con documentos SINTÉTICOS. **Siguiente:** paso 4, corregir la oferta desde el chat.
+
 - **La oferta también en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis).** Junto a «Oferta», el
   botón **«Oferta en Word»** descarga el mismo documento en .docx: portada, pliego respondido, anexos, oferta
   económica y los adjuntos (como imagen de cada página; los originales no cambian). `app/propuesta_word.py`;

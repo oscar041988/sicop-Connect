@@ -217,6 +217,12 @@ va dentro del PDF.
 - Conviene **responder el asistente de elegibilidad** (paso 7) y subir ahí los documentos que pide el pliego: esos
   archivos son los anexos de la oferta.
 
+**El asistente como chat** (si está encendido, `ASSISTANT_CHAT=true`): en lugar de una pregunta a la vez con su
+formulario, el asistente conversa. Conteste con sus palabras («sí, tenemos 14 años») y suba los documentos en el
+mismo chat. La IA propone las respuestas y **la app las guarda y lo confirma** debajo («Guardado · …»); si algo no
+se pudo guardar, lo dice («un documento necesita el archivo»). Cuando todos los requisitos tienen respuesta, sale
+**«Ya está lista la oferta»** con los botones para pedirla en PDF o en Word.
+
 ### 9.1 Qué trae el PDF, en orden
 
 1. **Portada:** institución, «OFERTA», tipo y número de procedimiento, objeto, oferente y cédula jurídica.

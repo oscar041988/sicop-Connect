@@ -67,6 +67,7 @@ DEFAULTS: dict[str, str] = {
     "REPORTS_DIR": "data/reportes",
     "ASSISTANT_ENABLED": "false",
     "ASSISTANT_SEND_DOCUMENTS": "false",
+    "ASSISTANT_CHAT": "false",
     "ENRICH_ENABLED": "false",
     "ENRICH_EMAILS": "false",
     "ENRICH_TOKEN": "",
@@ -364,9 +365,16 @@ class Settings:
 
     @property
     def assistant_send_documents(self) -> bool:
-        """ASSISTANT_SEND_DOCUMENTS (false): si el texto de los documentos de Hermatix va a OpenAI. Oscar no lo ha
-        decidido: con true la app no envía nada y avisa que ese camino todavía no está construido."""
+        """ASSISTANT_SEND_DOCUMENTS (false): si el texto de los documentos que se suben en el chat del asistente va a
+        la IA. Oscar lo aprobó el 2026-11-11 (DECISION_IA.md §10.4): la IA los lee, sin modificarlos. Con false solo
+        recibe el nombre del archivo."""
         return _as_bool(self.get("ASSISTANT_SEND_DOCUMENTS"))
+
+    @property
+    def assistant_chat(self) -> bool:
+        """ASSISTANT_CHAT (false): el asistente se usa como chat (DECISION_IA.md §10). Necesita la IA encendida;
+        apagado, el asistente pregunta uno por uno como siempre. Cambiarlo no borra nada."""
+        return _as_bool(self.get("ASSISTANT_CHAT"))
 
     @property
     def documents_max_mb_per_tender(self) -> int:

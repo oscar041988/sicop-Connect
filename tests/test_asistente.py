@@ -222,14 +222,14 @@ def test_documento_validado_y_fuera_de_git(lista):
         assert asistente.documento(conn, settings.assistant_docs_dir, "00000000002", rid) is None   # otro cartel
 
 
-def test_con_send_documents_true_no_se_guarda_ni_se_envia_nada(lista):
+def test_con_send_documents_true_el_formulario_guarda_igual(lista):
+    # Oscar, 2026-11-11 (§10.4): ASSISTANT_SEND_DOCUMENTS solo decide si la IA lee el texto en el chat. El formulario
+    # de siempre no llama a la IA: guarda el documento igual con true o con false.
     db, ids, settings = lista
     _empezar(db)
     con_true = load_settings(env_file=None, environ={**settings.raw, "ASSISTANT_SEND_DOCUMENTS": "true"})
-    with pytest.raises(asistente.AsistenteInvalido, match="todavía no está construido"):
-        _responder(db, con_true, ids["patente"], archivo=PDF)
-    assert not settings.assistant_docs_dir.exists()
-    assert next(p for p in _pasos(db) if p.item.id == ids["patente"]).respuesta is None
+    _responder(db, con_true, ids["patente"], archivo=PDF)
+    assert next(p for p in _pasos(db) if p.item.id == ids["patente"]).respuesta.tiene_archivo
 
 
 def test_pausar_y_retomar_otra_persona_sigue_donde_quedo(lista):
@@ -485,7 +485,7 @@ def test_0032_conserva_las_respuestas_con_su_id_y_sus_protecciones(tmp_path):
                              " tipo_evidencia, estado, fuente, valor_si_no, respondido_por_nombre, creado_en) VALUES"
                              " (1, ?, 'r', 'p', 'si_no', 'respondido', 'usuario', 1, 'Ana', 't')", (item,)).lastrowid
         conn.commit()
-    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql"]
+    assert apply_migrations(base) == ["0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, estado, valor_si_no FROM eligibility_answers").fetchall() == [
             (antes, "respondido", 1)]

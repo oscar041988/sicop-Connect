@@ -14,8 +14,8 @@
 * «Lo tiene · archivo pendiente» (migración 0032, solo documentos): Hermatix tiene el documento pero todavía no se
   sube (son delicados); se completa después con «Cambiar». El avance lo cuenta aparte.
 * Archivos: PDF/PNG/JPG validados igual que en el perfil, en ASSISTANT_DOCS_DIR/<nro_sicop>/, fuera de Git; cada
-  vista o descarga queda en audit_log. Con ASSISTANT_SEND_DOCUMENTS=false su texto nunca sale de la app (la IA no
-  recibe archivos en ningún caso: con true se avisa que ese camino falta, decisión pendiente de Oscar).
+  vista o descarga queda en audit_log. Aquí la IA nunca recibe archivos. En el chat (app/asistente_chat.py), con
+  ASSISTANT_SEND_DOCUMENTS=true la IA lee el texto de lo que se sube, sin modificarlo (Oscar, 2026-11-11, §10.4).
 """
 
 from __future__ import annotations
@@ -372,9 +372,6 @@ def responder(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, item
     actual, paso = _sesion_y_paso(conn, nro_sicop, item_id, ahora.astimezone(HORA_CR).date())
     campos = _valores(paso.item, entrada)
     es_documento = paso.item.tipo_evidencia == "documento" and entrada.estado == "respondido"
-    if es_documento and settings.assistant_send_documents:
-        raise AsistenteInvalido("ASSISTANT_SEND_DOCUMENTS=true todavía no está construido (falta la decisión de"
-                                " Oscar): ponlo en false. No se guardó ni se envió nada.")
     if es_documento and archivo is None:
         raise AsistenteInvalido("Sube el documento (PDF, PNG o JPG). Si Hermatix lo tiene pero lo subes después,"
                                 " elige «Lo tiene · subo el archivo después»; si no, «Todavía no lo sé» o «Hermatix"

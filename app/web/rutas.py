@@ -25,6 +25,8 @@ from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
 from app.ai import asistente as ia_asistente
+from app.ai import chat as ia_chat
+from app.ai import cola as ia_cola
 from app.ai import expediente as ia_expediente
 from app.ai import explicacion as ia_explicacion
 from app.ai import reporte as ia_reporte
@@ -482,7 +484,29 @@ def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime,
                  "error": error_asistente, "formulario": formulario_asistente or {},
                  "hecho": request.session.pop("hecho_asistente", None)},
         "EVIDENCIAS": verificacion.EVIDENCIAS, "citar": _citador(conn, nro_sicop, settings),
+        "chat": _contexto_chat(conn, settings, pasos, sesion, actual, ahora),
     }
+
+
+def _chat_encendido(settings) -> bool:
+    """ASSISTANT_CHAT=true y la IA encendida (DECISION_IA.md §10): si no, el asistente pregunta uno por uno."""
+    try:
+        return settings.assistant_chat and settings.ia_activa
+    except ValueError:   # AI_MODE mal escrito: sin chat
+        return False
+
+
+def _contexto_chat(conn, settings, pasos, sesion, actual, ahora: datetime) -> dict:
+    if not _chat_encendido(settings) or sesion is None:
+        return {"activo": False}
+    lista = ia_chat.mensajes(conn, sesion.id)
+    return {"activo": True, "mensajes": lista,
+            "presentacion": None if lista else ia_chat.presentacion(pasos, sesion),
+            "listo": ia_chat.listo(pasos, sesion),
+            # El dato del perfil de la pregunta de ahora se confirma con un clic, como siempre (no va a la IA).
+            "perfil": actual if actual is not None and actual.perfil is not None and actual.respuesta is None else None,
+            "gasto": ia_cola.costo_de_hoy(conn, ahora.astimezone(HORA_CR).date()), "tope": settings.ia_max_daily_cost,
+            "lee_archivos": settings.assistant_send_documents, "limite_mb": settings.assistant_doc_max_mb}
 
 
 def _asistente_permitido(request: Request, conn, nro_sicop: str) -> Response | None:
@@ -530,6 +554,37 @@ def empezar_asistente(request: Request, nro_sicop: str) -> Response:
             return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         r = ia_asistente.redactar(conn, settings, nro_sicop, _quien(request), _ahora())
     return _volver_asistente(request, nro_sicop, f"Asistente listo. {_redactar_mensaje(r)}")
+
+
+# --- El asistente como chat (DECISION_IA.md §10; ASSISTANT_CHAT) -----------------------------------------------------
+# La IA lee el mensaje y propone las respuestas; la app las guarda con las reglas de siempre (app/ai/chat.py).
+
+@router.post("/oportunidades/{nro_sicop}/asistente/chat", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def chat_asistente(request: Request, nro_sicop: str, mensaje: str = Form(""),
+                   archivo: UploadFile | None = File(None)) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        if not _chat_encendido(settings):
+            return _render_detalle(request, conn, nro_sicop, status_code=400,
+                                   error_asistente="El chat está apagado (ASSISTANT_CHAT=false o la IA apagada).")
+        subido = None
+        if archivo is not None and archivo.filename:
+            limite = settings.assistant_doc_max_mb * 1024 * 1024
+            datos = archivo.file.read(limite + 1)
+            if len(datos) > limite:
+                return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=(
+                    f"El archivo pasa de {settings.assistant_doc_max_mb} MB (ASSISTANT_DOC_MAX_MB): no se guardó."))
+            subido = (datos, archivo.filename)
+        try:
+            ia_chat.enviar(conn, settings, nro_sicop, mensaje, subido, _quien(request), _ahora())
+        except ia_chat.ChatInvalido as exc:
+            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+    return RedirectResponse(f"/oportunidades/{nro_sicop}#chat", status_code=303)
 
 
 @router.post("/oportunidades/{nro_sicop}/asistente/redactar", response_class=HTMLResponse,

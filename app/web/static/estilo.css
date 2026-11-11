@@ -677,3 +677,31 @@ form.en-linea { display: inline; margin-left: 8px; }
   .compacta .card h3 a { -webkit-line-clamp: 3; }
 }
 
+
+/* Asistente como chat (DECISION_IA.md §10; ASSISTANT_CHAT; diseño de la maqueta aprobada por Oscar, 11/11). La persona
+   a la derecha (azul oscuro), la IA y la app a la izquierda; lo que dice la app (lo guardado, la pregunta siguiente)
+   lleva borde verde para distinguirlo de lo que dice la IA. */
+.chat-asistente { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+.chat-gasto { margin: 0; }
+.chat-mensajes { list-style: none; margin: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+                 background: #fff; border: 1px solid var(--line); border-radius: 12px; max-height: 70vh; overflow-y: auto; }
+.chat-mensajes .msg { display: flex; flex-direction: column; gap: 3px; max-width: 86%; }
+.chat-mensajes .msg .autor { font-size: .72rem; font-weight: 700; color: var(--mut); letter-spacing: .03em; }
+.chat-mensajes .msg .burbuja { padding: 10px 14px; border-radius: 14px; white-space: pre-line; overflow-wrap: anywhere; }
+.chat-mensajes .msg.persona { align-self: flex-end; }
+.chat-mensajes .msg.persona .autor { text-align: right; }
+.chat-mensajes .msg.persona .burbuja { background: var(--hx-azul-osc); color: #fff; border-top-right-radius: 4px; }
+.chat-mensajes .msg.asistente, .chat-mensajes .msg.app { align-self: flex-start; }
+.chat-mensajes .msg.asistente .burbuja { background: var(--g0); border: 1px solid var(--line); border-top-left-radius: 4px; }
+.chat-mensajes .msg.app .burbuja { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--g5);
+                                   border-top-left-radius: 4px; }
+.chat-adjunto { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; }
+.chat-adjunto::before { content: "Archivo: "; font-weight: 500; }
+.chat-listo { display: flex; flex-direction: column; gap: 8px; background: var(--g1); border: 1px solid #BFE3CF;
+              border-radius: 12px; padding: 12px 14px; }
+.chat-listo strong { color: var(--g7); }
+.chat-redactar { display: flex; flex-direction: column; gap: 8px; }
+.chat-redactar label[for="chat-mensaje"] { font-weight: 700; }
+.chat-redactar textarea { width: 100%; resize: vertical; }
+.chat-acciones { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-end; justify-content: space-between; }
+.chat-archivo { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; min-width: 0; }

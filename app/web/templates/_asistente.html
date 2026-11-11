@@ -36,7 +36,9 @@
   {% endif %}
   <progress max="{{ av.total or 1 }}" value="{{ av.respondidos }}"></progress>
 
-  {% if a.actual %}
+  {% if chat.activo %}
+  {% include "_chat.html" %}
+  {% elif a.actual %}
   {% set p = a.actual %}
   {% set f = a.formulario %}
   {% set t = p.item.tipo_evidencia %}

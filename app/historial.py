@@ -40,6 +40,7 @@ ACCIONES = {
     "empezar_asistente": "Empezó el asistente de elegibilidad de un cartel",
     "redactar_preguntas_asistente": "Pidió a la IA las preguntas del asistente de un cartel",
     "responder_asistente": "Respondió una pregunta del asistente",
+    "chat_asistente": "Escribió en el chat del asistente",
     "confirmar_perfil_asistente": "Confirmó un dato del perfil en el asistente",
     "ver_documento_asistente": "Vio un documento de una respuesta del asistente",
     "descargar_documento_asistente": "Descargó un documento de una respuesta del asistente",

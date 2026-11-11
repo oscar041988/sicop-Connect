@@ -260,6 +260,7 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
                              "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/asistente/ampliar",
+                             "/oportunidades/{nro_sicop}/asistente/chat",
                              "/oportunidades/{nro_sicop}/asistente/empezar",
                              "/oportunidades/{nro_sicop}/asistente/redactar",
                              "/oportunidades/{nro_sicop}/asistente/resultado",

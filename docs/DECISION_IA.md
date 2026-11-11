@@ -297,8 +297,19 @@ documento, en otro formato, para poder editarlo a mano si hace falta.
 2. ~~Anthropic en `app/ai/cliente.py`, junto a OpenAI (§8)~~ **hecho (2026-11-11).**
 2 bis. ~~La oferta también en Word (10.6 bis)~~ **hecho (2026-11-11):** botón «Oferta en Word»
    (`app/propuesta_word.py`, `python-docx` 1.2.0), sin migración.
-3. El chat de elegibilidad en el cartel, con subida de archivos y «Ya está listo» → botón «Oferta». Reemplaza a las
-   preguntas actuales; las respuestas ya guardadas no se tocan.
+3. ~~El chat de elegibilidad en el cartel, con subida de archivos y «Ya está listo» → botón «Oferta». Reemplaza a las
+   preguntas actuales; las respuestas ya guardadas no se tocan.~~ **Hecho (2026-11-11):** `app/ai/chat.py`, plantilla
+   `_chat.html`, prompt `config/prompts/chat_asistente_v1.md`, migración **0044** (`asistente_chat`; `ia_usage`
+   acepta `chat`). Se enciende con `ASSISTANT_CHAT=true` (con la IA encendida); apagado, el asistente de siempre.
+   - **Cómo funciona:** la IA lee el mensaje y **propone** respuestas (salida estructurada: requisito, estado, valor,
+     vencimiento y si usa el archivo). La app las guarda con `asistente.responder`, con las mismas validaciones que
+     el formulario: un documento no queda «respondido» sin el archivo, aunque se pida. Lo guardado y la pregunta
+     siguiente los escribe **la app**, no la IA. Cada respuesta lleva la nota «Desde el chat del asistente.».
+   - **A la IA va:** el cartel (número y objeto), los requisitos con su cita y su respuesta actual, los últimos 30
+     mensajes y el mensaje nuevo; con `ASSISTANT_SEND_DOCUMENTS=true`, el texto del archivo (hasta 15 000
+     caracteres). No va el pliego completo (sí sus requisitos con la cita) ni el perfil: el dato vigente del perfil
+     se confirma con el botón «Sí, es correcto», como siempre. Por eso cuesta menos que la estimación de 10.5.
+   - Pruebas con IA SIMULADA: `tests/test_chat_asistente.py` (11).
 4. Corregir la oferta desde el chat: acciones de 10.3.1 y versiones de la oferta (migración nueva).
 5. «Oferta terminada» y el borrado de datos personales (10.4).
 6. Medir el costo con Oscar y ajustar el tope.
