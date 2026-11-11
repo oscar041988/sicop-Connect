@@ -137,7 +137,7 @@ def secciones(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, pagi
     h = huella(paginas)
     if (guardadas := _guardadas(conn, nro_sicop, h)) is not None:
         return guardadas, None
-    if settings.ai_mode != "openai":
+    if not settings.ia_activa:
         return [], "la IA está apagada (AI_MODE=none): el pliego va entero en una sola sección"
     if costo_de_hoy(conn, datetime.now(HORA_CR).date()) >= settings.ia_max_daily_cost:
         return [], (f"ya se usó el presupuesto de IA de hoy ({settings.ia_max_daily_cost} USD, IA_MAX_DAILY_COST): "

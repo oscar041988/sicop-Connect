@@ -120,7 +120,7 @@ def correr(settings: Settings, *, cliente=None, reloj: Callable[[], datetime] = 
            avisar: Callable[[str], None] = lambda _: None, **opciones) -> Corrida:
     """Una corrida de la cola. Lanza app.bloqueo.CicloOcupado si ya hay otra, IaConfiguracion o ValueError si la
     configuración no sirve. cliente y opciones (dormir) solo se cambian en las pruebas (OpenAI SIMULADO)."""
-    if settings.ai_mode != "openai":
+    if not settings.ia_activa:
         return Corrida("apagada", motivo="AI_MODE=none")
     if settings.ia_precio_entrada_usd is None or settings.ia_precio_salida_usd is None:
         raise ia_cliente.IaConfiguracion("Faltan IA_PRECIO_ENTRADA_USD e IA_PRECIO_SALIDA_USD: sin precios no se puede"

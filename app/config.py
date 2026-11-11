@@ -77,6 +77,9 @@ DEFAULTS: dict[str, str] = {
     "IA_MAX_INPUT_TOKENS": "50000",
     "OPENAI_API_KEY": "",
     "OPENAI_MODEL": "",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "",
+    "ANTHROPIC_EFFORT": "",
     "IA_TIMEOUT_SECONDS": "120",
     "IA_MAX_OUTPUT_TOKENS": "4000",
     "IA_PROMPT_VERSION": "v1",
@@ -88,8 +91,10 @@ DEFAULTS: dict[str, str] = {
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
 SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY",
-                            "ENRICH_TOKEN"})
-AI_MODES = ("none", "openai")
+                            "ANTHROPIC_API_KEY", "ENRICH_TOKEN"})
+AI_MODES = ("none", "openai", "anthropic")
+# Esfuerzo de razonamiento de los modelos de Anthropic (output_config.effort del SDK). Vacío: el del modelo.
+ANTHROPIC_EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -406,11 +411,23 @@ class Settings:
 
     @property
     def ai_mode(self) -> str:
-        """none (por defecto: la app no llama a ninguna IA) u openai (Reporte con IA, lección 2)."""
+        """none (por defecto: la app no llama a ninguna IA), openai (Reporte con IA, lección 2) o anthropic
+        (DECISION_IA.md §8, aprobado por Oscar el 2026-11-05)."""
         modo = self.get("AI_MODE").strip().lower() or "none"
         if modo not in AI_MODES:
-            raise ValueError(f"AI_MODE debe ser {' u '.join(AI_MODES)}")
+            raise ValueError(f"AI_MODE debe ser {', '.join(AI_MODES[:-1])} o {AI_MODES[-1]}")
         return modo
+
+    @property
+    def ia_activa(self) -> bool:
+        """True con AI_MODE=openai o anthropic: la app puede llamar a la IA."""
+        return self.ai_mode != "none"
+
+    @property
+    def ia_modelo(self) -> str:
+        """El modelo de la IA activa (OPENAI_MODEL o ANTHROPIC_MODEL); vacío con AI_MODE=none."""
+        modo = self.ai_mode
+        return self.openai_model if modo == "openai" else self.anthropic_model if modo == "anthropic" else ""
 
     @property
     def openai_api_key(self) -> str:
@@ -421,6 +438,26 @@ class Settings:
     def openai_model(self) -> str:
         """Nombre del modelo (OPENAI_MODEL): lo eligen Oscar e Ivania; nunca va en el código."""
         return self.get("OPENAI_MODEL").strip()
+
+    @property
+    def anthropic_api_key(self) -> str:
+        """Clave de la API de Anthropic. Nunca se muestra ni se guarda en la base ni en los registros."""
+        return self.get("ANTHROPIC_API_KEY").strip()
+
+    @property
+    def anthropic_model(self) -> str:
+        """Nombre del modelo de Anthropic (ANTHROPIC_MODEL): lo elige Oscar (§8); nunca va en el código."""
+        return self.get("ANTHROPIC_MODEL").strip()
+
+    @property
+    def anthropic_effort(self) -> str | None:
+        """ANTHROPIC_EFFORT: low, medium, high, xhigh o max. Vacío: el valor por defecto del modelo."""
+        esfuerzo = self.get("ANTHROPIC_EFFORT").strip().lower()
+        if not esfuerzo:
+            return None
+        if esfuerzo not in ANTHROPIC_EFFORTS:
+            raise ValueError(f"ANTHROPIC_EFFORT debe ser {', '.join(ANTHROPIC_EFFORTS[:-1])} o {ANTHROPIC_EFFORTS[-1]}")
+        return esfuerzo
 
     @property
     def ia_timeout_seconds(self) -> int:

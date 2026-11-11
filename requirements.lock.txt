@@ -21,8 +21,12 @@
 # httpx2/httpcore2 2.16.0 y truststore 0.10.5, pero se fijan 2.13.1 y 0.10.4, las de requirements-dev.txt (con
 # httpx2 2.16 falla una prueba, ver ese archivo); openai acepta httpx2 >= 2.12. Ninguna otra versión cambió. Las
 # seis tienen ruedas para Linux y Python 3.12 (comprobado con pip download).
+# 2026-11-11 (DECISION_IA.md §8, cambio a Anthropic): se agregó anthropic. Entorno limpio con este lock +
+# anthropic==2.8.0: solo se sumaron anthropic 2.8.0 y docstring_parser 0.18.0 (ninguna otra versión cambió); las
+# dos son py3-none-any (comprobado con pip download para Linux y Python 3.12).
 annotated-doc==0.0.5
 annotated-types==0.8.0
+anthropic==2.8.0
 anyio==4.15.1
 argon2-cffi==25.1.0
 argon2-cffi-bindings==26.1.0
@@ -31,6 +35,7 @@ cffi==2.1.1
 charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
+docstring_parser==0.18.0
 et_xmlfile==2.0.0
 fastapi==0.143.0
 google-auth==2.62.0

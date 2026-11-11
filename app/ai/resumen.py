@@ -275,7 +275,7 @@ def resumir(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, client
                              formato=FORMATO, **extra)
     except ia_cliente.IaFallo as exc:
         costo = _costo_del_uso(conn, exc.uso_id)
-        id_ = _guardar(conn, exp, version, settings.openai_model, None, "fallido", exc.motivo, [], costo, exc.uso_id)
+        id_ = _guardar(conn, exp, version, settings.ia_modelo, None, "fallido", exc.motivo, [], costo, exc.uso_id)
         return _cargar(conn, id_, exp)
 
     def fallido(motivo: str) -> Resultado:

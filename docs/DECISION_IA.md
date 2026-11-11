@@ -123,6 +123,17 @@ autorice, y OpenAI los guarda hasta 30 días para vigilar abusos. Por eso solo s
   saldo vence.
 - **[por decidir · Oscar]:** el modelo de Anthropic y sus precios (se comparan en 3 carteles antes de cambiar), y la
   fecha del cambio.
+- **Construido (2026-11-11, Ivania con Claude):** `AI_MODE=anthropic` en `app/ai/cliente.py`, junto a OpenAI, con
+  el SDK oficial `anthropic` 2.8.0. Configuración: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` y `ANTHROPIC_EFFORT`
+  (opcional: cuánto razona el modelo; ese razonamiento cuenta dentro de `IA_MAX_OUTPUT_TOKENS`). Las instrucciones
+  van como «system», el texto como mensaje y la salida estructurada con el mismo JSON Schema. Mismos reintentos,
+  mismo registro en `ia_usage` y el mismo presupuesto diario; los precios `IA_PRECIO_*` son los del modelo activo.
+  Pruebas con Anthropic SIMULADO en `tests/test_ia_anthropic.py` (regla 7). **Todavía no se llamó a la API real.**
+  - Sin «fallbacks» (pasar a otro modelo si el elegido se niega): cambiaría el modelo y el costo sin que Oscar lo
+    decida. Un rechazo queda como fallo «rechazo del modelo» y la app sigue sin IA, como hoy.
+  - **Falta (Oscar con Ivania):** la clave de Anthropic con límite de gasto, el modelo y los precios en el `.env`;
+    `ia probar`; y la comparación en 3 carteles. Antes de esa comparación, revisar que los esquemas de salida
+    (`FORMATO` de cada módulo) los acepte Anthropic: si no, la llamada sale «BadRequestError 400».
 
 ## 9. Ampliación: la IA en la oferta completa (pedido de Oscar, comunicado por Ivania, 2026-11-10)
 

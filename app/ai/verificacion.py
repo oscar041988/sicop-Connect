@@ -381,7 +381,7 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
         raise VerificacionError("Este cartel todavía no tiene resumen con IA: la lista sale de sus requerimientos.")
     if not reqs:
         raise VerificacionError("El resumen con IA de este cartel no trae requerimientos.")
-    if settings.ai_mode != "openai":
+    if not settings.ia_activa:
         raise VerificacionError("La IA está apagada (AI_MODE=none): no se puede generar la lista.")
     if costo_de_hoy(conn, datetime.now(HORA_CR).date()) >= settings.ia_max_daily_cost:
         raise VerificacionError(f"Ya se usó el presupuesto de IA de hoy ({settings.ia_max_daily_cost} USD,"
@@ -397,7 +397,7 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
         raise VerificacionError(str(exc)) from None
     except ia_cliente.IaFallo as exc:
         with transaccion(conn):
-            _guardar_generacion(conn, nro_sicop, resumen_id, exc.uso_id, exp.huella, settings.openai_model,
+            _guardar_generacion(conn, nro_sicop, resumen_id, exc.uso_id, exp.huella, settings.ia_modelo,
                                 "fallido", exc.motivo, 0, quien)
         raise VerificacionError(f"OpenAI no respondió bien ({exc.motivo}). No se cambió la lista.") from None
     try:

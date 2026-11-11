@@ -198,9 +198,10 @@ def ia_probar_cmd(settings: Settings) -> int:
     except ValueError as exc:
         print(f"Error: {exc}.", file=sys.stderr)
         return 1
-    if modo != "openai":
-        print("La IA está apagada (AI_MODE=none): no se llamó a OpenAI. Para la primera prueba real, con Oscar:"
-              " AI_MODE=openai, OPENAI_API_KEY y OPENAI_MODEL en .env.")
+    if modo == "none":
+        print("La IA está apagada (AI_MODE=none): no se llamó a ninguna IA. Para la primera prueba real, con Oscar:"
+              " AI_MODE=openai (OPENAI_API_KEY y OPENAI_MODEL) o AI_MODE=anthropic (ANTHROPIC_API_KEY y"
+              " ANTHROPIC_MODEL) en .env.")
         return 1
     db = check_database(settings.database_path)
     if db["status"] != "ok":
@@ -218,12 +219,13 @@ def ia_probar_cmd(settings: Settings) -> int:
             return 1
     costo = (f"{ia_cliente.texto_decimal(r.costo)} USD (estimado)" if r.costo is not None
              else "sin precio (faltan IA_PRECIO_ENTRADA_USD e IA_PRECIO_SALIDA_USD)")
-    print(f"Prueba de OpenAI: {r.resultado}{f' ({r.motivo})' if r.motivo else ''} · modelo {r.modelo}")
+    proveedor = "Anthropic" if modo == "anthropic" else "OpenAI"
+    print(f"Prueba de {proveedor}: {r.resultado}{f' ({r.motivo})' if r.motivo else ''} · modelo {r.modelo}")
     print(f"Tokens: entrada {r.tokens_entrada} · salida {r.tokens_salida} · duración {r.duracion_s} s"
           f" · intentos {r.intentos}")
     print(f"Costo: {costo}")
     print(f"Respuesta: {r.texto[:200]}")
-    print(f"Anotado en ia_usage (#{r.uso_id}). Compáralo con el uso que muestra el panel de OpenAI.")
+    print(f"Anotado en ia_usage (#{r.uso_id}). Compáralo con el uso que muestra el panel de {proveedor}.")
     return 0
 
 
@@ -1415,7 +1417,7 @@ def build_parser() -> argparse.ArgumentParser:
     ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
     ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
-    ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
+    ia_sub.add_parser("probar", help="UNA llamada corta de prueba a la IA de AI_MODE (openai o anthropic); queda en ia_usage")
     iv = ia_sub.add_parser("verificar", help="Lista de verificación de un cartel con IA (asistente, lección 2)")
     iv.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")

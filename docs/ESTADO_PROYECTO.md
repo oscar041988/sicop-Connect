@@ -7,6 +7,15 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Anthropic en la app, junto a OpenAI (2026-11-11, DECISION_IA.md §8; paso 2 de §10.7).** `AI_MODE=anthropic`
+  en `app/ai/cliente.py` con el SDK oficial `anthropic` 2.8.0 (dependencia nueva, aprobada en §8; entorno limpio:
+  solo se suman anthropic y docstring_parser). Configuración `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` y
+  `ANTHROPIC_EFFORT` (`.env.example`). Los módulos preguntan «¿IA activa?» en vez de «¿es OpenAI?»
+  (`settings.ia_activa`, `settings.ia_modelo`). 21 pruebas nuevas con Anthropic SIMULADO
+  (`tests/test_ia_anthropic.py`). **No se llamó a la API real.** `CLAUDE.md` actualizado.
+  **Pendiente · Oscar:** clave, modelo y precios en el `.env`; `ia probar`; comparación en 3 carteles. **En el
+  servidor**, con el PR: `pip install -r requirements.lock.txt` (sin migración).
+
 - **Guía para pasar el enriquecimiento a otra computadora (2026-11-11, pedido de Ivania):**
   `docs/TRASPASO_ENRIQUECIMIENTO.md`, para Anabelle u Oscar cuando Ivania ya no esté (Fase 2, `enrich remoto`).
   Necesita el servidor actualizado. Solo una computadora con la tarea a la vez. Sin código. Último paso del

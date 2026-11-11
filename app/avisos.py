@@ -344,7 +344,7 @@ def enviar(conn: sqlite3.Connection, por_destinatario: dict[str, list[Oportunida
 
 def _ia_encendida(settings: Settings) -> bool:
     try:
-        return settings.ai_mode == "openai"
+        return settings.ia_activa
     except ValueError:   # AI_MODE mal escrito: el correo sale igual, sin el resumen
         return False
 

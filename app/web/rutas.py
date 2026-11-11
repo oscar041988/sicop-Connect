@@ -257,7 +257,7 @@ _TEXTOS_IA = {"recomendaciones": ia_resumen.RECOMENDACIONES, "estados": ia_resum
 
 def _ia_encendida() -> bool:
     try:
-        return load_settings().ai_mode == "openai"
+        return load_settings().ia_activa
     except ValueError:   # AI_MODE mal escrito: el panel sigue funcionando, sin el bloque de la IA
         return False
 

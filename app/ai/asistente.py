@@ -70,7 +70,7 @@ def redactar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien
     faltan = [p for p in asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date()) if p.origen == "app"]
     if not faltan:
         return Redaccion(0, None)
-    if settings.ai_mode != "openai":
+    if not settings.ia_activa:
         return Redaccion(0, "la IA está apagada (AI_MODE=none): se usan las preguntas de la app")
     extra = {"dormir": dormir} if dormir is not None else {}
     redactadas, motivo = 0, None

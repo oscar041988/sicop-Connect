@@ -101,7 +101,7 @@ def explicar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, resul
              evaluaciones: list[elegibilidad.Evaluacion], cliente=None, dormir=None) -> Explicacion:
     """La explicación de la IA, o la de la app con el motivo. Nunca lanza por la IA."""
     de_la_app = elegibilidad.explicacion_de_la_app(resultado, evaluaciones)
-    if settings.ai_mode != "openai":
+    if not settings.ia_activa:
         return Explicacion(de_la_app, "app", "la IA está apagada (AI_MODE=none)", None)
     if costo_de_hoy(conn, datetime.now(HORA_CR).date()) >= settings.ia_max_daily_cost:
         return Explicacion(de_la_app, "app", f"ya se usó el presupuesto de IA de hoy ({settings.ia_max_daily_cost}"
