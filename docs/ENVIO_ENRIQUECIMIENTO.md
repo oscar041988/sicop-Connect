@@ -78,3 +78,4 @@ carteles nuevos quedan sin ficha, documentos ni resumen con IA.
 ## Pendiente
 
 - Probarlo contra el servidor real (`ACTUALIZACION_SERVIDOR.md` §11), con Oscar.
+- Pasarlo a otra computadora (Anabelle u Oscar) cuando Ivania ya no esté: `docs/TRASPASO_ENRIQUECIMIENTO.md`.

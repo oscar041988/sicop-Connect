@@ -7,6 +7,11 @@ cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
 
+- **Guía para pasar el enriquecimiento a otra computadora (2026-11-11, pedido de Ivania):**
+  `docs/TRASPASO_ENRIQUECIMIENTO.md`, para Anabelle u Oscar cuando Ivania ya no esté (Fase 2, `enrich remoto`).
+  Necesita el servidor actualizado. Solo una computadora con la tarea a la vez. Sin código. Último paso del
+  enriquecimiento por ahora; se sigue con el asistente.
+
 - **Borrador: el asistente como chat (2026-11-11, pedido de Oscar por Ivania).** Chat en el cartel que pregunta los
   requisitos, recibe archivos, dice «Ya está listo» y arma la oferta completa; Oscar la corrige conversando y cada
   cambio crea una versión. La IA solo usa una lista cerrada de acciones. `DECISION_IA.md` §10. Sin código todavía.
