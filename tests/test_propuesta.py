@@ -307,6 +307,16 @@ def test_sin_pliego_vuelve_al_cartel_con_el_aviso(panel_oferta):
     assert "Falta el pliego" in oscar.get(f"/oportunidades/{NRO}").text
 
 
+def test_pedida_desde_el_asistente_el_aviso_sale_en_el_asistente(panel_oferta):
+    oscar = panel_oferta["oscar"]
+    _dar_seguimiento(oscar)
+    token = token_csrf(oscar.get(f"/oportunidades/{NRO}").text)
+    r = oscar.post(f"/oportunidades/{NRO}/oferta", data={"csrf_token": token, "desde": "asistente"},
+                   follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}/asistente#oferta"
+    assert "Falta el pliego" in oscar.get(f"/oportunidades/{NRO}/asistente").text
+
+
 @navegador
 def test_el_boton_entrega_el_pdf_y_guarda_una_copia(panel_oferta, db, tmp_path):
     oscar = panel_oferta["oscar"]

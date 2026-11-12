@@ -60,6 +60,7 @@
       Lo que no cumple o falta sale en rojo.</span>
     <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="desde" value="asistente">
       <button type="submit" name="formato" value="pdf">Pedir la oferta completa (PDF)</button>
       <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
     </form>
@@ -72,6 +73,7 @@
     <strong>Oferta · versión {{ ultima.numero }}</strong>
     <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="desde" value="asistente">
       <button type="submit" name="formato" value="pdf">Descargar la última (PDF)</button>
       <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
     </form>
@@ -85,6 +87,7 @@
           <small class="sub">· {{ v.creado_por }}, {{ v.creado_en | fecha }}</small>
           <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="desde" value="asistente">
             <input type="hidden" name="version" value="{{ v.numero }}">
             <button type="submit" name="formato" value="pdf" class="btn o">PDF</button>
             <button type="submit" name="formato" value="docx" class="btn o">Word</button>

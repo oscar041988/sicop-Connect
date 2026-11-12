@@ -380,11 +380,13 @@ async def generar_oferta(request: Request, nro_sicop: str) -> Response:
     if formato not in TIPOS_OFERTA:
         formato = "pdf"
     version = str(formulario.get("version") or "")          # una versión anterior (paso 4); vacío = la última
+    desde_asistente = formulario.get("desde") == "asistente"   # si falla, el error se ve donde se pidió
     return await run_in_threadpool(_generar_oferta, request, nro_sicop, formato,
-                                   int(version) if version.isdigit() else None)
+                                   int(version) if version.isdigit() else None, desde_asistente)
 
 
-def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf", version: int | None = None) -> Response:
+def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf", version: int | None = None,
+                    desde_asistente: bool = False) -> Response:
     settings = load_settings()
     ahora = datetime.now(HORA_CR)
     with closing(connect(settings.database_path)) as conn:
@@ -395,7 +397,8 @@ def _generar_oferta(request: Request, nro_sicop: str, formato: str = "pdf", vers
             armada = armar(conn, settings, nro_sicop, _quien(request), ahora, version=version)
         except propuesta.PropuestaError as exc:
             request.session["error_oferta"] = str(exc)
-            return RedirectResponse(f"/oportunidades/{nro_sicop}", status_code=303)
+            destino = f"/oportunidades/{nro_sicop}/asistente#oferta" if desde_asistente else f"/oportunidades/{nro_sicop}"
+            return RedirectResponse(destino, status_code=303)
     oferta_economica.guardar(armada.contenido, settings.exports_dir, armada.procedimiento, ahora, prefijo="oferta",
                              extension=f".{formato}")
     nombre = f"oferta_{nro_sicop}_{ahora:%Y%m%d-%H%M%S}.{formato}"
@@ -451,7 +454,35 @@ def dar_seguimiento(request: Request, nro_sicop: str) -> Response:
     return RedirectResponse(f"/oportunidades/{nro_sicop}#asistente", status_code=303)
 
 
-# --- Asistente de elegibilidad (lección 3): en el detalle del cartel, para quien entra al expediente ------------
+# --- Asistente de elegibilidad (lección 3): para quien entra al expediente ------------------------------------------
+# Desde el 2026-11-12 (pedido de Ivania) tiene su propia página, con el diseño de la maqueta del chat: la ficha del
+# cartel arriba, el asistente a la izquierda y el avance, los archivos y la oferta a la derecha. El detalle del cartel
+# solo muestra el botón «Abrir el asistente».
+
+@router.get("/oportunidades/{nro_sicop}/asistente", response_class=HTMLResponse)
+def pagina_asistente(request: Request, nro_sicop: str, pregunta: int | None = None) -> Response:
+    """La página del asistente. ?pregunta=<requisito> muestra esa pregunta («Cambiar» una respuesta)."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_asistente(request, conn, nro_sicop, ver_item=pregunta)
+
+
+def _render_asistente(request: Request, conn: sqlite3.Connection, nro_sicop: str, status_code: int = 200,
+                      ver_item: int | None = None, **asistente_extra) -> Response:
+    if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+        return negado
+    ahora = _ahora()
+    datos = panel.detalle(conn, nro_sicop, panel.version_vigente(conn), ahora)
+    if datos is None:
+        return _no_encontrado(request, f"No hay un cartel con Número SICOP {nro_sicop}.")
+    return PLANTILLAS.TemplateResponse(request, "asistente.html", {
+        "d": datos, "seg": seguimiento.estado(conn, nro_sicop), "puede_entrar": True, "asistente_activo": True,
+        "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
+        "error_oferta": request.session.pop("error_oferta", None),
+        **_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra),
+    }, status_code=status_code)
+
 
 def _citador(conn, nro_sicop: str, settings):
     """[DOC n] → documento, solo si el expediente sigue siendo el que leyó la IA de la lista (si no, sin enlace)."""
@@ -544,11 +575,11 @@ def _decidir_propuesta(request: Request, nro_sicop: str, propuesta_id: int, apli
             nueva = oferta_cambios.decidir(conn, nro_sicop, propuesta_id, aplicar, base.bloques, base.anexos,
                                            _quien(request), _ahora())
         except (oferta_cambios.CambioInvalido, propuesta.PropuestaError) as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         p = next(x for x in oferta_cambios.propuestas(conn, nro_sicop) if x.id == propuesta_id)
         ia_chat.anotar(conn, nro_sicop, f"Aplicado · versión {nueva.numero}: {p.descripcion}" if nueva
                        else f"No aplicado: {p.descripcion}", _ahora())
-    return RedirectResponse(f"/oportunidades/{nro_sicop}#chat", status_code=303)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#chat", status_code=303)
 
 
 def _asistente_permitido(request: Request, conn, nro_sicop: str) -> Response | None:
@@ -565,7 +596,7 @@ def _asistente_permitido(request: Request, conn, nro_sicop: str) -> Response | N
 
 def _volver_asistente(request: Request, nro_sicop: str, mensaje: str) -> Response:
     request.session["hecho_asistente"] = mensaje
-    return RedirectResponse(f"/oportunidades/{nro_sicop}#asistente", status_code=303)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#asistente", status_code=303)
 
 
 def _redactar_mensaje(r) -> str:
@@ -589,11 +620,11 @@ def empezar_asistente(request: Request, nro_sicop: str) -> Response:
             if not verificacion.listar(conn, nro_sicop):
                 verificacion.generar(conn, settings, nro_sicop, _quien(request))
         except verificacion.VerificacionError as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         try:
             asistente.empezar(conn, nro_sicop, _quien(request), _ahora())
         except asistente.AsistenteInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         r = ia_asistente.redactar(conn, settings, nro_sicop, _quien(request), _ahora())
     return _volver_asistente(request, nro_sicop, f"Asistente listo. {_redactar_mensaje(r)}")
 
@@ -612,21 +643,21 @@ def chat_asistente(request: Request, nro_sicop: str, mensaje: str = Form(""),
         if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
             return negado
         if not _chat_encendido(settings):
-            return _render_detalle(request, conn, nro_sicop, status_code=400,
+            return _render_asistente(request, conn, nro_sicop, status_code=400,
                                    error_asistente="El chat está apagado (ASSISTANT_CHAT=false o la IA apagada).")
         subido = None
         if archivo is not None and archivo.filename:
             limite = settings.assistant_doc_max_mb * 1024 * 1024
             datos = archivo.file.read(limite + 1)
             if len(datos) > limite:
-                return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=(
+                return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=(
                     f"El archivo pasa de {settings.assistant_doc_max_mb} MB (ASSISTANT_DOC_MAX_MB): no se guardó."))
             subido = (datos, archivo.filename)
         try:
             ia_chat.enviar(conn, settings, nro_sicop, mensaje, subido, _quien(request), _ahora())
         except ia_chat.ChatInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
-    return RedirectResponse(f"/oportunidades/{nro_sicop}#chat", status_code=303)
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#chat", status_code=303)
 
 
 @router.post("/oportunidades/{nro_sicop}/asistente/redactar", response_class=HTMLResponse,
@@ -642,7 +673,7 @@ def redactar_asistente(request: Request, nro_sicop: str) -> Response:
         try:
             r = ia_asistente.redactar(conn, settings, nro_sicop, _quien(request), _ahora())
         except asistente.AsistenteInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
     return _volver_asistente(request, nro_sicop, _redactar_mensaje(r))
 
 
@@ -666,7 +697,7 @@ def responder_asistente(request: Request, nro_sicop: str, item_id: int, estado: 
             asistente.responder(conn, settings, nro_sicop, item_id, entrada, _subido(archivo), _quien(request),
                                 _ahora(), guardar_en_perfil=guardar)
         except (asistente.AsistenteInvalido, expediente_archivos.ArchivoInvalido) as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=_estado_error(exc), ver_item=item_id,
+            return _render_asistente(request, conn, nro_sicop, status_code=_estado_error(exc), ver_item=item_id,
                                    error_asistente=str(exc), formulario_asistente=entrada.__dict__)
     return _volver_asistente(request, nro_sicop,
                              "Respuesta guardada." + (" También quedó en el perfil." if guardar else ""))
@@ -683,7 +714,7 @@ def confirmar_perfil_asistente(request: Request, nro_sicop: str, item_id: int) -
         try:
             asistente.confirmar_perfil(conn, nro_sicop, item_id, _quien(request), _ahora())
         except asistente.AsistenteInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, ver_item=item_id,
+            return _render_asistente(request, conn, nro_sicop, status_code=400, ver_item=item_id,
                                    error_asistente=str(exc))
     return _volver_asistente(request, nro_sicop, "Dato del perfil confirmado.")
 
@@ -700,7 +731,7 @@ def ampliar_asistente(request: Request, nro_sicop: str) -> Response:
         try:
             asistente.ampliar(conn, nro_sicop, _quien(request), _ahora())
         except asistente.AsistenteInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
     return _volver_asistente(request, nro_sicop, "Listo: ahora el asistente pregunta también los demás requisitos.")
 
 
@@ -708,7 +739,7 @@ def ampliar_asistente(request: Request, nro_sicop: str) -> Response:
 
 def _volver_resultado(request: Request, nro_sicop: str, mensaje: str) -> Response:
     request.session["hecho_asistente"] = mensaje
-    return RedirectResponse(f"/oportunidades/{nro_sicop}#resultado", status_code=303)
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#resultado", status_code=303)
 
 
 @router.post("/oportunidades/{nro_sicop}/asistente/{item_id}/revisar", response_class=HTMLResponse,
@@ -726,7 +757,7 @@ def revisar_requisito(request: Request, nro_sicop: str, item_id: int, cumple: st
                 raise elegibilidad.ResultadoInvalido("Elige «Cumple» o «No cumple».")
             elegibilidad.revisar(conn, nro_sicop, item_id, cumple == "1", nota, _quien(request), _ahora())
         except elegibilidad.ResultadoInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
     return _volver_resultado(request, nro_sicop, "Revisión guardada. Calcula el resultado para dejar la constancia.")
 
 
@@ -744,7 +775,7 @@ def calcular_resultado(request: Request, nro_sicop: str) -> Response:
         try:
             constancia_id = ia_explicacion.calcular(conn, settings, nro_sicop, _quien(request), _ahora())
         except elegibilidad.ResultadoInvalido as exc:
-            return _render_detalle(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
         c = elegibilidad.constancia(conn, nro_sicop, constancia_id)
     sin_ia = f" Explicación de la app: {c.explicacion_motivo}." if c.explicacion_motivo else ""
     return _volver_resultado(request, nro_sicop, f"Resultado calculado: {c.resultado_texto}.{sin_ia}")

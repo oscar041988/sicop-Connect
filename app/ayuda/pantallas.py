@@ -35,9 +35,9 @@ PANTALLAS: dict[str, str] = {
     "Correo": "/ayuda-ejemplo/correo",
     "Perfil": "/perfil",
     "Elemento del perfil": "/perfil/{perfil}",
-    "Asistente": "/oportunidades/{seguido}",       # en seguimiento, con el asistente empezado
-    "Revisión rápida": "/oportunidades/{sin_encargado}",   # asistente sin ampliar, excluyentes respondidos
-    "Resultado": "/oportunidades/{seguido}",       # el mismo cartel, con un resultado ya calculado
+    "Asistente": "/oportunidades/{seguido}/asistente",   # su propia página (12/11), con el asistente empezado
+    "Revisión rápida": "/oportunidades/{sin_encargado}/asistente",   # sin ampliar, excluyentes respondidos
+    "Resultado": "/oportunidades/{seguido}/asistente",   # el mismo cartel, con un resultado ya calculado
     "Constancia": "/oportunidades/{seguido}/asistente/resultados/{constancia}",
 }
 SIN_SESION = {"Iniciar sesión"}
@@ -142,7 +142,7 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Perfil", "el estado"): Objetivo(selector="table.lista .estado-perfil"),
     ("Elemento del perfil", "el estado"): Objetivo(selector=".ficha .estado-perfil"),
     ("Asistente", "la sección «Asistente de elegibilidad»"): Objetivo(selector="#asistente"),
-    ("Asistente", "el avance"): Objetivo(selector=".asistente .avance", url="/oportunidades/{sin_encargado}"),
+    ("Asistente", "el avance"): Objetivo(selector=".asistente .avance", url="/oportunidades/{sin_encargado}/asistente"),
     ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),
     ("Asistente", "el dato del perfil"): Objetivo(selector=".perfil-dato"),
     ("Revisión rápida", "el resultado rápido"): Objetivo(selector="#revision-rapida"),

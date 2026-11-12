@@ -226,18 +226,18 @@ def test_en_la_pagina_aplicar_y_no(panel_oferta, db, tmp_path, monkeypatch):  # 
         mid2 = ia_chat._guardar(conn, sesion.id, "app", "Cambio propuesto: otro SINTÉTICO", AHORA)
         rechazar = oferta_cambios.proponer(conn, NRO, {"accion": "quitar_seccion", "seccion": s[1]}, "otro", mid2,
                                            AHORA)
-    pagina = oscar.get(f"/oportunidades/{NRO}").text
+    pagina = oscar.get(f"/oportunidades/{NRO}/asistente").text
     assert f"/asistente/propuestas/{aplicar}/aplicar" in pagina and "Oferta · versión 1" in pagina
     token = token_csrf(pagina)
     assert ana.post(f"/oportunidades/{NRO}/asistente/propuestas/{aplicar}/aplicar",
                     data={"csrf_token": token_csrf(ana.get(f"/oportunidades/{NRO}").text)}).status_code == 403
     r = oscar.post(f"/oportunidades/{NRO}/asistente/propuestas/{aplicar}/aplicar", data={"csrf_token": token},
                    follow_redirects=False)
-    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}#chat"
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}/asistente#chat"
     r = oscar.post(f"/oportunidades/{NRO}/asistente/propuestas/{rechazar}/rechazar", data={"csrf_token": token},
                    follow_redirects=False)
     assert r.status_code == 303
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Aplicado · versión 2: SINTÉTICO" in pagina and "No aplicado: otro" in pagina
     assert "Oferta · versión 2" in pagina and "Versiones (2)" in pagina
     r = oscar.post(f"/oportunidades/{NRO}/asistente/propuestas/{aplicar}/aplicar", data={"csrf_token": token})

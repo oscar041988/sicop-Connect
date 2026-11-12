@@ -445,12 +445,12 @@ def test_en_la_pagina_el_chat_reemplaza_la_pregunta_y_responde(web_chat):
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
         seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
         asistente.empezar(conn, NRO, ANA, AHORA)                     # sin pasar por la IA de las preguntas
-    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     assert 'id="chat"' in pagina and "Hola. Leí los requisitos" in pagina and 'name="valor_si_no"' not in pagina
     simulado.salidas.append({"mensaje": "Gracias.", "respuestas": [_r("R1", valor="sí")]})
     r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/chat", {"mensaje": "Sí ofertamos por SICOP <b>ya</b>"})
-    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}#chat"
-    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}/asistente#chat"
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     assert "Sí ofertamos por SICOP &lt;b&gt;ya&lt;/b&gt;" in pagina           # escapado
     assert "Guardado · Ofertar por SICOP" in pagina and "Pregunta 2 de 2" in pagina
     # Otra encargada no entra; sin token CSRF tampoco.
@@ -463,7 +463,7 @@ def test_con_el_chat_apagado_sigue_el_formulario_de_siempre(web):
     with closing(connect(db)) as conn:
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
         asistente.empezar(conn, NRO, ANA, AHORA)
-    pagina = c["oscar"].get(f"/oportunidades/{NRO}").text
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text
     assert 'id="chat"' not in pagina and 'name="valor_si_no"' in pagina
     r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/chat", {"mensaje": "Hola"})
     assert r.status_code == 400 and "El chat está apagado" in r.text

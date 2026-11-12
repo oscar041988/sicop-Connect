@@ -405,23 +405,47 @@ def _post(cliente, ruta, datos=None, archivos=None):
     return cliente.post(ruta, data={"csrf_token": token, **(datos or {})}, files=archivos, follow_redirects=False)
 
 
-def test_dar_seguimiento_abre_el_asistente_en_la_misma_pagina(web):
+def test_dar_seguimiento_y_abrir_el_asistente(web):
     db, ids, _, c, u = web
     _post(c["ivania"], f"/oportunidades/{NRO}/revision", {"decision": "interesa"})   # obligatoria antes
     r = _post(c["ivania"], f"/oportunidades/{NRO}/seguimiento")
     assert r.headers["location"] == f"/oportunidades/{NRO}#asistente"
-    pagina = " ".join(c["ivania"].get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(c["ivania"].get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "lo usan su encargado (todavía sin asignar) y los administradores" in pagina
     with closing(connect(db)) as conn:
         seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
-    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     assert 'id="asistente"' in pagina and "Empezar el asistente" in pagina and "La IA está apagada" in pagina
     assert _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar").status_code == 303
-    pagina = c["ivania"].get(f"/oportunidades/{NRO}").text
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     assert "Revisión rápida" in pagina and "0 de 2</strong> excluyentes respondidos" in " ".join(pagina.split())
     assert "Ofertar por SICOP." in pagina                                    # el primer excluyente
     assert "Para tener en cuenta (2)" in pagina
 
+
+
+def test_el_asistente_tiene_su_propia_pagina(web):
+    # Pedido de Ivania (2026-11-12): el cartel solo tiene el botón; el asistente se abre en otra página, con la ficha
+    # del cartel, el asistente a la izquierda y el avance, los archivos y la oferta a la derecha (la maqueta).
+    db, ids, _, c, u = web
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+    cartel = c["ivania"].get(f"/oportunidades/{NRO}").text
+    assert f'href="/oportunidades/{NRO}/asistente"' in cartel and "Abrir el asistente" in cartel
+    assert "Empezar el asistente" not in cartel and 'class="pregunta-asistente"' not in cartel
+    _post(c["ivania"], f"/oportunidades/{NRO}/asistente/empezar")
+    assert "Continuar con el asistente" in c["ivania"].get(f"/oportunidades/{NRO}").text
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"vence_el": "2027-01-15"},
+              {"archivo": ("permiso.pdf", PDF, "application/pdf")})
+    assert r.headers["location"] == f"/oportunidades/{NRO}/asistente#asistente"
+    pagina = " ".join(c["ivania"].get(f"/oportunidades/{NRO}/asistente").text.split())
+    assert 'class="asis-ficha"' in pagina and f"{NRO}" in pagina and "← Volver al cartel" in pagina
+    assert "Requisitos del cartel" in pagina and "1 / 5</strong> con respuesta" in pagina
+    assert "Archivos subidos (1)" in pagina and "permiso.pdf" in pagina
+    assert 'id="oferta"' in pagina and 'name="desde" value="asistente"' in pagina
+    assert c["ana"].get(f"/oportunidades/{NRO}/asistente").status_code == 403       # ni el encargado ni admin
+    assert c["ivania"].get("/oportunidades/99999999999/asistente").status_code == 404
 
 def test_responder_pausar_y_que_otra_persona_siga(web):
     db, ids, _, c, u = web
@@ -433,15 +457,15 @@ def test_responder_pausar_y_que_otra_persona_siga(web):
     assert r.status_code == 303
     r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "varios"})
     assert r.status_code == 400 and "no es un número" in r.text and "Al menos tres años" in r.text   # misma pregunta
-    pagina = c["oscar"].get(f"/oportunidades/{NRO}").text                    # otra persona, otra sesión
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text                    # otra persona, otra sesión
     assert "1 de 2</strong> excluyentes respondidos" in " ".join(pagina.split()) and "Al menos tres años" in pagina
     r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"vence_el": "2027-01-15"},
               {"archivo": ("permiso.pdf", PDF, "application/pdf")})
     assert r.status_code == 303
-    pagina = c["oscar"].get(f"/oportunidades/{NRO}").text
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text
     rid = re.search(r"/asistente/respuestas/(\d+)/archivo", pagina).group(1)
     assert c["oscar"].get(f"/oportunidades/{NRO}/asistente/respuestas/{rid}/archivo").content == PDF
-    cambiar = c["ivania"].get(f"/oportunidades/{NRO}?pregunta={ids['sicop']}").text
+    cambiar = c["ivania"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['sicop']}").text
     assert "Respuesta actual: Sí" in cambiar
 
 
@@ -451,14 +475,14 @@ def test_en_la_pagina_lo_tiene_sin_subir_el_archivo(web):
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
     _post(c["oscar"], f"/oportunidades/{NRO}/asistente/empezar")
     _post(c["oscar"], f"/oportunidades/{NRO}/asistente/ampliar")           # todo el cuestionario
-    pregunta = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
+    pregunta = c["oscar"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['patente']}").text
     assert 'value="archivo_pendiente"' in pregunta and "Lo tiene · subo el archivo después" in pregunta
-    sicop = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['sicop']}").text
+    sicop = c["oscar"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['sicop']}").text
     assert 'value="archivo_pendiente"' not in sicop                        # solo en los documentos
     r = _post(c["oscar"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder",
               {"estado": "archivo_pendiente", "vence_el": "2027-01-15"})
     assert r.status_code == 303
-    pagina = " ".join(c["oscar"].get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(c["oscar"].get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "1 de 5</strong> respondidas" in pagina and "1 archivo pendiente" in pagina
     assert "Lo tiene · archivo pendiente · vence 15/01/2027" in pagina
 
@@ -492,10 +516,10 @@ def test_guardar_en_el_perfil_es_solo_de_administradores_y_todo_sale_escapado(we
     r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['patente']}/responder", {"guardar_en_perfil": "1"},
               {"archivo": ("permiso.pdf", PDF, "application/pdf")})
     assert r.status_code == 400 and "solo para administradores" in r.text
-    pagina = c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['soporte']}").text
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['soporte']}").text
     assert "<script>alert(1)</script>" not in pagina and "&lt;script&gt;alert(1)&lt;/script&gt;" in pagina
     assert "Guardar también en el perfil" not in pagina                     # «soporte» no tiene elemento del perfil
-    assert "Guardar también en el perfil" in c["oscar"].get(f"/oportunidades/{NRO}?pregunta={ids['patente']}").text
+    assert "Guardar también en el perfil" in c["oscar"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['patente']}").text
 
 
 # --- Migración 0032 -----------------------------------------------------------------------------------------------
@@ -567,18 +591,18 @@ def test_en_la_pagina_el_resultado_rapido_y_seguir_con_los_demas(web):
         seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
     oscar = c["oscar"]
     _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Cuando respondas los excluyentes" in pagina and 'id="resultado"' not in pagina
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "1"})
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "2"})
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Queda fuera: no cumple un requisito excluyente" in pagina and "2 años &lt; 3 años" in pagina
     assert 'id="resultado"' in pagina                                    # se puede guardar la constancia
     assert _post(oscar, f"/oportunidades/{NRO}/asistente/resultado").status_code == 303
-    assert "No cumplen un requisito excluyente" in oscar.get(f"/oportunidades/{NRO}").text
+    assert "No cumplen un requisito excluyente" in oscar.get(f"/oportunidades/{NRO}/asistente").text
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['anos']}/responder", {"valor_numero": "8"})
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Los excluyentes cumplen: vale la pena seguir" in pagina and 'id="resultado"' not in pagina
     assert _post(oscar, f"/oportunidades/{NRO}/asistente/ampliar").status_code == 303
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "2 de 5</strong> respondidas" in pagina and 'id="resultado"' in pagina and "Revisión rápida" not in pagina

@@ -3,11 +3,26 @@
 Última actualización: 2026-11-12 (escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1100 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1102 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
 ## Último resultado
+
+- **El asistente en su propia página (2026-11-12, pedido de Ivania).** Con el diseño de la maqueta del chat que vio
+  Oscar (11/11): `GET /oportunidades/{nro}/asistente` (`pagina_asistente` y `_render_asistente` en
+  `app/web/rutas.py`, plantilla `asistente.html`, estilos `.asis-*`). Arriba la ficha del cartel; a la izquierda el
+  asistente de siempre (`_asistente.html`: empezar, pregunta o chat, respuestas dadas, revisión rápida y resultado);
+  a la derecha tres cajas: requisitos con su estado, archivos subidos y oferta (PDF y Word).
+  - En el cartel solo queda el botón **«Abrir el asistente»** / «Continuar con el asistente» (arriba y en la pestaña
+    «Requisitos»). Las acciones del asistente y sus errores vuelven a la página nueva; la oferta pedida desde allí
+    vuelve allí si falla (`desde=asistente`). Mismas reglas de acceso (encargado y administradores).
+  - Ayuda: `app/ayuda/pantallas.py` y misiones 09 y 23 («Abrir el asistente»).
+  - Revisado con capturas sobre una COPIA de la base (20261003280, escritorio y celular; copia borrada). Arreglos al
+    verlo: el título de SICOP trae espacios duros (se usa `resaltar(..., titulo=True)`, como en el cartel) y la
+    lista de requisitos tiene desplazamiento (96 en ese cartel).
+  - Pruebas: las del asistente apuntan a la página nueva; 2 nuevas (`test_el_asistente_tiene_su_propia_pagina`,
+    `test_pedida_desde_el_asistente_el_aviso_sale_en_el_asistente`). Suite: 1102 passed.
 
 - **Escaneo de fallas de la app (2026-11-12, pedido de Ivania).** Revisado: patrones de error en `app/` (análisis
   del código), SQL armado con texto, sesión/permisos/descargas/token de la API, 98 páginas del panel y todas las rutas

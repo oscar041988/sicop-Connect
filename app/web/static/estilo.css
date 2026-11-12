@@ -715,3 +715,32 @@ form.en-linea { display: inline; margin-left: 8px; }
                   border-radius: 12px; padding: 12px 14px; }
 .chat-versiones .historial form { display: inline-flex; gap: 6px; margin-left: 6px; }
 .chat-versiones .historial .btn { padding: 4px 10px; font-size: .82rem; }
+
+/* Página del asistente (2026-11-12, pedido de Ivania): el diseño de la maqueta del chat. Ficha del cartel arriba y dos
+   columnas: el asistente a la izquierda; avance, archivos y oferta a la derecha (una sola columna en pantallas chicas). */
+.asis-ficha { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
+              display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 12px 0 16px; }
+.asis-ficha h1 { margin: 0; font-size: 1.3rem; line-height: 1.3; color: var(--g9); overflow-wrap: break-word; }
+.asis-ids { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .82rem; color: var(--mut); }
+.asis-ids span { min-width: 0; }
+.asis-nro { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; color: var(--g9); }
+.asis-etiquetas { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.asis-columnas { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .asis-columnas { grid-template-columns: minmax(0, 1fr); } }
+.asis-principal { min-width: 0; }
+.asis-principal .asistente { margin-top: 0; }
+.asis-lateral { display: grid; gap: 16px; min-width: 0; }
+.asis-caja { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+             display: grid; gap: 10px; }
+.asis-caja h3 { margin: 0; font-size: .95rem; color: var(--g9); }
+.asis-caja p { margin: 0; }
+.asis-caja progress { width: 100%; }
+.asis-avance strong { font-size: 1.6rem; color: var(--g9); font-variant-numeric: tabular-nums; }
+.asis-reqs, .asis-docs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .85rem; }
+.asis-reqs { max-height: 460px; overflow-y: auto; padding-right: 4px; }
+.asis-reqs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
+                padding-bottom: 6px; border-bottom: 1px dashed var(--line); overflow-wrap: anywhere; }
+.asis-reqs li:last-child { border-bottom: 0; padding-bottom: 0; }
+.asis-docs li { display: grid; gap: 2px; overflow-wrap: anywhere; }
+.asis-caja form.en-linea { display: flex; flex-wrap: wrap; gap: 8px; }
+.asistente-abrir .btn { display: inline-block; }

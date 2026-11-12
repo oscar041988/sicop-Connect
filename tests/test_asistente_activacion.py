@@ -28,11 +28,11 @@ def test_apagado_no_aparece_y_sus_direcciones_no_responden(web, monkeypatch):
     db_path, ids, _, c, u = web
     _seguido(db_path, u)
     oscar = c["oscar"]
-    assert 'id="asistente"' in oscar.get(f"/oportunidades/{NRO}").text
+    assert 'id="asistente"' in oscar.get(f"/oportunidades/{NRO}/asistente").text
     token_antes = _post(oscar, f"/oportunidades/{NRO}/asistente/empezar")              # con el asistente encendido
     assert token_antes.status_code == 303
     monkeypatch.setenv("ASSISTANT_ENABLED", "false")
-    pagina = oscar.get(f"/oportunidades/{NRO}").text
+    pagina = oscar.get(f"/oportunidades/{NRO}/asistente").text
     assert 'id="asistente"' not in pagina
     r = oscar.get(f"/oportunidades/{NRO}/asistente/resultados/1")
     assert r.status_code == 404 and "ASSISTANT_ENABLED=false" in r.text
@@ -51,7 +51,7 @@ def test_sin_ia_funciona_como_formulario(web):
     _seguido(db_path, u)
     oscar = c["oscar"]
     assert _post(oscar, f"/oportunidades/{NRO}/asistente/empezar").status_code == 303
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "El cartel pide:" in pagina                                    # la pregunta de la app, sin la IA
     assert _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder",
                  {"valor_si_no": "1"}).status_code == 303
@@ -96,7 +96,7 @@ def test_al_calcular_se_ve_el_veredicto_y_la_explicacion_esta_en_la_constancia(w
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder", {"valor_si_no": "0"})   # excluyente: No
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/responder", {"valor_texto": "24/7"})  # → Revisar
     _post(oscar, f"/oportunidades/{NRO}/asistente/resultado")
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert '<strong>No cumplen un requisito excluyente</strong>' in pagina
     assert "Esto es lo que falta" not in pagina                      # la explicación solo está en la constancia
     rid = pagina.split("/asistente/resultados/")[1].split("/")[0]

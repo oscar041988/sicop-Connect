@@ -9,9 +9,10 @@ Lo usan su encargado y los administradores.
 ### Empezar
 
 1. Ve a la página del cartel.
-2. Baja hasta «Asistente de elegibilidad».
+2. Haz clic en el botón verde «Abrir el asistente».
+   El asistente se abre en su propia página: arriba el cartel, a la izquierda el asistente y a la derecha cuánto
+   falta, los archivos subidos y la oferta.
    [captura: Asistente · resaltar la sección «Asistente de elegibilidad»]
-   Si acabas de hacer clic en «Dar seguimiento», la página ya bajó hasta aquí.
 3. Haz clic en «Empezar el asistente».
    Solo la primera vez. Después sigue donde quedó.
    La primera vez la IA saca los requisitos del pliego. Tarda un poco: lee el pliego completo.
@@ -67,7 +68,7 @@ Lo usan su encargado y los administradores.
 ### Seguir otro día
 
 12. Cierra la página cuando quieras. Todo queda guardado.
-13. Vuelve al cartel otro día. El asistente sigue en la pregunta donde quedaste.
+13. Vuelve otro día con «Continuar con el asistente». Sigue en la pregunta donde quedaste.
     Otra persona autorizada también puede seguir.
 
 ### Revisar o cambiar respuestas

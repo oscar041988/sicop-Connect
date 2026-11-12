@@ -84,8 +84,8 @@
       </form>
       {% endif %}
       {% elif con_asis %}
-      <a class="btn p" href="?paso=requisitos#asistente" data-paso="requisitos">
-        {% if asis.pasos and asis.sesion %}Continuar con el asistente{% else %}Abrir asistente{% endif %}</a>
+      <a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/asistente">
+        {% if asis.pasos and asis.sesion %}Continuar con el asistente{% else %}Abrir el asistente{% endif %}</a>
       {% endif %}
       <a class="btn o" href="#revisiones">Decidir</a>
     </div>
@@ -214,9 +214,20 @@
     {% else %}
     <p class="vacio">Todavía sin requisitos: salen al «Empezar el asistente».</p>
     {% endif %}
-    {% if asistente_activo %}{# ASSISTANT_ENABLED (asistente, lección 5). La lista de verificación ya no tiene página:
-       se genera al «Empezar el asistente» (pedido de Ivania, 2026-11-09). #}
-    {% include "_asistente.html" %}
+    {% if asistente_activo and seg %}{# ASSISTANT_ENABLED (asistente, lección 5). Desde el 2026-11-12 el asistente tiene
+       su propia página (pedido de Ivania); aquí solo el botón para abrirlo. #}
+    <section id="asistente" class="asistente asistente-abrir">
+      <h2>Asistente de elegibilidad</h2>
+      {% if puede_entrar %}
+      <p class="sub">Pregunta, uno por uno, lo que pide el cartel (primero los excluyentes), arma la oferta y la corrige
+        conversando. Se abre en su propia página.</p>
+      <p><a class="btn p" href="/oportunidades/{{ c.nro_sicop }}/asistente">
+        {% if asis.pasos and asis.sesion %}Continuar con el asistente{% else %}Abrir el asistente{% endif %}</a></p>
+      {% else %}
+      <p class="sub">El asistente de este cartel lo usan {{ seg.encargado or "su encargado (todavía sin asignar)" }} y los
+        administradores.</p>
+      {% endif %}
+    </section>
     {% endif %}
   </section>
 
@@ -424,12 +435,6 @@
   var ancla = window.location.hash && document.getElementById(window.location.hash.slice(1));
   var panel = ancla && ancla.closest(".panel-paso");
   if (panel && panel.hidden) { mostrar(panel.dataset.paso, false); ancla.scrollIntoView(); }
-  /* El chat del asistente abre en el último mensaje, no en el primero (como cualquier chat). */
-  function chatAlFinal() {
-    document.querySelectorAll(".chat-mensajes").forEach(function (m) { m.scrollTop = m.scrollHeight; });
-  }
-  chatAlFinal();
-  document.querySelectorAll("a[data-paso]").forEach(function (a) { a.addEventListener("click", chatAlFinal); });
 
   /* Revisión obligatoria (pedido de Oscar, 2026-11-11): sin revisión, un enlace que sale del cartel lleva a la
      revisión; «Atrás» o cerrar la pestaña muestran el aviso del navegador. Formularios, descargas y páginas del mismo

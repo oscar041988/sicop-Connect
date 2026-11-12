@@ -263,7 +263,7 @@ def test_empezar_el_asistente_genera_la_lista_y_ya_no_hay_pagina(base, monkeypat
         assert verificacion.listar(conn, NRO) == []
     cliente = TestClient(app)
     assert iniciar_sesion(cliente, "admin@ejemplo.test").status_code == 303
-    html = cliente.get(f"/oportunidades/{NRO}").text
+    html = cliente.get(f"/oportunidades/{NRO}/asistente").text
     assert "Lista de verificación para el asistente" not in html and "Primero la IA saca los requisitos" in html
     assert cliente.get(f"/oportunidades/{NRO}/verificacion").status_code == 404
     r = cliente.post(f"/oportunidades/{NRO}/asistente/empezar", data={"csrf_token": token_csrf(html)},

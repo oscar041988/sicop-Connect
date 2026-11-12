@@ -231,18 +231,18 @@ def test_calcular_revisar_y_descargar_la_constancia_en_la_pagina(web):
                         (ids["patente"], {"estado": "archivo_pendiente"}),
                         (ids["cierre"], {"valor_fecha": "2026-12-01"}), (ids["soporte"], {"valor_texto": "24/7"})):
         assert _post(oscar, f"/oportunidades/{NRO}/asistente/{item}/responder", datos).status_code == 303
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Todavía no se ha calculado" in pagina and "Calcular el resultado" in pagina
     assert pagina.count('class="revisar-requisito"') == 2                  # la fecha y el texto
     r = _post(oscar, f"/oportunidades/{NRO}/asistente/resultado")
-    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}#resultado"
-    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}").text.split())
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}/asistente#resultado"
+    pagina = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente").text.split())
     assert "Pueden participar si completan lo que falta" in pagina and elegibilidad.AVISO in pagina
     assert "&lt;script&gt;" in pagina and "<script>alert(1)" not in pagina   # todo escapado
     r = _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/revisar", {"cumple": "2"})
     assert r.status_code == 400 and "Elige «Cumple» o «No cumple»" in r.text
     _post(oscar, f"/oportunidades/{NRO}/asistente/{ids['soporte']}/revisar", {"cumple": "1", "nota": "ok"})
-    rid = re.search(r'/asistente/resultados/(\d+)"', oscar.get(f"/oportunidades/{NRO}").text).group(1)
+    rid = re.search(r'/asistente/resultados/(\d+)"', oscar.get(f"/oportunidades/{NRO}/asistente").text).group(1)
     constancia = " ".join(oscar.get(f"/oportunidades/{NRO}/asistente/resultados/{rid}").text.split())
     assert "Constancia del resultado de elegibilidad" in constancia and elegibilidad.AVISO in constancia
     assert "8 años" in constancia and "Lo tiene · archivo pendiente" in constancia

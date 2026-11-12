@@ -1,4 +1,4 @@
-{# Asistente de elegibilidad (lección 3), dentro del detalle del cartel. Lo usan el encargado y los administradores. #}
+{# Asistente de elegibilidad (lección 3), en su propia página (asistente.html, desde el 2026-11-12). Lo usan el encargado y los administradores. #}
 {% if seg %}
 <section id="asistente" class="asistente">
   <h2>Asistente de elegibilidad</h2>
@@ -103,7 +103,7 @@
         {% if t == "documento" %}<button type="submit" name="estado" value="archivo_pendiente" class="btn o" formnovalidate>Lo tiene · subo el archivo después</button>
         <button type="submit" name="estado" value="no_lo_tiene" class="btn o" formnovalidate>Hermatix no lo tiene</button>{% endif %}
         <button type="submit" name="estado" value="no_se" class="btn o" formnovalidate>Todavía no lo sé</button>
-        {% if p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}#asistente">Volver a la siguiente</a>{% endif %}
+        {% if p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente#asistente">Volver a la siguiente</a>{% endif %}
       </div>
     </form>
   </article>
@@ -143,7 +143,7 @@
         {% if x.respuesta.tiene_archivo %}· <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ x.respuesta.id }}/ver" target="_blank" rel="noopener">Ver</a>
           · <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ x.respuesta.id }}/archivo">Descargar</a>{% endif %}
         <small class="sub">· {{ x.respuesta.respondido_por }}, {{ x.respuesta.creado_en | fecha }}</small>
-        · <a href="/oportunidades/{{ c.nro_sicop }}?pregunta={{ x.item.id }}#pregunta">Cambiar</a></li>
+        · <a href="/oportunidades/{{ c.nro_sicop }}/asistente?pregunta={{ x.item.id }}#pregunta">Cambiar</a></li>
       {% endfor %}
     </ol>
   </details>
