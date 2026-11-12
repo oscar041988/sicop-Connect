@@ -466,7 +466,9 @@ el PR)
   respuestas 66, constancias 3, perfil 3 y votos 1, iguales antes y después; `integrity_check` ok y
   `foreign_key_check` vacío. `AI_MODE=openai` (lo cambió Ivania). ~~Subir el respaldo al Drive~~ **hecho (Claude, 05/11):**
   `G:\Mi unidad\sicop-respaldos\sicop_20261105-090500` (7 archivos, ≈477 MB; tamaños iguales y huella del `.db`
-  igual al manifiesto). **Pendiente · Ivania:** probar «Marcar» y el reporte. **En el servidor**, con el PR: `migrate` hasta 0038.
+  igual al manifiesto). ~~Pendiente · Ivania: probar «Marcar» y el reporte~~ **hecho (Ivania, 05/11; confirmado el
+  12/11):** `20261002824` marcado «Cumple» a las 09:32 y su reporte generado a las 09:32:28. **En el servidor**, con
+  el PR: `migrate` hasta 0038.
 
 - **Página de ayuda · lección 4, ayuda viva, hecha (2026-11-04, plan aprobado por Ivania).** (1) Al final de cada
   misión, «¿Te sirvió esta ayuda?» (Sí / No y un comentario opcional de hasta 500 caracteres). Ruta
