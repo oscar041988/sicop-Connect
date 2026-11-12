@@ -239,6 +239,7 @@ ejemplo: la huella del archivo frente a la huella del cartel; por qué el tempor
 
 **Datos de apoyo:** `docs/ESTADO_PROYECTO.md` («Pendientes») · guía, sección 23.2 (plan de las 160 horas).
 
+> **Pasada al Google Doc por Ivania el 12/11** (ordenada por valor y con horas; Claude no la ha leído).
 > Actualizado el 2026-11-12. Ivania ya escribió esta sección en el Google Doc (26/10). Lo marcado **(nuevo)** no
 > estaba el 26/10; lo marcado **(nuevo 12/11)** pasó entre el 30/10 y el 12/11. Lo «sin novedad registrada» no
 > tiene cambios en `ESTADO_PROYECTO.md` desde el 29/10: confírmalo antes de escribirlo.
