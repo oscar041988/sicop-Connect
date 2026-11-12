@@ -141,7 +141,12 @@ Trabajo en local. Horas informadas por Ivania el 12/11 (7 h por día); el trabaj
 
 ### Uso de Claude
 
-No registrado.
+| Día | Encargos | % de la sesión | % semanal (todos los modelos) |
+|---|---|---|---|
+| lun 9/11 a mié 11/11 | no registrado | no registrado | no registrado |
+| jue 12/11 | no registrado | 12 % (se reinicia a las 18:29) | 20 % (la semana se reinicia el 18/11, 9:59) |
+
+Fuente: `/usage`, copiado por Ivania el 12/11 por la tarde (hora de Guatemala).
 
 ## Métricas del mes (guía, sección 22) — preliminar al 23/10
 
@@ -191,7 +196,7 @@ próximo ajuste de reglas.
 | 3 (21–23/10) | 21 h | no registrado | sección «Semana 3» |
 | 4 (26–30/10) | 35 h | no registrado | sección «Semana 4» |
 | 5 (2–6/11) | 35 h | no registrado | sección «Semana 5» |
-| 6 (9–12/11) | 28 h | no registrado | sección «Semana 6» |
+| 6 (9–12/11) | 28 h | 20 % semanal el 12/11; antes, no registrado | sección «Semana 6» |
 | **Total** | **193,5 h** | incompleto | |
 
 Interacciones totales y veces que se agotó la ventana: **no registradas**. Comparación con la estimación del anexo
