@@ -1,12 +1,19 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
+Última actualización: 2026-11-12 (nombres de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
 de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1097 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
 ## Último resultado
+
+- **Competencia: todas las empresas ganadoras con nombre (2026-11-12, Ivania).** Ivania buscó en la ficha del
+  proveedor de SICOP las 22 empresas (cédula jurídica 3101/3102) que ganaron carteles de familias candidatas y no
+  tenían nombre; se agregaron a `config/competidores.yaml` (29 cédulas con nombre). Nombres en el formato del
+  archivo («S.A.», «Ltda.», con tildes); la dirección no se guarda. Consulta de solo lectura a la base después:
+  0 empresas sin nombre; queda sin nombre 1 cédula de persona física, a propósito (datos personales).
+  - `tests/test_competencia.py`: 15 passed (el archivo carga sin errores).
 
 - **Chat: una respuesta a medias espera lo que falta (2026-11-12, opción 1 de Ivania).** Prueba de Ivania con la
   IA real en `20261003280`: al requisito 36 (lugar discreto, alerta de manipulación y respaldo alterno) contestó
@@ -1830,7 +1837,8 @@ el PR)
       (iot_frio 5, gps_flotas 4, cámaras corporales 1, rastreo de activos 1); 13 cédulas ganadoras sin nombre.
   - 452 passed (15 nuevas en `tests/test_competencia.py`, datos SINTÉTICOS).
   - **Pendiente · Ivania/Oscar:**
-    - poner nombre a las cédulas ganadoras en `config/competidores.yaml` (Registro Nacional o ficha del
+    - ~~poner nombre a las cédulas ganadoras en `config/competidores.yaml`~~ **hecho 2026-11-12: 29 cédulas con
+      nombre, ninguna empresa ganadora sin nombre** (Registro Nacional o ficha del
       proveedor en SICOP); **avance 2026-10-26 (Ivania):** 7 empresas con nombre (las 7 que compiten de verdad). De las
       13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); `0702950024` es persona física
       (sin nombre, para no guardar datos personales en Git; a confirmar con Oscar).
