@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1087 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1088 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -16,7 +16,14 @@ el PR)
   pregunta sigue abierta; al completarla, guarda todo junto. Con «guarde lo que le dije», guarda con la nota «Falta:
   …». «No lo tenemos» y «no sé» no esperan. `app/ai/chat.py`, sin migración. 4 pruebas nuevas en
   `tests/test_chat_asistente.py` (IA SIMULADA); 1087 pruebas pasan. La respuesta ya guardada del requisito 36 no cambia: se corrige con
-  «Cambiar». **Pendiente · Ivania:** probarlo con la IA real (contestar solo una parte de una pregunta).
+  «Cambiar».
+  - **Prueba real del v4 (Ivania, 12/11, pregunta 43, requisito excluyente de los técnicos con mínimo de 2 años):**
+    «Tenemos el listado y los currículos» quedó guardado «Lo tiene · archivo pendiente» sin decir los 2 años: la IA
+    devolvió `falta` vacío (entendió que tener el documento bastaba); la app hizo lo correcto con eso. **Prompt
+    `chat_asistente_v5.md`** (v4 sin tocar): el mínimo sin confirmar también va en «falta», con un ejemplo de este
+    caso. Solo cambian el prompt y `VERSION`. 1 prueba nueva; 1088 pruebas pasan. Las respuestas ya guardadas de las preguntas 41 y 43
+    se corrigen con «Cambiar». **Pendiente · Ivania:** probar el v5 con la IA real (un documento con mínimo,
+    contestando sin decir si se cumple).
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin

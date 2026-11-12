@@ -238,8 +238,7 @@ def test_el_prompt_v3_junta_la_respuesta_por_partes_y_no_vuelve_a_preguntar():
 # --- Prueba de Ivania con la IA real (2026-11-12): una respuesta a medias quedaba «Lo tiene» -----------------------
 
 def test_el_prompt_v4_espera_lo_que_falta():
-    assert ia_chat.VERSION == "v4"
-    v4 = " ".join(ia_chat.cargar_prompt().split())
+    v4 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v4.md").read_text(encoding="utf-8").split())
     v3 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v3.md").read_text(encoding="utf-8").split())
     for texto in ("escribe en «falta» lo que todavía no dijo", "La app no lo guarda hasta que el encargado lo complete",
                   "«guardar_igual» = true"):
@@ -248,6 +247,20 @@ def test_el_prompt_v4_espera_lo_que_falta():
     for texto in ("júntalas", "nunca vuelvas a preguntar lo que ya respondió", "Trata siempre de usted"):
         assert texto in v4                                                       # lo de v3 sigue
     assert {"falta", "guardar_igual"} <= set(ia_chat.ESQUEMA["properties"]["respuestas"]["items"]["required"])
+
+
+def test_el_prompt_v5_pide_confirmar_el_minimo():
+    # Prueba real de Ivania (12/11, pregunta 43): «Tenemos el listado y los currículos» sin decir los 2 años quedó
+    # guardado; la IA entendió que tener el documento bastaba.
+    assert ia_chat.VERSION == "v5"
+    v5 = " ".join(ia_chat.cargar_prompt().split())
+    v4 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v4.md").read_text(encoding="utf-8").split())
+    for texto in ("El mínimo también cuenta", "Tener el documento no basta: pregunta si se cumple el mínimo",
+                  "Ejemplo de un documento con mínimo"):
+        assert texto in v5 and texto not in v4
+    for texto in ("escribe en «falta» lo que todavía no dijo", "«guardar_igual» = true", "júntalas",
+                  "Trata siempre de usted"):
+        assert texto in v5                                                       # lo de v4 sigue
 
 
 def test_una_respuesta_a_medias_no_se_guarda_hasta_completarla(lista):

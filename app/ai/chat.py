@@ -37,9 +37,10 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v4"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
+VERSION = "v5"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
                                 # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar;
-                                # v4 (12/11, opción 1 de Ivania): si falta una parte, no se guarda hasta completarla
+                                # v4 (12/11, opción 1 de Ivania): si falta una parte, no se guarda hasta completarla;
+                                # v5 (12/11, prueba real): el mínimo sin confirmar también falta
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
