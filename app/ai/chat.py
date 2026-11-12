@@ -37,10 +37,11 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v5"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
+VERSION = "v6"                # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
                                 # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar;
                                 # v4 (12/11, opción 1 de Ivania): si falta una parte, no se guarda hasta completarla;
-                                # v5 (12/11, prueba real): el mínimo sin confirmar también falta
+                                # v5 (12/11, prueba real): el mínimo sin confirmar también falta;
+                                # v6 (12/11, prueba real): «detalle» guarda lo que no cabe en un número, sí/no o fecha
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
@@ -61,6 +62,7 @@ ESQUEMA = _objeto(
         falta=_texto("Lo que el requisito pide y el encargado todavía no dijo; «» si ya habló de todo"),
         guardar_igual={"type": "boolean",
                        "description": "true solo si el encargado pidió guardar lo dicho aunque falte algo"},
+        detalle=_texto("Todo lo que dijo sobre el requisito, en una línea; «» si el tipo es texto"),
     )),
     cambios=_lista(_objeto(
         accion={"type": "string", "enum": [*oferta_cambios.ACCIONES, ""],
@@ -266,6 +268,18 @@ def _entrada(paso: asistente.Paso, r: dict, nota: str = NOTA) -> asistente.Entra
     return asistente.Entrada(**campos)
 
 
+def _nota(paso: asistente.Paso, r: dict, falta: str) -> str:
+    """La nota de la respuesta: de dónde vino, lo que dijo si no cabe en el valor (prueba de Ivania, 2026-11-12: en
+    un requisito de número se perdía «enlace web para móviles: sí») y lo que falta si se guardó igual."""
+    nota = NOTA
+    detalle = _vacio(r["detalle"]).rstrip(".")
+    if detalle and paso.item.tipo_evidencia != "texto":     # en un texto ya va todo en el valor
+        nota += f" Dijo: {detalle}."
+    if falta:
+        nota += f" Falta: {falta}."
+    return nota
+
+
 def _corto(texto: str, largo: int = 90) -> str:
     texto = " ".join(texto.split())
     return texto if len(texto) <= largo else texto[:largo - 1].rstrip() + "…"
@@ -293,8 +307,8 @@ def _aplicar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, visib
         if r["usa_archivo"] and archivo is not None and not usado and paso.item.tipo_evidencia == "documento":
             subir = (io.BytesIO(archivo[0]), archivo[1])
         try:
-            asistente.responder(conn, settings, nro_sicop, paso.item.id,
-                                _entrada(paso, r, f"{NOTA} Falta: {falta}." if falta else NOTA), subir, quien, ahora)
+            asistente.responder(conn, settings, nro_sicop, paso.item.id, _entrada(paso, r, _nota(paso, r, falta)),
+                                subir, quien, ahora)
         except (asistente.AsistenteInvalido, ArchivoInvalido) as exc:
             lineas.append(f"No se guardó «{_corto(paso.item.requisito)}»: {exc}")
             continue

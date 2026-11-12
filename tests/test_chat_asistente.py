@@ -252,8 +252,7 @@ def test_el_prompt_v4_espera_lo_que_falta():
 def test_el_prompt_v5_pide_confirmar_el_minimo():
     # Prueba real de Ivania (12/11, pregunta 43): «Tenemos el listado y los currículos» sin decir los 2 años quedó
     # guardado; la IA entendió que tener el documento bastaba.
-    assert ia_chat.VERSION == "v5"
-    v5 = " ".join(ia_chat.cargar_prompt().split())
+    v5 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v5.md").read_text(encoding="utf-8").split())
     v4 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v4.md").read_text(encoding="utf-8").split())
     for texto in ("El mínimo también cuenta", "Tener el documento no basta: pregunta si se cumple el mínimo",
                   "Ejemplo de un documento con mínimo"):
@@ -261,6 +260,55 @@ def test_el_prompt_v5_pide_confirmar_el_minimo():
     for texto in ("escribe en «falta» lo que todavía no dijo", "«guardar_igual» = true", "júntalas",
                   "Trata siempre de usted"):
         assert texto in v5                                                       # lo de v4 sigue
+
+
+# --- Prueba de Ivania con la IA real (2026-11-12, pregunta 45): en un número se perdía la otra parte ---------------
+
+def test_el_prompt_v6_pide_el_detalle():
+    assert ia_chat.VERSION == "v6"
+    v6 = " ".join(ia_chat.cargar_prompt().split())
+    v5 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v5.md").read_text(encoding="utf-8").split())
+    for texto in ("«detalle»: todo lo que el encargado dijo sobre ese requisito", "Ejemplo de un número con otra parte"):
+        assert texto in v6 and texto not in v5
+    for texto in ("El mínimo también cuenta", "escribe en «falta» lo que todavía no dijo", "Trata siempre de usted"):
+        assert texto in v6                                                       # lo de v5 sigue
+    assert "detalle" in ia_chat.ESQUEMA["properties"]["respuestas"]["items"]["required"]
+
+
+def test_en_un_numero_la_otra_parte_queda_en_la_nota(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "Sí, y las referencias también.", IaSimulada({
+        "mensaje": "Gracias.",
+        "respuestas": [{**_r("R2", valor="14"), "falta": "", "guardar_igual": False,
+                        "detalle": "14 años con GPS; referencias de clientes: sí."}]}))
+    r = _respuesta(db, ids["anos"])
+    assert (r.resumen, r.nota) == ("14 años", f"{ia_chat.NOTA} Dijo: 14 años con GPS; referencias de clientes: sí.")
+
+
+def test_en_un_texto_el_detalle_no_se_repite_en_la_nota(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _ampliar(db)
+    soporte = next(n for n, p in enumerate(_pasos(db), start=1) if p.item.id == ids["soporte"])
+    _enviar(db, settings, "Soporte 24/7 por teléfono.", IaSimulada({
+        "mensaje": "Gracias.",
+        "respuestas": [{**_r(f"R{soporte}", valor="Soporte 24/7 por teléfono"), "falta": "", "guardar_igual": False,
+                        "detalle": "Soporte 24/7 por teléfono"}]}))
+    assert _respuesta(db, ids["soporte"]).nota == ia_chat.NOTA                  # el texto ya va en el valor
+
+
+def test_guardado_igual_lleva_lo_que_dijo_y_lo_que_falta(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "Guarde lo que le dije.", IaSimulada({
+        "mensaje": "Entendido.",
+        "respuestas": [{**_r("R2", valor="14"), "falta": "las referencias", "guardar_igual": True,
+                        "detalle": "14 años con GPS"}]}))
+    assert _respuesta(db, ids["anos"]).nota == f"{ia_chat.NOTA} Dijo: 14 años con GPS. Falta: las referencias."
 
 
 def test_una_respuesta_a_medias_no_se_guarda_hasta_completarla(lista):

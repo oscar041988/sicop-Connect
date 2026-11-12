@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1088 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1092 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -22,8 +22,15 @@ el PR)
     devolvió `falta` vacío (entendió que tener el documento bastaba); la app hizo lo correcto con eso. **Prompt
     `chat_asistente_v5.md`** (v4 sin tocar): el mínimo sin confirmar también va en «falta», con un ejemplo de este
     caso. Solo cambian el prompt y `VERSION`. 1 prueba nueva; 1088 pruebas pasan. Las respuestas ya guardadas de las preguntas 41 y 43
-    se corrigen con «Cambiar». **Pendiente · Ivania:** probar el v5 con la IA real (un documento con mínimo,
-    contestando sin decir si se cumple).
+    se corrigen con «Cambiar».
+  - **Prueba real del v5 (Ivania, 12/11, pregunta 45: «al menos 2 apps» y «un enlace para móviles»):** contestó «2»
+    → «Todavía no se guarda…: falta si ofrece un enlace…» y la pregunta siguió abierta; contestó «Sí, tenemos el
+    enlace web» → guardado y pasó a la 46. **Funciona.** Pero el requisito es de número: se guardó solo «2 apps» y
+    lo del enlace quedó únicamente en el chat. **Prompt `chat_asistente_v6.md`** (v5 sin tocar): cada respuesta
+    trae `detalle` (todo lo dicho, en una línea) y la app lo pone en la nota cuando el requisito es de número, sí o
+    no, fecha o documento: «Desde el chat del asistente. Dijo: 2 apps; enlace web para móviles: sí.» (en un texto
+    ya va todo en el valor). `chat._nota`. 4 pruebas nuevas; 1092 pruebas pasan. **Pendiente · Ivania:** probar el v6 y el caso del
+    mínimo con un documento (p. ej. las certificaciones de servicios GPS de `20261003280`).
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
