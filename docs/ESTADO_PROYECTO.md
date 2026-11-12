@@ -2,11 +2,21 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1083 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1087 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
 ## Último resultado
+
+- **Chat: una respuesta a medias espera lo que falta (2026-11-12, opción 1 de Ivania).** Prueba de Ivania con la
+  IA real en `20261003280`: al requisito 36 (lugar discreto, alerta de manipulación y respaldo alterno) contestó
+  solo la alerta; el asistente dijo bien qué faltaba, pero la app lo guardó «Lo tiene · archivo pendiente» y pasó a
+  la pregunta 42 (el v3 lo pedía así). Ahora, prompt **`chat_asistente_v4.md`** (v3 sin tocar): cada respuesta trae
+  `falta` y `guardar_igual`. Si falta algo, la app **no guarda ni avanza** («Todavía no se guarda…: falta …») y la
+  pregunta sigue abierta; al completarla, guarda todo junto. Con «guarde lo que le dije», guarda con la nota «Falta:
+  …». «No lo tenemos» y «no sé» no esperan. `app/ai/chat.py`, sin migración. 4 pruebas nuevas en
+  `tests/test_chat_asistente.py` (IA SIMULADA); 1087 pruebas pasan. La respuesta ya guardada del requisito 36 no cambia: se corrige con
+  «Cambiar». **Pendiente · Ivania:** probarlo con la IA real (contestar solo una parte de una pregunta).
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
@@ -45,8 +55,9 @@ el PR)
 
 - **El chat ya no repite la pregunta (2026-11-11).** Prompt `chat_asistente_v3.md`: si la respuesta llega por
   partes, la IA la junta, la anota y nombra una sola vez lo que falta; «guarde lo que le dije» anota lo dicho. Desde
-  la segunda vuelta sin avanzar, la app dice cómo seguir. **Pendiente · Ivania:** probarlo respondiendo por partes
-  una pregunta que pida dos cosas.
+  la segunda vuelta sin avanzar, la app dice cómo seguir. ~~Pendiente · Ivania: probarlo respondiendo por partes
+  una pregunta que pida dos cosas~~ **probado (Ivania, 12/11):** no repite la pregunta, pero guardaba la respuesta a
+  medias; arreglado con el v4 (arriba).
 
 - **Oferta más sobria y chat abajo (2026-11-11).** Pedido de Oscar: la oferta (PDF y Word, también la económica)
   lleva solo el logo de Hermatix con su nombre arriba a la izquierda, sin franjas ni pie de color; títulos en negro,
@@ -65,8 +76,9 @@ el PR)
   antes y después (carteles 15015, revisiones 8, resúmenes 70, uso de IA 113, respuestas 103, historial 569,
   sesiones 5); `integrity_check` ok y `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude,
   11/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261111-113040` (7 archivos, ≈390 MB; tamaños iguales y huella del
-  `.db` igual al manifiesto). **Pendiente · Ivania:** probarlo: armar la oferta
-  de un cartel con el asistente respondido y pedir un cambio en el chat. **Siguiente:** paso 5, «Oferta terminada» y
+  `.db` igual al manifiesto). ~~Pendiente · Ivania: probarlo: armar la oferta
+  de un cartel con el asistente respondido y pedir un cambio en el chat~~ **hecho (Ivania, 11/11; comprobado el
+  12/11):** `20261001587`, versiones 1 a 3 (13:12, 13:16 y 14:42) con 2 cambios aplicados desde el chat. **Siguiente:** paso 5, «Oferta terminada» y
   el borrado de los datos personales (`DECISION_IA.md` §10.4).
 
 - **El asistente como chat (2026-11-11; `DECISION_IA.md` §10, paso 3 de §10.7).** En el cartel, con
@@ -97,7 +109,8 @@ el PR)
   `propuesta.preparar()` junta los datos una sola vez para los dos formatos. Dependencia nueva `python-docx` 1.2.0
   (+ `lxml`; entorno limpio comprobado, ruedas para Linux). Sin migración. 4 pruebas nuevas
   (`tests/test_propuesta_word.py`). §10 marcada **aprobada** (Oscar, 11/11).
-  **Pendiente · Ivania:** probar «Oferta en Word» en un cartel y abrirlo en Word. **En el servidor**, con el PR:
+  ~~Pendiente · Ivania: probar «Oferta en Word» en un cartel y abrirlo en Word~~ **hecho (Ivania, 11/11;
+  comprobado el 12/11):** dos .docx de `20261001587` en `data/exports/ofertas/` (13:13 y 14:55). **En el servidor**, con el PR:
   `pip install -r requirements.lock.txt`.
 
 - **Anthropic en la app, junto a OpenAI (2026-11-11, DECISION_IA.md §8; paso 2 de §10.7).** `AI_MODE=anthropic`

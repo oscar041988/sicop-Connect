@@ -37,12 +37,14 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v3"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
-                                # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar
+VERSION = "v4"                  # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
+                                # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar;
+                                # v4 (12/11, opción 1 de Ivania): si falta una parte, no se guarda hasta completarla
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
 NOTA = "Desde el chat del asistente."
+ESPERAN_TODO = ("respondido", "archivo_pendiente")   # «no lo tenemos» y «no sé» no esperan el resto
 ROLES = {"persona": "PERSONA", "asistente": "ASISTENTE", "app": "APP"}
 
 ESQUEMA = _objeto(
@@ -55,6 +57,9 @@ ESQUEMA = _objeto(
                      "documento: «»"),
         vence_el=_texto("AAAA-MM-DD si se sabe hasta cuándo vale el documento; si no, «»"),
         usa_archivo={"type": "boolean", "description": "true solo si el archivo de este mensaje prueba este requisito"},
+        falta=_texto("Lo que el requisito pide y el encargado todavía no dijo; «» si ya habló de todo"),
+        guardar_igual={"type": "boolean",
+                       "description": "true solo si el encargado pidió guardar lo dicho aunque falte algo"},
     )),
     cambios=_lista(_objeto(
         accion={"type": "string", "enum": [*oferta_cambios.ACCIONES, ""],
@@ -245,9 +250,9 @@ def _vacio(valor: str) -> str:
     return "" if valor == NO else valor.strip()
 
 
-def _entrada(paso: asistente.Paso, r: dict) -> asistente.Entrada:
+def _entrada(paso: asistente.Paso, r: dict, nota: str = NOTA) -> asistente.Entrada:
     valor, t = _vacio(r["valor"]), paso.item.tipo_evidencia
-    campos = {"estado": r["estado"], "vence_el": _vacio(r["vence_el"]), "nota": NOTA}
+    campos = {"estado": r["estado"], "vence_el": _vacio(r["vence_el"]), "nota": nota}
     if r["estado"] == "respondido":
         if t == "numero":
             campos["valor_numero"] = valor
@@ -276,11 +281,19 @@ def _aplicar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, visib
         if paso is None or paso.item.id in vistos or r["estado"] == NO:
             continue                                     # requisito inventado, repetido o sin estado: se ignora
         vistos.add(paso.item.id)
+        # Respuesta a medias (prueba de Ivania, 2026-11-12: «Lo tiene» con dos de tres partes sin decir): no se guarda
+        # hasta completarla; con «guarde lo que le dije», se guarda con la nota de lo que falta.
+        falta = _vacio(r["falta"]) if r["estado"] in ESPERAN_TODO else ""
+        if falta and not r["guardar_igual"]:
+            lineas.append(f"Todavía no se guarda «{_corto(paso.item.requisito)}»: falta {falta}. Contéstelo aquí, o "
+                          f"escriba «guarde lo que le dije» para guardarlo con esa nota.")
+            continue
         subir = None
         if r["usa_archivo"] and archivo is not None and not usado and paso.item.tipo_evidencia == "documento":
             subir = (io.BytesIO(archivo[0]), archivo[1])
         try:
-            asistente.responder(conn, settings, nro_sicop, paso.item.id, _entrada(paso, r), subir, quien, ahora)
+            asistente.responder(conn, settings, nro_sicop, paso.item.id,
+                                _entrada(paso, r, f"{NOTA} Falta: {falta}." if falta else NOTA), subir, quien, ahora)
         except (asistente.AsistenteInvalido, ArchivoInvalido) as exc:
             lineas.append(f"No se guardó «{_corto(paso.item.requisito)}»: {exc}")
             continue

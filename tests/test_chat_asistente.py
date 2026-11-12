@@ -227,13 +227,72 @@ def test_el_prompt_v2_trata_de_usted_y_la_v1_no_cambia():
 
 
 def test_el_prompt_v3_junta_la_respuesta_por_partes_y_no_vuelve_a_preguntar():
-    assert ia_chat.VERSION == "v3"
-    v3 = " ".join(ia_chat.cargar_prompt().split())
+    v3 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v3.md").read_text(encoding="utf-8").split())
     v2 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v2.md").read_text(encoding="utf-8").split())
     for texto in ("llega por partes", "júntalas", "Nunca vuelvas a preguntar lo que ya respondió",
                   "«guarde lo que le dije»", "anótalo otra vez con todo junto"):
         assert texto in v3 and texto not in v2
     assert "Trata siempre de usted" in v3 and "«lo subo después»" in v3          # lo de v2 sigue
+
+
+# --- Prueba de Ivania con la IA real (2026-11-12): una respuesta a medias quedaba «Lo tiene» -----------------------
+
+def test_el_prompt_v4_espera_lo_que_falta():
+    assert ia_chat.VERSION == "v4"
+    v4 = " ".join(ia_chat.cargar_prompt().split())
+    v3 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v3.md").read_text(encoding="utf-8").split())
+    for texto in ("escribe en «falta» lo que todavía no dijo", "La app no lo guarda hasta que el encargado lo complete",
+                  "«guardar_igual» = true"):
+        assert texto in v4 and texto not in v3
+    assert "anótalo como «respondido» con lo que dijo" not in v4                 # lo de v3 que cambió
+    for texto in ("júntalas", "nunca vuelvas a preguntar lo que ya respondió", "Trata siempre de usted"):
+        assert texto in v4                                                       # lo de v3 sigue
+    assert {"falta", "guardar_igual"} <= set(ia_chat.ESQUEMA["properties"]["respuestas"]["items"]["required"])
+
+
+def test_una_respuesta_a_medias_no_se_guarda_hasta_completarla(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "Ofertamos por SICOP.", IaSimulada({
+        "mensaje": "Gracias. ¿Con qué firma digital?",
+        "respuestas": [{**_r("R1", valor="sí"), "falta": "la firma digital", "guardar_igual": False}]}))
+
+    assert _respuesta(db, ids["sicop"]) is None                                  # no se guarda: falta una parte
+    textos = [m.texto for m in _mensajes(db)]
+    assert textos[-2] == ("Todavía no se guarda «Ofertar por SICOP.»: falta la firma digital. Contéstelo aquí, o "
+                          "escriba «guarde lo que le dije» para guardarlo con esa nota.")
+    assert textos[-1] == "Seguimos con la pregunta 1 de 2 (arriba)."            # la misma pregunta sigue abierta
+
+    _enviar(db, settings, "Con la firma del representante.", IaSimulada({
+        "mensaje": "Gracias, con eso queda completo.",
+        "respuestas": [{**_r("R1", valor="sí"), "falta": "", "guardar_igual": False}]}))
+    r = _respuesta(db, ids["sicop"])
+    assert (r.resumen, r.nota) == ("Sí", ia_chat.NOTA)                           # completo: se guarda y avanza
+    assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")
+
+
+def test_guarde_lo_que_le_dije_guarda_con_la_nota_de_lo_que_falta(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "Guarde lo que le dije.", IaSimulada({
+        "mensaje": "Entendido.",
+        "respuestas": [{**_r("R1", valor="sí"), "falta": "la firma digital", "guardar_igual": True}]}))
+    r = _respuesta(db, ids["sicop"])
+    assert (r.resumen, r.nota) == ("Sí", f"{ia_chat.NOTA} Falta: la firma digital.")
+    assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")
+
+
+def test_no_lo_tenemos_y_no_se_no_esperan_el_resto(lista):
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "No sé.", IaSimulada({
+        "mensaje": "Entendido.",
+        "respuestas": [{**_r("R1", estado="no_se"), "falta": "la firma digital", "guardar_igual": False}]}))
+    r = _respuesta(db, ids["sicop"])
+    assert (r.estado, r.nota) == ("no_se", ia_chat.NOTA)
 
 
 def test_ya_esta_lista_cuando_todo_tiene_respuesta(lista):
