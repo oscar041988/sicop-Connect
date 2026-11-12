@@ -23,6 +23,7 @@ el PR)
     lista de requisitos tiene desplazamiento (96 en ese cartel).
   - Pruebas: las del asistente apuntan a la página nueva; 2 nuevas (`test_el_asistente_tiene_su_propia_pagina`,
     `test_pedida_desde_el_asistente_el_aviso_sale_en_el_asistente`). Suite: 1102 passed.
+  - **Revisada por Ivania en su panel (12/11): se ve bien.** Pendiente · Oscar: verla (el diseño sale de su maqueta).
 
 - **Escaneo de fallas de la app (2026-11-12, pedido de Ivania).** Revisado: patrones de error en `app/` (análisis
   del código), SQL armado con texto, sesión/permisos/descargas/token de la API, 98 páginas del panel y todas las rutas
