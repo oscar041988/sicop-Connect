@@ -74,8 +74,10 @@ def _fecha(iso: str | None) -> datetime | None:
 
 
 def intentados_hoy(conn: sqlite3.Connection, hoy: date) -> set[str]:
-    return {n for (n,) in conn.execute("SELECT DISTINCT nro_sicop FROM ia_summaries WHERE substr(creado_en, 1, 10) = ?",
-                                       (hoy.isoformat(),))}
+    # Un resumen recomparado (ok o revisar sin ia_usage) no fue un intento de la IA: no gasta el tope del día.
+    return {n for (n,) in conn.execute(
+        "SELECT DISTINCT nro_sicop FROM ia_summaries WHERE substr(creado_en, 1, 10) = ?"
+        " AND (estado = 'fallido' OR ia_usage_id IS NOT NULL)", (hoy.isoformat(),))}
 
 
 def costo_de_hoy(conn: sqlite3.Connection, hoy: date) -> Decimal:

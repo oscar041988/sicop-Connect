@@ -312,6 +312,30 @@ def del_cartel(conn: sqlite3.Connection, nro_sicop: str) -> list[Resultado]:
         f"SELECT {_COLUMNAS} FROM ia_summaries WHERE nro_sicop = ? ORDER BY id DESC", (nro_sicop,))]
 
 
+def recomparar(conn: sqlite3.Connection, settings: Settings,
+               nro_sicop: str | None = None) -> tuple[int, list[tuple[Resultado, Resultado]]]:
+    """Vuelve a comparar con SICOP el último resumen de cada cartel (o de uno), sin llamar a la IA.
+    Solo si su expediente no cambió (misma huella). Los resúmenes no se modifican: si las diferencias cambian, queda
+    una fila nueva con el mismo resumen, sin costo. Devuelve (cuántos revisó, [(anterior, nuevo)])."""
+    nros = [nro_sicop] if nro_sicop else [n for (n,) in conn.execute(
+        "SELECT DISTINCT nro_sicop FROM ia_summaries WHERE resumen_json IS NOT NULL ORDER BY nro_sicop")]
+    revisados, cambios = 0, []
+    for nro in nros:
+        anterior = ultimo(conn, nro)
+        exp = armar_expediente(conn, nro, settings.ia_max_input_tokens) if anterior else None
+        if exp is None or exp.huella != anterior.huella:
+            continue  # expediente nuevo: el próximo «resumir» pide otro resumen
+        revisados += 1
+        diferencias = comparar(conn, nro, anterior.datos)
+        if diferencias == anterior.diferencias:
+            continue
+        motivo = f"Recomparado con SICOP desde el resumen #{anterior.id}, sin llamar a la IA"
+        id_ = _guardar(conn, exp, anterior.prompt_version, anterior.modelo, anterior.datos,
+                       "revisar" if diferencias else "ok", motivo, diferencias, None, None)
+        cambios.append((anterior, _cargar(conn, id_, exp)))
+    return revisados, cambios
+
+
 # --- Texto para leer (EXPORTS_DIR) --------------------------------------------------------------------------------
 
 def _con_cita(texto: str, cita: str) -> str:

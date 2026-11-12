@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1079 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1083 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -12,6 +12,14 @@ el PR)
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
   motivo. `resumen.comparar` ya no compara la cantidad de una línea que aparece más de una vez en «Qué piden».
   1 prueba nueva; 1079 pruebas pasan.
+  - **Recomparar lo guardado (mismo día, opción elegida por Ivania):** el arreglo solo valía para resúmenes nuevos
+    y `ia resumir` reutilizaba el #81 con la regla vieja. Nueva orden `ia recomparar [--nro N]`: vuelve a comparar
+    con SICOP el último resumen de cada cartel cuyo expediente no cambió, sin llamar a la IA. Como los resúmenes no
+    se modifican (migración 0026), si las diferencias cambian queda una fila nueva con el mismo resumen, sin costo y
+    con el motivo «Recomparado con SICOP desde el resumen #…». No gasta el tope diario de la cola (`intentados_hoy`).
+    Respaldo previo `sicop_20261112-083011`. En la base real: 18 revisados, 2 cambiaron, `20261100871` (#81 → #84)
+    y `20261003242` (#44 → #85, línea 1 con dos componentes: 7200 y 3), los dos de REVISAR a OK. `ia resumir` ya no dice «sin resumen» cuando hay motivo y resumen.
+    4 pruebas nuevas; 1083 pruebas pasan.
 
 - **Revisión obligatoria (2026-11-11, pedido de Oscar; decisiones de Ivania).**
   - «Dar seguimiento» solo se puede con una revisión vigente «Interesa» o «Revisar requisitos». La ruta lo vuelve a
@@ -31,8 +39,9 @@ el PR)
   nadie la repetía. Nueva tarea «SICOP CONNECT - resumenes IA» (`sicop-enriquecimiento.ps1 -SoloIa`, lunes a
   viernes 14:00); si la de las 10:00 salió bien no gasta nada. `ia cola` a mano el 11/11 a las 15:06: 10 de 22
   (7 OK, 3 «incompleta · max_output_tokens», entre ellos el Alta `20261100871`), 0.51 USD; quedan 12. Los que salen
-  bien usan hasta 3872 de los 4000 tokens. **Pendiente · Ivania:** `IA_MAX_OUTPUT_TOKENS=8000` en `.env` y
-  `ia resumir --nro 20261100871`.
+  bien usan hasta 3872 de los 4000 tokens. ~~Pendiente · Ivania: `IA_MAX_OUTPUT_TOKENS=8000` en `.env` y
+  `ia resumir --nro 20261100871`~~ **hecho (Ivania, 12/11):** 8000 confirmado con `doctor`; el resumen ya existía
+  (#81, del 11/11 15:15) y quedó OK con `ia recomparar` (arriba).
 
 - **El chat ya no repite la pregunta (2026-11-11).** Prompt `chat_asistente_v3.md`: si la respuesta llega por
   partes, la IA la junta, la anota y nombra una sola vez lo que falta; «guarde lo que le dije» anota lo dicho. Desde

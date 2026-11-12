@@ -347,7 +347,7 @@ def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None, prompt: str
     if not res.reutilizado:
         print(f"Tokens: entrada {res.tokens_entrada} · salida {res.tokens_salida} · costo {costo}")
     if res.motivo:
-        print(f"Motivo: {res.motivo} (sin resumen; no se inventa uno)")
+        print(f"Motivo: {res.motivo}" + (" (sin resumen; no se inventa uno)" if res.datos is None else ""))
     for d in res.diferencias:
         print(f"  No coincide con SICOP · {d['dato']}: resumen «{d['resumen']}» · SICOP «{d['sicop']}»")
     if res.datos:
@@ -355,6 +355,27 @@ def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None, prompt: str
               " (la decisión es del encargado)")
     print(f"Guardado en: {archivo}")
     return 0 if res.estado != "fallido" else 1
+
+
+def ia_recomparar_cmd(settings: Settings, nro_sicop: str | None = None) -> int:
+    """Vuelve a comparar con SICOP los resúmenes guardados (regla de comparación nueva), sin llamar a la IA."""
+    if nro_sicop is not None and not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        revisados, cambios = ia_resumen.recomparar(conn, settings, nro_sicop)
+    for antes, ahora in cambios:
+        print(f"{ahora.nro_sicop}: {ia_resumen.ESTADOS[antes.estado].upper()} → {ia_resumen.ESTADOS[ahora.estado].upper()}"
+              f" · resumen #{antes.id} → #{ahora.id}")
+        for d in ahora.diferencias:
+            print(f"  No coincide con SICOP · {d['dato']}: resumen «{d['resumen']}» · SICOP «{d['sicop']}»")
+    print(f"Revisados: {revisados} · cambiaron: {len(cambios)}"
+          + (" · nada que cambiar" if not cambios else "") + " (sin llamar a la IA, sin costo)")
+    return 0
 
 
 def ia_cola_cmd(settings: Settings, ver: bool, cliente=None, **opciones) -> int:
@@ -1424,6 +1445,8 @@ def build_parser() -> argparse.ArgumentParser:
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ir.add_argument("--prompt", metavar="VERSION",
                     help="Usar esta versión del prompt (v3…) solo para este cartel, sin cambiar IA_PROMPT_VERSION")
+    irc = ia_sub.add_parser("recomparar", help="Vuelve a comparar con SICOP los resúmenes guardados, sin llamar a la IA")
+    irc.add_argument("--nro", metavar="NUMERO_SICOP", help="Solo este cartel (si no, todos)")
     irp = ia_sub.add_parser("reporte", help="Reporte de cartel Hermatix en PDF, máximo 3 páginas (lección 4)")
     irp.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
     irp.add_argument("--nuevo", action="store_true", help="Generar otro aunque el resumen no haya cambiado")
@@ -1531,6 +1554,8 @@ def _ejecutar(args, settings: Settings) -> int:
         return ia_reporte_cmd(settings, args.nro.strip(), forzar=args.nuevo)
     if args.command == "ia" and args.ia_command == "resumir":
         return ia_resumir_cmd(settings, args.nro.strip(), prompt=args.prompt.strip() if args.prompt else None)
+    if args.command == "ia" and args.ia_command == "recomparar":
+        return ia_recomparar_cmd(settings, args.nro.strip() if args.nro else None)
     if args.command == "ia" and args.ia_command == "cola":
         return ia_cola_cmd(settings, args.ver)
     if args.command == "ayuda":

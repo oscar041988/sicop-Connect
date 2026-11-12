@@ -233,6 +233,84 @@ def test_la_base_no_acepta_un_fallido_con_resumen_ni_se_modifica_ni_se_borra(db)
     assert apply_migrations(db) == []
 
 
+# --- Recomparar lo guardado (regla de comparación nueva, sin IA) --------------------------------------------------
+
+_VIEJA = [{"dato": "Cantidad de la línea 1", "resumen": "2", "sicop": "10"}]
+
+
+def _guardado_con_regla_vieja(db, huella=None) -> int:
+    """Un resumen ok y, encima, la misma fila como la habría dejado una regla vieja: «revisar» con una diferencia."""
+    _resumir(db, OpenAISimulado(respuesta(_resumen_valido())))
+    with closing(connect(db)) as conn:
+        id_ = conn.execute(
+            "INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, resumen_json, estado,"
+            " diferencias_json, costo_estimado, moneda, ia_usage_id, creado_en)"
+            " SELECT nro_sicop, prompt_version, modelo, coalesce(?, huella), resumen_json, 'revisar', ?, costo_estimado,"
+            " moneda, ia_usage_id, creado_en FROM ia_summaries ORDER BY id DESC LIMIT 1",
+            (huella, json.dumps(_VIEJA))).lastrowid
+        conn.commit()
+    return id_
+
+
+def _recomparar(db, nro=None):
+    with closing(connect(db)) as conn:
+        return resumen.recomparar(conn, _settings(db), nro)
+
+
+def test_recomparar_agrega_una_fila_nueva_sin_costo_y_deja_la_vieja(db):
+    viejo = _guardado_con_regla_vieja(db)
+    revisados, cambios = _recomparar(db, NRO)
+
+    assert revisados == 1 and len(cambios) == 1
+    antes, ahora = cambios[0]
+    assert (antes.id, antes.estado, ahora.estado, ahora.diferencias, ahora.costo) == (viejo, "revisar", "ok", [], None)
+    assert ahora.motivo == f"Recomparado con SICOP desde el resumen #{viejo}, sin llamar a la IA"
+    assert ahora.datos == antes.datos and ahora.huella == antes.huella
+    with closing(connect(db)) as conn:
+        assert conn.execute("SELECT estado, diferencias_json FROM ia_summaries WHERE id = ?", (viejo,)).fetchone() \
+            == ("revisar", json.dumps(_VIEJA))                    # la fila vieja no se toca
+        assert conn.execute("SELECT count(*) FROM ia_usage").fetchone() == (1,)   # solo la llamada original
+    assert _recomparar(db) == (1, [])                             # otra vez: nada que cambiar, ninguna fila nueva
+
+
+def test_recomparar_no_toca_un_resumen_de_otro_expediente(db):
+    _guardado_con_regla_vieja(db, huella="b" * 64)
+    assert _recomparar(db) == (0, [])
+
+
+def test_despues_de_recomparar_resumir_reutiliza_y_la_cola_no_lo_cuenta(db):
+    from app.ai import cola
+    from datetime import date
+
+    _guardado_con_regla_vieja(db)
+    _, [(_, nuevo)] = _recomparar(db)
+    r = _resumir(db, OpenAISimulado())                            # vacío: si llamara, fallaría
+    assert (r.reutilizado, r.id, r.estado) == (True, nuevo.id, "ok")
+    with closing(connect(db)) as conn:
+        filas = conn.execute("SELECT id, ia_usage_id IS NULL FROM ia_summaries ORDER BY id").fetchall()
+        hoy = date.fromisoformat(nuevo.creado_en[:10])
+        # El resumen original (con ia_usage) cuenta como intento; el recomparado, solo, no contaría.
+        assert filas[-1] == (nuevo.id, 1) and cola.intentados_hoy(conn, hoy) == {NRO}
+        conn.execute("DROP TRIGGER ia_summaries_no_se_borran")
+        conn.execute("DELETE FROM ia_summaries WHERE id <> ?", (nuevo.id,))
+        assert cola.intentados_hoy(conn, hoy) == set()
+
+
+def test_comando_recomparar(db, tmp_path, capsys):
+    viejo = _guardado_con_regla_vieja(db)
+    assert main(["ia", "recomparar", "--nro", NRO], _settings(db, tmp_path)) == 0
+    salida = capsys.readouterr().out
+    assert f"{NRO}: REVISAR → OK · resumen #{viejo} → #{viejo + 1}" in salida
+    assert "Revisados: 1 · cambiaron: 1 (sin llamar a la IA, sin costo)" in salida
+    assert main(["ia", "recomparar"], _settings(db, tmp_path)) == 0
+    assert "cambiaron: 0 · nada que cambiar" in capsys.readouterr().out
+    assert main(["ia", "recomparar", "--nro", "12-3"], _settings(db, tmp_path)) == 1
+    capsys.readouterr()
+    assert ia_resumir_cmd(_settings(db, tmp_path), NRO, cliente=OpenAISimulado()) == 0   # reutiliza, sin llamar
+    salida = capsys.readouterr().out
+    assert "Motivo: Recomparado con SICOP" in salida and "sin resumen" not in salida
+
+
 # --- Comando y configuración ---------------------------------------------------------------------------------------
 
 def test_comando_resumir(db, tmp_path, capsys):
