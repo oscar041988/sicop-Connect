@@ -1413,7 +1413,8 @@ el PR)
     `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). ~~Respaldo y `migrate` (0024) en la base local~~
     **hecho por Ivania (29/10):** respaldo `sicop_20261029-115027` (ZIP subido al Drive) → esquema 0024, integridad
     ok, outbox con sus 48 filas, 5 revisiones y 4 usuarios (comprobado por Claude en solo lectura). 687 passed.
-    **Pendiente · Ivania:** probar asignando un cartel y mirar la vista previa del ciclo de mañana.
+    ~~Pendiente · Ivania: probar asignando un cartel y mirar la vista previa del ciclo de mañana~~ **hecho
+    (confirmado por Ivania el 12/11):** en la outbox hay 1 correo de asignación del 30/10 (15:44), `aceptado`.
   - **Paso 5 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
     Ivania):** etapas del seguimiento, preparando · enviada · ganada · perdida (migración **0025**,
     `seguimiento_etapas`, sin borrado). Empieza «preparando»; la cambian el encargado vigente y los administradores
