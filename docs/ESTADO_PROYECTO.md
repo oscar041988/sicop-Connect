@@ -1,9 +1,10 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un botón, migración 0043; borrador del asistente como chat,
-`DECISION_IA.md` §10, con decisiones de Oscar y estimación de costo; rama `desarrollo`) · Base local en esquema
-0043 · Suite: 1079 passed · `desarrollo` en GitHub: `b31528f` (push del 11/11) · `main` de GitHub: `7f5c558` (sin
-cambios desde el 29/10; espera que Oscar una el PR)
+Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
+botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1079 passed · `desarrollo` en GitHub: al día
+con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
+el PR)
 
 ## Último resultado
 
