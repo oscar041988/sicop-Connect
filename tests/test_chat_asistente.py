@@ -283,8 +283,7 @@ def test_el_prompt_v5_pide_confirmar_el_minimo():
 # --- Prueba de Ivania con la IA real (2026-11-12, pregunta 45): en un número se perdía la otra parte ---------------
 
 def test_el_prompt_v6_pide_el_detalle():
-    assert ia_chat.VERSION == "v6"
-    v6 = " ".join(ia_chat.cargar_prompt().split())
+    v6 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v6.md").read_text(encoding="utf-8").split())
     v5 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v5.md").read_text(encoding="utf-8").split())
     for texto in ("«detalle»: todo lo que el encargado dijo sobre ese requisito", "Ejemplo de un número con otra parte"):
         assert texto in v6 and texto not in v5
@@ -316,6 +315,32 @@ def test_en_un_texto_el_detalle_no_se_repite_en_la_nota(lista):
         "respuestas": [{**_r(f"R{soporte}", valor="Soporte 24/7 por teléfono"), "falta": "", "guardar_igual": False,
                         "detalle": "Soporte 24/7 por teléfono"}]}))
     assert _respuesta(db, ids["soporte"]).nota == ia_chat.NOTA                  # el texto ya va en el valor
+
+
+def test_el_prompt_v7_usa_lo_dicho_de_la_respuesta_actual():
+    assert ia_chat.VERSION == "v7"
+    v7 = " ".join(ia_chat.cargar_prompt().split())
+    v6 = " ".join((ia_chat.PROMPTS_DIR / "chat_asistente_v6.md").read_text(encoding="utf-8").split())
+    texto = "Lo que dice «Dijo» ya está respondido: no lo vuelvas a preguntar"
+    assert texto in v7 and texto not in v6
+    for texto in ("«detalle»: todo lo que el encargado dijo", "El mínimo también cuenta", "Trata siempre de usted"):
+        assert texto in v7                                                       # lo de v6 sigue
+
+
+def test_lo_dicho_en_el_chat_viaja_con_su_respuesta_y_la_nota_a_mano_no(lista):
+    # Prueba de Ivania (2026-11-12): la IA volvió a pedir la alerta de manipulación, dicha más de 30 mensajes antes.
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _responder(db, settings, ids["sicop"], valor_si_no="1", nota="COMENTARIO-INTERNO de Oscar")   # a mano
+    _enviar(db, settings, "14 años y referencias.", IaSimulada({
+        "mensaje": "Gracias.",
+        "respuestas": [{**_r("R2", valor="14"), "detalle": "14 años con GPS; referencias de clientes: sí"}]}))
+    simulado = IaSimulada({"mensaje": "Gracias.", "respuestas": []})
+    _enviar(db, settings, "Otra cosa.", simulado)
+    enviado = simulado.llamadas[0]["input"]
+    assert "respuesta actual: 14 años · Dijo: 14 años con GPS; referencias de clientes: sí." in enviado
+    assert "respuesta actual: Sí ·" not in enviado and "COMENTARIO-INTERNO" not in enviado   # la nota a mano no va
 
 
 def test_guardado_igual_lleva_lo_que_dijo_y_lo_que_falta(lista):

@@ -11,8 +11,8 @@ Quién hace qué:
 * La app confirma lo que guardó y hace la siguiente pregunta: la IA no lo hace, para que nunca diga algo que no pasó.
 * Archivos: se guardan en ASSISTANT_DOCS_DIR como siempre, tal cual (sin modificarlos). Con
   ASSISTANT_SEND_DOCUMENTS=true la IA lee su texto (Oscar, §10.4); con false, solo el nombre.
-* A la IA va: el cartel (número y objeto), los requisitos con su cita y su respuesta actual, la conversación y el
-  mensaje. Nunca el perfil, contraseñas ni usuarios. Con la IA apagada o sin presupuesto, el chat lo dice y no llama.
+* A la IA va: el cartel (número y objeto), los requisitos con su cita y su respuesta actual (con lo dicho en el chat,
+  «Dijo: …»; nunca una nota escrita a mano), la conversación y el mensaje. Nunca el perfil, contraseñas ni usuarios. Con la IA apagada o sin presupuesto, el chat lo dice y no llama.
 * Pruebas siempre con IA SIMULADA (regla 7).
 """
 
@@ -37,11 +37,12 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v6"                # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
+VERSION = "v7"              # v2 (2026-11-11, prueba de Ivania): trato de usted y cómo avanzar sin la respuesta;
                                 # v3 (11/11): la respuesta por partes se junta y no se vuelve a preguntar;
                                 # v4 (12/11, opción 1 de Ivania): si falta una parte, no se guarda hasta completarla;
                                 # v5 (12/11, prueba real): el mínimo sin confirmar también falta;
-                                # v6 (12/11, prueba real): «detalle» guarda lo que no cabe en un número, sí/no o fecha
+                                # v6 (12/11, prueba real): «detalle» guarda lo que no cabe en un número, sí/no o fecha;
+                                # v7 (12/11): la «respuesta actual» trae lo dicho en el chat («Dijo: …»)
 LARGO_MENSAJE = 4000            # lo que puede escribir la persona en un mensaje
 LARGO_ARCHIVO = 15000           # caracteres del texto de un archivo que se mandan a la IA
 CONVERSACION = 30               # mensajes anteriores que se mandan a la IA
@@ -190,12 +191,23 @@ def _guardar(conn: sqlite3.Connection, session_id: int, rol: str, texto: str, ah
 
 # --- Lo que va a la IA ---------------------------------------------------------------------------------------------
 
+def lo_dicho(respuesta: asistente.Respuesta | None) -> str:
+    """«Dijo: … Falta: …» de una respuesta que vino del chat; «» si no. Una nota escrita a mano en el formulario no se
+    manda a la IA: puede traer comentarios internos (lo del chat ya lo había leído la IA)."""
+    nota = (respuesta.nota or "") if respuesta else ""
+    return nota[len(NOTA):].strip() if nota.startswith(NOTA) else ""
+
+
 def _requisitos(pasos: list[asistente.Paso]) -> str:
     lineas = ["REQUISITOS (del cartel):"]
     for n, p in enumerate(pasos, start=1):
         i = p.item
         tipo = verificacion.EVIDENCIAS[i.tipo_evidencia] + (f" ({i.unidad})" if i.unidad else "")
         actual = p.respuesta.resumen if p.respuesta else "sin responder"
+        # Lo dicho en el chat viaja con su respuesta (prueba de Ivania, 2026-11-12: la IA volvió a pedir la alerta de
+        # manipulación, dicha más de 30 mensajes antes).
+        if dicho := lo_dicho(p.respuesta):
+            actual += f" · {dicho}"
         lineas.append(f"R{n} · excluyente: {'sí' if i.excluyente else 'no'} · tipo: {tipo} · mínimo: {i.minimo}"
                       f" · cita: {'; '.join(i.citas) or 'sin cita'} · requisito: «{i.requisito}»"
                       f" · respuesta actual: {actual}")

@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1095 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1097 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -49,8 +49,14 @@ el PR)
     ~~Pendiente · Ivania: corregir con «Cambiar» las respuestas 36, 38 y 43~~ **hecho por el chat (Ivania,
     12/11):** requisito 36 (lugar discreto), técnicos y 38 (apps) con respuesta nueva y nota «Dijo: …»; la vieja
     queda en el historial. En la 36 la IA volvió a pedir la alerta de manipulación, dicha a las 10:00: solo recibe
-    los últimos 30 mensajes y la respuesta guardada («Lo tiene», sin detalle). Mejora posible, sin hacer: mandarle
-    también la nota «Dijo: …» de cada respuesta.
+    los últimos 30 mensajes y la respuesta guardada («Lo tiene», sin detalle). ~~Mejora posible, sin hacer: mandarle
+    también la nota «Dijo: …» de cada respuesta~~ **hecha (12/11, pedido de Ivania):** prompt
+    **`chat_asistente_v7.md`** (v6 sin tocar): la «respuesta actual» de cada requisito trae lo dicho en el chat
+    («… · Dijo: … Falta: …») y la IA no vuelve a preguntarlo. Solo va la nota que escribió el chat; una nota escrita
+    a mano en el formulario no se manda (puede traer comentarios internos). `chat.lo_dicho`. Las respuestas de antes
+    del v6 no tienen «Dijo» y no cambian. ≈ 0,0025 USD más por mensaje en un cartel de 96 requisitos. 2 pruebas
+    nuevas; 1097 pruebas pasan. **Pendiente · Ivania:** probarlo con la IA real (agregar algo a una respuesta vieja
+    que ya tenga «Dijo:», p. ej. las certificaciones de `20261003280`).
   - **Aviso de «trabado» al corregir (12/11, pedido de Ivania):** después de corregir otras respuestas salía
     «Seguimos con la pregunta 65… Si ya dijo lo que sabe, escriba «guarde lo que le dije»…», aunque sí se había
     guardado algo. Ahora `_sin_repetir` recibe si se guardó algo en esa vuelta y, si es así, no muestra el aviso.
