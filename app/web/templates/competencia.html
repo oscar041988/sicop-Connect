@@ -82,7 +82,7 @@
       {% for c in fam.competidores %}
         <tr>
           <td>{% if c.nombre %}<strong>{{ c.nombre }}</strong><br><small>{{ c.cedulas | sort | join(", ") }}</small>
-              {% else %}{{ nombre_competidor(c.clave) }}<br><small>sin nombre en competidores.yaml</small>{% endif %}</td>
+              {% else %}{{ nombre_competidor(c.clave) }}<br><small>{% if es_persona_fisica(c.cedulas | first) %}su nombre no se guarda (dato personal){% else %}sin nombre en competidores.yaml{% endif %}</small>{% endif %}</td>
           <td class="centro"><a class="veces" href="{{ url_registros(fam.familia, c.clave) }}" title="Ver los registros">{{ c.veces }}</a></td>
           <td class="instituciones-celda"><ul class="instituciones">{% for inst, n in c.instituciones | dictsort(by="value", reverse=true) %}<li>{{ inst }}{% if n > 1 %} <small>({{ n }})</small>{% endif %}</li>{% endfor %}</ul></td>
           <td class="num">

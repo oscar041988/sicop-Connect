@@ -80,7 +80,8 @@ PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
     MOTIVOS=panel.MOTIVOS, NOMBRES_FAMILIA=panel.NOMBRES_FAMILIA, resaltar=panel.resaltar,
-    falta_para_seguimiento=panel.falta_para_seguimiento, nombre_competidor=competencia.nombre_competidor, version_estatico=version_estatico,
+    falta_para_seguimiento=panel.falta_para_seguimiento, nombre_competidor=competencia.nombre_competidor,
+    es_persona_fisica=competencia.es_persona_fisica, version_estatico=version_estatico,
     termino=ayuda.termino, ayuda_para=ayuda.ayuda_para,
 )
 SOLO_DIGITOS = re.compile(r"^[0-9]+$")
