@@ -345,8 +345,9 @@ SICOP bloqueó la solicitud automática del reporte.
 
 **Datos para estimar horas** (`docs/METRICAS.md`): semana 2, 37,25 h estimadas · 49 h reales (+32 %); semana 3,
 21 h (7 h por día, sin desglose por tarea); **(nuevo)** semana 4 (26–29/10), 28 h (7 h por día). Total del mes
-hasta el 29/10: **123,5 h**. **(nuevo 12/11)** Del 30/10 al 12/11 **no hay horas anotadas** en `METRICAS.md`:
-anótalas antes de estimar. Uso de Claude casi sin registrar: dilo así en la estimación.
+hasta el 29/10: **123,5 h**. **(nuevo 12/11)** Del 30/10 al 12/11, 7 h por día hábil (10 días, 70 h): semana 4
+completa (26–30/10) 35 h, semana 5 (2–6/11) 35 h y semana 6 (9–12/11) 28 h. Total al 12/11: **193,5 h**. Uso de
+Claude casi sin registrar: dilo así en la estimación.
 
 **Escribe tú:** ordena los pendientes por valor para Hermatix y estima las horas de cada uno con los datos del
 mes (sección 7). Incluye las tres mejoras en curso: ¿cuál va primero y por qué? Este es el entregable E10: lo

@@ -1673,7 +1673,8 @@ el PR)
     **2026-11-12:** datos de apoyo de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (marcado «(nuevo 12/11)»).
     **Hecho (Ivania, 12/11, en el Google Doc; Claude no lo ha leído):** sección 9 con sus palabras, ordenada por
     valor y con horas. **Queda · Ivania:** la parte del servidor de la sección 6, cuando se actualice el servidor y
-    se hagan allí los simulacros; anotar en `docs/METRICAS.md` las horas del 30/10 al 12/11.
+    se hagan allí los simulacros. ~~Anotar en `docs/METRICAS.md` las horas del 30/10 al 12/11~~ **hecho (12/11):**
+    7 h por día hábil, semanas 4 (completa), 5 y 6; total del proyecto **193,5 h**.
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
