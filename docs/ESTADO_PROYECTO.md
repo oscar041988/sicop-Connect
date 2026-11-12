@@ -166,7 +166,8 @@ el PR)
   de bloqueo de SICOP con ID de soporte: FALLO «control no automatizable», una alerta a `OBTAIN_ALERT_TO`, sin
   reintento. **No se creó la tarea «SICOP CONNECT - obtencion».** `DECISION_OBTENCION.md` §8.
   ~~Pendiente · Ivania: volver a poner `SOURCE_MODE=manual` en el `.env`~~ **hecho (Ivania, 2026-11-11)**; el reporte
-  se sigue pidiendo a mano.
+  se sigue pidiendo a mano. **12/11:** `doctor` todavía mostraba `auto` (el cambio no había quedado en el `.env`);
+  Ivania lo corrigió y `doctor` confirma `SOURCE_MODE manual`.
   **Pendiente · Oscar:** decidir si se consulta a SICOP con el ID de soporte.
 
 - **Enriquecimiento del 10/11 caído por «database is locked» (revisado y arreglado, 2026-11-10).** A las 10:00:47 se
