@@ -362,7 +362,7 @@ SICOP bloqueó la solicitud automática del reporte.
 - **(nuevo)** Revisar con Oscar las evidencias que salen de los PDF y ajustar el YAML si hay más falsos positivos.
   **(nuevo 12/11)** Revisión reglas vs IA del 9/11 (`docs/revision_reglas_vs_ia_20261109.md`): 41 carteles, 10
   desacuerdos; dos arreglados (A1 en las reglas, B1 en el prompt v8) y uno espera a Oscar (A2, arriba).
-- **(nuevo)** El competidor `0702950024` es persona física: confirmar con Oscar que no se guarda su nombre. Sin
+- **(nuevo)** Un competidor es persona física: confirmar con Oscar que no se guarda su nombre. Sin
   novedad registrada.
 
 *Mejoras (nuevo: empezadas después del 26/10; todas solo en local hasta actualizar el servidor):*

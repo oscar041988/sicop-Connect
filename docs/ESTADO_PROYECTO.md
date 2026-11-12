@@ -3,7 +3,7 @@
 Última actualización: 2026-11-12 (escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1099 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1100 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -25,6 +25,12 @@ el PR)
   tenían nombre; se agregaron a `config/competidores.yaml` (29 cédulas con nombre). Nombres en el formato del
   archivo («S.A.», «Ltda.», con tildes); la dirección no se guarda. Consulta de solo lectura a la base después:
   0 empresas sin nombre; queda sin nombre 1 cédula de persona física, a propósito (datos personales).
+  - **Etiqueta de persona física (12/11, pedido de Ivania):** la página mostraba esa cédula como «Cédula … ·
+    sin nombre en competidores.yaml». Ahora la app reconoce sola las cédulas de persona (la jurídica tiene 10
+    dígitos y empieza en 2, 3 o 4; `competencia.es_persona_fisica`) y muestra «Persona física · Cédula …» con «su
+    nombre no se guarda (dato personal)». La cédula NO se puso en el YAML (quedaría en GitHub). Página real
+    revisada sobre una copia de la base (200, con la etiqueta). Suite: 1100 passed (`a65565b`).
+    Pendiente · Oscar: confirmar que no se guarda el nombre de esa persona.
   - `tests/test_competencia.py`: 15 passed (el archivo carga sin errores).
 
 - **Chat: una respuesta a medias espera lo que falta (2026-11-12, opción 1 de Ivania).** Prueba de Ivania con la
@@ -1852,7 +1858,7 @@ el PR)
     - ~~poner nombre a las cédulas ganadoras en `config/competidores.yaml`~~ **hecho 2026-11-12: 29 cédulas con
       nombre, ninguna empresa ganadora sin nombre** (Registro Nacional o ficha del
       proveedor en SICOP); **avance 2026-10-26 (Ivania):** 7 empresas con nombre (las 7 que compiten de verdad). De las
-      13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); `0702950024` es persona física
+      13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); una cédula es de persona física
       (sin nombre, para no guardar datos personales en Git; a confirmar con Oscar).
       Hallazgo: la página cuenta como competidor a quien ganó cualquier línea de un cartel de la familia (mejora aparte;
       ejemplo: `3101941043` sale primera en `iot_frio` con 2 carteles, por líneas que no eran de Hermatix);

@@ -286,8 +286,8 @@ def test_yaml_con_error_no_tumba_la_pagina(cliente):
 def test_cedula_de_persona_fisica_se_etiqueta_sin_nombre():
     assert [competencia.es_persona_fisica(c) for c in ("3101450326", "3102026972", "2100042005", "4000042147")] == [
         False] * 4                                          # jurídicas: sociedades, S.R.L., Estado, autónomas
-    assert all(competencia.es_persona_fisica(c) for c in ("0702950024", "702950024", "155812345678"))
-    assert competencia.nombre_competidor("cedula:0702950024") == "Persona física · Cédula 0702950024"
+    assert all(competencia.es_persona_fisica(c) for c in ("0100000001", "100000001", "100000000001"))
+    assert competencia.nombre_competidor("cedula:0100000001") == "Persona física · Cédula 0100000001"
     assert competencia.nombre_competidor("cedula:3101000002") == "Cédula 3101000002"
     assert competencia.nombre_competidor("Netway S.A.") == "Netway S.A."
 
