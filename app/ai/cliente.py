@@ -135,8 +135,26 @@ def motivo_de(exc: Exception) -> str:
     return f"{motivo} · {codigo}" if isinstance(codigo, str) and CODIGO.match(codigo) else motivo
 
 
+# Veces que se intenta anotar el uso si la base está ocupada (cada intento espera lo que espera la conexión). El
+# 2026-11-10 a las 10:01, la IA respondió (y cobró) pero la base seguía ocupada: no quedó fila en ia_usage y ese
+# gasto no contó en el tope del día. Ya pagada la llamada, vale la pena esperar más antes de rendirse.
+INTENTOS_REGISTRO = 3
+
+
 def _registrar(conn: sqlite3.Connection, proposito: str, nro_sicop: str | None, modelo: str, entrada, salida,
                costo: Decimal | None, duracion: float, intentos: int, resultado: str, motivo: str | None) -> int:
+    for vez in range(1, INTENTOS_REGISTRO + 1):
+        try:
+            return _insertar_uso(conn, proposito, nro_sicop, modelo, entrada, salida, costo, duracion, intentos,
+                                 resultado, motivo)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc) or vez == INTENTOS_REGISTRO:
+                raise
+    raise RuntimeError("INTENTOS_REGISTRO debe ser 1 o más")
+
+
+def _insertar_uso(conn: sqlite3.Connection, proposito: str, nro_sicop: str | None, modelo: str, entrada, salida,
+                  costo: Decimal | None, duracion: float, intentos: int, resultado: str, motivo: str | None) -> int:
     with transaccion(conn):
         return conn.execute(
             "INSERT INTO ia_usage (creado_en, proposito, nro_sicop, modelo, tokens_entrada, tokens_salida,"

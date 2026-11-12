@@ -1,12 +1,24 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-12 (nombres de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
+Última actualización: 2026-11-12 (escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
+de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1097 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1099 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
 ## Último resultado
+
+- **Escaneo de fallas de la app (2026-11-12, pedido de Ivania).** Revisado: patrones de error en `app/` (análisis
+  del código), SQL armado con texto, sesión/permisos/descargas/token de la API, 98 páginas del panel y todas las rutas
+  con parámetros raros sobre una COPIA de la base (0 errores 500; copia borrada), base real en solo lectura
+  (integridad OK, identificadores como texto, montos sin float) y los logs de `data/logs/`.
+  - **Falla reparada:** el 10/11 a las 10:01 la cola de IA pidió el resumen de `20261100871` (≈19 900 tokens); la IA
+    respondió y cobró, pero la base estaba ocupada y `_registrar` cayó con «database is locked»: no quedó fila en
+    `ia_usage` y ese gasto no contó en el tope del día. Ahora `app/ai/cliente.py` intenta anotar el uso hasta 3
+    veces (`INTENTOS_REGISTRO`) antes de rendirse. (La espera de 600 s de las tareas, del 10/11, ya lo hacía raro.)
+  - `tests/test_ia_cliente.py`: 2 nuevas (base ocupada que se libera: el gasto queda; ocupada siempre: se rinde tras
+    3 intentos), fallan sin la reparación. Suite: 1099 passed.
 
 - **Competencia: todas las empresas ganadoras con nombre (2026-11-12, Ivania).** Ivania buscó en la ficha del
   proveedor de SICOP las 22 empresas (cédula jurídica 3101/3102) que ganaron carteles de familias candidatas y no
