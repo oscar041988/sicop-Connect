@@ -55,8 +55,11 @@ el PR)
     («… · Dijo: … Falta: …») y la IA no vuelve a preguntarlo. Solo va la nota que escribió el chat; una nota escrita
     a mano en el formulario no se manda (puede traer comentarios internos). `chat.lo_dicho`. Las respuestas de antes
     del v6 no tienen «Dijo» y no cambian. ≈ 0,0025 USD más por mensaje en un cartel de 96 requisitos. 2 pruebas
-    nuevas; 1097 pruebas pasan. **Pendiente · Ivania:** probarlo con la IA real (agregar algo a una respuesta vieja
-    que ya tenga «Dijo:», p. ej. las certificaciones de `20261003280`).
+    nuevas; 1097 pruebas pasan. ~~Pendiente · Ivania: probarlo con la IA real~~ **probado por Ivania (12/11,
+    12:27): funciona.** «Sobre las certificaciones de GPS: una de las tres es del Ministerio de Salud» → guardado sin
+    volver a preguntar nada (lo de las 11:20 estaba a más de 30 mensajes); nota nueva «Dijo: Tres certificaciones
+    firmadas digitalmente, emitidas en 2025, de servicios GPS prestados de 2023 a 2025; una es del Ministerio de
+    Salud; las subirá después.» La pregunta 65 ya sale en usted («Responda sí o no; si es no, indique…»).
   - **Aviso de «trabado» al corregir (12/11, pedido de Ivania):** después de corregir otras respuestas salía
     «Seguimos con la pregunta 65… Si ya dijo lo que sabe, escriba «guarde lo que le dije»…», aunque sí se había
     guardado algo. Ahora `_sin_repetir` recibe si se guardó algo en esa vuelta y, si es así, no muestra el aviso.
