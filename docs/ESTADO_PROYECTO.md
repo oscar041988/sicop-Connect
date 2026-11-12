@@ -1227,7 +1227,8 @@ el PR)
     reactivación **solo con cargador** (`powercfg … SUB_SLEEP RTCWAKE 1`; con batería siguen apagados).
   - Ciclo #38 corrido a mano a las 11:03 (dry-run): **FALLO, sin archivo nuevo en `data\incoming`** (el reporte
     de hoy no se había descargado); 0 avisos.
-  - **Pendiente · Ivania:** subir el reporte del 28/10 en «Cargar archivo». ~~El 29/10 comprobar en
+  - ~~Pendiente · Ivania: subir el reporte del 28/10 en «Cargar archivo»~~ **hecho el mismo día (comprobado el
+    12/11): carga #39, 28/10 13:50, ok, periodo 28/07 → 28/10.** ~~El 29/10 comprobar en
     `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00~~ **comprobado (12/11):**
     `2026-10-29 08:00:02 - run-cycle`.
 - **Reporte de cartel con IA · lección 1, el expediente (2026-10-28, rama `desarrollo`, solo local):** guía
