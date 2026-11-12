@@ -390,8 +390,9 @@ def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: 
         _guardar(conn, sesion.id, "app", "\n".join(lineas), ahora)
     if oferta is not None:
         _proponer(conn, sesion.id, nro_sicop, oferta, datos["cambios"], ahora)
+    guardo = any(linea.startswith("Guardado · ") for linea in lineas)
     siguiente = _sin_repetir(siguiente_mensaje(asistente.recorrido(conn, nro_sicop, dia),
-                                               asistente.sesion(conn, nro_sicop)), anteriores)
+                                               asistente.sesion(conn, nro_sicop)), anteriores, guardo)
     if siguiente:
         _guardar(conn, sesion.id, "app", siguiente, ahora)
 
@@ -446,15 +447,16 @@ def _proponer(conn: sqlite3.Connection, session_id: int, nro_sicop: str, oferta,
         oferta_cambios.proponer(conn, nro_sicop, cambio, descripcion, mensaje_id, ahora)
 
 
-def _sin_repetir(nuevo: str, anteriores: list[Mensaje]) -> str:
+def _sin_repetir(nuevo: str, anteriores: list[Mensaje], guardo: bool = False) -> str:
     """Si la pregunta siguiente es la misma que la app hizo la última vez, no se copia entera otra vez (prueba de
-    Ivania, 2026-11-11: se repetía completa después de cada mensaje)."""
+    Ivania, 2026-11-11: se repetía completa después de cada mensaje). guardo: en esta vuelta se guardó algo (p. ej.
+    se corrigió otro requisito), así que no está trabada y no se dice cómo salir (prueba de Ivania, 2026-11-12)."""
     ultima = next((m.texto for m in reversed(anteriores) if m.rol == "app" and "Pregunta " in m.texto), None)
     if ultima is not None and nuevo.startswith("Pregunta ") and nuevo in ultima:
         numero = nuevo.split(":", 1)[0]                   # «Pregunta 1 de 8»
         seguimos = f"Seguimos con la {numero[0].lower()}{numero[1:]} (arriba)."
         # Ya van dos vueltas sin avanzar (prueba de Ivania, 2026-11-11: la misma pregunta 4 veces): cómo seguir.
-        if any(m.rol == "app" and m.texto.startswith(seguimos) for m in anteriores[-4:]):
+        if not guardo and any(m.rol == "app" and m.texto.startswith(seguimos) for m in anteriores[-4:]):
             seguimos += f" Si ya dijo lo que sabe, escriba {ATASCADO} y seguimos."
         return seguimos
     if not nuevo.startswith("Pregunta ") and any(m.rol == "app" and m.texto == nuevo for m in anteriores):

@@ -195,6 +195,24 @@ def test_la_misma_pregunta_no_se_repite_entera(lista):
     assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")
 
 
+def test_corregir_otro_requisito_no_muestra_el_aviso_de_trabado(lista):
+    # Prueba de Ivania (2026-11-12): corrigió otras respuestas desde el chat y salió «Si ya dijo lo que sabe, escriba
+    # «guarde lo que le dije»…», aunque no estaba trabada: en esas vueltas sí se guardó algo.
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    _enviar(db, settings, "14 años.", IaSimulada({"mensaje": "Gracias.", "respuestas": [_r("R2", valor="14")]}))
+    assert _mensajes(db)[-1].texto.startswith("Pregunta 2 de 2:")              # sigue la de SICOP
+    for anos in ("15", "16"):                                                   # corrige la de años dos veces
+        _enviar(db, settings, f"Son {anos} años.", IaSimulada({"mensaje": "Gracias.",
+                                                               "respuestas": [_r("R2", valor=anos)]}))
+        assert _mensajes(db)[-1].texto == "Seguimos con la pregunta 2 de 2 (arriba)."   # sin el aviso de trabado
+    assert _respuesta(db, ids["anos"]).resumen == "16 años"
+    # Sin guardar nada, a la segunda vuelta el aviso sí sale (como antes).
+    _enviar(db, settings, "Hmm", IaSimulada({"mensaje": "¿Me aclara?", "respuestas": []}))
+    assert _mensajes(db)[-1].texto.startswith("Seguimos con la pregunta 2 de 2 (arriba). Si ya dijo lo que sabe")
+
+
 def test_la_pregunta_dice_como_avanzar_y_la_ia_sabe_cual_es_la_actual(lista):
     db, ids, settings = lista
     settings = _con_ia(settings)

@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1092 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1093 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -46,7 +46,15 @@ el PR)
     cuándo; «tres, firmadas, servicios 2023–2025» → no guarda, pide solo la fecha de emisión (sí faltaba); «se
     emitieron en 2025» → guardado «Lo tiene · archivo pendiente», nota «Dijo: Tres certificaciones firmadas
     digitalmente, emitidas en 2025, de servicios GPS prestados de 2023 a 2025; las subirá después.»
-    **Pendiente · Ivania:** corregir con «Cambiar» las respuestas 36, 38 y 43.
+    ~~Pendiente · Ivania: corregir con «Cambiar» las respuestas 36, 38 y 43~~ **hecho por el chat (Ivania,
+    12/11):** requisito 36 (lugar discreto), técnicos y 38 (apps) con respuesta nueva y nota «Dijo: …»; la vieja
+    queda en el historial. En la 36 la IA volvió a pedir la alerta de manipulación, dicha a las 10:00: solo recibe
+    los últimos 30 mensajes y la respuesta guardada («Lo tiene», sin detalle). Mejora posible, sin hacer: mandarle
+    también la nota «Dijo: …» de cada respuesta.
+  - **Aviso de «trabado» al corregir (12/11, pedido de Ivania):** después de corregir otras respuestas salía
+    «Seguimos con la pregunta 65… Si ya dijo lo que sabe, escriba «guarde lo que le dije»…», aunque sí se había
+    guardado algo. Ahora `_sin_repetir` recibe si se guardó algo en esa vuelta y, si es así, no muestra el aviso.
+    1 prueba nueva; 1093 pruebas pasan.
   - **Hallazgo (12/11, sin tocar):** las preguntas guardadas de los requisitos tratan de vos («¿Podés aportar…?»,
     «Respondé sí o no», «Escribí el número»; preguntas 61 a 65 de `20261003280`) y la app agrega «diga» (usted).
     Vienen de la pregunta que generó la IA al armar la lista, no del chat (la regla de usted del 11/11 es solo del
