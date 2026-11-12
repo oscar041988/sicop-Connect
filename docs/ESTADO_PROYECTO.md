@@ -19,7 +19,7 @@ el PR)
     con el motivo «Recomparado con SICOP desde el resumen #…». No gasta el tope diario de la cola (`intentados_hoy`).
     Respaldo previo `sicop_20261112-083011`. En la base real: 18 revisados, 2 cambiaron, `20261100871` (#81 → #84)
     y `20261003242` (#44 → #85, línea 1 con dos componentes: 7200 y 3), los dos de REVISAR a OK. `ia resumir` ya no dice «sin resumen» cuando hay motivo y resumen.
-    4 pruebas nuevas; 1083 pruebas pasan.
+    4 pruebas nuevas; 1083 pruebas pasan. **Visto en el panel (Ivania, 12/11):** los dos salen en OK.
 
 - **Revisión obligatoria (2026-11-11, pedido de Oscar; decisiones de Ivania).**
   - «Dar seguimiento» solo se puede con una revisión vigente «Interesa» o «Revisar requisitos». La ruta lo vuelve a
