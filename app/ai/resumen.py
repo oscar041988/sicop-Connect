@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
@@ -184,10 +185,11 @@ def comparar(conn: sqlite3.Connection, nro_sicop: str, datos: dict) -> list[dict
                                 "sicop": f"{texto_decimal(info.monto)} {info.moneda}"})
 
     cantidades = {linea.numero_linea.strip(): linea.cantidad for linea in compra.lineas}
+    por_linea = Counter((item["linea"] or "").strip() for item in datos["que_piden"])
     for item in datos["que_piden"]:
         linea = (item["linea"] or "").strip()
-        if linea not in cantidades or item["cantidad"] == NO:
-            continue
+        if linea not in cantidades or item["cantidad"] == NO or por_linea[linea] > 1:
+            continue  # una línea desglosada en componentes: cada componente tiene su propia cantidad
         del_resumen, de_sicop = _decimal(item["cantidad"]), _decimal(cantidades[linea])
         if del_resumen is not None and de_sicop is not None and del_resumen != de_sicop:
             diferencias.append({"dato": f"Cantidad de la línea {linea}", "resumen": item["cantidad"],

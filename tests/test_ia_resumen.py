@@ -145,6 +145,19 @@ def test_cantidad_y_monto_distintos_quedan_revisar(db):
     assert [d["dato"] for d in r.diferencias] == ["Monto estimado", "Cantidad de la línea 1"]   # la línea 2 coincide
 
 
+def test_linea_desglosada_en_componentes_no_marca_revisar(db):
+    # Caso real 20261100871: una línea de SICOP (cantidad 1) desglosada en componentes, dos de ellos con cantidad 2.
+    with closing(connect(db)) as conn:
+        _ficha(conn)
+        conn.commit()
+    componente = {"linea": "1", "especificaciones_clave": [], "cita": "[DOC 1 · pág. 2]"}
+    datos = _resumen_valido(que_piden=[{**componente, "bien_o_servicio": "GPS", "cantidad": "10"},
+                                       {**componente, "bien_o_servicio": "Antena", "cantidad": "2"},
+                                       {**componente, "bien_o_servicio": "Cable", "cantidad": "2"}])
+    r = _resumir(db, OpenAISimulado(respuesta(datos)))
+    assert (r.estado, r.diferencias) == ("ok", [])
+
+
 def test_lo_que_coincide_o_no_se_encontro_no_marca_revisar(db):
     datos = _resumen_valido(plazos={"cierre_recepcion": {"valor": "2026-11-20", "cita": "SICOP"},   # sin hora
                                     "apertura_ofertas": {"valor": "2026-11-21 09:00", "cita": "[DOC 1 · pág. 1]"},
