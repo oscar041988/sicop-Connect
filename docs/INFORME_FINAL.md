@@ -175,7 +175,9 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
   enriquecimiento se apagaron (9/11, decisión de Ivania).
 - **(nuevo 12/11)** IA en operación: **158 llamadas, ≈ 4,48 USD estimados** del 29/10 al 11/11 (`ia_usage`); 85
   resúmenes (68 OK, 8 Revisar, 9 fallidos, sin resumen inventado) y 11 reportes PDF. Topes: 10 resúmenes y 5 USD
-  al día. El 12/11, `ia recomparar` corrigió 2 resúmenes marcados Revisar por error, sin llamar a la IA.
+  al día. El 12/11, `ia recomparar` corrigió 2 resúmenes marcados Revisar por error, sin llamar a la IA. Falta
+  **1 llamada** en esa cuenta: el 10/11 a las 10:01 la IA respondió (≈ 19 900 tokens) pero la base estaba ocupada y
+  el gasto no se anotó; desde el 12/11 la app reintenta anotarlo hasta 3 veces.
 - Ciclos reales a mano: #23, #25 y #28 importaron ZIP reales con 0 rechazadas.
 - Respaldos: `backup` con manifiesto y huella; copia en ZIP al Drive de Hermatix (23/10; 26/10: `sicop_20261026-093951`
   y `sicop_20261026-115002`; **(nuevo)** 29/10: `sicop_20261026-135112`). **(nuevo)** Desde el 27/10, el respaldo
@@ -320,7 +322,9 @@ SICOP bloqueó la solicitud automática del reporte.
   **(nuevo 12/11)** Desde el 11/11, «Dar seguimiento» exige una revisión vigente (pedido de Oscar).
 
 *Mejoras con valor para Hermatix:*
-- Competidores: 7 empresas ya tienen nombre en `config/competidores.yaml` (26/10). Falta decidir si se descarga
+- Competidores: ~~7 empresas ya tienen nombre en `config/competidores.yaml` (26/10)~~ **(nuevo 12/11)** todas las
+  empresas ganadoras tienen nombre: **29 cédulas** (Ivania buscó 22 más en la ficha del proveedor de SICOP; solo
+  queda sin nombre, a propósito, la persona física). Falta decidir si se descarga
   «Contratos» y corregir que la página cuente como competidor a quien ganó cualquier línea de un cartel de la
   familia.
 - Más catálogo: buscar por nombre los códigos de las 6 familias que aún no tienen.
@@ -336,7 +340,10 @@ SICOP bloqueó la solicitud automática del reporte.
 - Playwright en el servidor Ubuntu: pendiente de verificar (ahora lo necesita también el enriquecimiento).
 - **(nuevo)** Dos avisos «FontBBox» al leer un PDF el 28/10: no detuvieron nada; no se revisó si ese PDF perdió
   texto.
-- ~~Pruebas: 667 passed (29/10)~~ **(nuevo 12/11)** Pruebas: **1083 passed** (12/11, `desarrollo` = `1d25e8f`).
+- ~~Pruebas: 667 passed (29/10)~~ **(nuevo 12/11)** Pruebas: **1099 passed** (12/11, `desarrollo` = `c7346bf`).
+- **(nuevo 12/11)** Escaneo de fallas (12/11): análisis del código, seguridad, 98 páginas del panel y todas las rutas
+  con parámetros raros sobre una copia de la base (0 errores) y la base real en solo lectura (integridad OK). Una
+  falla real, reparada: el gasto de la IA no se anotaba si la base estaba ocupada (ver sección 6).
 - **(nuevo 12/11)** Dependencias nuevas: `python-docx` (Word) y `anthropic` (SDK oficial); en el servidor, `pip
   install -r requirements.lock.txt` con el PR.
 - **(nuevo 12/11)** «database is locked» cuando dos programas escriben a la vez: arreglado el 9 y el 10/11 (`BEGIN
