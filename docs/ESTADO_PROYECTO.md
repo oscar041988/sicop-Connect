@@ -29,8 +29,19 @@ el PR)
     lo del enlace quedó únicamente en el chat. **Prompt `chat_asistente_v6.md`** (v5 sin tocar): cada respuesta
     trae `detalle` (todo lo dicho, en una línea) y la app lo pone en la nota cuando el requisito es de número, sí o
     no, fecha o documento: «Desde el chat del asistente. Dijo: 2 apps; enlace web para móviles: sí.» (en un texto
-    ya va todo en el valor). `chat._nota`. 4 pruebas nuevas; 1092 pruebas pasan. **Pendiente · Ivania:** probar el v6 y el caso del
-    mínimo con un documento (p. ej. las certificaciones de servicios GPS de `20261003280`).
+    ya va todo en el valor). `chat._nota`. 4 pruebas nuevas; 1092 pruebas pasan.
+  - **Prueba del v6 con la IA real, hecha por Claude en una COPIA de la base (12/11; la base real no se tocó;
+    respuestas de PRUEBA):** pregunta 46 (kilometraje **y** reportes generales), dos corridas con los mismos
+    mensajes. Segunda: «muestra el kilometraje» → «Todavía no se guarda… falta… los reportes generales»; «los
+    reportes también, la subo después» → guardado, nota «Desde el chat del asistente. Dijo: Ficha técnica con
+    kilometraje y reportes generales de control; la subirá después.» **Funciona.** Primera: la IA fue demasiado
+    exigente y volvió a preguntar si «recopila» el kilometraje cuando ya se dijo que la ficha lo «muestra» (lo tomó
+    como otra cosa). La app hizo lo correcto las dos veces; la IA no siempre contesta igual. Decisión: usarlo así;
+    si la repetición sale seguido en el uso real, un v7 con «muestra, recopila e informa son lo mismo: no preguntes
+    por sinónimos». Unos centavos en OpenAI. No se abrió la página del resultado (se leyó la nota en la base) ni se
+    probó un requisito de número o sí/no. Script: solo en el scratchpad.
+    **Pendiente · Ivania:** el caso del mínimo con un documento (p. ej. las certificaciones de servicios GPS de
+    `20261003280`); corregir con «Cambiar» las respuestas 36, 38 y 43.
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
