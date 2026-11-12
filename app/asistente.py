@@ -190,8 +190,8 @@ def pregunta_de_la_app(item: verificacion.Item) -> str:
         "numero": f"¿Cuántos {item.unidad} tiene Hermatix?" if item.unidad else "¿Qué número tiene Hermatix?",
         "fecha": "¿Qué fecha corresponde en el caso de Hermatix?",
         "si_no": "¿Hermatix lo puede ofrecer?" if verificacion.es_fila(item) else "¿Hermatix cumple con esto?",
-        "documento": "¿Hermatix tiene este documento? Súbelo (PDF, PNG o JPG) y escribe hasta qué fecha vence.",
-        "texto": "¿Cómo cumple Hermatix con esto? Escríbelo con tus palabras.",
+        "documento": "¿Hermatix tiene este documento? Súbalo (PDF, PNG o JPG) y escriba hasta qué fecha vence.",
+        "texto": "¿Cómo cumple Hermatix con esto? Escríbalo con sus palabras.",
     }
     return f"{texto} {preguntas[item.tipo_evidencia]}"
 
@@ -261,7 +261,7 @@ def _momento(ahora: datetime) -> str:
 def empezar(conn: sqlite3.Connection, nro_sicop: str, quien: Quien, ahora: datetime) -> Sesion:
     """Abre la conversación del cartel (si ya existe, la devuelve: se retoma, no se duplica)."""
     if not verificacion.listar(conn, nro_sicop):
-        raise AsistenteInvalido("Este cartel todavía no tiene lista de verificación: genérala primero.")
+        raise AsistenteInvalido("Este cartel todavía no tiene lista de verificación: genérela primero.")
     verificacion.sincronizar_filas(conn, nro_sicop)          # las filas de «Qué piden» también se preguntan
     with transaccion(conn):
         cursor = conn.execute("INSERT OR IGNORE INTO eligibility_sessions (nro_sicop, iniciada_por, iniciada_por_nombre,"
@@ -311,7 +311,7 @@ def _fecha(texto: str, campo: str) -> str | None:
 def _valores(item: verificacion.Item, e: Entrada) -> dict:
     """Los valores de la respuesta según «Qué lo demuestra». Un dato que falta o no se entiende se vuelve a pedir."""
     if e.estado not in ESTADOS:
-        raise AsistenteInvalido("Elige una respuesta.")
+        raise AsistenteInvalido("Elija una respuesta.")
     nota = e.nota.strip()[:LARGO_TEXTO] or None
     vacio = {"valor_texto": None, "valor_numero": None, "valor_fecha": None, "valor_si_no": None, "unidad": None,
              "vence_el": None, "nota": nota}
@@ -327,24 +327,24 @@ def _valores(item: verificacion.Item, e: Entrada) -> dict:
         try:
             numero = str(Decimal(numero.replace(",", "."))) if numero else ""
         except InvalidOperation:
-            raise AsistenteInvalido(f"«{e.valor_numero}» no es un número: escribe solo la cantidad (por ejemplo 8)."
+            raise AsistenteInvalido(f"«{e.valor_numero}» no es un número: escriba solo la cantidad (por ejemplo 8)."
                                     ) from None
         if not numero:
-            raise AsistenteInvalido("Escribe el número exacto (por ejemplo 8).")
+            raise AsistenteInvalido("Escriba el número exacto (por ejemplo 8).")
         return {**vacio, "valor_numero": numero, "unidad": item.unidad}
     if t == "fecha":
         fecha = _fecha(e.valor_fecha, "Fecha")
         if fecha is None:
-            raise AsistenteInvalido("Escribe la fecha.")
+            raise AsistenteInvalido("Escriba la fecha.")
         return {**vacio, "valor_fecha": fecha}
     if t == "si_no":
         if e.valor_si_no not in ("1", "0"):
-            raise AsistenteInvalido("Elige «Sí» o «No».")
+            raise AsistenteInvalido("Elija «Sí» o «No».")
         return {**vacio, "valor_si_no": int(e.valor_si_no)}
     if t == "texto":
         texto = e.valor_texto.strip()[:LARGO_TEXTO]
         if not texto:
-            raise AsistenteInvalido("Escribe la respuesta.")
+            raise AsistenteInvalido("Escriba la respuesta.")
         return {**vacio, "valor_texto": texto}
     return {**vacio, "vence_el": _fecha(e.vence_el, "Vence el")}                # documento: el archivo, aparte
 
@@ -373,8 +373,8 @@ def responder(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, item
     campos = _valores(paso.item, entrada)
     es_documento = paso.item.tipo_evidencia == "documento" and entrada.estado == "respondido"
     if es_documento and archivo is None:
-        raise AsistenteInvalido("Sube el documento (PDF, PNG o JPG). Si Hermatix lo tiene pero lo subes después,"
-                                " elige «Lo tiene · subo el archivo después»; si no, «Todavía no lo sé» o «Hermatix"
+        raise AsistenteInvalido("Suba el documento (PDF, PNG o JPG). Si Hermatix lo tiene pero lo sube después,"
+                                " elija «Lo tiene · subo el archivo después»; si no, «Todavía no lo sé» o «Hermatix"
                                 " no lo tiene».")
     if guardar_en_perfil and (paso.item.perfil_item_id is None or entrada.estado != "respondido"
                               or paso.item.tipo_evidencia == "si_no"):
@@ -415,7 +415,7 @@ def confirmar_perfil(conn: sqlite3.Connection, nro_sicop: str, item_id: int, qui
     """La persona confirmó que el dato vigente del perfil sigue siendo correcto: queda como su respuesta."""
     actual, paso = _sesion_y_paso(conn, nro_sicop, item_id, ahora.astimezone(HORA_CR).date())
     if paso.perfil is None:
-        raise AsistenteInvalido("Este requisito no tiene un dato vigente en el perfil: respóndelo.")
+        raise AsistenteInvalido("Este requisito no tiene un dato vigente en el perfil: respóndalo.")
     v = paso.perfil.vigente
     campos = {"estado": "respondido", "fuente": "perfil", "perfil_version_id": v.id, "valor_texto": v.valor,
               "valor_numero": v.numero, "unidad": v.unidad, "vence_el": v.vence_el, "nota": v.nota}

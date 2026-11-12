@@ -25,7 +25,7 @@ from app.database import transaccion
 from app.historial import Quien
 from app.importers.comun import HORA_CR
 
-VERSION = "v1"
+VERSION = "v2"                  # v2 (2026-11-12, decisión de Ivania): siempre de usted (con v1 salían vos y tú)
 TANDA = 30
 
 ESQUEMA = _objeto(preguntas=_lista(_objeto(
@@ -62,12 +62,17 @@ def _sin_presupuesto(conn: sqlite3.Connection, settings: Settings) -> str | None
 
 
 def redactar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: Quien, ahora: datetime,
-             cliente=None, dormir=None) -> Redaccion:
-    """Pide a la IA las preguntas que faltan (las que hoy arma la app). Nunca lanza por la IA: devuelve el motivo."""
+             cliente=None, dormir=None, viejas: bool = False) -> Redaccion:
+    """Pide a la IA las preguntas que faltan (las que hoy arma la app). Con viejas, también las redactadas con otra
+    versión del prompt (2026-11-12: las de v1 trataban de vos o de tú). Nunca lanza por la IA: devuelve el motivo."""
     actual = asistente.sesion(conn, nro_sicop)
     if actual is None:
         raise asistente.AsistenteInvalido("El asistente de este cartel no se ha empezado.")
-    faltan = [p for p in asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date()) if p.origen == "app"]
+    otra_version = {i for (i,) in conn.execute(
+        "SELECT item_id FROM eligibility_questions WHERE session_id = ? AND prompt_version <> ?",
+        (actual.id, VERSION))} if viejas else set()
+    faltan = [p for p in asistente.recorrido(conn, nro_sicop, ahora.astimezone(HORA_CR).date())
+              if p.origen == "app" or p.item.id in otra_version]
     if not faltan:
         return Redaccion(0, None)
     if not settings.ia_activa:

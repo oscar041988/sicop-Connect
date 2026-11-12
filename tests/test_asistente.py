@@ -99,7 +99,7 @@ def test_la_pregunta_de_la_app_trae_el_requisito_su_minimo_y_la_cita(lista):
     assert anos.origen == "app"
     assert anos.pregunta == ("El cartel pide: «Al menos tres años de experiencia en GPS.» (mínimo: al menos 3 años)."
                              " [DOC 1 · pág. 7] ¿Cuántos años tiene Hermatix?")
-    assert "Súbelo" in pasos[ids["patente"]].pregunta
+    assert "Súbalo" in pasos[ids["patente"]].pregunta                    # de usted (Ivania, 2026-11-12)
 
 
 def test_la_pregunta_de_la_ia_vale_mientras_no_corrijan_el_requisito(lista):
@@ -155,9 +155,9 @@ def test_cada_tipo_pide_su_dato_exacto(lista):
         _responder(db, settings, ids["anos"], valor_numero="varios años")
     with pytest.raises(asistente.AsistenteInvalido, match="«Sí» o «No»"):
         _responder(db, settings, ids["sicop"])
-    with pytest.raises(asistente.AsistenteInvalido, match="Escribe la fecha"):
+    with pytest.raises(asistente.AsistenteInvalido, match="Escriba la fecha"):
         _responder(db, settings, ids["cierre"])
-    with pytest.raises(asistente.AsistenteInvalido, match="Sube el documento"):
+    with pytest.raises(asistente.AsistenteInvalido, match="Suba el documento"):
         _responder(db, settings, ids["patente"])
     with pytest.raises(asistente.AsistenteInvalido, match="solo para documentos"):
         _responder(db, settings, ids["anos"], estado="no_lo_tiene")
@@ -327,6 +327,39 @@ def test_la_ia_redacta_en_tandas_y_solo_recibe_la_lista(lista, monkeypatch):
     assert _redactar(db, _con_ia(settings), simulado).redactadas == 0 and len(simulado.llamadas) == 3   # ya están
     with closing(connect(db)) as conn:
         assert {p for (p,) in conn.execute("SELECT proposito FROM ia_usage")} == {"asistente"}
+
+
+def test_el_prompt_v2_trata_de_usted():
+    # Decisión de Ivania (2026-11-12): con v1 la IA redactaba de vos («¿Podés…?») o de tú («Escribe…»).
+    assert ia_asistente.VERSION == "v2"
+    v2 = " ".join(ia_asistente.cargar_prompt().split())
+    v1 = " ".join((ia_asistente.PROMPTS_DIR / "asistente_elegibilidad_v1.md").read_text(encoding="utf-8").split())
+    assert "Trata siempre de usted" in v2 and "Trata siempre de usted" not in v1
+    assert "Escriba solo el número" in v2 and "Escribe solo el número" not in v2
+    assert "Nunca supongas" in v2 and "Pide el dato exacto" in v2                      # lo de v1 sigue
+
+
+def test_viejas_vuelve_a_redactar_solo_las_de_otra_version(lista):
+    db, ids, settings = lista
+    s = _empezar(db)
+    with closing(connect(db)) as conn:
+        uso = conn.execute("INSERT INTO ia_usage (creado_en, proposito, modelo, duracion_s, intentos, resultado)"
+                           " VALUES ('2026-11-03', 'asistente', 'm', 1, 1, 'ok')").lastrowid
+        conn.commit()
+        items = {i.id: i for i in verificacion.listar(conn, NRO)}
+        asistente.guardar_preguntas(conn, s.id, {ids["anos"]: (items[ids["anos"]].requisito, "¿Cuántos años tenés?")},
+                                    uso, "v1", AHORA)
+    simulado = OpenAISimulado()
+    assert _redactar(db, _con_ia(settings), simulado).redactadas == 4            # sin viejas: solo las de la app
+    assert next(p for p in _pasos(db) if p.item.id == ids["anos"]).pregunta.startswith("¿Cuántos años tenés?")
+    with closing(connect(db)) as conn:
+        r = ia_asistente.redactar(conn, _con_ia(settings), NRO, ANA, AHORA, cliente=simulado, dormir=lambda s: None,
+                                  viejas=True)
+        assert r.redactadas == 1                                                    # solo la de v1
+        assert conn.execute("SELECT DISTINCT prompt_version FROM eligibility_questions").fetchall() == [("v2",)]
+        assert ia_asistente.redactar(conn, _con_ia(settings), NRO, ANA, AHORA, cliente=simulado,
+                                     dormir=lambda s: None, viejas=True).redactadas == 0   # ya no queda ninguna
+    assert next(p for p in _pasos(db) if p.item.id == ids["anos"]).pregunta.startswith("Pregunta <b>R")
 
 
 @pytest.mark.parametrize("caso", ["ia_apagada", "sin_presupuesto", "fallo"])

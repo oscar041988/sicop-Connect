@@ -2,7 +2,7 @@
 
 Última actualización: 2026-11-12 (reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1093 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1095 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
 el PR)
 
@@ -58,7 +58,19 @@ el PR)
   - **Hallazgo (12/11, sin tocar):** las preguntas guardadas de los requisitos tratan de vos («¿Podés aportar…?»,
     «Respondé sí o no», «Escribí el número»; preguntas 61 a 65 de `20261003280`) y la app agrega «diga» (usted).
     Vienen de la pregunta que generó la IA al armar la lista, no del chat (la regla de usted del 11/11 es solo del
-    chat). **Pendiente:** revisar dónde se generan y cómo corregir las ya guardadas, si Ivania lo pide.
+    chat). ~~Pendiente: revisar dónde se generan y cómo corregir las ya guardadas~~ **arreglado (12/11, decisión de
+    Ivania: usted en todo el asistente):** prompt **`asistente_elegibilidad_v2.md`** (v1 sin tocar; regla 8 «Trata
+    siempre de usted…» y ejemplos en usted); las preguntas de la app y los avisos de `app/asistente.py` en usted
+    («Súbalo…», «Escriba la fecha», «Suba el documento…», «Elija…»). Nueva orden **`ia preguntas [--nro N]`**: vuelve
+    a redactar con IA las preguntas hechas con otra versión del prompt (`redactar(viejas=True)`); las respuestas ya
+    dadas guardan su propia copia y no cambian. En la base había 164 preguntas v1 (5 carteles; 40 con vos y 42 con
+    tú). El resto del panel y las misiones de ayuda siguen en tú (guía de estilo de la ayuda). 2 pruebas nuevas;
+    1095 pruebas pasan.
+    ~~Pendiente: correr `ia preguntas` en la base real~~ **hecho (12/11, pedido de Ivania):** respaldo
+    `sicop_20261112-115356` antes; `ia preguntas` redactó **186 preguntas** con v2 en los 5 carteles (más que las
+    164 de antes: también las que armaba la app), 9 llamadas, ≈ 0,107 USD. Revisado en la base: 0 con vos; las 5
+    que la búsqueda marcó como «tú» eran «SICOP indica» / «el pliego indica» (en usted: «Escriba», «Responda»).
+    Ejemplo, pregunta 62 de `20261003280`: «¿Puede aportar ese cronograma para el concurso?».
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin

@@ -105,7 +105,7 @@ def test_un_documento_no_queda_cumplido_sin_el_archivo(lista):
     _enviar(db, settings, "Ponle que sí tenemos la patente.", simulado)
     assert _respuesta(db, ids["patente"]) is None
     assert "No se guardó «Aportar patente municipal vigente." in _mensajes(db)[-2].texto
-    assert "Sube el documento" in _mensajes(db)[-2].texto
+    assert "Suba el documento" in _mensajes(db)[-2].texto
 
 
 @pytest.mark.parametrize("lee", [True, False])

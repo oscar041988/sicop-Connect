@@ -293,6 +293,38 @@ def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
     return 0
 
 
+def ia_preguntas_cmd(settings: Settings, nro_sicop: str | None = None, cliente=None) -> int:
+    """Vuelve a redactar con IA las preguntas del asistente hechas con otra versión del prompt (2026-11-12: las de v1
+    trataban de vos o de tú) y las que arma la app. Las respuestas ya dadas guardan su propia copia: no cambian."""
+    from app import asistente
+    from app.ai import asistente as ia_asistente
+    from app.historial import TERMINAL
+
+    if nro_sicop is not None and not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        nros = [nro_sicop] if nro_sicop else [n for (n,) in conn.execute(
+            "SELECT nro_sicop FROM eligibility_sessions ORDER BY nro_sicop")]
+        fallo = False
+        for nro in nros:
+            try:
+                r = ia_asistente.redactar(conn, settings, nro, TERMINAL, datetime.now(HORA_CR), cliente=cliente,
+                                          viejas=True)
+            except asistente.AsistenteInvalido as exc:
+                print(f"{nro}: {exc}")
+                fallo = True
+                continue
+            print(f"{nro}: {r.redactadas} preguntas redactadas con el prompt {ia_asistente.VERSION}"
+                  + (f" · {r.motivo}" if r.motivo else ""))
+            fallo = fallo or r.motivo is not None
+    return 1 if fallo else 0
+
+
 def ia_reporte_cmd(settings: Settings, nro_sicop: str, forzar: bool = False) -> int:
     """Reporte con IA, lección 4: el Reporte de cartel Hermatix en PDF (máximo 3 páginas) del resumen vigente."""
     if not ia_expediente.nro_valido(nro_sicop):
@@ -1441,6 +1473,9 @@ def build_parser() -> argparse.ArgumentParser:
     ia_sub.add_parser("probar", help="UNA llamada corta de prueba a la IA de AI_MODE (openai o anthropic); queda en ia_usage")
     iv = ia_sub.add_parser("verificar", help="Lista de verificación de un cartel con IA (asistente, lección 2)")
     iv.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
+    ipr = ia_sub.add_parser("preguntas", help="Vuelve a redactar con IA las preguntas del asistente de versiones viejas"
+                                              " del prompt (y las que arma la app)")
+    ipr.add_argument("--nro", metavar="NUMERO_SICOP", help="Solo este cartel (si no, todos los que tienen asistente)")
     ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
     ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ir.add_argument("--prompt", metavar="VERSION",
@@ -1554,6 +1589,8 @@ def _ejecutar(args, settings: Settings) -> int:
         return ia_reporte_cmd(settings, args.nro.strip(), forzar=args.nuevo)
     if args.command == "ia" and args.ia_command == "resumir":
         return ia_resumir_cmd(settings, args.nro.strip(), prompt=args.prompt.strip() if args.prompt else None)
+    if args.command == "ia" and args.ia_command == "preguntas":
+        return ia_preguntas_cmd(settings, args.nro.strip() if args.nro else None)
     if args.command == "ia" and args.ia_command == "recomparar":
         return ia_recomparar_cmd(settings, args.nro.strip() if args.nro else None)
     if args.command == "ia" and args.ia_command == "cola":
