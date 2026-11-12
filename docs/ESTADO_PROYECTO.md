@@ -355,7 +355,11 @@ el PR)
     IA real en `20261100749` y `20261004211`: de «Revisar requisitos» a «Descartar» (0.046 USD).
   - **Pendiente · Oscar (A2):** `20261003868` (64 sensores LoRaWAN para inundaciones) sale Alta en iot_frio y se
     avisó; la IA dice descartar. ¿Interesan los sensores IoT en general o solo frío y temperatura?
-  - **Pendiente · Ivania:** activar `IA_PROMPT_VERSION=v8` (reemplaza a v7) cuando Oscar apruebe el reporte.
+  - ~~Pendiente · Ivania: activar `IA_PROMPT_VERSION=v8` (reemplaza a v7) cuando Oscar apruebe el reporte~~
+    **hecho (12/11): Oscar aprobó el reporte (comunicado por Ivania) e Ivania puso `IA_PROMPT_VERSION=v8`**
+    (`doctor`: v8). `ia cola --ver` (12:33): la cola pasó de 6 a 14 (los abiertos con resumen v5 vuelven a entrar,
+    primero `20261100871` Alta); hoy ya se hicieron los 10 del día, así que se rehacen desde el 13/11 a las 10:00, 10
+    por día (≈ 0,05 USD cada uno). Los resúmenes v5 quedan en el historial; volver atrás = `v5` en el `.env`.
 
 - **Pulido del código (2026-11-09, pedido de Ivania; commit `b2d47a5`).**
   - **Error real arreglado: dos programas que escriben a la vez se trababan.** Las transacciones empezaban con
@@ -611,7 +615,8 @@ el PR)
     recomendación~~ **4000 comprobado y v5 activado por Ivania (2026-11-05, `doctor`: `IA_PROMPT_VERSION v5`),
     provisional hasta Oscar** (`DECISION_IA.md` §7). `ia cola --ver`: 18 en cola; la de las 10:00 hace 10 por día.
     Al llegar el v5 a un cartel con lista de verificación (p. ej. `20261003242`, `20261003291`), «¿Cumple?» de
-    Requerimientos dice «Sin evaluar» hasta volver a generar la lista. **Pendiente · Oscar:** confirmar el v5.
+    Requerimientos dice «Sin evaluar» hasta volver a generar la lista. ~~Pendiente · Oscar: confirmar el v5~~
+    **reemplazado: Oscar aprobó el reporte y el v8 está activo desde el 12/11.**
   - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
     de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
 

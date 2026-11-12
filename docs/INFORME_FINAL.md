@@ -304,7 +304,7 @@ SICOP bloqueó la solicitud automática del reporte.
   probarla contra el servidor real.
 - **Reporte de cartel con IA** **(nuevo 12/11: en operación):** cola automática de resúmenes (Alta → Media → Baja,
   10 al día), citas que abren el documento en su página (revisión de 11 citas en 10 carteles: 0 errores), extracto
-  en el correo diario, Reporte PDF de hasta 3 páginas con «Por qué se recomienda» y «¿Cumple?». Prompt activo v5.
+  en el correo diario, Reporte PDF de hasta 3 páginas con «Por qué se recomienda» y «¿Cumple?». Prompt activo v8 desde el 12/11 (aprobado por Oscar; antes v5).
 - **(nuevo 12/11) Asistente de elegibilidad** (lecciones 1 a 5): lista de verificación con IA, preguntas primero de
   los excluyentes, resultado «¿podemos participar?» con constancia, y desde el 11/11 **como chat**. Prueba completa
   en 2 de 3 carteles (5/11): funciona. Siguiente: paso 5 del chat, «Oferta terminada» y el borrado de los datos
