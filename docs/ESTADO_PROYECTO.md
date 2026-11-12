@@ -40,8 +40,17 @@ el PR)
     si la repetición sale seguido en el uso real, un v7 con «muestra, recopila e informa son lo mismo: no preguntes
     por sinónimos». Unos centavos en OpenAI. No se abrió la página del resultado (se leyó la nota en la base) ni se
     probó un requisito de número o sí/no. Script: solo en el scratchpad.
-    **Pendiente · Ivania:** el caso del mínimo con un documento (p. ej. las certificaciones de servicios GPS de
-    `20261003280`); corregir con «Cambiar» las respuestas 36, 38 y 43.
+    ~~Pendiente · Ivania: el caso del mínimo con un documento (p. ej. las certificaciones de servicios GPS de
+    `20261003280`)~~ **probado por Ivania con la IA real (12/11, pregunta 64, requisito excluyente con cuatro
+    mínimos): funciona de punta a punta.** «Tenemos las certificaciones» → no guarda, pide cuántas, firmadas y de
+    cuándo; «tres, firmadas, servicios 2023–2025» → no guarda, pide solo la fecha de emisión (sí faltaba); «se
+    emitieron en 2025» → guardado «Lo tiene · archivo pendiente», nota «Dijo: Tres certificaciones firmadas
+    digitalmente, emitidas en 2025, de servicios GPS prestados de 2023 a 2025; las subirá después.»
+    **Pendiente · Ivania:** corregir con «Cambiar» las respuestas 36, 38 y 43.
+  - **Hallazgo (12/11, sin tocar):** las preguntas guardadas de los requisitos tratan de vos («¿Podés aportar…?»,
+    «Respondé sí o no», «Escribí el número»; preguntas 61 a 65 de `20261003280`) y la app agrega «diga» (usted).
+    Vienen de la pregunta que generó la IA al armar la lista, no del chat (la regla de usted del 11/11 es solo del
+    chat). **Pendiente:** revisar dónde se generan y cómo corregir las ya guardadas, si Ivania lo pide.
 
 - **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
   línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
