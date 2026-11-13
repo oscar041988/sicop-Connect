@@ -23,8 +23,8 @@ Oscar una el PR)
     campo.
   - Pruebas nuevas (3): la hoja es exactamente una página más y va al final; el reporte largo con hoja llega a 4;
     panel y resumen la muestran y sin el campo no; v9 en el esquema y el texto. Suite: **1116 passed**.
-  - **Pendiente de Ivania:** `IA_PROMPT_VERSION=v9` en `.env` y `python -m app.cli migrate` (la base real pasa a
-    0046). Los resúmenes viejos no traen la hoja hasta generarlos de nuevo (cuesta otra llamada a la IA). Si salen
+  - ~~Pendiente de Ivania: `IA_PROMPT_VERSION=v9` en `.env` y `python -m app.cli migrate` (la base real pasa a
+    0046)~~ **hecho (Ivania, 13/11).** Los resúmenes viejos no traen la hoja hasta generarlos de nuevo (cuesta otra llamada a la IA). Si salen
     «incompleta · max_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 6000). ~~Rehacer las capturas de la misión
     25~~ **hecho (13/11, Claude):** la misión no tenía capturas; ahora tiene 2 (paso 3, «Reporte PDF» de la fila
     del resumen, con su regla en `app/ayuda/pantallas.py`; paso 9, «Leer de qué trata, explicado en detalle»), con
