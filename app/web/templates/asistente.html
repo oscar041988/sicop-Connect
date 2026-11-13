@@ -26,39 +26,7 @@
   </div>
 
   <aside class="asis-lateral" aria-label="Avance y oferta">
-    {% if asis.sesion %}
-    {% set evs = res_eleg.evaluaciones | sort(attribute="item.excluyente", reverse=true) %}
-    {% set con = evs | rejectattr("respuesta", "none") | list | length %}
-    <section class="asis-caja" aria-label="Avance">
-      <h3>Requisitos del cartel</h3>
-      <p class="asis-avance"><strong>{{ con }} / {{ evs | length }}</strong> con respuesta</p>
-      <progress max="{{ evs | length or 1 }}" value="{{ con }}"></progress>
-      <ul class="asis-reqs">
-        {% for e in evs %}
-        {% set color = {"cumple": "verde", "no_cumple": "rojo"}.get(e.estado, "ambar") %}
-        <li><span>{% if e.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ e.item.requisito }}</span>
-          <span class="pildora {{ color }}">{{ ELEG.estados.get(e.estado, "Falta") }}</span></li>
-        {% endfor %}
-      </ul>
-      <p class="sub">Todos los requisitos salen en la oferta; nadie los oculta.</p>
-    </section>
-
-    {% set con_archivo = asis.pasos | selectattr("respuesta") | selectattr("respuesta.tiene_archivo") | list %}
-    <section class="asis-caja" aria-label="Archivos subidos">
-      <h3>Archivos subidos ({{ con_archivo | length }})</h3>
-      {% if con_archivo %}
-      <ul class="asis-docs">
-        {% for p in con_archivo %}
-        <li><b>{{ p.respuesta.archivo_nombre }}</b>
-          <small>{{ p.item.requisito }} ·
-            <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ p.respuesta.id }}/ver" target="_blank" rel="noopener">Ver</a></small></li>
-        {% endfor %}
-      </ul>
-      {% else %}<p class="sub">Todavía ninguno. Los archivos se suben al responder.</p>{% endif %}
-      <p class="sub">Se guardan tal cual, sin modificarlos.</p>
-    </section>
-    {% endif %}
-
+    {# La oferta va primero (Ivania, 13/11): es lo que se busca al terminar; después el avance y los archivos #}
     <section class="asis-caja" id="oferta" aria-label="Oferta">
       <h3>Oferta</h3>
       {% set versiones = chat.versiones if chat.activo else [] %}
@@ -128,6 +96,39 @@
       <p class="sub">Cada cambio crea una versión nueva; las anteriores y el chat se guardan. La firma y la sube a SICOP
         una persona.</p>
     </section>
+
+    {% if asis.sesion %}
+    {% set evs = res_eleg.evaluaciones | sort(attribute="item.excluyente", reverse=true) %}
+    {% set con = evs | rejectattr("respuesta", "none") | list | length %}
+    <section class="asis-caja" aria-label="Avance">
+      <h3>Requisitos del cartel</h3>
+      <p class="asis-avance"><strong>{{ con }} / {{ evs | length }}</strong> con respuesta</p>
+      <progress max="{{ evs | length or 1 }}" value="{{ con }}"></progress>
+      <ul class="asis-reqs">
+        {% for e in evs %}
+        {% set color = {"cumple": "verde", "no_cumple": "rojo"}.get(e.estado, "ambar") %}
+        <li><span>{% if e.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ e.item.requisito }}</span>
+          <span class="pildora {{ color }}">{{ ELEG.estados.get(e.estado, "Falta") }}</span></li>
+        {% endfor %}
+      </ul>
+      <p class="sub">Todos los requisitos salen en la oferta; nadie los oculta.</p>
+    </section>
+
+    {% set con_archivo = asis.pasos | selectattr("respuesta") | selectattr("respuesta.tiene_archivo") | list %}
+    <section class="asis-caja" aria-label="Archivos subidos">
+      <h3>Archivos subidos ({{ con_archivo | length }})</h3>
+      {% if con_archivo %}
+      <ul class="asis-docs">
+        {% for p in con_archivo %}
+        <li><b>{{ p.respuesta.archivo_nombre }}</b>
+          <small>{{ p.item.requisito }} ·
+            <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ p.respuesta.id }}/ver" target="_blank" rel="noopener">Ver</a></small></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="sub">Todavía ninguno. Los archivos se suben al responder.</p>{% endif %}
+      <p class="sub">Se guardan tal cual, sin modificarlos.</p>
+    </section>
+    {% endif %}
   </aside>
 </div>
 

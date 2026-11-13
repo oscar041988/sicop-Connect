@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 (la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
@@ -10,6 +10,13 @@ con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios 
 Oscar una el PR)
 
 ## Último resultado
+
+- **La caja «Oferta» primero en el asistente (2026-11-13, pedido de Ivania).** Ivania la revisó en pantalla con
+  `20261003280`: se ve bien, pero la quiere antes de «Requisitos del cartel» y «Archivos subidos». En
+  `asistente.html` solo cambia el orden de las tres cajas de la columna derecha; el contenido es el mismo.
+  - Misión 23: «a la derecha la oferta, cuánto falta y los archivos subidos» y «Mira la caja «Oferta», arriba a la
+    derecha»; sus 8 capturas rehechas con la base de EJEMPLO y revisadas.
+  - Pruebas del asistente, la oferta y la ayuda: 125 passed. Suite: 1113 passed. Sin pruebas nuevas.
 
 - **Ayuda al día con los cambios del 13/11 (Ivania; `OPERACION.md` §8).** Misiones: **9** (paso nuevo «Solo los
   míos», con captura, y ¿Y si…? cuando no muestra nada), **23** (sección «Antes de pedir la oferta», pasos 17–19 con
@@ -49,8 +56,8 @@ Oscar una el PR)
   - Archivos: `app/propuesta.py`, `app/web/rutas.py`, `asistente.html`, `estilo.css`. 3 pruebas nuevas en
     `tests/test_propuesta.py` (dice lo mismo que la portada y no llama a la IA; sin pliego ni asistente; la caja con
     su enlace). Suite: 1112 passed. Sin migración.
-  - **Pendiente · Ivania:** verla en el asistente de `20261003280` y decir si se entiende (Claude no la vio en
-    pantalla: haría falta la sesión del panel).
+  - ~~Pendiente · Ivania: verla en el asistente de `20261003280` y decir si se entiende~~ **hecho (13/11): se ve
+    bien; la quiso primero en la columna (entrada de arriba).**
 
 - **«7 de 20» en la animación de la Bitácora (2026-11-13, Ivania; mejora 14 de la lista del 13/11).** Las corridas
   locales guardaban `en_cola` solo al terminar, así que la persona picando decía «7 consultados» sin el total.

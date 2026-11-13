@@ -10,8 +10,8 @@ Lo usan su encargado y los administradores.
 
 1. Ve a la página del cartel.
 2. Haz clic en el botón verde «Abrir el asistente».
-   El asistente se abre en su propia página: arriba el cartel, a la izquierda el asistente y a la derecha cuánto
-   falta, los archivos subidos y la oferta.
+   El asistente se abre en su propia página: arriba el cartel, a la izquierda el asistente y a la derecha la
+   oferta, cuánto falta y los archivos subidos.
    [captura: Asistente · resaltar la sección «Asistente de elegibilidad»]
 3. Haz clic en «Empezar el asistente».
    Solo la primera vez. Después sigue donde quedó.
@@ -81,7 +81,7 @@ Lo usan su encargado y los administradores.
 
 ### Antes de pedir la oferta
 
-17. Mira la caja «Oferta», a la derecha.
+17. Mira la caja «Oferta», arriba a la derecha.
     [captura: Asistente · resaltar la lista «Antes de pedirla»]
     Dice cuántos puntos faltan. Con alguno pendiente, la oferta saldría como «BORRADOR».
     Lo más grave sale primero: «No cumple», después «Revisar» y al final «Falta».
