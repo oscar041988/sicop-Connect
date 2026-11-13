@@ -105,6 +105,7 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Cartel", "«Historial»"): Objetivo(texto="Historial", url="/oportunidades/{seguido}"),
     ("Cartel", "«Ver» del resumen"): Objetivo(selector="#resumen-ia a.btn.p"),
     ("Cartel", "«Resumen ejecutivo»"): Objetivo(selector="#resumen-ia h2"),
+    ("Cartel", "«Reporte PDF» del resumen"): Objetivo(selector="#resumen-ia a[href$='/reporte']"),
     # Resumen
     ("Resumen", "la columna «Excluyente»"): Objetivo(texto="Excluyente"),
     ("Resumen", "una cita"): Objetivo(selector=".cita"),

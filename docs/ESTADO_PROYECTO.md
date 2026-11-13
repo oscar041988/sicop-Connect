@@ -25,7 +25,10 @@ Oscar una el PR)
     panel y resumen la muestran y sin el campo no; v9 en el esquema y el texto. Suite: **1116 passed**.
   - **Pendiente de Ivania:** `IA_PROMPT_VERSION=v9` en `.env` y `python -m app.cli migrate` (la base real pasa a
     0046). Los resúmenes viejos no traen la hoja hasta generarlos de nuevo (cuesta otra llamada a la IA). Si salen
-    «incompleta · max_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 6000). Rehacer las capturas de la misión 25.
+    «incompleta · max_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 6000). ~~Rehacer las capturas de la misión
+    25~~ **hecho (13/11, Claude):** la misión no tenía capturas; ahora tiene 2 (paso 3, «Reporte PDF» de la fila
+    del resumen, con su regla en `app/ayuda/pantallas.py`; paso 9, «Leer de qué trata, explicado en detalle»), con
+    la base de EJEMPLO y revisadas. Pruebas de la ayuda: 50 passed. La base local ya está en 0046 y en WAL.
 
 - **La caja «Oferta» primero en el asistente (2026-11-13, pedido de Ivania).** Ivania la revisó en pantalla con
   `20261003280`: se ve bien, pero la quiere antes de «Requisitos del cartel» y «Archivos subidos». En

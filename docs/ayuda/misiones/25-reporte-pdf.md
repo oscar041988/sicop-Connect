@@ -11,6 +11,7 @@ máximo 3 páginas con la identidad de Hermatix, más una hoja que explica el ca
 2. Busca la fila del resumen con IA, con los botones «Ver» y «Descargar».
 3. Haz clic en «Reporte PDF».
    Se descarga el archivo. Si el resumen no cambió, es el mismo reporte de la vez anterior.
+   [captura: Cartel · resaltar «Reporte PDF» del resumen]
 
 ### Leerlo
 
@@ -29,6 +30,7 @@ máximo 3 páginas con la identidad de Hermatix, más una hoja que explica el ca
    Cuenta con palabras sencillas qué compran, cómo tiene que ser, cuándo se entrega, qué piden para participar y
    cómo escogen al ganador. La misma explicación está en el cartel, debajo de «De qué trata».
    Si no aparece, el resumen es anterior a esta hoja: genera el resumen de nuevo.
+   [captura: Cartel · resaltar «Leer de qué trata, explicado en detalle»]
 
 **Dónde quedaste:** con el PDF descargado, listo para compartir o imprimir.
 
