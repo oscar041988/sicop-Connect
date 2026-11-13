@@ -765,3 +765,8 @@ form.en-linea { display: inline; margin-left: 8px; }
   100% { transform: rotate(-25deg); } }
 @keyframes chispas { 0%, 52% { opacity: 0; } 56%, 66% { opacity: 1; } 72%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .minero .brazos, .minero .chispas { animation: none; } }
+/* Último correo de cada tipo, arriba del panel de carteles, y el resumen semanal en el panel (Ivania, 13/11). El
+   cuerpo del resumen es el del correo, con sus estilos en línea; aquí solo se limita el ancho. */
+.ultimos-correos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; font-size: .88rem; color: var(--mut); }
+.ultimos-correos strong { color: var(--ink); }
+.resumen-semanal { max-width: 640px; }

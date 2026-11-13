@@ -14,7 +14,7 @@ import sqlite3
 import tempfile
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote, urlencode
 
@@ -76,6 +76,7 @@ PLANTILLAS.env.filters["fecha"] = panel.fecha_cr
 PLANTILLAS.env.filters["legible"] = panel.legible
 PLANTILLAS.env.filters["titulo"] = panel.formato_titulo
 PLANTILLAS.env.filters["dia"] = perfil.dia
+PLANTILLAS.env.filters["fecha_dia"] = lambda d: d.strftime("%d/%m/%Y")  # como en el correo (avisos._PLANTILLAS)
 PLANTILLAS.env.globals["monto"] = panel.monto
 PLANTILLAS.env.globals.update(
     ENCAJES=panel.ENCAJES, PLAZOS=panel.PLAZOS, CALIDADES=panel.CALIDADES, DECISIONES=panel.DECISIONES,
@@ -187,16 +188,41 @@ def oportunidades(request: Request, prioridad: str = "candidatos", familia: str 
         opciones = panel.opciones_filtros(conn, version) if version else {"familias": [], "instituciones": [], "tipos": []}
         sin_evaluar = panel.importado_sin_evaluar(conn)
         seguimientos = seguimiento.de_carteles(conn, [f.nro_sicop for f in resultado.filas])
+        ultimos = _ultimos_correos(conn)
     consulta = {k: v for k, v in vars(filtros).items() if k != "pagina" and v and v != "candidatos"}
     return PLANTILLAS.TemplateResponse(request, "oportunidades.html", {
         "filtros": filtros, "pagina": resultado, "opciones": opciones, "version": version,
-        "seguimientos": seguimientos,
+        "seguimientos": seguimientos, "ultimos": ultimos,
         "aviso": _aviso_reglas(version, sin_evaluar), "prioridades": panel.PRIORIDADES,
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
         "url_chip": lambda valor: "/oportunidades?" + urlencode(
             {k: v for k, v in {**consulta, "revisado": valor}.items() if v}),
         "url_pagina": lambda n: "/oportunidades?" + urlencode({**consulta, "pagina": n}),
         "url_exportar": "/oportunidades.xlsx" + ("?" + urlencode(consulta) if consulta else ""),
+    })
+
+
+def _ultimos_correos(conn) -> list[tuple[str, avisos.UltimoEnvio | None, str | None]]:
+    """La línea «Último correo» del panel (Ivania, 13/11: el resumen semanal salía y nadie lo veía):
+    (qué correo, su último envío real, enlace para verlo en el panel)."""
+    return [("Último correo diario", avisos.ultimo_envio(conn, tuple(avisos.MOTIVOS)), None),
+            ("Último resumen semanal", avisos.ultimo_envio(conn, (resumen.MOTIVO,)), "/resumen-semanal")]
+
+
+@router.get("/resumen-semanal", response_class=HTMLResponse)
+def pagina_resumen_semanal(request: Request) -> Response:
+    """El resumen semanal en el panel, con el mismo cuerpo que el correo de los lunes. Se arma al abrir la página con
+    los datos de hoy (el correo no se guarda): la semana es la misma, pero las cifras que cambian con el tiempo
+    (pendientes, próximos cierres) pueden no ser iguales a las del correo."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    ahora = _ahora()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        c = resumen.contenido(conn, version, ahora, "") if version else None
+        envio = avisos.ultimo_envio(conn, (resumen.MOTIVO,))
+    return PLANTILLAS.TemplateResponse(request, "resumen_semanal.html", {
+        "c": c, "hasta": c.fin - timedelta(days=1) if c else None, "panel": "", "envio": envio,
     })
 
 

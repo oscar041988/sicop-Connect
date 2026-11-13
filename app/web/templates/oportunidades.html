@@ -1,5 +1,17 @@
 {% extends "base.html" %}
 {% block contenido %}
+{# Último correo de cada tipo (Ivania, 13/11): así se sabe que salió sin entrar a Gmail. «Aceptado» = Gmail lo tomó. #}
+<ul class="ultimos-correos">
+  {% for nombre, e, enlace in ultimos %}
+  <li>{{ nombre }}:
+    {% if e %}<strong>{{ e.momento | fecha }}</strong>
+      {% if e.aceptados %}· aceptado por Gmail para {{ e.aceptados }} persona{{ "s" if e.aceptados != 1 }}{% endif %}
+      {% if e.fallidos %}· <span class="falta">falló para {{ e.fallidos }}</span>{% endif %}
+      {% if e.inciertos %}· <span class="falta">incierto para {{ e.inciertos }}</span>{% endif %}
+    {% else %}todavía no se ha enviado ninguno{% endif %}
+    {% if enlace %}· <a href="{{ enlace }}">Ver el resumen</a>{% endif %}</li>
+  {% endfor %}
+</ul>
 {# Chips de estado de la revisión + búsqueda (diseño del prototipo de Hermatix) #}
 <div class="tools">
   {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos"), ("ofertada", "Ofertada"), ("no_se_oferta", "No se oferta")] %}

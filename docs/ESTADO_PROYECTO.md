@@ -1,14 +1,33 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (persona picando en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
+Última actualización: 2026-11-13 («Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1103 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1106 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **«Último correo» y el resumen semanal en el panel (2026-11-13, pedido de Ivania).** El resumen semanal salía los
+  lunes y nadie lo veía (Gmail lo aceptaba, pero licitaciones@ lo envía y lo recibe). Ahora:
+  - Arriba del Panel de carteles, dos líneas: «Último correo diario» y «Último resumen semanal», con la hora del
+    último envío real y para cuántas personas lo aceptó Gmail; «falló» o «incierto» en rojo. La vista previa
+    (dry-run) no cuenta. `avisos.ultimo_envio` agrupa por `updated_at`: todas las filas de un envío llevan la hora
+    del ciclo (`_marcar`). «Aceptado» no prueba que llegó a la bandeja.
+  - Página **`/resumen-semanal`** (todos los usuarios del panel), enlazada desde «Ver el resumen»: el mismo cuerpo
+    que el correo (`correo/_resumen_cuerpo.html`, compartido con `correo/resumen.html`; el pie «Recibes este
+    resumen…» queda solo en el correo). **El correo no se guarda:** la página se arma al abrirla con los datos de
+    hoy; la semana es la misma, pero pendientes y próximos cierres pueden haber cambiado (la página lo dice). Una
+    copia exacta necesitaría una migración.
+  - Archivos: `app/avisos.py`, `app/web/rutas.py` (`_ultimos_correos`, `pagina_resumen_semanal`, filtro
+    `fecha_dia`), `oportunidades.html`, `resumen_semanal.html`, `correo/_resumen_cuerpo.html`,
+    `correo/resumen.html`, `estilo.css`. 3 pruebas nuevas en `tests/test_ultimo_correo.py` (envíos SIMULADOS).
+    Suite: 1106 passed. Sin migración.
+  - Comprobado en solo lectura con la base real: «Último resumen semanal: 09/11/2026 08:00 · aceptado por Gmail
+    para 3 personas», igual que el registro del ciclo.
 
 - **Persona picando en la Bitácora (2026-11-13, pedido de Oscar por medio de Ivania).** Oscar quería ver una
   persona picando mientras el enriquecimiento trabaja. Ivania eligió la Bitácora (el panel no arranca el
@@ -27,7 +46,8 @@ Oscar una el PR)
   - Otros del 13/11: guía de la demo para Oscar (página privada de Ivania en claude.ai, fuera del repositorio).
     El resumen semanal salió los lunes 2/11 y 9/11 (registro del ciclo: Gmail lo ACEPTÓ para los 4 y los 3
     destinatarios) pero Ivania nunca lo vio en licitaciones@. **Pendiente · Ivania:** buscarlo en Gmail
-    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario.
+    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario. Desde el mismo día,
+    el panel muestra cada envío y el resumen (entrada de arriba).
 
 - **El asistente en su propia página (2026-11-12, pedido de Ivania).** Con el diseño de la maqueta del chat que vio
   Oscar (11/11): `GET /oportunidades/{nro}/asistente` (`pagina_asistente` y `_render_asistente` en

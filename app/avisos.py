@@ -312,6 +312,29 @@ def _escribir_vista_previa(carpeta: Path, por_destinatario: dict[str, list[Oport
     return archivos
 
 
+@dataclass
+class UltimoEnvio:
+    """El último envío real de un tipo de correo, para la línea «Último correo» del panel."""
+    momento: str
+    aceptados: int       # personas: Gmail lo tomó (no prueba que llegó a la bandeja)
+    fallidos: int
+    inciertos: int
+
+
+def ultimo_envio(conn: sqlite3.Connection, motivos: tuple[str, ...]) -> UltimoEnvio | None:
+    """El último envío (no la vista previa) con esos motivos. Todas las filas de un envío llevan el mismo
+    updated_at (la hora del ciclo, ver _marcar), así que esa hora agrupa a sus destinatarios."""
+    marcas = ", ".join("?" * len(motivos))
+    fila = conn.execute(f"SELECT max(updated_at) FROM notification_outbox WHERE motivo IN ({marcas})"
+                        " AND status IN ('aceptado', 'fallido', 'incierto')", motivos).fetchone()
+    if fila[0] is None:
+        return None
+    cuentas = dict(conn.execute(
+        f"SELECT status, count(DISTINCT recipient) FROM notification_outbox WHERE motivo IN ({marcas})"
+        " AND updated_at = ? GROUP BY status", (*motivos, fila[0])).fetchall())
+    return UltimoEnvio(fila[0], cuentas.get("aceptado", 0), cuentas.get("fallido", 0), cuentas.get("incierto", 0))
+
+
 def _marcar(conn: sqlite3.Connection, ids: list[int], estado: str, detalle: str, ahora: datetime) -> None:
     with transaccion(conn):
         conn.executemany(
