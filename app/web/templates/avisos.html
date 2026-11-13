@@ -23,6 +23,8 @@
     <p class="vacio">Es el resumen de otra semana: ya no se envía.</p>
     {% elif a.vencido %}
     <p class="vacio">El cartel ya cerró: no se puede reenviar.</p>
+    {% elif not a.destinatario_activo and a.es_asignacion %}
+    <p class="vacio">{{ a.para }} ya no es el encargado de este cartel (o su usuario se desactivó): no se reenvía.</p>
     {% elif not a.destinatario_activo %}
     <p class="vacio">{{ a.para }} ya no recibe avisos (ver «Destinatarios»).</p>
     {% else %}

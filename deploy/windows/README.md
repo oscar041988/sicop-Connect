@@ -1,11 +1,13 @@
 # Ciclo diario en Windows (local)
 
 Equivalente local de `deploy/systemd/sicop-cycle.timer` + `sicop-cycle.service`: una tarea del Programador de
-tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **siempre en dry-run** (prepara los
-avisos y la vista previa, no envía nada). Se usa mientras todo se desarrolla en local (decisión de Oscar,
-2026-10-21). La tarea la crea la persona que usa la computadora; el script no la activa solo.
+tareas de Windows que corre el ciclo **de lunes a viernes a las 8:00**, **con envío real** desde el 2026-10-30
+(decisión de Ivania; antes, siempre en dry-run). Envía solo si `.env` tiene `NOTIFICATIONS_ENABLED=true` y
+`NOTIFICATIONS_DRY_RUN=false`. Se usa mientras todo se desarrolla en local (decisión de Oscar, 2026-10-21).
+**Cuando Oscar active el ciclo del servidor, deshabilitar esta tarea**, o los destinatarios recibirán dos correos.
+La tarea la crea la persona que usa la computadora; el script no la activa solo.
 
-- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --dry-run` y agrega la salida,
+- `sicop-ciclo.ps1`: lo que corre la tarea. Ejecuta `run-cycle --origen real --send` y agrega la salida,
   con fecha y código de salida, a `data\logs\ciclo-AAAA-MM.log`.
 - Códigos de salida: `0` = ok · `1` = fallo (queda en `source_runs`) · `2` = ya había otro ciclo en curso.
 
@@ -27,15 +29,19 @@ $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
     -WorkingDirectory $proyecto
 $horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 8:00
 $ajustes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -StartWhenAvailable
 Register-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario" -Action $accion -Trigger $horario -Settings $ajustes `
     -Description "run-cycle --origen real --dry-run, lunes a viernes 8:00. Registro en data\logs."
 ```
 
 - Corre con tu usuario y **solo con la sesión abierta**: la computadora tiene que estar encendida y con tu
   sesión iniciada a las 8:00.
-- Si a las 8:00 estaba apagada, ese día no corre y no se ejecuta tarde (igual que `Persistent=false` en el
-  servidor: `-StartWhenAvailable` no se usa a propósito).
+- `-StartWhenAvailable` (2026-11-09, decisión de Ivania): si a las 8:00 estaba apagada, suspendida o sin la
+  sesión abierta, el ciclo corre **tarde**, en cuanto se pueda (una sola vez, no una por cada día perdido). Se
+  agregó porque del 3 al 6/11 el ciclo no corrió (despertó 8:02, sesión después de las 8:00) y se acumularon
+  avisos. El servidor sigue con `Persistent=false` (decisión de Oscar): son ajustes distintos. Una tarea ya creada
+  se cambia con `$t = Get-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"; $t.Settings.StartWhenAvailable
+  = $true; Set-ScheduledTask -InputObject $t`.
 - `-WakeToRun` (2026-10-28): si a las 8:00 está **suspendida**, Windows la despierta para correr la tarea. Solo
   funciona con los temporizadores de reactivación activados en el plan de energía; en esta computadora, **solo
   con cargador** (`powercfg /setacvalueindex SCHEME_CURRENT SUB_SLEEP RTCWAKE 1` y
@@ -139,6 +145,27 @@ en SICOP la cola del día (fichas y documentos), con la **ventana del navegador 
 `data\logs\enriquecimiento-AAAA-MM.log`. Códigos: `0` = ok · `1` = algún FALLO · `2` = CAPTCHA o bloqueo (se detuvo)
 u otra corrida en curso. Con `ENRICH_ENABLED=false` (por defecto) no consulta nada.
 
+**Después corre `ia cola`** (Reporte con IA, lección 5; decisión de Ivania, 2026-10-30): los resúmenes con IA de los
+carteles Alta, Media y Baja ya enriquecidos, con el presupuesto diario (`IA_MAX_SUMMARIES_PER_DAY`, `IA_MAX_DAILY_COST`).
+Corre aunque el enriquecimiento falle, y con `AI_MODE=none` no hace nada. Su salida va al mismo registro, en su
+propio bloque. Si el enriquecimiento salió bien, el código de la tarea es el de `ia cola` (`1` = algún resumen
+fallido o la cola se detuvo por la clave o el saldo). Detalle: `docs/OPERACION.md` §3.3.
+
+**Segunda oportunidad: tarea «SICOP CONNECT - resumenes IA»** (creada el 2026-11-11): el mismo script con `-SoloIa`
+a las **14:00, lunes a viernes**, con el mismo usuario y los mismos ajustes que la de las 10:00. Solo corre `ia cola`;
+si a las 10:00 todo salió bien, no gasta nada. Para crearla en otra computadora:
+
+```powershell
+$base = Get-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
+$accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-enriquecimiento.ps1`" -SoloIa" `
+    -WorkingDirectory $proyecto
+$horario = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At 14:00
+Register-ScheduledTask -TaskName "SICOP CONNECT - resumenes IA" -Action $accion -Trigger $horario `
+    -Principal $base.Principal -Settings $base.Settings `
+    -Description "Segunda oportunidad de ia cola a las 14:00, lunes a viernes."
+```
+
 **Modo interactivo:** para que se vea la ventana, la tarea tiene que ser «**Ejecutar solo cuando el usuario haya
 iniciado sesión**». Si se elige «Ejecutar tanto si el usuario inició sesión como si no», el navegador corre
 escondido y no se puede supervisar. Además, en ese horario la computadora tiene que estar encendida, con la sesión
@@ -189,3 +216,35 @@ El resumen queda en `data\exports\resumen-enriquecimiento-<n>.txt` mientras los 
 
 `ENRICH_ENABLED=false` en `.env` (la tarea sigue corriendo pero no consulta) o
 `Disable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"`.
+
+### Fase 2: la PC consulta y el servidor guarda (`enrich remoto`)
+
+Desde la actualización del servidor, la base principal está allá (`docs/ACTUALIZACION_SERVIDOR.md`). La misma tarea
+pasa a correr `enrich remoto`: pide la cola al servidor, consulta SICOP con la ventana visible y manda cada cartel
+(`docs/ENVIO_ENRIQUECIMIENTO.md`). La cola de IA ya no corre aquí: la hace el servidor a las 10:45.
+
+1. En el `.env` de la PC (lo edita Ivania; el token se copia en persona, nunca por chat):
+   ```ini
+   ENRICH_ENABLED=true
+   ENRICH_SERVER_URL=https://sicop.hermatix.com
+   ENRICH_TOKEN=          # el mismo de /etc/sicop-connect/app.env del servidor
+   ```
+   Con `ENRICH_SERVER_URL`, `enrich run` se niega a correr: nada escribe ya en la base local.
+2. Una corrida supervisada, con un solo cartel:
+   ```powershell
+   cd C:\Users\User\sicop-connect
+   .\.venv\Scripts\Activate.ps1
+   python -m app.cli enrich remoto --max 1
+   ```
+   Lo esperado: «Corrida #N en el servidor…», la consulta con la ventana y «Enviado al servidor: nueva · K
+   documento(s) guardado(s)». En el panel del servidor, «Bitácora» muestra la corrida (el video queda en esta PC).
+3. La tarea, con `-Remoto` (sin cambiar el horario de las 10:00):
+   ```powershell
+   $proyecto = "C:\Users\User\sicop-connect"
+   $accion = New-ScheduledTaskAction -Execute "powershell.exe" `
+       -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$proyecto\deploy\windows\sicop-enriquecimiento.ps1`" -Remoto" `
+       -WorkingDirectory $proyecto
+   Set-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento" -Action $accion
+   Enable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
+   ```
+   **Volver atrás** (la PC sola con su base): quitar `-Remoto` del mismo modo y vaciar `ENRICH_SERVER_URL`.

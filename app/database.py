@@ -14,6 +14,30 @@ MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 
 # Nombre esperado: 0001_esquema_inicial.sql (4 dígitos, guion bajo, minúsculas).
 _MIGRATION_NAME = re.compile(r"^(\d{4})_[a-z0-9_]+\.sql$")
+# Una migración que reconstruye una tabla a la que otras apuntan lo pide con esta línea (procedimiento de 12 pasos de
+# la documentación de SQLite, «ALTER TABLE»): corre con las llaves foráneas apagadas y, ANTES de confirmar, se
+# revisan todas con PRAGMA foreign_key_check; si alguna quedó rota, no se aplica nada.
+SIN_LLAVES_FORANEAS = "-- migracion: sin llaves foraneas"
+# Segundos que una conexión espera si otro programa está escribiendo (el panel, el enriquecimiento) antes de fallar con
+# «database is locked». Con los 5 s de Python, el ciclo del 2026-11-05 a las 8:00 se detuvo.
+ESPERA_BASE_OCUPADA_S = 30
+# Las tareas programadas (ciclo, enriquecimiento, cola de IA, obtención) esperan más: nadie las mira, y una carga
+# grande en «Cargar archivo» ocupa la base unos minutos. El 2026-11-10 a las 10:00, una carga de 11 390 carteles
+# tuvo la base ocupada más de 2 min y el enriquecimiento y la cola de IA se cayeron a los 30 s.
+ESPERA_TAREAS_S = 600
+_espera_s = ESPERA_BASE_OCUPADA_S
+
+
+@contextmanager
+def espera_de_tarea():
+    """Dentro del bloque, las conexiones nuevas esperan ESPERA_TAREAS_S; al salir, vuelve la espera normal. Lo usan
+    los comandos de las tareas programadas (app/cli.py); el panel no."""
+    global _espera_s
+    anterior, _espera_s = _espera_s, ESPERA_TAREAS_S
+    try:
+        yield
+    finally:
+        _espera_s = anterior
 
 
 class MigrationError(Exception):
@@ -52,8 +76,12 @@ def discover_migrations(directory: Path = MIGRATIONS_DIR) -> list[Migration]:
 
 @contextmanager
 def transaccion(conn: sqlite3.Connection):
-    """Todo lo de adentro se guarda junto o no se guarda nada (para conexiones de connect())."""
-    conn.execute("BEGIN")
+    """Todo lo de adentro se guarda junto o no se guarda nada (para conexiones de connect()).
+
+    IMMEDIATE: reserva la escritura al empezar. Con un BEGIN normal, una transacción que lee y después escribe
+    mientras otro programa escribe queda trabada con él: SQLite falla en los dos con «database is locked» sin
+    esperar ESPERA_BASE_OCUPADA_S. Así, si la base está ocupada, espera en el BEGIN y sigue."""
+    conn.execute("BEGIN IMMEDIATE")
     try:
         yield
         conn.execute("COMMIT")
@@ -63,9 +91,9 @@ def transaccion(conn: sqlite3.Connection):
 
 
 def connect(path: Path) -> sqlite3.Connection:
-    """Conexión con claves foráneas activas y transacciones explícitas."""
+    """Conexión con claves foráneas activas, transacciones explícitas y espera ante la base ocupada."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, isolation_level=None)
+    conn = sqlite3.connect(path, isolation_level=None, timeout=_espera_s)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
@@ -96,9 +124,14 @@ def apply_migrations(path: Path, directory: Path = MIGRATIONS_DIR) -> list[str]:
         for migration in migrations:
             if migration.version in applied:
                 continue
+            sin_llaves = SIN_LLAVES_FORANEAS in migration.sql
+            if sin_llaves:
+                conn.execute("PRAGMA foreign_keys = OFF")   # solo fuera de una transacción tiene efecto
             try:
                 # Todo el archivo y su registro van en una sola transacción: o se aplica completo o nada.
                 conn.executescript("BEGIN;\n" + migration.sql)
+                if sin_llaves and (rotas := conn.execute("PRAGMA foreign_key_check").fetchall()):
+                    raise sqlite3.IntegrityError(f"quedarían {len(rotas)} llaves foráneas rotas (p. ej. {rotas[0]})")
                 conn.execute(
                     "INSERT INTO schema_migrations (version, name, checksum, applied_at) VALUES (?, ?, ?, ?)",
                     (migration.version, migration.name, migration.checksum,
@@ -109,6 +142,9 @@ def apply_migrations(path: Path, directory: Path = MIGRATIONS_DIR) -> list[str]:
                 if conn.in_transaction:
                     conn.execute("ROLLBACK")
                 raise MigrationError(f"Falló {migration.name}: {exc}") from exc
+            finally:
+                if sin_llaves:
+                    conn.execute("PRAGMA foreign_keys = ON")
             done.append(migration.name)
         return done
 

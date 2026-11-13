@@ -1,8 +1,909 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-10-27 (enriquecimiento lección 4, entregas 4B (panel) y 4C (reglas sobre el texto de los PDF); rama `desarrollo`, 638 passed, subida a GitHub; **PR #4 abierto, espera a Oscar**) · Día / tarea: lección 10 preparada (hoja de la sesión, ampliaciones, práctica del reto 2); falta la sesión con Oscar (por calendario, lección 12) · Commit probado: `70cb283` (`desarrollo`, 638 passed) · `main` de GitHub: `2dc0e52` (PR #3 unido)
+Última actualización: 2026-11-13 («Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
+escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
+de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
+botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1106 passed · `desarrollo` en GitHub: al día
+con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
+Oscar una el PR)
 
 ## Último resultado
+
+- **«Último correo» y el resumen semanal en el panel (2026-11-13, pedido de Ivania).** El resumen semanal salía los
+  lunes y nadie lo veía (Gmail lo aceptaba, pero licitaciones@ lo envía y lo recibe). Ahora:
+  - Arriba del Panel de carteles, dos líneas: «Último correo diario» y «Último resumen semanal», con la hora del
+    último envío real y para cuántas personas lo aceptó Gmail; «falló» o «incierto» en rojo. La vista previa
+    (dry-run) no cuenta. `avisos.ultimo_envio` agrupa por `updated_at`: todas las filas de un envío llevan la hora
+    del ciclo (`_marcar`). «Aceptado» no prueba que llegó a la bandeja.
+  - Página **`/resumen-semanal`** (todos los usuarios del panel), enlazada desde «Ver el resumen»: el mismo cuerpo
+    que el correo (`correo/_resumen_cuerpo.html`, compartido con `correo/resumen.html`; el pie «Recibes este
+    resumen…» queda solo en el correo). **El correo no se guarda:** la página se arma al abrirla con los datos de
+    hoy; la semana es la misma, pero pendientes y próximos cierres pueden haber cambiado (la página lo dice). Una
+    copia exacta necesitaría una migración.
+  - Archivos: `app/avisos.py`, `app/web/rutas.py` (`_ultimos_correos`, `pagina_resumen_semanal`, filtro
+    `fecha_dia`), `oportunidades.html`, `resumen_semanal.html`, `correo/_resumen_cuerpo.html`,
+    `correo/resumen.html`, `estilo.css`. 3 pruebas nuevas en `tests/test_ultimo_correo.py` (envíos SIMULADOS).
+    Suite: 1106 passed. Sin migración.
+  - Comprobado en solo lectura con la base real: «Último resumen semanal: 09/11/2026 08:00 · aceptado por Gmail
+    para 3 personas», igual que el registro del ciclo.
+
+- **Persona picando en la Bitácora (2026-11-13, pedido de Oscar por medio de Ivania).** Oscar quería ver una
+  persona picando mientras el enriquecimiento trabaja. Ivania eligió la Bitácora (el panel no arranca el
+  enriquecimiento: corre a las 10:00 o con `enrich run`). Mientras la última corrida está «en curso», arriba de la
+  Bitácora sale un dibujo SVG que pica una roca, con los carteles consultados hasta ahora (sin los reintentos), «de N
+  en cola» si ya se sabe (en las corridas locales `en_cola` se guarda al final; en las remotas, al empezar), la
+  corrida y la hora de inicio. La página se recarga sola cada 15 s (`<meta http-equiv="refresh">` en el bloque nuevo
+  `cabeza` de `base.html`), solo durante la corrida.
+  - Una corrida «en curso» de más de 6 h se toma por cortada (apagón, PC cerrada) y no se anima
+    (`fichas_panel.EN_CURSO_MAXIMO`, `corrida_en_curso`). Sin animación con `prefers-reduced-motion`. Solo CSS, sin
+    JavaScript ni dependencias. Sin migración.
+  - Archivos: `app/fichas_panel.py`, `bitacora.html`, `base.html`, `estilo.css`. 1 prueba nueva en
+    `tests/test_panel_enriquecimiento.py` (sin corrida, con corrida, más de 6 h, terminada). Suite: 1103 passed.
+  - Vista previa fuera del repositorio: `vista-minero.html` en el Escritorio de Ivania (datos de ejemplo).
+  - **Pendiente · Oscar:** verla y decir si es lo que imaginaba.
+  - Otros del 13/11: guía de la demo para Oscar (página privada de Ivania en claude.ai, fuera del repositorio).
+    El resumen semanal salió los lunes 2/11 y 9/11 (registro del ciclo: Gmail lo ACEPTÓ para los 4 y los 3
+    destinatarios) pero Ivania nunca lo vio en licitaciones@. **Pendiente · Ivania:** buscarlo en Gmail
+    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario. Desde el mismo día,
+    el panel muestra cada envío y el resumen (entrada de arriba).
+
+- **El asistente en su propia página (2026-11-12, pedido de Ivania).** Con el diseño de la maqueta del chat que vio
+  Oscar (11/11): `GET /oportunidades/{nro}/asistente` (`pagina_asistente` y `_render_asistente` en
+  `app/web/rutas.py`, plantilla `asistente.html`, estilos `.asis-*`). Arriba la ficha del cartel; a la izquierda el
+  asistente de siempre (`_asistente.html`: empezar, pregunta o chat, respuestas dadas, revisión rápida y resultado);
+  a la derecha tres cajas: requisitos con su estado, archivos subidos y oferta (PDF y Word).
+  - En el cartel solo queda el botón **«Abrir el asistente»** / «Continuar con el asistente» (arriba y en la pestaña
+    «Requisitos»). Las acciones del asistente y sus errores vuelven a la página nueva; la oferta pedida desde allí
+    vuelve allí si falla (`desde=asistente`). Mismas reglas de acceso (encargado y administradores).
+  - Ayuda: `app/ayuda/pantallas.py` y misiones 09 y 23 («Abrir el asistente»).
+  - Revisado con capturas sobre una COPIA de la base (20261003280, escritorio y celular; copia borrada). Arreglos al
+    verlo: el título de SICOP trae espacios duros (se usa `resaltar(..., titulo=True)`, como en el cartel) y la
+    lista de requisitos tiene desplazamiento (96 en ese cartel).
+  - Pruebas: las del asistente apuntan a la página nueva; 2 nuevas (`test_el_asistente_tiene_su_propia_pagina`,
+    `test_pedida_desde_el_asistente_el_aviso_sale_en_el_asistente`). Suite: 1102 passed.
+  - **Revisada por Ivania en su panel (12/11): se ve bien.** Pendiente · Oscar: verla (el diseño sale de su maqueta).
+
+- **Escaneo de fallas de la app (2026-11-12, pedido de Ivania).** Revisado: patrones de error en `app/` (análisis
+  del código), SQL armado con texto, sesión/permisos/descargas/token de la API, 98 páginas del panel y todas las rutas
+  con parámetros raros sobre una COPIA de la base (0 errores 500; copia borrada), base real en solo lectura
+  (integridad OK, identificadores como texto, montos sin float) y los logs de `data/logs/`.
+  - **Falla reparada:** el 10/11 a las 10:01 la cola de IA pidió el resumen de `20261100871` (≈19 900 tokens); la IA
+    respondió y cobró, pero la base estaba ocupada y `_registrar` cayó con «database is locked»: no quedó fila en
+    `ia_usage` y ese gasto no contó en el tope del día. Ahora `app/ai/cliente.py` intenta anotar el uso hasta 3
+    veces (`INTENTOS_REGISTRO`) antes de rendirse. (La espera de 600 s de las tareas, del 10/11, ya lo hacía raro.)
+  - `tests/test_ia_cliente.py`: 2 nuevas (base ocupada que se libera: el gasto queda; ocupada siempre: se rinde tras
+    3 intentos), fallan sin la reparación. Suite: 1099 passed.
+
+- **Competencia: todas las empresas ganadoras con nombre (2026-11-12, Ivania).** Ivania buscó en la ficha del
+  proveedor de SICOP las 22 empresas (cédula jurídica 3101/3102) que ganaron carteles de familias candidatas y no
+  tenían nombre; se agregaron a `config/competidores.yaml` (29 cédulas con nombre). Nombres en el formato del
+  archivo («S.A.», «Ltda.», con tildes); la dirección no se guarda. Consulta de solo lectura a la base después:
+  0 empresas sin nombre; queda sin nombre 1 cédula de persona física, a propósito (datos personales).
+  - **Etiqueta de persona física (12/11, pedido de Ivania):** la página mostraba esa cédula como «Cédula … ·
+    sin nombre en competidores.yaml». Ahora la app reconoce sola las cédulas de persona (la jurídica tiene 10
+    dígitos y empieza en 2, 3 o 4; `competencia.es_persona_fisica`) y muestra «Persona física · Cédula …» con «su
+    nombre no se guarda (dato personal)». La cédula NO se puso en el YAML (quedaría en GitHub). Página real
+    revisada sobre una copia de la base (200, con la etiqueta). Suite: 1100 passed (`a65565b`).
+    Pendiente · Oscar: confirmar que no se guarda el nombre de esa persona.
+  - `tests/test_competencia.py`: 15 passed (el archivo carga sin errores).
+
+- **Chat: una respuesta a medias espera lo que falta (2026-11-12, opción 1 de Ivania).** Prueba de Ivania con la
+  IA real en `20261003280`: al requisito 36 (lugar discreto, alerta de manipulación y respaldo alterno) contestó
+  solo la alerta; el asistente dijo bien qué faltaba, pero la app lo guardó «Lo tiene · archivo pendiente» y pasó a
+  la pregunta 42 (el v3 lo pedía así). Ahora, prompt **`chat_asistente_v4.md`** (v3 sin tocar): cada respuesta trae
+  `falta` y `guardar_igual`. Si falta algo, la app **no guarda ni avanza** («Todavía no se guarda…: falta …») y la
+  pregunta sigue abierta; al completarla, guarda todo junto. Con «guarde lo que le dije», guarda con la nota «Falta:
+  …». «No lo tenemos» y «no sé» no esperan. `app/ai/chat.py`, sin migración. 4 pruebas nuevas en
+  `tests/test_chat_asistente.py` (IA SIMULADA); 1087 pruebas pasan. La respuesta ya guardada del requisito 36 no cambia: se corrige con
+  «Cambiar».
+  - **Prueba real del v4 (Ivania, 12/11, pregunta 43, requisito excluyente de los técnicos con mínimo de 2 años):**
+    «Tenemos el listado y los currículos» quedó guardado «Lo tiene · archivo pendiente» sin decir los 2 años: la IA
+    devolvió `falta` vacío (entendió que tener el documento bastaba); la app hizo lo correcto con eso. **Prompt
+    `chat_asistente_v5.md`** (v4 sin tocar): el mínimo sin confirmar también va en «falta», con un ejemplo de este
+    caso. Solo cambian el prompt y `VERSION`. 1 prueba nueva; 1088 pruebas pasan. Las respuestas ya guardadas de las preguntas 41 y 43
+    se corrigen con «Cambiar».
+  - **Prueba real del v5 (Ivania, 12/11, pregunta 45: «al menos 2 apps» y «un enlace para móviles»):** contestó «2»
+    → «Todavía no se guarda…: falta si ofrece un enlace…» y la pregunta siguió abierta; contestó «Sí, tenemos el
+    enlace web» → guardado y pasó a la 46. **Funciona.** Pero el requisito es de número: se guardó solo «2 apps» y
+    lo del enlace quedó únicamente en el chat. **Prompt `chat_asistente_v6.md`** (v5 sin tocar): cada respuesta
+    trae `detalle` (todo lo dicho, en una línea) y la app lo pone en la nota cuando el requisito es de número, sí o
+    no, fecha o documento: «Desde el chat del asistente. Dijo: 2 apps; enlace web para móviles: sí.» (en un texto
+    ya va todo en el valor). `chat._nota`. 4 pruebas nuevas; 1092 pruebas pasan.
+  - **Prueba del v6 con la IA real, hecha por Claude en una COPIA de la base (12/11; la base real no se tocó;
+    respuestas de PRUEBA):** pregunta 46 (kilometraje **y** reportes generales), dos corridas con los mismos
+    mensajes. Segunda: «muestra el kilometraje» → «Todavía no se guarda… falta… los reportes generales»; «los
+    reportes también, la subo después» → guardado, nota «Desde el chat del asistente. Dijo: Ficha técnica con
+    kilometraje y reportes generales de control; la subirá después.» **Funciona.** Primera: la IA fue demasiado
+    exigente y volvió a preguntar si «recopila» el kilometraje cuando ya se dijo que la ficha lo «muestra» (lo tomó
+    como otra cosa). La app hizo lo correcto las dos veces; la IA no siempre contesta igual. Decisión: usarlo así;
+    si la repetición sale seguido en el uso real, un v7 con «muestra, recopila e informa son lo mismo: no preguntes
+    por sinónimos». Unos centavos en OpenAI. No se abrió la página del resultado (se leyó la nota en la base) ni se
+    probó un requisito de número o sí/no. Script: solo en el scratchpad.
+    ~~Pendiente · Ivania: el caso del mínimo con un documento (p. ej. las certificaciones de servicios GPS de
+    `20261003280`)~~ **probado por Ivania con la IA real (12/11, pregunta 64, requisito excluyente con cuatro
+    mínimos): funciona de punta a punta.** «Tenemos las certificaciones» → no guarda, pide cuántas, firmadas y de
+    cuándo; «tres, firmadas, servicios 2023–2025» → no guarda, pide solo la fecha de emisión (sí faltaba); «se
+    emitieron en 2025» → guardado «Lo tiene · archivo pendiente», nota «Dijo: Tres certificaciones firmadas
+    digitalmente, emitidas en 2025, de servicios GPS prestados de 2023 a 2025; las subirá después.»
+    ~~Pendiente · Ivania: corregir con «Cambiar» las respuestas 36, 38 y 43~~ **hecho por el chat (Ivania,
+    12/11):** requisito 36 (lugar discreto), técnicos y 38 (apps) con respuesta nueva y nota «Dijo: …»; la vieja
+    queda en el historial. En la 36 la IA volvió a pedir la alerta de manipulación, dicha a las 10:00: solo recibe
+    los últimos 30 mensajes y la respuesta guardada («Lo tiene», sin detalle). ~~Mejora posible, sin hacer: mandarle
+    también la nota «Dijo: …» de cada respuesta~~ **hecha (12/11, pedido de Ivania):** prompt
+    **`chat_asistente_v7.md`** (v6 sin tocar): la «respuesta actual» de cada requisito trae lo dicho en el chat
+    («… · Dijo: … Falta: …») y la IA no vuelve a preguntarlo. Solo va la nota que escribió el chat; una nota escrita
+    a mano en el formulario no se manda (puede traer comentarios internos). `chat.lo_dicho`. Las respuestas de antes
+    del v6 no tienen «Dijo» y no cambian. ≈ 0,0025 USD más por mensaje en un cartel de 96 requisitos. 2 pruebas
+    nuevas; 1097 pruebas pasan. ~~Pendiente · Ivania: probarlo con la IA real~~ **probado por Ivania (12/11,
+    12:27): funciona.** «Sobre las certificaciones de GPS: una de las tres es del Ministerio de Salud» → guardado sin
+    volver a preguntar nada (lo de las 11:20 estaba a más de 30 mensajes); nota nueva «Dijo: Tres certificaciones
+    firmadas digitalmente, emitidas en 2025, de servicios GPS prestados de 2023 a 2025; una es del Ministerio de
+    Salud; las subirá después.» La pregunta 65 ya sale en usted («Responda sí o no; si es no, indique…»).
+  - **Aviso de «trabado» al corregir (12/11, pedido de Ivania):** después de corregir otras respuestas salía
+    «Seguimos con la pregunta 65… Si ya dijo lo que sabe, escriba «guarde lo que le dije»…», aunque sí se había
+    guardado algo. Ahora `_sin_repetir` recibe si se guardó algo en esa vuelta y, si es así, no muestra el aviso.
+    1 prueba nueva; 1093 pruebas pasan.
+  - **Hallazgo (12/11, sin tocar):** las preguntas guardadas de los requisitos tratan de vos («¿Podés aportar…?»,
+    «Respondé sí o no», «Escribí el número»; preguntas 61 a 65 de `20261003280`) y la app agrega «diga» (usted).
+    Vienen de la pregunta que generó la IA al armar la lista, no del chat (la regla de usted del 11/11 es solo del
+    chat). ~~Pendiente: revisar dónde se generan y cómo corregir las ya guardadas~~ **arreglado (12/11, decisión de
+    Ivania: usted en todo el asistente):** prompt **`asistente_elegibilidad_v2.md`** (v1 sin tocar; regla 8 «Trata
+    siempre de usted…» y ejemplos en usted); las preguntas de la app y los avisos de `app/asistente.py` en usted
+    («Súbalo…», «Escriba la fecha», «Suba el documento…», «Elija…»). Nueva orden **`ia preguntas [--nro N]`**: vuelve
+    a redactar con IA las preguntas hechas con otra versión del prompt (`redactar(viejas=True)`); las respuestas ya
+    dadas guardan su propia copia y no cambian. En la base había 164 preguntas v1 (5 carteles; 40 con vos y 42 con
+    tú). El resto del panel y las misiones de ayuda siguen en tú (guía de estilo de la ayuda). 2 pruebas nuevas;
+    1095 pruebas pasan.
+    ~~Pendiente: correr `ia preguntas` en la base real~~ **hecho (12/11, pedido de Ivania):** respaldo
+    `sicop_20261112-115356` antes; `ia preguntas` redactó **186 preguntas** con v2 en los 5 carteles (más que las
+    164 de antes: también las que armaba la app), 9 llamadas, ≈ 0,107 USD. Revisado en la base: 0 con vos; las 5
+    que la búsqueda marcó como «tú» eran «SICOP indica» / «el pliego indica» (en usted: «Escriba», «Responda»).
+    Ejemplo, pregunta 62 de `20261003280`: «¿Puede aportar ese cronograma para el concurso?».
+
+- **Reporte de cartel: líneas desglosadas en componentes (2026-11-12).** En `20261100871` el pliego reparte una
+  línea de SICOP (cantidad 1) en componentes con cantidades propias (10, 2, 2), y el reporte salía «Revisar» sin
+  motivo. `resumen.comparar` ya no compara la cantidad de una línea que aparece más de una vez en «Qué piden».
+  1 prueba nueva; 1079 pruebas pasan.
+  - **Recomparar lo guardado (mismo día, opción elegida por Ivania):** el arreglo solo valía para resúmenes nuevos
+    y `ia resumir` reutilizaba el #81 con la regla vieja. Nueva orden `ia recomparar [--nro N]`: vuelve a comparar
+    con SICOP el último resumen de cada cartel cuyo expediente no cambió, sin llamar a la IA. Como los resúmenes no
+    se modifican (migración 0026), si las diferencias cambian queda una fila nueva con el mismo resumen, sin costo y
+    con el motivo «Recomparado con SICOP desde el resumen #…». No gasta el tope diario de la cola (`intentados_hoy`).
+    Respaldo previo `sicop_20261112-083011`. En la base real: 18 revisados, 2 cambiaron, `20261100871` (#81 → #84)
+    y `20261003242` (#44 → #85, línea 1 con dos componentes: 7200 y 3), los dos de REVISAR a OK. `ia resumir` ya no dice «sin resumen» cuando hay motivo y resumen.
+    4 pruebas nuevas; 1083 pruebas pasan. **Visto en el panel (Ivania, 12/11):** los dos salen en OK.
+
+- **Revisión obligatoria (2026-11-11, pedido de Oscar; decisiones de Ivania).**
+  - «Dar seguimiento» solo se puede con una revisión vigente «Interesa» o «Revisar requisitos». La ruta lo vuelve a
+    comprobar (`panel.falta_para_seguimiento`). Mientras no hay revisión, el botón dice «Revisar para dar seguimiento».
+  - Salir de un cartel sin revisión: los enlaces del panel llevan a la revisión con un aviso; «Atrás» o cerrar la
+    pestaña muestran el aviso del navegador. Formularios, descargas y páginas del mismo cartel no cuentan como salir.
+  - La revisión es una por cartel: si otra persona ya la hizo, no hace falta repetirla.
+  - 1 prueba nueva; los ayudantes de las pruebas de seguimiento registran antes la revisión.
+
+- **Sin texto vertical en la oferta (2026-11-11).** El texto girado de los PDF (etiquetas, sellos, diagramas) salía
+  letra por letra en el PDF y el Word de la oferta («G / re / r / g…»). `propuesta.sin_texto_vertical` salta los
+  tramos de 6 o más líneas seguidas de hasta 4 caracteres, casi todas con letras (en la base real: 51 tramos, todos
+  ilegibles). La oferta de `20261001587` pasó de 81 a 35 páginas sin perder contenido. 1077 pruebas pasan.
+
+- **Resúmenes con IA: segunda oportunidad a las 14:00 (2026-11-11).** El 10/11 y el 11/11 no hubo resúmenes: la
+  tarea de las 10:00 falló (10/11 «database is locked» por una carga en el panel; 11/11 faltaba `migrate` 0044) y
+  nadie la repetía. Nueva tarea «SICOP CONNECT - resumenes IA» (`sicop-enriquecimiento.ps1 -SoloIa`, lunes a
+  viernes 14:00); si la de las 10:00 salió bien no gasta nada. `ia cola` a mano el 11/11 a las 15:06: 10 de 22
+  (7 OK, 3 «incompleta · max_output_tokens», entre ellos el Alta `20261100871`), 0.51 USD; quedan 12. Los que salen
+  bien usan hasta 3872 de los 4000 tokens. ~~Pendiente · Ivania: `IA_MAX_OUTPUT_TOKENS=8000` en `.env` y
+  `ia resumir --nro 20261100871`~~ **hecho (Ivania, 12/11):** 8000 confirmado con `doctor`; el resumen ya existía
+  (#81, del 11/11 15:15) y quedó OK con `ia recomparar` (arriba).
+
+- **El chat ya no repite la pregunta (2026-11-11).** Prompt `chat_asistente_v3.md`: si la respuesta llega por
+  partes, la IA la junta, la anota y nombra una sola vez lo que falta; «guarde lo que le dije» anota lo dicho. Desde
+  la segunda vuelta sin avanzar, la app dice cómo seguir. ~~Pendiente · Ivania: probarlo respondiendo por partes
+  una pregunta que pida dos cosas~~ **probado (Ivania, 12/11):** no repite la pregunta, pero guardaba la respuesta a
+  medias; arreglado con el v4 (arriba).
+
+- **Oferta más sobria y chat abajo (2026-11-11).** Pedido de Oscar: la oferta (PDF y Word, también la económica)
+  lleva solo el logo de Hermatix con su nombre arriba a la izquierda, sin franjas ni pie de color; títulos en negro,
+  encabezados de tabla en gris claro; el rojo queda solo para lo pendiente. El título del cartel ya no se sale de la
+  hoja (SICOP manda espacios duros). El chat del asistente abre en el último mensaje. Ivania probó el paso 4: la
+  versión 2 quedó guardada. 1075 pruebas pasan.
+
+- **Corregir la oferta desde el chat (2026-11-11; `DECISION_IA.md` §10, paso 4).** Con la oferta armada (versión 1),
+  en el chat se piden cambios («en la sección 3 que diga…», «quite la sección de visita»): la IA los propone y la
+  app los muestra con **«Aplicar» / «No»**; cada «Aplicar» crea una versión nueva (las anteriores se guardan y se
+  descargan en PDF o Word; la portada dice «Versión N»). Lista cerrada: respuestas, marcar cumple/acepta, quitar,
+  volver a poner, agregar y mover secciones, quitar y volver a poner anexos. Nunca precios, pliego, secciones en rojo
+  ni anexos pendientes. `app/oferta_cambios.py`, prompt `chat_oferta_v1.md`, migración **0045**. 8 pruebas nuevas
+  (IA SIMULADA). ~~Respaldo y `migrate` (0045)~~ **hecho (Claude a pedido de Ivania, 11/11, panel cerrado):** respaldo
+  `C:\Users\User\respaldos-sicop\sicop_20261111-113040` (esquema 0044, integridad ok); `doctor`: 0045; conteos iguales
+  antes y después (carteles 15015, revisiones 8, resúmenes 70, uso de IA 113, respuestas 103, historial 569,
+  sesiones 5); `integrity_check` ok y `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude,
+  11/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261111-113040` (7 archivos, ≈390 MB; tamaños iguales y huella del
+  `.db` igual al manifiesto). ~~Pendiente · Ivania: probarlo: armar la oferta
+  de un cartel con el asistente respondido y pedir un cambio en el chat~~ **hecho (Ivania, 11/11; comprobado el
+  12/11):** `20261001587`, versiones 1 a 3 (13:12, 13:16 y 14:42) con 2 cambios aplicados desde el chat. **Siguiente:** paso 5, «Oferta terminada» y
+  el borrado de los datos personales (`DECISION_IA.md` §10.4).
+
+- **El asistente como chat (2026-11-11; `DECISION_IA.md` §10, paso 3 de §10.7).** En el cartel, con
+  `ASSISTANT_CHAT=true` y la IA encendida, el asistente es un chat como la maqueta: la persona contesta con sus
+  palabras y sube archivos; la IA propone las respuestas y **la app las guarda con las reglas de siempre** (un
+  documento no se cumple sin el archivo); la app confirma lo guardado y hace la pregunta siguiente. Al final, «Ya
+  está lista la oferta» con los botones PDF y Word. `app/ai/chat.py`, `_chat.html`, prompt
+  `chat_asistente_v1.md`, migración **0044**. `ASSISTANT_SEND_DOCUMENTS=true` ya no bloquea: decide si la IA lee
+  el texto de los archivos del chat (Oscar, §10.4). 11 pruebas nuevas (IA SIMULADA). **No se probó con la IA real.**
+  ~~Respaldo y `migrate` (0044)~~ **hecho (Claude a pedido de Ivania, 2026-11-11, panel cerrado y después del
+  enriquecimiento #13 «ok»):** respaldo `C:\Users\User\respaldos-sicop\sicop_20261111-103948` (esquema 0043,
+  integridad ok); `doctor`: 0044. Conteos iguales antes y después (carteles 15015, revisiones 8, resúmenes 70, uso
+  de IA 107, respuestas 103, borradores 2, historial 562, documentos 242, sesiones 4); `integrity_check` ok y
+  `foreign_key_check` vacío. ~~Subir el respaldo al Drive~~ **hecho (Claude, 11/11):**
+  `G:\Mi unidad\sicop-respaldos\sicop_20261111-103948` (7 archivos, ≈390 MB; tamaños iguales y huella del `.db`
+  igual al manifiesto). **Pendiente · Ivania:** en el `.env`: `ASSISTANT_CHAT=true`,
+  `IA_MAX_DAILY_COST=5.00` y, si se quiere que la IA lea los archivos, `ASSISTANT_SEND_DOCUMENTS=true`; probarlo en
+  un cartel con documentos SINTÉTICOS. ~~Hecho (Ivania, 11/11, cartel 20261001587).~~ **Prueba con la IA real:**
+  no inventó nada, no usó un archivo que no correspondía y contestó la duda con la cita; 0.003–0.005 USD por mensaje
+  (≈ 0.10 USD por cartel). Corregido el mismo día: prompt `chat_asistente_v2.md` (usted; «lo subo después», «no lo
+  tenemos» y «no sé» avanzan), la pregunta no se repite entera y muestra como máximo 2 citas (`DECISION_IA.md`
+  §10.7). Archivos de prueba SINTÉTICOS en `data\pruebas\` (fuera de Git). **Pendiente · Ivania:** probar otra vez
+  (el panel toma los cambios solo). **Siguiente:** paso 4, corregir la oferta desde el chat.
+
+- **La oferta también en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis).** Junto a «Oferta», el
+  botón **«Oferta en Word»** descarga el mismo documento en .docx: portada, pliego respondido, anexos, oferta
+  económica y los adjuntos (como imagen de cada página; los originales no cambian). `app/propuesta_word.py`;
+  `propuesta.preparar()` junta los datos una sola vez para los dos formatos. Dependencia nueva `python-docx` 1.2.0
+  (+ `lxml`; entorno limpio comprobado, ruedas para Linux). Sin migración. 4 pruebas nuevas
+  (`tests/test_propuesta_word.py`). §10 marcada **aprobada** (Oscar, 11/11).
+  ~~Pendiente · Ivania: probar «Oferta en Word» en un cartel y abrirlo en Word~~ **hecho (Ivania, 11/11;
+  comprobado el 12/11):** dos .docx de `20261001587` en `data/exports/ofertas/` (13:13 y 14:55). **En el servidor**, con el PR:
+  `pip install -r requirements.lock.txt`.
+
+- **Anthropic en la app, junto a OpenAI (2026-11-11, DECISION_IA.md §8; paso 2 de §10.7).** `AI_MODE=anthropic`
+  en `app/ai/cliente.py` con el SDK oficial `anthropic` 2.8.0 (dependencia nueva, aprobada en §8; entorno limpio:
+  solo se suman anthropic y docstring_parser). Configuración `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` y
+  `ANTHROPIC_EFFORT` (`.env.example`). Los módulos preguntan «¿IA activa?» en vez de «¿es OpenAI?»
+  (`settings.ia_activa`, `settings.ia_modelo`). 21 pruebas nuevas con Anthropic SIMULADO
+  (`tests/test_ia_anthropic.py`). **No se llamó a la API real.** `CLAUDE.md` actualizado.
+  **Pendiente · Oscar:** clave, modelo y precios en el `.env`; `ia probar`; comparación en 3 carteles. **En el
+  servidor**, con el PR: `pip install -r requirements.lock.txt` (sin migración).
+
+- **Guía para pasar el enriquecimiento a otra computadora (2026-11-11, pedido de Ivania):**
+  `docs/TRASPASO_ENRIQUECIMIENTO.md`, para Anabelle u Oscar cuando Ivania ya no esté (Fase 2, `enrich remoto`).
+  Necesita el servidor actualizado. Solo una computadora con la tarea a la vez. Sin código. Último paso del
+  enriquecimiento por ahora; se sigue con el asistente.
+
+- **Borrador: el asistente como chat (2026-11-11, pedido de Oscar por Ivania).** Chat en el cartel que pregunta los
+  requisitos, recibe archivos, dice «Ya está listo» y arma la oferta completa; Oscar la corrige conversando y cada
+  cambio crea una versión. La IA solo usa una lista cerrada de acciones. `DECISION_IA.md` §10. Sin código todavía.
+  Decidido por Oscar (11/11): el chat es el asistente de elegibilidad, solo modifica la oferta (nunca archivos del
+  cartel ni subidos); misma estructura para todas (Tarrazú + NAVSAT), cambia solo si se pide y solo en esa oferta;
+  corrigen encargados y administradores, cada uno en los carteles que tiene a cargo.
+  La IA lee los documentos subidos sin modificarlos; tope de gasto por día.
+  Estimación en §10.5 (3 carteles al día): se recomienda Sonnet 5.5 y 8 USD al día (≈ 130 USD al mes).
+  Maqueta del chat (datos SINTÉTICOS, fuera de Git): https://claude.ai/artifact/49wN3PpodRhAaamFwnEPtQ.
+  **Oscar la vio y le gustó (11/11).** Decidió además: datos personales tal cual mientras se trabaja y borrado
+  automático al terminar la oferta; la oferta también en Word (.docx); pruebas con OpenAI (gastar el saldo), tope
+  de 5 USD al día durante las pruebas; el modelo de Anthropic, después de las pruebas.
+  **Pendiente · Oscar:** precisar «terminada» y qué se borra; dónde se guardan los documentos reales; adjuntos en
+  el Word; saldo que queda en OpenAI (en `ia_usage` hay ≈ 3.56 USD estimados del 29/10 al 9/11).
+
+- **Oferta completa con un botón, como la de NAVSAT (2026-11-10, pedido de Oscar por Ivania).** En el cartel, el
+  botón «Oferta» arma un solo PDF:
+  - portada;
+  - el pliego copiado sección por sección, con «Respuesta Sección NN»;
+  - el listado de anexos;
+  - el anexo 1.1 con la oferta económica (diseño de Tarrazú);
+  - los documentos del asistente adjuntos.
+
+  La IA solo marca dónde empieza cada sección (`DECISION_IA.md` §9). Lo que no cumple, falta o está sin precio sale
+  en rojo, y la portada dice «BORRADOR». Los precios salen de `config/tarifario.yaml`. Se quitaron los formularios
+  «Oferta económica» y «Respuesta técnica». Migración **0043**. `DECISION_PROPUESTA.md` §12. Pruebas en
+  `tests/test_propuesta.py`.
+  ~~Respaldo y `migrate` (0043)~~ **hecho (Claude a pedido de Ivania, 2026-11-10, panel cerrado):** respaldo
+  `C:\Users\User\respaldos-sicop\sicop_20261110-160213` (esquema 0042, integridad ok); `doctor`: 0043. Revisiones
+  8, resúmenes 70, uso de IA 107, respuestas 103, constancias 8, perfil 3/4, borradores 2 y 1, historial 562,
+  iguales antes y después; `integrity_check` ok y `foreign_key_check` vacío.
+  ~~Subir el respaldo al Drive~~ **hecho (Claude, 10/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261110-160213`
+  (7 archivos, ≈431 MB; tamaños iguales y huella del `.db` igual al manifiesto).
+  ~~Pendiente · Ivania: probar «Oferta» en un cartel con pliego y asistente~~ **hecho (Ivania, 2026-11-11).**
+  **Pendiente · Oscar:** llenar el tarifario y los datos del representante (`config/oferta.yaml`); decidir cómo se
+  elige la ficha técnica de cada cartel.
+
+- **Enriquecimiento sin repetir carteles (2026-11-10, pedido de Ivania).** Un cartel que ya tiene su ficha y sus
+  documentos ya no se vuelve a buscar. Antes volvía cada día, porque `last_seen` cambia en cada carga: 44 de 173
+  consultas fueron repetidas y 35 de ellas salieron «sin cambios». Ahora solo entran los nunca enriquecidos, los que
+  SICOP modificó después de la última ficha (`raw_snapshots`) y los que no pudieron guardar algún documento (hasta 3
+  veces). Se quitó «cierra en 3 días». Con la cola vacía no se abre SICOP ni se escribe el resumen.
+  `DECISION_OBTENCION.md` §9. Cola real del 10/11: de 24 a 16 (15 nunca enriquecidos y 1 modificado). Pruebas en
+  `tests/test_enriquecimiento.py` (3 nuevas, 2 cambiadas) y `tests/test_enriquecimiento_pc.py` (1 cambiada).
+  **Corrida #12 cerrada a mano:** «con_fallos», 2 consultados y 1 FALLO, con el motivo en la bitácora.
+
+- **Solicitud automática del reporte: SICOP la bloqueó (2026-11-10, pedido de Ivania).** Nunca estuvo activa en la
+  PC: las solicitudes de 06:30 y 14:00 eran para el servidor. Ivania cambió el `.env` (`SOURCE_MODE=auto`,
+  `OBTAIN_REQUEST_HOUR=06:30,14:00`); la primera vuelta real (`obtain auto`, solicitud #4, 15:00) encontró el aviso
+  de bloqueo de SICOP con ID de soporte: FALLO «control no automatizable», una alerta a `OBTAIN_ALERT_TO`, sin
+  reintento. **No se creó la tarea «SICOP CONNECT - obtencion».** `DECISION_OBTENCION.md` §8.
+  ~~Pendiente · Ivania: volver a poner `SOURCE_MODE=manual` en el `.env`~~ **hecho (Ivania, 2026-11-11)**; el reporte
+  se sigue pidiendo a mano. **12/11:** `doctor` todavía mostraba `auto` (el cambio no había quedado en el `.env`);
+  Ivania lo corrigió y `doctor` confirma `SOURCE_MODE manual`.
+  **Pendiente · Oscar:** decidir si se consulta a SICOP con el ID de soporte.
+
+- **Enriquecimiento del 10/11 caído por «database is locked» (revisado y arreglado, 2026-11-10).** A las 10:00:47 se
+  subió un ZIP en «Cargar archivo» (11 390 carteles, 85 029 líneas y la evaluación de 14 830): la base quedó ocupada
+  más de 2 min. `enrich run` (cartel 3 de 20) y `ia cola` (primer cartel) esperaron los 30 s de siempre y se
+  cayeron. No fue SICOP. **Arreglo:** las tareas programadas (`run-cycle`, `enrich run`/`remoto`, `ia cola`,
+  `obtain auto`) esperan hasta **10 min** a que la base se libere (`ESPERA_TAREAS_S`, `app/database.py`); el panel
+  sigue en 30 s. 1 prueba nueva en `tests/test_migraciones.py`. **Quedó en la base:** la corrida #12 decía
+  «en_curso» (~~pendiente~~ cerrada a mano, ver arriba), y la cola de IA hizo la llamada del
+  cartel 20261100871 pero no pudo anotar su uso (ese costo no figura en el presupuesto del día). **Consejo:** subir
+  el ZIP antes de las 10:00 o después de las 10:30.
+
+- ~~**Respuesta técnica como la de Tarrazú (2026-11-10, pedido de Ivania).**~~ **Reemplazada el mismo día por la
+  oferta completa (arriba): el formulario y su PDF se quitaron sin llegar a Git.** La respuesta que presentó Hermatix
+  («Contratación Tarrazu Se Cumple», en `data/ofertas/`, fuera de Git) va punto por punto por sección del pliego, con
+  «Respuesta Hermatix: Se entiende, se acepta y se cumple.». El PDF de la app pasa a esa forma: campo nuevo **«Sección
+  del pliego»** por fila (sin migración), filas agrupadas por sección y los pendientes («No cumple», «Revisar», «Sin
+  marcar») en rojo. `DECISION_PROPUESTA.md` §11. 2 pruebas nuevas; 55 pruebas de propuestas pasan.
+  ~~Pendiente · Ivania: revisarla en el panel~~ **hecho (10/11, ver abajo: «me gustó, se ve bien»).**
+  **Siguiente (propuesto):** páginas del equipo con las fichas Hero
+  (necesita la decisión de Oscar sobre cómo se elige el equipo de cada cartel) y el análisis de la oferta de NAVSAT.
+
+- **Oferta económica con el diseño de Tarrazú (2026-11-10, pedido de Ivania).** El PDF que descarga el panel (y el
+  comando) copia el formato de la oferta ganadora: membrete de Hermatix en cada hoja (imágenes en
+  `app/web/static/membrete-*.png`), Times New Roman, tabla de precios con encabezado azul y «Monto en Letras»,
+  condiciones, «DESGLOSE DE PRECIO», «Fórmula Matemática» y firma. No salen las páginas del equipo (esperan las fichas
+  técnicas). Además, sin precio en una línea, el aviso dice «Falta el precio unitario de la línea 1.» y se repite junto
+  a los botones (antes parecía que el botón no hacía nada). `DECISION_PROPUESTA.md` §10. Suite: **1030 passed**.
+  ~~Pendiente · Ivania: escribir los precios del cartel 20261001587 y descargar el PDF desde el panel~~ **hecho
+  (Ivania, 2026-11-10): «se ve igual, me gusta el diseño».** La migración 0042 ya está aplicada en la base local.
+  **La respuesta técnica también pasa a ese diseño** (membrete, título centrado, tabla azul, firma centrada; pedido de
+  Ivania, 2026-11-10). No hay oferta técnica de Tarrazú para copiarla: se compara cuando Oscar la mande.
+  ~~Pendiente · Ivania: descargar la respuesta técnica desde el panel y revisarla~~ **hecho (Ivania, 2026-11-10):
+  «me gustó, se ve bien».**
+
+- **Lista de verificación sin página propia (2026-11-09, pedido de Ivania: «ya sabemos que camina»).** Se quitaron el
+  botón «Lista de verificación para el asistente», la página `/oportunidades/{nro}/verificacion` y sus acciones
+  (generar, corregir, agregar, quitar, volver a poner, elegir perfil). La lista sigue por dentro: **«Empezar el
+  asistente» la genera con IA si el cartel no la tiene** (necesita el resumen con IA). Ya no se corrigen requisitos a
+  mano; `python -m app.cli ia verificar` sigue para volver a generarla. Misión de ayuda 22 retirada (21 sigue con la
+  23; la 23 actualizada). Sin migración: las tablas y lo ya guardado no se tocan.
+
+- **Propuestas: la oferta económica (2026-11-09, DECISION_PROPUESTA.md aprobado por Oscar, comunicado por Ivania).**
+  `python -m app.cli oferta economica --datos OFERTA.yaml` arma el PDF (carta, tabla con el monto en letras,
+  condiciones, desglose que cuadra y fórmula de reajuste), sin IA; una persona lo firma y lo sube a SICOP. Con los
+  datos de Tarrazú (solo local) reproduce la oferta ganadora al céntimo. 32 pruebas (datos SINTÉTICOS).
+  **Formulario en el panel (hecho):** «Oferta económica» en el cartel, solo para quien entra al expediente; sale
+  lleno con lo del cartel y `config/oferta.yaml`; borrador guardado (migración **0041**); «Descargar PDF». 5 pruebas.
+  **Respuesta técnica, primera parte sin IA (hecha):** «Respuesta técnica» en el cartel: matriz de cumplimiento
+  (pide · ofrece · prueba · ¿Cumple?), filas iniciales del resumen con IA marcadas con su origen, borrador (migración
+  **0042**) y PDF. `DECISION_PROPUESTA.md` §11. Suite: 1031 passed. ~~`migrate`~~ (hecho: 0042 en la base local).
+  ~~Pendiente · Ivania: probarla en el panel~~ **hecho (10/11).** **Pendiente · Oscar:** la oferta técnica de Tarrazú, fichas técnicas y la decisión sobre la IA (segunda parte).
+
+- **Oferta ganadora de Hermatix revisada (2026-11-09, autorización de Oscar comunicada por Ivania).** Licitación
+  Reducida 2025LD-000058-0002900001 (Tarrazú, videovigilancia con IA para la flotilla): pliego, estudio de mercado y
+  oferta económica en `data/ofertas/` (fuera de Git). Análisis completo con precios **solo en local**
+  (`data/ofertas/analisis_oferta_tarrazu.md`); lo aprendido, sin precios ni datos personales, en
+  `DECISION_PROPUESTA.md` §9. No está en la base (adjudicaciones de jul–oct 2026). **Falta:** oferta técnica y
+  anexos, acta con puntajes y capturas de SICOP (Hermatix no ha perdido concursos: no hay oferta perdida).
+
+- **Fase 2 · envío del enriquecimiento al servidor (2026-11-09, diseño y paso 1): `docs/ENVIO_ENRIQUECIMIENTO.md`.**
+  Decisiones de Ivania: la cola de IA corre en el servidor (no usa navegador); la PC pide la cola al servidor y
+  devuelve, por cartel, la ficha tal cual y los archivos; el servidor repite `guardar_ficha` y `guardar_documento`
+  (sin copiar filas entre bases). Token `ENRICH_TOKEN`, solo HTTPS. 4 pasos.
+  - **Paso 1 hecho:** `deploy/systemd/sicop-ia-cola.service` y `.timer` (lunes a viernes 10:45; el enriquecimiento
+    tardó de 9 a 21 min). `ACTUALIZACION_SERVIDOR.md`: la cola de IA pasa al servidor desde el primer día.
+  - **Paso 2 hecho:** tres direcciones con token en el servidor (`app/web/api_enriquecimiento.py`, lógica en
+    `app/sources/remoto.py`): abrir corrida (borrado al cierre + cola), consulta de un cartel (ficha + archivos:
+    repite `guardar_ficha`/`guardar_documento` y reevalúa) y cierre. Migración **0040** (`enrich_runs.origen`,
+    `cola_json`), `ENRICH_TOKEN` (oculto en `doctor`). 8 pruebas nuevas.
+  - **Suite con Python 3.12 (servidor):** 964 passed y 1 falla causada por agregar la 0040 durante la corrida
+    (lista fija de migraciones); arreglada.
+  - **Paso 3 hecho:** `python -m app.cli enrich remoto` (`app/sources/enriquecimiento_pc.py`): pide la cola,
+    base de trabajo nueva en `data/trabajo/`, consulta con el navegador y manda cada cartel; no vuelve a bajar lo
+    que el servidor ya tiene; CAPTCHA igual que `enrich run`. `ENRICH_SERVER_URL` (solo https); con ella, `enrich
+    run` se niega. Cambios chicos: `ya_guardados` en `consultar_uno`/`descargar_documentos`, grabaciones a
+    conservar que manda el servidor. 5 pruebas (2 de punta a punta con el SICOP simulado). Suite del paso 2:
+    973 passed.
+  - **Paso 4 hecho — fase 2 lista:** `sicop-enriquecimiento.ps1 -Remoto`, la bitácora del servidor señala que el
+    video de una consulta remota está en la PC, misión 18, `ACTUALIZACION_SERVIDOR.md` §11 (token y activación).
+    **Prueba real:** app de la PC como servidor de prueba (copia de la base) + `enrich remoto --max 1` con SICOP real:
+    `20261100801`, 7 documentos guardados, reevaluado Baja → Media; base real sin tocar.
+  - **Pendiente:** probarlo contra el servidor real, con Oscar (§11 de la guía).
+
+- **Actualización del servidor preparada (2026-11-09, pedido de Ivania): `docs/ACTUALIZACION_SERVIDOR.md`.** De
+  `02b569b` (esquema 0007) a `desarrollo` (0039). Decisiones de Ivania: se lleva **la base local** con sus carpetas
+  (rutas relativas: revisado, sirve en el servidor; ~600 MB sin las grabaciones); el ciclo de las 8:00 pasa al
+  servidor y se apaga la tarea de Windows; **enriquecimiento e IA en pausa** hasta la fase 2 (envío PC → servidor
+  con token, decisión del 27/10). Texto nuevo del PR en `docs/PR_DESARROLLO.md` (102 commits sobre `main`).
+  Nada se ejecutó en el servidor. **Suite con Python 3.12** (entorno limpio): 964 passed (ver fase 2).
+  - **Pendiente · Oscar:** unir el PR, los valores de la sección 0 de la guía y el día del cambio.
+
+- **Ayuda al día con el detalle del cartel rediseñado (2026-11-09, pedido de Ivania).** `ayuda capturas` de todas
+  las misiones dio 148 de 159: las 11 que faltaban eran de las misiones 04, 06 y 09, que todavía describían la
+  página anterior al rediseño del 6/11. Reescritas: **04** (franja: institución, etiquetas, título, «¿Podemos
+  participar?», «Dar seguimiento» y «Decidir», las cuatro cifras, enlaces), **06** (pestañas «Condiciones» y
+  «Documentos», con `?paso=` en las capturas) y **09** (pasos 2 a 5: el botón verde, la pestaña «Requisitos» y las
+  etiquetas de etapa y encargado). Misión 05: empieza «en las cuatro cifras». Claves nuevas en
+  `app/ayuda/pantallas.py`. Capturas: 04 7/7, 06 9/9, 09 4/4 (todas las misiones completas); 51 pruebas de ayuda
+  pasan.
+
+- **Revisión reglas vs IA (2026-11-09, pedido de Ivania): `docs/revision_reglas_vs_ia_20261109.md`.** 41 carteles
+  con resumen, 10 desacuerdos; 2 se habían avisado por correo con la IA diciendo descartar.
+  - **A1 hecho:** `20261002824` (cámaras fotográficas y de videoconferencia, UNA) salía Media por «CAMARAS» en el
+    título + «grabacion de video» en el pliego. «grabacion de video» pasó de señal media a **contexto** en
+    videotelemática (reglas `967ebe5b6cc0`); en una copia de la base solo cambia ese cartel. Golden set: 39 casos,
+    39/39. La base local se reevalúa con el próximo ciclo (o `evaluate`).
+  - **B1 hecho:** prompt **v8** = v7 + FleetRun es software, el mantenimiento en taller se descarta. Probado con
+    IA real en `20261100749` y `20261004211`: de «Revisar requisitos» a «Descartar» (0.046 USD).
+  - **Pendiente · Oscar (A2):** `20261003868` (64 sensores LoRaWAN para inundaciones) sale Alta en iot_frio y se
+    avisó; la IA dice descartar. ¿Interesan los sensores IoT en general o solo frío y temperatura?
+  - ~~Pendiente · Ivania: activar `IA_PROMPT_VERSION=v8` (reemplaza a v7) cuando Oscar apruebe el reporte~~
+    **hecho (12/11): Oscar aprobó el reporte (comunicado por Ivania) e Ivania puso `IA_PROMPT_VERSION=v8`**
+    (`doctor`: v8). `ia cola --ver` (12:33): la cola pasó de 6 a 14 (los abiertos con resumen v5 vuelven a entrar,
+    primero `20261100871` Alta); hoy ya se hicieron los 10 del día, así que se rehacen desde el 13/11 a las 10:00, 10
+    por día (≈ 0,05 USD cada uno). Los resúmenes v5 quedan en el historial; volver atrás = `v5` en el `.env`.
+
+- **Pulido del código (2026-11-09, pedido de Ivania; commit `b2d47a5`).**
+  - **Error real arreglado: dos programas que escriben a la vez se trababan.** Las transacciones empezaban con
+    `BEGIN`: si una leía y después escribía mientras otro programa escribía, SQLite fallaba en los dos con
+    «database is locked» sin esperar los 30 s de `ESPERA_BASE_OCUPADA_S` (probado: con `BEGIN` fallan los dos;
+    con `BEGIN IMMEDIATE` espera 1 s y sigue). Ahora `BEGIN IMMEDIATE` en `database.transaccion`, `calidad.py`,
+    `importers/comun.py` y `matching/evaluar.py`; prueba en `tests/test_migraciones.py`.
+  - **Reportes PDF:** la huella para reutilizar un reporte ahora incluye los topes por sección y el máximo de
+    páginas (antes solo la plantilla): con topes nuevos se rehace. Prueba en `tests/test_reporte.py`.
+  - `cli.py`: variable del bucle que tapaba el módulo `calidad` → `calidad_datos`. Sin usar: `import io` en
+    `importers/catalogo.py` y una variable en `test_asistente.py`.
+  - Revisado sin problemas: dinero en `Decimal` (el único `float` es la copia JSON), SQL con parámetros `?`,
+    fechas con zona horaria, `except … pass` intencionales. Herramienta: pyflakes, solo en el scratchpad (no es
+    dependencia del proyecto).
+
+- **Reporte PDF: «Por qué se recomienda» al final (2026-11-09, pedido de Oscar por Ivania).** Media página que
+  explica en detalle la recomendación preliminar (las tres: dar seguimiento, revisar requisitos, descartar), con
+  citas y, si es descartar, qué tendría que pedir el cartel para que valiera la pena. Decisiones de Ivania: para las
+  tres recomendaciones y **hasta 3 páginas** (`DECISION_IA.md` regla 9).
+  - La escribe el modelo en la misma llamada del resumen: prompt nuevo **`resumen_cartel_v6.md`** (v5 sin tocar),
+    campo `explicacion_recomendacion` en el esquema. Reporte: `MAX_PAGINAS = 3`, tope de 1 800 caracteres, párrafos
+    conservados, color según la recomendación. Migración **0039**: CHECK de `ia_reports.paginas` 1–3.
+  - Un resumen anterior a v6 muestra la justificación corta y avisa que se genere de nuevo.
+  - Pruebas con IA simulada: `test_reporte.py` (3 nuevas), `test_ia_resumen.py` (1 nueva). Revisado en un PDF de
+    MUESTRA con la base de EJEMPLO.
+  - Migración 0039 aplicada a la base local (`migrate`, 9/11).
+  - Probado con IA real en `20261100575` (paradas de Siquirres, «Descartar»): v6 (resumen #58, 0.022 USD) escribió
+    al final «el documento de decisión inicial no tiene texto leído»; Ivania pidió quitarlo → **prompt v7** (v6 +
+    no mencionar documentos sin leer ni limitaciones del expediente). v7: resumen #59 (0.022 USD), sin esa frase;
+    reporte de 2 páginas. Ese cartel queda con el resumen v7 en el panel.
+  - **La 3.ª página muestra más (Ivania, 9/11):** topes por sección más grandes (18 requerimientos en vez de 10, 14
+    filas de «Qué piden» en vez de 8, textos de 300 caracteres…); si no cabe en 3, reintenta con los de antes y
+    luego con los cortos. Medido con los 35 carteles reales (explicación de 250 palabras simulada): 31 en 3
+    páginas, 4 en 2, ninguno pasó de 3. Siquirres sigue en 2 (cartel corto). Arregladas también 6 pruebas con la
+    lista fija de migraciones (faltaba la 0039).
+  - ~~Pendiente: activar con `IA_PROMPT_VERSION=v7` en el `.env` (Ivania), después de mostrarle el reporte a
+    Oscar~~ **reemplazado por el pendiente de v8 (09/11).** Con v7, la cola de las 10:00 rehace los resúmenes abiertos dentro del tope diario (10 por día, 1.00 USD).
+
+- **Borrador `docs/DECISION_PROPUESTA.md` (2026-11-09, pedido de Oscar por Ivania): la app arma la oferta para
+  SICOP.** Sin aprobar: no se construye nada hasta que Oscar lo acepte.
+  - Límites: no se puede asegurar ganar todos los concursos; la oferta la sube y firma con firma digital la persona
+    autorizada (no hay API de SICOP para presentarla); el precio lo aprueba una persona.
+  - Meta: cero descalificaciones por forma y máximo puntaje en lo que no es precio. 5 etapas: paquete de
+    documentos, respuesta técnica, puntaje esperado, tabla de precios, revisión final.
+  - **Siguiente:** Oscar decide la sección 6 (9 puntos) y entrega una o dos ofertas reales con capturas de cada
+    pantalla de SICOP (sin eso no empieza la etapa 1). IA para redactar ofertas: aprobación nueva en
+    `DECISION_IA.md`.
+
+- **Sin avisos de vencimiento del perfil (2026-11-09, Ivania: «no necesitamos que notifique eso»).** Se quitaron el
+  cuadro «Revisar pronto» de «Perfil» y la línea «Perfil de Hermatix: N elementos vencidos o por vencer… Revisar el
+  perfil» de la lista de carteles (`perfil.avisos` ya no existe). Cada elemento conserva su estado («Por vencer»,
+  «Vencido») en la tabla, y el asistente lo sigue usando igual. Misión de ayuda 21 sin ese paso (capturas
+  regeneradas). 139 pruebas de perfil, asistente, panel y ayuda pasan.
+
+- **Ciclo diario de Windows: corre tarde si se perdió las 8:00 (2026-11-09, decisión de Ivania).** Del 3 al 6/11
+  no salió ningún aviso (18 «nueva» quedaron preparados): 3/11 despertó a las 8:02; 4/11 sesión abierta después
+  de las 8:00; 5/11 `database is locked` (otro programa escribía en `sicop.db`; la app espera 5 s); 6/11 Windows
+  la detuvo (`0x800710E0`, sin línea en el registro, causa no confirmada). Arreglo: `StartWhenAvailable` encendido
+  en la tarea «SICOP CONNECT - ciclo diario» (cambia la decisión del 22/10 de dejarla así); README de
+  `deploy/windows` al día. El servidor sigue con `Persistent=false`. **Base ocupada (hecho, 9/11):** `connect()`
+  espera hasta 30 s (`ESPERA_BASE_OCUPADA_S`, antes 5 s de Python) a que otro programa termine de escribir; prueba
+  en `tests/test_migraciones.py`. Ciclo #54 del 9/11 a las 8:00: OK, 12 avisos y el resumen
+  semanal aceptados por Gmail.
+
+- **Exclusión «construccion de paradas» (2026-11-09, Ivania).** `20261100575` «CONSTRUCCIÓN DE PARADAS SIQUIRRES
+  2026» daba Media en conteo_pasajeros («PARADAS») y salió en el aviso del 9/11: es obra civil. Exclusión en las
+  9 familias de `config/hermatix_rules.yaml` (reglas `c40b2c956048`) y fila nueva en el golden set
+  (falso_positivo_conocido; 38 casos, acierto 38/38). Sin líneas de catálogo: `golden_lineas.csv` no cambia. La
+  base se reevalúa con el próximo ciclo (o `evaluate`).
+
+- **Correos del enriquecimiento apagados (2026-11-09, decisión de Ivania: «no nos interesan»).** Nuevo
+  `ENRICH_EMAILS` (false por defecto): `enrich run` ya no manda el resumen diario ni la alerta por CAPTCHA a
+  `OBTAIN_ALERT_TO`, aunque los avisos estén en envío real; queda solo la vista previa en `EXPORTS_DIR` y la
+  bitácora. No hace falta tocar el `.env`. Los recordatorios de la obtención (ZIP) no cambian. Prueba nueva en
+  `tests/test_enriquecimiento.py`.
+
+- **Panel de carteles: lista compacta (2026-11-06, pedido de Ivania; sin revisar en el navegador todavía).** Una
+  fila por cartel con encabezado de columnas (Cartel | Monto estimado | Cierre de ofertas | Prioridad); debajo del
+  título, institución · tipo, etiquetas y «Ver más» (antes «Ver toda la información», mismos datos) en una sola
+  línea; toda la fila abre el cartel; «Cierra en N días» en naranja bajo la fecha si faltan 7 o menos. Con la base
+  de EJEMPLO la página pasa de 7650 a 2884 px (unas 8 filas por pantalla). En el celular, cada dato muestra su
+  etiqueta. Solo `oportunidades.html` y un bloque `.compacta` al final de `estilo.css`. Misiones 02, 03 y 08
+  ajustadas; 51 pruebas de ayuda y 192 del panel, seguimiento y acceso pasan. **Después:** rehacer las capturas
+  de la misión 02.
+  **Segunda pasada (06/11, «¿es atractivo y amigable?»):** la decisión del equipo («Interesa», «Ofertada») en
+  verde sólido y la familia neutra; flecha «›» al final de cada fila; montos a la derecha; sin la palabra
+  «prioridad» repetida. Revisado con una COPIA de la base real (usuario temporal solo en la copia): títulos de
+  SICOP de 3 líneas → 2 líneas y «…» (completo al pasar el mouse); «Sin coincidencia» no cabía → columna más
+  ancha. 197 pruebas pasan. **Visto en los datos reales:** un cartel sale una vez por familia (Correos, 3 filas
+  iguales); agruparlo cambia `panel.listar` y el Excel: proponerlo aparte.
+
+- **Detalle del cartel, segunda versión (2026-11-06).** A Ivania no le gustó la primera (tarjeta azul cargada y
+  cortada, pasos en dos filas, cajas dentro de cajas, todo muy largo); eligió «franja arriba». Ahora: franja blanca a
+  lo ancho (institución y chips, título, «¿Podemos participar?» con su color, **una sola acción verde** —«Dar
+  seguimiento» o el asistente— y «Decidir», que baja a la revisión), 4 cifras en una fila y enlaces (expediente,
+  ZIP, Reporte PDF, SICOP). Pestañas en una fila: Resumen, Requisitos, Condiciones, Documentos (mismas claves
+  `?paso=`). Datos en filas etiqueta | valor; revisión compacta (decisión en botones de opción). «Lista de
+  verificación» pasa a botón blanco. 233 pruebas relacionadas pasan. **Arreglado (06/11, aviso de Ivania): la
+  página se movía hacia los lados.** La columna de las pestañas crecía hasta lo más ancho que tuviera dentro (la
+  fila de pestañas en el celular; las tablas del resumen, de 640 px como mínimo); ahora `minmax(0, 1fr)` la limita
+  a la pantalla y la tabla se desplaza dentro de su caja. Medido con Playwright en 1366, 1280, 1024, 800 y 390 px
+  (base de EJEMPLO, las 4 pestañas): sin desborde. **Siguió moviéndose** (laptop con touchpad, toda la página):
+  con una copia de la base real, 7 carteles, las 4 pestañas, 8 anchos y barras de desplazamiento visibles, tampoco
+  hay desborde; la causa probable es el gesto «volver» del touchpad (dos dedos un poco de lado). En `estilo.css`:
+  `html { overscroll-behavior-x: none; overflow-x: clip; }` (todas las páginas). **Confirmado por Ivania (06/11): ya
+  no se mueve.** ~~Pendiente · Ivania: verlo en el
+  navegador. Después: rehacer las capturas de las misiones 04, 08, 09 y 23 (`ayuda capturas`)~~ **hecho** (lo
+  confirmado arriba; capturas rehechas el 09/11).
+- **Detalle del cartel rediseñado, primera versión (2026-11-05, pedido de Ivania; reemplazada el 06/11).** Solo
+  presentación: `app/web/templates/oportunidad.html` y un bloque `.cartel-*` al final de `estilo.css`; base, menú y
+  rutas sin cambios. Izquierda: tarjeta azul marino fija (institución, título, números, «¿Podemos participar?» con
+  círculo cumplidos/total y botón del asistente, 4 cifras, chips y botones). Derecha: 4 pasos con `?paso=entender|
+  requisitos|condiciones|evidencia` (sin JavaScript funciona; con JavaScript cambia sin recargar; `#asistente`,
+  `#pregunta` y los avisos del asistente abren «Requisitos»). Dato que falta → «—» o «no encontrado».
+  **No hay botón «Archivar cartel»:** no existe esa acción (etapas Preparando, Enviada, Ganada y Perdida); se muestra
+  solo el aviso de plazo cerrado cuando la etapa es Preparando. «Ver en SICOP ↗» abre la búsqueda pública de SICOP
+  (no hay enlace directo estable). Pruebas: `tests/test_cartel_pasos.py` (9) y 3 pruebas ajustadas a los textos nuevos
+  («Abrir», chips de etapa y encargado).
+
+- **Prueba completa del asistente (lección 5), 2 de 3 carteles (Ivania, 2026-11-05): funciona.**
+  `20261003280` (GPS): «No cumplen un requisito excluyente» (oferta firmada digitalmente y patente comercial).
+  `20261002863`: «Falta información». Explicación redactada por la IA en los dos. **Falta:** `20261003242`
+  (cuando tenga el resumen v5 y su lista vuelta a generar).
+
+- **Resultado del asistente sin ruido (2026-11-05, pedido de Ivania):** al calcular, en el cartel se ve solo el
+  veredicto y tres botones, en este orden: «Ver explicación» (página nueva `…/resultados/<id>/explicacion`: la
+  constancia sin el detalle por requisito), «Ver constancia» y «Descargar» (Ivania, 05/11: botones, no una
+  pestaña desplegable; probados por Ivania), y la tabla
+  «Cómo va cada requisito» también queda siempre cerrada (su resumen muestra el conteo de «Revisar»). La
+  constancia (documento para imprimir) la sigue mostrando completa. Misión 24 y sus 8 capturas rehechas; prueba
+  nueva; 78 pruebas del asistente pasan.
+
+- **Asistente · lección 5, Encargo 5 (código) hecho (2026-11-05, plan aprobado por Ivania).**
+  (1) `ASSISTANT_ENABLED` (**false por defecto**, decisión de Ivania siguiendo la guía): apagado, el cartel no
+  muestra el asistente ni el botón de la lista, y `/oportunidades/<nro>/asistente/…` y `/verificacion…` dan 404
+  (middleware `cerrar_asistente_apagado`); no borra nada. Sin IA sigue como formulario (prueba nueva).
+  (2) **Administración → Registro del asistente** (`/asistente/registro`, solo administradores): `audit_log` con
+  `historial.REGISTRO_ASISTENTE` (lista, asistente, «¿Cumple?», perfil y sus accesos). (3) Aviso arriba del panel de
+  carteles con los elementos del perfil vencidos o por vencer (`perfil.avisos`). (4) `OPERACION.md` §3.4,
+  `.env.example`, misión 23 («¿Y si no veo el asistente…?»). La base de ejemplo de la ayuda lo enciende. Las
+  pruebas lo encienden en `tests/conftest.py`; `tests/test_asistente_activacion.py` (5). Sin migración.
+  Corrida completa: **944 passed**. ~~Pendiente · Ivania: agregar `ASSISTANT_ENABLED=true` a su `.env`~~ **hecho
+  (`doctor`: `ASSISTANT_ENABLED true`) y revisado por Ivania en el panel (2026-11-05): se ve bien.** **Falta de la lección 5:** prueba completa con 3 carteles, servidor y una
+  semana de uso con Oscar.
+
+- **Botón «Lista de verificación para el asistente» (2026-11-05, pedido de Ivania):** era un enlace con flecha;
+  ahora es un botón azul de Hermatix (`.btn.azul`: `--hx-azul`, `--hx-azul-osc` al pasar el mouse). Misión 22 y sus
+  6 capturas rehechas. 66 pruebas de la lista y la ayuda pasan.
+
+- **Sin viñetas en «Especificaciones clave» y «Riesgos y dudas» (2026-11-05, pedido de Ivania)**, en el resumen y
+  en el Reporte PDF (clase `sin-vinetas`). El reporte ahora también se rehace si cambia su diseño (huella de
+  `reporte_cartel.html` junto con la de «¿Cumple?»). 39 pruebas del reporte y el resumen pasan (una nueva); los 24
+  reportes reales caben en 2 páginas (copia de la base).
+
+- **«Qué piden» también en el asistente (2026-11-05, pedido de Ivania; opciones elegidas por ella: una pregunta
+  por fila y vale lo más reciente).** Cada fila del último resumen entra a la lista de verificación como pregunta
+  de sí o no, no excluyente: «El cartel pide: «Qué piden · Línea 1: … (50) — specs». ¿Hermatix lo puede
+  ofrecer?» (`verificacion.sincronizar_filas`, clave `que-piden:…`, sin IA; al generar la lista, al empezar o
+  ampliar el asistente y al abrir el cartel; no escribe si nada cambió; lo que quitó una persona no vuelve; las
+  filas que ya no están en el resumen se retiran). «¿Cumple?» de la fila: lo más reciente entre la respuesta del
+  asistente y «Marcar»; el resumen y el reporte se actualizan solos. Sin migración. Misiones 05, 23 y 25.
+  9 pruebas en `tests/test_cumplimiento.py`; corrida completa: **938 passed**.
+  **Efecto (medido en una copia de la base):** `20261002824` suma 18 preguntas y su resultado pasa de «Pueden
+  participar si completan» a «Falta información» hasta responderlas; `20261002863` +4 y `20261003280` +1, sin
+  cambio de resultado. Las constancias ya calculadas no cambian. ~~Pendiente · Ivania: probarlo en el panel~~
+  **probado por Ivania (2026-11-05, `20261002824`): funciona.**
+
+- **«¿Cumple?» en el resumen y el Reporte PDF (2026-11-05, pedido de Ivania; opciones elegidas por ella).**
+  Columna nueva en «Qué piden» y en «Requerimientos», en la página del resumen («Ver») y en el reporte.
+  Requerimientos: el estado del asistente de elegibilidad de hoy (Cumple / No cumple / Falta / Revisar;
+  «Informativo» si no se pregunta; «Sin evaluar» sin asistente o si el requisito no está en la lista).
+  Qué piden: lo marca el encargado o un administrador («Marcar»: Cumple / No cumple / Revisar + nota); ruta
+  `POST /oportunidades/{nro}/resumen/cumple`. `app/cumplimiento.py` y migración **0038**
+  (`resumen_lineas_cumple`, no se borra ni se modifica; `ia_reports.cumple_huella`: el reporte se rehace si
+  cambia un estado). Para que los 24 reportes reales sigan en 2 páginas: columna angosta y `LIMITES_CORTOS`
+  de requerimientos 8 → 7 (probado en una copia de la base). También en el reporte: el título casi todo en
+  mayúsculas sale todo en mayúsculas (`20261002824` venía «cOMPRA DE CAMARAS…» desde SICOP) y los datos de
+  «Garantías y condiciones» hasta 200 caracteres (el plazo de entrega de ese cartel ya sale completo).
+  Misiones 05 y 25 actualizadas. Pruebas: `tests/test_cumplimiento.py` (6) y 4 en `tests/test_reporte.py`.
+  Corrida completa: 922 passed, 9 failed (listas de migraciones y rutas escritas a mano, sin la 0038);
+  corregidas y vueltas a correr con los archivos relacionados: 245 passed.
+  ~~Respaldo y `migrate` (0038)~~ **hecho (Claude a pedido de Ivania, 2026-11-05, panel cerrado):** respaldo
+  `sicop_20261105-090500` (esquema 0037, integridad ok); `doctor`: 0038. Revisiones 7, resúmenes 37, reportes 3,
+  respuestas 66, constancias 3, perfil 3 y votos 1, iguales antes y después; `integrity_check` ok y
+  `foreign_key_check` vacío. `AI_MODE=openai` (lo cambió Ivania). ~~Subir el respaldo al Drive~~ **hecho (Claude, 05/11):**
+  `G:\Mi unidad\sicop-respaldos\sicop_20261105-090500` (7 archivos, ≈477 MB; tamaños iguales y huella del `.db`
+  igual al manifiesto). ~~Pendiente · Ivania: probar «Marcar» y el reporte~~ **hecho (Ivania, 05/11; confirmado el
+  12/11):** `20261002824` marcado «Cumple» a las 09:32 y su reporte generado a las 09:32:28. **En el servidor**, con
+  el PR: `migrate` hasta 0038.
+
+- **Página de ayuda · lección 4, ayuda viva, hecha (2026-11-04, plan aprobado por Ivania).** (1) Al final de cada
+  misión, «¿Te sirvió esta ayuda?» (Sí / No y un comentario opcional de hasta 500 caracteres). Ruta
+  `POST /ayuda/{nombre}/voto`, `app/ayuda/votos.py` y migración **0037** (`ayuda_votos`, no se borra ni se
+  modifica). En `/ayuda`, solo los administradores ven «Cómo les fue con la ayuda», con las misiones de más «no»
+  primero. (2) `tests/test_ayuda_viva.py` falla si una misión dice «clic en «X»» o «pulsa «X»» y X ya no está en la
+  app. Hoy pasan todas. (3) `docs/OPERACION.md` §8 «Mantener la ayuda al día», con la pregunta «¿Este cambio afecta
+  alguna misión de la ayuda?», más una nota en `docs/ayuda/ESTILO.md`. 925 pruebas. Respaldo
+  `sicop_20261104-154209` (esquema 0036, integridad ok) y `migrate` (0037) hechos con el panel cerrado: revisiones
+  6, resúmenes 37, respuestas 66, perfil 3 y resultados 3, iguales antes y después; `ayuda_votos` vacía.
+  ~~Pendiente · Ivania: votar una misión y ver la tabla en `/ayuda`~~ **probado por Ivania (2026-11-05): voto
+  «Sí» en `01-entrar` con comentario «Prueba de Ivania 05/11», guardado en `ayuda_votos` (id 1).** **En el servidor**, con el PR: `migrate` hasta 0037.
+
+- **Reporte con IA · lección 4, Encargo 4 hecho (2026-11-04, plan aprobado por Ivania): Reporte de cartel
+  Hermatix en PDF, máximo 2 páginas.** `app/ai/reporte.py` + `templates/reporte_cartel.html`; PDF con el Chromium
+  de Playwright (sin librerías nuevas); KPI de SICOP calculados por la app (el monto del modelo no se usa); límites
+  por sección y reintento con límites cortos; migración **0036** (`ia_reports`, no se borra ni se modifica);
+  `REPORTS_DIR` (data/reportes) en el respaldo; botón «Reporte PDF» en la fila del resumen y `ia reporte --nro N`.
+  Los **24 carteles reales con resumen caben en 2 páginas** (probado solo leyendo la base). Misión de ayuda 25 (sin
+  capturas). Detalle: `docs/RESUMEN_IA.md` §9. Pruebas: `tests/test_reporte.py`.
+  918 pruebas (las 2 que fallaron en la primera corrida se arreglaron: `REPORTS_DIR` faltaba en la base de
+  ejemplo de la ayuda, y una prueba buscaba el formato viejo). Respaldo `sicop_20261104-150812` y `migrate` (0036)
+  hechos (panel cerrado): 37 resúmenes y 66 respuestas antes y después. Ese respaldo también está en
+  `G:\Mi unidad\sicop-respaldos\sicop_20261104-150812` (tamaños y huella del `.db` comprobados). ~~Pendiente · Ivania: generar 3
+  reportes («Reporte PDF»), abrirlos e imprimir uno~~ **hecho (Ivania, confirmado el 12/11).**
+  **Pendiente · Oscar:** aprobar el diseño y el logo (hoy el de `app/web/static/logo-hermatix.png`) y leer 3
+  reportes cronometrando (¿se entiende en 2 minutos?).
+
+- **Reunión de Ivania con Oscar (2026-11-04)** (hoja de decisiones preparada por Claude). Decidió:
+  - **PR #5:** lo une hoy. En el servidor: respaldo, `migrate` (0033) y `ayuda capturas`.
+  - **Perfil:** cargar ya la **parte A** (datos, no documentos) de `docs/PERFIL_LISTA_INICIAL.md`; los datos los
+    dan los encargados y administradores del sistema.
+  - **Asistente:** preguntar **primero solo los excluyentes**; el resto, si el cartel interesa.
+  - **Documentos delicados:** solo en el servidor cuando esté actualizado; a la IA, nunca (`false`).
+  - **Reglas del resultado:** de acuerdo con las dos. **Presupuesto IA:** sigue en 1.00 USD. **Resumen v3:**
+    probarlo en 3 carteles y comparar. Registrado en `docs/DECISION_IA.md` §7.
+  - **Hecho (Claude, plan aprobado por Ivania): revisión rápida.** Migración **0034** (`eligibility_sessions`:
+    `ampliada_en` y `ampliada_por_nombre`). El asistente pregunta primero solo los excluyentes; al responderlos
+    muestra el resultado rápido; «Seguir con los demás requisitos» abre el resto (una vez, queda en el historial).
+    Sin excluyentes, empieza con todo. La sección «Resultado» aparece al ampliar, o antes si un excluyente no
+    cumple. Misiones 23 (7 capturas) y 24 (8) actualizadas. Pruebas nuevas en `tests/test_asistente.py` y
+    `tests/test_elegibilidad.py`. 910 passed. ~~Respaldo y `migrate` (0034)~~ **hecho (2026-11-04, panel
+    cerrado):** respaldo `sicop_20261104-131541`; `doctor`: 0034; 3 sesiones, 66 respuestas y 3 constancias antes y
+    después.
+  - **Perfil: tipos nuevos «Capacidad» y «Evaluación»** (decisión de Ivania, 2026-11-04). Migración **0035**
+    (`company_profile_items` reconstruida con sus ids, llaves foráneas revisadas). `config/perfil.yaml` trae la
+    **parte A** como sugerencias (17 datos, con frases que proponen cada elemento en la lista de verificación).
+    912 passed. Respaldo `sicop_20261104-133112` y `migrate` (0035) hechos (2026-11-04, panel cerrado): 3
+    elementos, 4 versiones y 4 requisitos con elemento del perfil antes y después; `foreign_key_check` vacío.
+    ~~Pendiente · encargados y administradores: cargar los datos en `/perfil`~~ **hecho (Ivania, confirmado el
+    12/11).** ~~Pendiente · Ivania: el
+    elemento #3 se llama «A» (de una prueba): cambiarlo o dejarlo~~ **Ivania lo deja así (2026-11-05):** no lo usa
+    ningún requisito ni respuesta, y la app no lo propone (no tiene palabras de más de 3 letras).
+  - **Respaldo al Drive (2026-11-04):** Ivania instaló Google Drive para escritorio (`G:\`). Claude creó
+    `G:\Mi unidad\sicop-respaldos` y copió el último respaldo del día, `sicop_20261104-133112` (6 archivos, ≈475
+    MB; contiene todo lo de los tres anteriores), en su subcarpeta: tamaños iguales y huella del `.db` igual al
+    manifiesto. ~~Pendiente · Ivania: compartir la carpeta solo con Oscar (sin enlace público)~~ **compartida por
+    Ivania (2026-11-05).** La copia vieja del
+    proyecto en «Mi unidad\sicop-connect» (del 14/10, con `.env` y `data/`) ya no está.
+  - **Prueba del resumen v3 en 3 carteles (Claude, 2026-11-04):** `docs/comparacion_resumen_v3_20261104.md`. El v3
+    y un v4 más corto fallaron (respuesta incompleta con 8000 tokens; con 16000, la IA tardó más de 120 s). Un **v5**
+    (el v2 + garantías, plazos y vigencia de la oferta) funcionó en los 3: 19/29/23 requerimientos contra 16/12/13
+    del v2, mismo costo. ~~Pendiente · Ivania: volver `IA_MAX_OUTPUT_TOKENS` a 4000 y llevar a Oscar la
+    recomendación~~ **4000 comprobado y v5 activado por Ivania (2026-11-05, `doctor`: `IA_PROMPT_VERSION v5`),
+    provisional hasta Oscar** (`DECISION_IA.md` §7). `ia cola --ver`: 18 en cola; la de las 10:00 hace 10 por día.
+    Al llegar el v5 a un cartel con lista de verificación (p. ej. `20261003242`, `20261003291`), «¿Cumple?» de
+    Requerimientos dice «Sin evaluar» hasta volver a generar la lista. ~~Pendiente · Oscar: confirmar el v5~~
+    **reemplazado: Oscar aprobó el reporte y el v8 está activo desde el 12/11.**
+  - Prueba de 5 carteles: solo se anotó `20261002824` (app: «Pueden participar si completan»), sin el criterio
+    de Oscar todavía. **Pendiente:** los otros 4 y la opinión de Oscar.
+
+- **Asistente · lección 4, Encargo 4 hecho (2026-11-04, rama `desarrollo`, solo local): el resultado «¿podemos
+  participar?».** Plan aprobado por Ivania; un commit por paso. La app compara (sí/no, número contra su mínimo con
+  «al menos» / «máximo» leídos del texto, documento contra el cierre del cartel) y calcula uno de cuatro resultados;
+  lo que no puede comparar queda en «Revisar» y lo decide una persona («Cumple / No cumple», vale mientras no
+  cambie la respuesta). La IA solo explica (`app/ai/explicacion.py`, prompt `explicacion_elegibilidad_v1`): si
+  nombra otro resultado, falla o está apagada, queda la explicación de la app con el motivo. Migración **0033**
+  (`eligibility_item_reviews`, `eligibility_results`: no se borran ni se modifican). Sección «Resultado» al final
+  del asistente y constancia en `/oportunidades/<nro>/asistente/resultados/<id>` («Descargar» = PDF del
+  navegador). Ayuda: misión 24 (sin capturas todavía). Detalle: `docs/RESUMEN_IA.md` §8.
+  - Pruebas: `tests/test_elegibilidad.py` (los cuatro resultados, documento vencido al cierre, «máximo 5 días»,
+    revisar, la IA que contradice se descarta, la constancia con todas las respuestas, la 0033).
+  - 896 passed. ~~Respaldo y `migrate` (0033)~~ **hecho (Claude a pedido de Ivania, 2026-11-04, panel cerrado):**
+    respaldo `sicop_20261104-111251` (esquema 0032, integridad ok, con sus ZIP); `migrate` aplicó la 0033;
+    `doctor`: esquema 0033; 56 respuestas antes y después, tablas nuevas vacías, triggers presentes,
+    `foreign_key_check` vacío.
+  - Primera prueba real (Ivania, 2026-11-04, cartel 20261002824): «Falta información» (1 cumple, 10 falta, 1
+    revisar excluyente), explicación de la IA coherente, 0,0035 USD. Única falla: la IA usaba las etiquetas
+    internas «R1:», «R2:»… → prompt `explicacion_elegibilidad_v2` y la app las borra (`sin_referencias`).
+    Constancia: la columna «Estado» partía la etiqueta («Cu/mpl/e») → arreglado en `estilo.css`.
+  - Capturas de la misión 24 (2026-11-04): **8 de 8**, con la base de EJEMPLO (el seguido ahora trae un resultado
+    calculado sin IA: «Falta información», un «Revisar» y un archivo pendiente); misión 23 rehecha: 6 de 6.
+  - ~~Pendiente · Ivania: subir el ZIP del respaldo al Drive; probar los cuatro resultados en el panel;~~
+    ~~descargar una constancia y ver que se entiende sin abrir la app~~ **hecho (Ivania, confirmado el 12/11).**
+    **Sigue pendiente · Ivania con Oscar:** evaluar 5 carteles reales y anotar cada diferencia con su criterio. Las reglas (sobre todo «archivo pendiente» y los «Revisar» excluyentes) se
+    ajustan con lo que diga Oscar.
+
+- **Asistente: «Lo tiene · archivo pendiente» (2026-11-04, pedido de Ivania, rama `desarrollo`, solo local).**
+  Los documentos de Hermatix son delicados y no se suben hasta que el asistente esté listo; «Todavía no lo sé» no
+  decía la verdad. Migración **0032** (`eligibility_answers.estado` acepta `archivo_pendiente`, solo documentos y
+  sin archivo; la tabla se reconstruye con sus ids y sus triggers). Botón «Lo tiene · subo el archivo después»,
+  avance «N archivos pendientes»; se completa después con «Cambiar». No va al perfil sin archivo. Misión 23 de la
+  ayuda actualizada. Pruebas nuevas en `tests/test_asistente.py` (incluida la de la migración).
+  866 passed. ~~Pendiente · Ivania: respaldo y `migrate`~~ **hecho (Claude a pedido de Ivania, 2026-11-04, panel
+  cerrado):** respaldo `C:\Users\User\respaldos-sicop\sicop_20261104-101915` (esquema 0031, integridad ok, con los
+  ZIP de documentos, expedientes, perfil y asistente); `migrate` aplicó la 0032; `doctor`: esquema 0032;
+  `eligibility_answers` 56 filas y último id 56 antes y después, `foreign_key_check` vacío, índice y triggers
+  presentes. ~~Pendiente · Ivania: subir el ZIP del respaldo al Drive; volver a responder con el botón nuevo las 5
+  preguntas de documento de 20261002824 que quedaron en «Todavía no lo sé»~~ **hecho (Ivania, confirmado el 12/11).**
+
+- **Asistente de elegibilidad · lección 1, antes del Encargo 1 (2026-11-02).** Guía nueva:
+  `docs/Guia_Asistente_Elegibilidad_SICOP.docx`. Oscar aprobó usar la IA también en el asistente y que lo usen los
+  dos niveles (Administrador y Encargado): registrado en `docs/DECISION_IA.md` §7 y en `CLAUDE.md`. Enviar
+  documentos de Hermatix a OpenAI sigue pendiente (`ASSISTANT_SEND_DOCUMENTS=false`).
+  - Lista inicial del perfil para revisar con Oscar: `docs/PERFIL_LISTA_INICIAL.md` (183 requerimientos de los 15
+    carteles con resumen; sin documentos de Hermatix).
+  - **Encargo 1 hecho (2026-11-02, rama `desarrollo`, solo local): perfil de Hermatix.** Migración **0029**
+    (`company_profile_items` + `company_profile_versions`: historial, nada se borra ni se modifica). Página
+    `/perfil` y `/perfil/<id>` («Perfil» en el menú): la ven los dos niveles; **cargan, reemplazan y marcan
+    pendiente solo los administradores** (decisión de Ivania; un encargado recibe 403). Estado calculado al leer:
+    vigente · por vencer (≤ 30 días, falta que Oscar lo confirme) · vencido · pendiente; aviso «Revisar pronto».
+    Documentos solo PDF/PNG/JPG con firma comprobada, en `PROFILE_DOCS_DIR` (data/perfil, fuera de Git), límite
+    `PROFILE_DOC_MAX_MB` (10); cada vista o descarga queda en `audit_log` y se ve en la página del elemento. El
+    respaldo agrega `…_perfil.zip`. Sugerencias del borrador en `config/perfil.yaml` (botones «+», quedan
+    pendientes). La recepción de archivos del expediente pasó a `app/archivos.py` (compartida, mismo
+    comportamiento). La base de ejemplo de la ayuda también apunta su `PROFILE_DOCS_DIR` dentro del ejemplo
+    (prueba nueva que lo vigila).
+  - Pruebas: `tests/test_perfil.py` 21 passed (más migraciones, respaldo, expediente y ayuda).
+  - Pendiente: acordar la lista con Oscar (editar `config/perfil.yaml`); cargar el perfil real (Ivania, desde la
+    app); probar con un usuario encargado que no puede cargar; servidor: crear `PROFILE_DOCS_DIR` con permisos
+    solo para el usuario `sicop` y revisar que el respaldo lo incluya.
+  - Corrección (2026-11-02): el commit `a916a86` dejó 3 pruebas fallando que no corrí en su momento:
+    `test_obtencion.py` y `test_obtencion_turnos.py` tienen su propia lista de migraciones, y `test_acceso.py` el
+    inventario de rutas POST (faltaban las del perfil). Arreglado en el commit del Encargo 2.
+- **Asistente · lección 2, Encargo 2 hecho (2026-11-02, rama `desarrollo`, solo local): lista de verificación.**
+  Migración **0030**: `eligibility_items` (un requisito verificable por fila: tipo de evidencia, mínimo o «no
+  indicado», excluyente, citas, elemento del perfil propuesto/confirmado, origen ia o usuario; nada se borra),
+  `eligibility_generations` y `ia_usage` reconstruida para aceptar los propósitos `verificacion`, `asistente` y
+  `explicacion` (las filas y sus ids se conservan). Para eso el ejecutor de migraciones acepta la línea
+  `-- migracion: sin llaves foraneas` (procedimiento de SQLite: llaves apagadas solo en esa migración y
+  `foreign_key_check` antes de confirmar).
+  - Generación con IA (`app/ai/verificacion.py`, prompt `lista_verificacion_v1`): requerimientos del resumen +
+    expediente (decisión de Ivania); la app descarta mínimos que no están en el texto, conserva los requisitos que
+    la IA omite y junta los repetidos con sus citas; volver a generar respeta lo corregido, agregado y quitado.
+    Presupuesto diario y `AI_MODE=none` respetados. Detalle en `docs/RESUMEN_IA.md` §6.
+  - Pantalla `/oportunidades/<nro>/verificacion` (los dos niveles; enlace desde el cartel): corregir, quitar,
+    volver a poner, agregar y confirmar el elemento del perfil (propuesto con `claves:` de `config/perfil.yaml`).
+    Terminal: `python -m app.cli ia verificar --nro N`.
+  - Orden (2026-11-03, pedido de Ivania al revisar el primer cartel): la pantalla y la terminal muestran la lista en
+    el orden del pliego (DOC n y página de su primera cita; después «SICOP» y los sin cita). Los excluyentes quedan
+    en su lugar con su etiqueta; el asistente (lección 3) los preguntará primero con su propio orden.
+  - Prueba con carteles reales (Ivania, 2026-11-03), 3 de 5:
+    - 20261002408 (cámaras, liceo): 16 requisitos, todos en los documentos y correctos; nada sobra.
+    - 20261003280 (GPS): 12 requisitos, todos en los documentos y correctos; nada sobra.
+    - 20261003242 (etiquetas RFID): 13 requisitos, 1 corregido (garantías de 12 y 24 meses de los anaqueles:
+      pág. 2, punto 1.7.17 → 12 meses; pág. 10, punto 9 → 24 meses; Ivania lo vio en el pliego y se mantiene);
+      solo 1 excluyente (contraste con los otros dos).
+    - Carteles 4 y 5 (Ivania, 2026-11-04, IA encendida): 20261001813 (cámaras de seguridad ciudadana, Liberia,
+      Baja): 9 requisitos; 20261003291 (equipos de media tensión, aeropuerto de Liberia, Baja, resumen
+      «descartar»): 17 requisitos, 13 excluyentes. En los dos: todos en el pliego, nada sobra, excluyentes con
+      sentido y «Qué lo demuestra» correcto. **5 de 5 hechos.**
+      Revisión de faltantes (Claude leyó los dos expedientes, 2026-11-04): `docs/revision_faltantes_20261104.md`,
+      sin agregar nada a la base. En 20261001813 falta toda la admisibilidad (10 años, 10 proyectos, 2 centros de
+      monitoreo, técnicos certificados, carné de alturas…), los requisitos legales y ~450 códigos técnicos; en
+      20261003291, otra vez la garantía de cumplimiento (5 %) y además la colateral (100 %). Mismo patrón que en
+      los 3 primeros → revisar el prompt del resumen (v3). ~~Pendiente · Ivania: comprobar en el PDF y decidir
+      si se agregan~~ **hecho (Ivania, confirmado el 12/11).**
+    - Falta comprobar: si faltan requisitos (Ivania aún no conoce bien el proceso: buscar las secciones típicas
+      del pliego y que Oscar revise uno); que la IA marca casi todo como excluyente en dos carteles (15 de 16,
+      11 de 12; viene del resumen) y en otro solo 1 de 13.
+    - Revisión de faltantes (Claude leyó el expediente completo, 2026-11-03): agregados 14 requisitos con
+      `verificacion.agregar` (firmados «Claude (pedido de Ivania)», cita dentro del texto): 3 en 20261002408, 6 en
+      20261003280 y 5 en 20261003242. Patrón: en 2 de 3 faltaba la garantía de cumplimiento y en los 3 las
+      especificaciones técnicas no salen como requisitos; viene del resumen con IA → revisar su prompt. Ivania debe
+      comprobar cada uno en la página citada. 20261003242 está «Objetado» en SICOP.
+    - **Regla de Ivania (2026-11-03): todo requisito se presenta, por fácil u obvio que sea; nadie filtra, el
+      usuario decide.** Segunda revisión completa de los 3 pliegos: agregados 22 + 77 + 46 requisitos (cada
+      especificación por separado, como el pliego las numera) y quitados (sin borrar) los 3 de Claude que las
+      agrupaban. Los agregados a mano se ordenan por la marca [DOC n · pág. p] escrita en su texto.
+      Tercera tanda (pedido de Ivania): 10 + 21 + 17 multas, cláusulas penales y condiciones de la institución,
+      con el texto empezando por «Multa / cláusula penal:» o «Condición de la institución:» (no excluyentes), y
+      un requisito que faltaba en el GPS (datos del Registro de Proveedores). Listas: **50, 115 y 80**. La v3 los
+      pide igual. **Para la lección 3:** el asistente no debe preguntar por «Multa…» ni «Condición de la
+      institución…» como si fueran requisitos: se muestran como información.
+    - Revisión de Ivania del cartel de cámaras (2026-11-03): los requisitos están en el pliego y los excluyentes
+      están bien; el texto dice lo mismo con otras palabras y «Qué lo demuestra» a veces dice «Sí o no» cuando
+      el pliego pide presentar algo. Decisiones: **texto literal del pliego** (resumen v3, aún sin usar) y
+      **«Documento» si se presenta algo** (prompt de la lista v2). Los ~200 «Agregado» de Claude no se
+      reescriben hasta comparar con la v3; los que la v3 no encuentre se pasan a texto literal y a documento.
+    - Revisión de Ivania de los carteles GPS `20261003280` y RFID `20261003242` (2026-11-03): los requisitos
+      están en el pliego, dicen lo mismo con otras palabras (se arregla con la v3), los excluyentes y «Qué lo
+      demuestra» están bien. En RFID vio la contradicción de la garantía de los anaqueles (12 y 24 meses).
+    - Pedido de Ivania (2026-11-03): la marca `[DOC n · pág. p]` va en «Cita», no en el título. `agregar` y
+      `corregir` la pasan solas (`verificacion.separar_citas`); los 207 «Agregado» ya guardados se movieron
+      (copia previa de la base en el scratchpad de la sesión).
+    - **Antes de probar la v3: subir `IA_MAX_OUTPUT_TOKENS`** (4000 por defecto; los resúmenes ya usan hasta 3900).
+      Con cada especificación por separado, el resumen y la lista de un cartel como el GPS (más de 90 requisitos)
+      no caben en 4000 y quedarían «fallido» (respuesta incompleta).
+    - **Prompt del resumen v3 hecho (2026-11-03, solo local, sin activar):** `config/prompts/resumen_cartel_v3.md`
+      (garantías, plazos, vigencia y especificaciones también como requerimientos; detalle en
+      `docs/RESUMEN_IA.md`) y `ia resumir --nro N --prompt v3` para probarlo en un cartel sin tocar `.env`.
+      Pruebas: `test_ia_resumen.py` + `test_verificacion.py` + `test_ia_cola.py` 46 passed (OpenAI SIMULADO).
+      Pendiente (Ivania, con presupuesto): resumen v3 y lista de los 3 carteles; comparar con los 14 agregados por
+      Claude y quitar los repetidos; activar `IA_PROMPT_VERSION=v3` solo después, con Oscar.
+    - Volver a generar 20261003242 **mañana** y ver que la corrección sigue con «Corregido»: hoy lo frenó el
+      presupuesto diario de IA (mensaje rojo; no llegó a llamar a OpenAI, no hay generación nueva). Hoy se
+      gastaron ~0,53 USD, la mayor parte en los 10 resúmenes de la cola (10:12–10:17). Decidir con Oscar si
+      conviene subir `IA_MAX_DAILY_COST` en el `.env`.
+  - Pruebas: `tests/test_verificacion.py` 12 passed (OpenAI SIMULADO).
+  - Pendiente (Ivania): generar la lista de 5 carteles reales y compararla con su pliego; corregir desde la
+    pantalla y comprobar que la corrección sigue al volver a generar; revisión con Oscar. Cada generación usa la
+    IA (costo parecido a un resumen).
+- **Asistente · lección 3, Encargo 3 hecho (2026-11-03, rama `desarrollo`, solo local): el asistente que pregunta
+  y no supone.** Decisiones de Ivania: la IA redacta las preguntas **una vez por cartel** (si no hay IA, las arma
+  la app); lo usan **el encargado asignado y los administradores** (la regla del expediente);
+  `ASSISTANT_SEND_DOCUMENTS` **solo false** (con true la app avisa y no guarda ni envía nada).
+  - Migración **0031**: `eligibility_sessions` (una por cartel), `eligibility_questions` (las de la IA) y
+    `eligibility_answers` (no se borran ni se modifican: cambiar una respuesta agrega otra y vale la última).
+  - En el detalle del cartel, sección «Asistente de elegibilidad» (`templates/_asistente.html`); «Dar
+    seguimiento» vuelve ahí. Excluyentes primero y luego el resto, cada grupo en el orden del pliego; una pregunta
+    a la vez con su cita; respuesta según «Qué lo demuestra» (número, fecha, sí/no, texto, documento con fecha de
+    vencimiento) + «Todavía no lo sé» y, en documentos, «Hermatix no lo tiene». «Multa…» y «Condición de la
+    institución…» no se preguntan: van en «Para tener en cuenta».
+  - Perfil sin suponer: el dato vigente o por vencer se muestra y se confirma con «Sí, es correcto»; vencido o
+    pendiente se pregunta. «Guardar también en el perfil» (solo administradores) crea una versión nueva.
+  - Archivos en `ASSISTANT_DOCS_DIR` (data/asistente, fuera de Git; validados como los del perfil con
+    `perfil.guardar_documento`; cada vista o descarga en `audit_log`; el respaldo agrega `…_asistente.zip`).
+  - IA: `app/ai/asistente.py`, prompt `asistente_elegibilidad_v1` (el de la guía), en tandas de 30; solo recibe
+    la lista. Detalle en `docs/RESUMEN_IA.md` §7.
+  - Pruebas: `tests/test_asistente.py` 18 passed (IA SIMULADA; con true ningún archivo se guarda ni sale).
+  - Prueba de Ivania (2026-11-03, cartel GPS `20261003280`, `AI_MODE=none`, después de `migrate` a 0031):
+    funciona, sigue donde quedó al cerrar el navegador, las preguntas se entienden y el campo de respuesta es el
+    correcto; nada la confundió.
+  - Ayuda (2026-11-03, pedido de Ivania): bloque nuevo «G. Asistente de elegibilidad» con las misiones
+    21-perfil, 22-lista-verificacion y 23-asistente (borrador); la 09 dice que «Dar seguimiento» baja al
+    asistente; 5 palabras nuevas en el glosario; botón «?» de `/perfil` y de la lista. La base de ejemplo de la
+    ayuda trae perfil, lista (IA SIMULADA) y un asistente empezado: capturas 21–23 hechas (19 de 19). Falta que
+    Ivania las pruebe siguiendo los pasos (ESTILO.md).
+  - Pendiente: probarlo con la IA encendida (preguntas redactadas por la IA); Oscar lo usa sin explicación previa
+    (sus dudas van a la ayuda); decidir con Oscar `ASSISTANT_SEND_DOCUMENTS`. El resultado («¿podemos
+    participar?») es la lección 4.
+
+- **Ayuda · lección 3, Encargo 3: página «¿Cómo se usa?» (2026-11-02, rama `desarrollo`, solo local).**
+  Decisiones de Ivania: convertidor de Markdown propio (sin dependencias nuevas) y misiones 13–18 solo para
+  administradores.
+  - `/ayuda`: tarjetas por bloque (orden de `docs/ayuda/MISIONES.md`), buscador sin tildes ni mayúsculas y
+    glosario (`GLOSARIO.md`). `/ayuda/<misión>`: la misión leída de su `.md`, con capturas y texto alternativo;
+    todo el texto escapado y solo enlaces a otras misiones. Enlace en el pie; el de «Ayuda» en el menú de arriba se quitó el 2026-11-03 para no
+    recargarlo (pedido de Ivania: ya está el botón «?»).
+  - Botón «?» fijo en cada pantalla → su misión (`config/ayuda.yaml`); 12 explicaciones del glosario al pasar el
+    mouse (`termino(...)` en las plantillas, sin JavaScript). Código: `app/ayuda/pagina.py`.
+  - Pruebas: `tests/test_ayuda_pagina.py` 31 passed. Capturas: siguen 132 de 132.
+  - Pendiente: Ivania recorre la ayuda dentro de la app (cada misión desde `/ayuda` y desde su «?»; buscar
+    «reporte», «descargar», «cierra»); preguntar a Oscar por el recorrido de bienvenida (Encargo 3B); revisión
+    de Oscar en su computadora.
+
+- **Ayuda · lección 2, Encargo 2: base de EJEMPLO y capturas automáticas (2026-11-02, rama `desarrollo`, solo
+  local).** Antes, en la misma lección: misiones reordenadas de arriba abajo y 7 de administración (20 en total,
+  commit `18b1b02`).
+  - `python -m app.cli ayuda ejemplo` rehace `data/ayuda_ejemplo/`: base aparte con datos inventados («EJEMPLO ·»,
+    `@ejemplo.test`, origen `sintetico`), hecha con los importadores y funciones reales; resumen con IA con un OpenAI
+    SIMULADO. Se niega si la base coincide con `DATABASE_PATH` y solo borra una carpeta con la marca de ejemplo.
+  - `python -m app.cli ayuda capturas [--mision 08-revision]`: arranca la app con la base de ejemplo (todas las
+    claves de configuración en el entorno: el `.env` no influye), Chromium sin ventana 1280 × 800, borde rojo sobre
+    el elemento de cada marcador → `app/web/static/ayuda/<misión>/<paso>.png` + `indice.json` (texto alternativo).
+    «Calidad de reglas» y «Competencia» usan un golden set y nombres de empresas de ejemplo (`app/ayuda/servidor.py`).
+    Las imágenes no van a Git (`.gitignore`): se regeneran.
+  - Resultado: **132 de 132 capturas**. Pruebas: `tests/test_ayuda_capturas.py` 9 passed; suite completa 771 passed.
+  - **Revisión de Ivania (2026-11-02):** revisó las 132 capturas una por una; todas tienen la marca roja.
+  - Comprobación de la lección 2: ☑ todas las misiones escritas (20) · ☑ cada paso importante con su captura y su
+    marca (revisión de Ivania) · ☐ ninguna captura con datos reales (falta la confirmación de Ivania) · ☐ revisión
+    de Oscar (misiones, orden nuevo y capturas).
+  - Pendiente: recorrer las misiones en la app real. Detalle conocido para mostrarle a Oscar: la captura del video
+    de la bitácora (misión 18, paso 13) muestra el círculo de carga del reproductor encima del cuadro.
 
 - **Lección 9 cerrada (2026-10-19).** Por calendario toca la lección 11: vamos 2 lecciones atrás.
   - Cierre: autoevaluación ☑, `health` ☑, HTTPS con login ☑, oportunidad real revisada en el servidor desde otra
@@ -249,10 +1150,86 @@
 
 ## Pendientes
 
+- **2026-10-30 (Ivania con Claude):**
+  - **Ciclo diario de Windows con envío real** (`0359db8`): la tarea «SICOP CONNECT - ciclo diario» (lunes a
+    viernes 8:00, desde el 21/10) corría `run-cycle --dry-run` fijo en `deploy/windows/sicop-ciclo.ps1`, así que
+    nunca enviaba aunque `.env` tuviera `NOTIFICATIONS_DRY_RUN=false`. Ahora `--send` (decisión de Ivania: Windows
+    por ahora, el servidor después). `doctor`: avisos habilitados, dry-run no, Gmail con token. El ciclo del 30/10
+    ya había corrido en dry-run; **primer envío automático: lunes 2/11, 8:00**.
+    ~~Pendiente · Ivania: avisar a Oscar~~ **avisado (30/10)**; **cuando Oscar active el ciclo del
+    servidor, deshabilitar la tarea de Windows** (si no, correos dobles: cada base deduplica solo lo suyo).
+    `APP_BASE_URL` local = `127.0.0.1`: los enlaces del correo solo abren en la laptop. La tarea corre solo con la
+    laptop encendida y la sesión abierta.
+  - **Regla:** exclusión «elaboracion de planos» en las 9 familias (`ba8b7cb`); `20261003260` (paradas de autobús,
+    San José; «APC» + «paradas» daban Media en conteo_pasajeros) al golden set como falso positivo. Antes se
+    revisaron los 37 carteles Alta/Media: solo afecta a ese. `evaluate`: reglas `aa5379adc1be`, el cartel quedó
+    «sin coincidencia». `score-rules`: sin errores nuevos. 733 passed.
+  - GitHub rechazó la llave SSH aunque estaba registrada; se arregló borrándola y volviéndola a agregar. Push de
+    `desarrollo` (`bd672af..ba8b7cb`).
+  - **Gestor de documentos, pasos 3 (notas) y 4 (descargar el expediente):** ver «Gestor de documentos» abajo.
+  - **Reporte con IA · lección 5, primera parte: resúmenes automáticos (pedido de Ivania, rama `desarrollo`, solo
+    local).** Ivania no quiere correr `ia resumir` a mano. Decisiones de Ivania, provisionales hasta Oscar
+    (`DECISION_IA.md` §5): cola + panel; **Alta y Media enriquecidos**; **10 resúmenes y 1.00 USD al día**.
+    `app/ai/cola.py` + `ia cola [--ver]`; `IA_MAX_SUMMARIES_PER_DAY` / `IA_MAX_DAILY_COST` (config y `.env.example`);
+    `deploy/windows/sicop-enriquecimiento.ps1` corre `ia cola` después de `enrich run` (misma tarea de las 10:00);
+    bloque «Resumen ejecutivo · Generado por IA» en la página del cartel (`_resumen_ia.html`). Sin migración.
+    12 pruebas nuevas en `tests/test_ia_cola.py` (OpenAI SIMULADO; el tope de costo roto a propósito: fallan).
+    `ia cola --ver` con la base real: 7 en cola (≈ 0,30 USD). **El script de la tarea ya está activo: la primera
+    corrida real es la de las 10:00 del 30/10.** Detalle: `RESUMEN_IA.md` §5 y `OPERACION.md` §3.3.
+    ~~Pendiente · Ivania: revisar el registro de las 10:00 y los resúmenes en el panel~~ **hecho (Ivania,
+    confirmado el 12/11)**; ~~contarle a Oscar las
+    decisiones provisionales~~ **contadas (30/10)**. **Falta de la lección 5:** citas como enlaces, «coincido / no coincido», reporte de 2
+    páginas (lección 4), correo, vista de uso y servidor.
+  - **Prompt `v2` con el criterio de Hermatix (2026-10-30, dado por Ivania):** `config/prompts/resumen_cartel_v2.md`
+    (detalle en `RESUMEN_IA.md` §4); la `v1` no cambia. Prueba nueva en `tests/test_ia_resumen.py`. ~~Pendiente ·
+    Ivania: `IA_PROMPT_VERSION=v2` en `.env`~~ **hecho (30/10, después de la cola de las 10:00): `doctor` dice v2**;
+    los 10 resúmenes `v1` de hoy vuelven a la cola desde el lunes. Siguiente paso de la lección 3: revisar con Oscar las recomendaciones de unos 10 carteles.
+  - **Baja también en la cola (2026-10-30, Ivania):** Oscar quiere un resumen de cada cartel del panel para decidir
+    más rápido. La cola es Alta → Media → Baja (`app/ai/cola.py`, panel, docs y pruebas ajustados; 29 passed en las
+    pruebas de IA). `ia cola --ver` a las 09:59: 21 en cola (7 Alta/Media y 14 Baja); con el tope de 10 por día se
+    pone al día en unos 2–3 días hábiles. Muchos Baja son ruido (mantenimiento, abarrotes): ~0,05 USD cada uno.
+    La revisión de 10 carteles la hace Ivania (con Oscar si puede) para comprobar que los resúmenes no inventen.
+  - **Citas como enlaces (2026-10-30, pedido de Ivania):** en el panel, [DOC n · pág. p] abre ese documento en esa
+    página (`app/web/citas.py`; `expediente.numeracion` da el mismo DOC n que leyó el modelo). Solo si el expediente
+    no cambió desde el resumen (misma huella); si cambió, la cita queda como texto con un aviso. 3 pruebas nuevas
+    (la de la huella falla rota a propósito). 759 passed. Primera cola real (10:00): 10 resúmenes, todos con `v1`
+    (`IA_PROMPT_VERSION` seguía en v1); al pasar a `v2` vuelven a la cola.
+  - **Revisión de citas (2026-10-30, Ivania con Claude):** 10 carteles, 11 citas comprobadas contra el texto del
+    PDF: **0 errores** (y el de la impresora, 20261002863, señaló una contradicción real entre pliego y anexo).
+  - **Aspecto del resumen (2026-10-30, pedido de Ivania):** en la página del cartel, una fila como la de los
+    documentos (resumen, recomendación, fecha) con **«Ver»** y **«Descargar»**. «Ver» abre `/oportunidades/{nro}/resumen`
+    (`resumen.html`): documento centrado con encabezado, datos oficiales de SICOP, recomendación destacada y tablas
+    (qué piden, requerimientos, indicadores, plazos, criterios), citas como enlaces. «Descargar» = la misma página con
+    `?imprimir=1`: el navegador la guarda como PDF (decisión de Ivania: sin librerías nuevas; el reporte de 2
+    páginas con logo sigue en la lección 4). Estilos de impresión en `estilo.css`. La página del cartel ya no arma
+    el expediente (más rápida).
+  - **`OBTAIN_ALERT_TO` = licitaciones@hermatix.com (Ivania, 30/10), en el `.env` local.** `doctor`: «configurado»,
+    «Pendientes: ninguno». Con los avisos reales, desde el lunes llegan ahí el resumen diario del enriquecimiento
+    (después de las 10:00) y la alerta inmediata de CAPTCHA o bloqueo. Las de la obtención automática no salen
+    mientras `SOURCE_MODE=manual`.
+  - **Extracto del resumen en el correo diario (2026-10-30, pedido de Ivania):** opción elegida: el correo sigue a
+    las 8:00 y trae el extracto si el cartel ya tiene resumen (si no, «todavía no está»). `app/avisos.py`
+    (`Extracto`, `con_resumen` según `AI_MODE`), `correo/aviso.txt` y `aviso.html`, `resumen.ultimo`. 2 pruebas
+    nuevas en `tests/test_avisos.py` (la de IA apagada falla rota a propósito). Vista previa sobre una COPIA de la
+    base: el lunes saldría `20261001885` (basureros, falso positivo Media) con «Recomendación: Descartar».
+  - **Falso positivo «basureros» (2026-10-30, Ivania):** `20261001885` (basureros hospitalarios, INS) iba a salir
+    como Media en el primer correo real del lunes («contenedores» + «trazabilidad», rastreo_activos). Exclusión
+    «basureros» **solo en rastreo_activos** (en gps_flotas, «camiones basureros» con GPS sí interesa); afecta a 3
+    carteles, todos compras de basureros. Golden set: 37 casos. `evaluate`: reglas `634dbc4ff81e`, el cartel queda
+    «sin coincidencia». Vista previa sobre una COPIA de la base: el lunes no saldría nada con los datos de hoy.
+  - **Casilla «coincido / no coincido»: pospuesta (Ivania, 30/10).** Oscar quiere el resumen para leer rápido; la
+    revisión de citas no encontró errores. Las recomendaciones raras se reportan a Claude a mano; si se vuelven
+    frecuentes, se construye.
+
 - **Salido de las autoevaluaciones y del despliegue (2026-10-29):**
-  - **Despliegue visto por Claude (29/10):** Oscar unió el PR #4 (`main` = `b51b532`) y el servidor responde
-    `/health` con esquema **0023**. No se sabe si activó los temporizadores (9.9) ni si los avisos siguen en
-    dry-run: preguntar a Oscar. Los commits de hoy (`DECISION_IA.md`, «Ver») van en un PR nuevo.
+  - **Despliegue visto por Claude (29/10):** Oscar llevó `main` a `b51b532` directamente (sin el botón del PR, que
+    siguió abierto) y el servidor responde `/health` con esquema **0023**. No se sabe si activó los temporizadores
+    (9.9) ni si los avisos siguen en dry-run: preguntar a Oscar.
+  - **PR #4 unido por error (29/10, 11:24, cuenta de Ivania):** al actualizar su título y descripción con los 4
+    commits de hoy (`DECISION_IA.md`, «Ver», estado) se pulsó «Merge». `main` = `7f5c558` (unión). Sin migraciones ni
+    dependencias nuevas, 676 passed; **el servidor no cambió** (sigue en `b51b532`). No se revirtió: lo decide
+    Oscar (revertir también sería escribir en `main`). ~~Pendiente · Ivania: avisar a Oscar~~ **avisado (30/10)**. `desarrollo` quedó
+    igual a `main` (avance rápido). Acuerdo: solo Oscar une los PR; abajo solo se pulsa «Comment».
   - **Pendiente:** mandar fichas, documentos y bitácora del enriquecimiento al servidor (la dirección con token de
     la decisión del 27/10). Hoy están solo en la base de Windows: el panel del servidor no los muestra.
   - Idea de mejora: aviso «cartel modificado: revise su decisión» cuando llega una ficha nueva con cambios.
@@ -414,8 +1391,10 @@
     reactivación **solo con cargador** (`powercfg … SUB_SLEEP RTCWAKE 1`; con batería siguen apagados).
   - Ciclo #38 corrido a mano a las 11:03 (dry-run): **FALLO, sin archivo nuevo en `data\incoming`** (el reporte
     de hoy no se había descargado); 0 avisos.
-  - **Pendiente · Ivania:** subir el reporte del 28/10 en «Cargar archivo»; el 29/10 comprobar en
-    `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00.
+  - ~~Pendiente · Ivania: subir el reporte del 28/10 en «Cargar archivo»~~ **hecho el mismo día (comprobado el
+    12/11): carga #39, 28/10 13:50, ok, periodo 28/07 → 28/10.** ~~El 29/10 comprobar en
+    `data\logs\ciclo-2026-10.log` que el ciclo corrió a las 08:00~~ **comprobado (12/11):**
+    `2026-10-29 08:00:02 - run-cycle`.
 - **Reporte de cartel con IA · lección 1, el expediente (2026-10-28, rama `desarrollo`, solo local):** guía
   `docs/Guia_Reporte_Cartel_IA_SICOP.docx` (traída por Luis); **Oscar aprobó la IA** (comunicado por Ivania).
   Borrador de `DECISION_IA.md` hecho (`d47b73f`); falta que Oscar lo acepte y luego cambiar «Sin API de IA» en
@@ -466,8 +1445,9 @@
   - Base local: respaldo `sicop_20261028-151332` (esquema 0022, en la carpeta temporal de la sesión de Claude) →
     `migrate` (0023), aplicado por Claude. `doctor`: `AI_MODE none`, clave y modelo PENDIENTE; `ia probar` → «IA
     apagada», sin llamar.
-  - **Pendiente · Oscar (con Ivania):** proyecto de OpenAI con límite de gasto, clave en `.env` escrita por él,
-    modelo y precios; después, la primera llamada real (`ia probar`) y comparar con el panel de OpenAI.
+  - ~~Pendiente · Oscar (con Ivania): proyecto de OpenAI con límite de gasto, clave en `.env` escrita por él,
+    modelo y precios; después, la primera llamada real (`ia probar`) y comparar con el panel de OpenAI~~ **hecho
+    (29/10, ver abajo: clave `y7sA`, recarga con tope y primera llamada OK).**
   - **2026-10-29 (Oscar, por Ivania):** acepta `DECISION_IA.md`, revisó la privacidad de la cuenta y creó el
     proyecto; la clave se la pasó a Ivania. **Sin límite de gasto y clave con todos los permisos**, a propósito (choca con la regla 4;
     riesgo anotado). Oscar no fijó modelo: lo elige Ivania.
@@ -477,8 +1457,46 @@
   - **Primera llamada real (29/10, Ivania):** `.env` con `AI_MODE=openai`, `gpt-6.1-terra` (elegido para la prueba;
     el definitivo en la lección 3) y precios 1.00 / 5.00 USD por millón; `doctor` bien. `ia probar` → **FALLO 401
     invalid_api_key** (`ia_usage` #1, sin costo). En la computadora está bien: sin variable de Windows, una sola
-    línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. **Pendiente · Oscar:** revisar en API keys
-    si esa clave existe y está activa, o generar una nueva y entregarla en persona.
+    línea, 167 caracteres, empieza `sk-`, sin espacios, termina en `U8kA`. ~~Pendiente · Oscar: revisar en API keys
+    si esa clave existe y está activa, o generar una nueva y entregarla en persona~~ **reemplazada por la clave nueva
+    (abajo).**
+  - **Clave nueva (29/10):** Oscar creó otra (termina en `y7sA`, proyecto SICOP, activa) e Ivania la puso en
+    `.env`. `ia probar` → **FALLO 429 credit_balance_exhausted** (`ia_usage` #3, sin costo): OpenAI **acepta** la
+    clave; la cuenta de la API no tiene saldo. La licencia de 20 USD de Oscar es de ChatGPT y no da saldo a la API
+    (tampoco la suscripción de Claude). Recomendado: cargar **10 USD con la recarga automática apagada** (sirve de
+    límite de gasto, regla 4); uso normal estimado 10–30 USD al mes (techo ~42 USD con los topes actuales).
+    ~~Recargar~~ **Oscar recargó (29/10): 10 USD, con un máximo de 15 USD** (por Ivania; con eso hay un tope de
+    gasto, regla 4). **Primera llamada real OK (29/10, Ivania):** `gpt-6.1-terra`, entrada 34
+    · salida 5 tokens, 2,76 s, intentos 1, costo estimado 0,000059 USD (cuadra con 1.00 / 5.00 USD por millón),
+    `ia_usage` #4. PR #5 abierto por Ivania (1B, paso 5 y esta corrección), espera a Oscar. ~~Pendiente · Oscar:
+    confirmar en «Usage» la llamada (puede tardar en aparecer) y el saldo cargado~~ **pasa al pendiente del 11/11
+    («saldo que queda en OpenAI»).** Lección 3: abajo.
+  - **Corregido (29/10, Claude):** la app reintentaba ese 429 (intentos 3) porque solo conocía el código
+    `insufficient_quota`; ahora `credit_balance_exhausted` también cuenta como falta de saldo y no se reintenta
+    (`app/ai/cliente.py`, `SIN_SALDO`; prueba nueva en `tests/test_ia_cliente.py`, 20 passed).
+- **Reporte de cartel con IA · lección 3, Encargo 3: resumen ejecutivo (2026-10-29, rama `desarrollo`, solo local;
+  plan aprobado por Ivania):** detalle en `docs/RESUMEN_IA.md` §4.
+  - Prompt `config/prompts/resumen_cartel_v1.md` (el de la guía + portafolio de las 9 familias + formato de fechas
+    y montos); `IA_PROMPT_VERSION` (v1). Criterio de Hermatix (montos mínimos, requisitos que descartan) **por
+    decidir · Oscar**: el prompt dice «sin criterio definido todavía».
+  - `app/ai/resumen.py`: salida estructurada estricta (JSON Schema), «no encontrado» para lo que falte,
+    comparación con SICOP (cierre, apertura, monto de la ficha, cantidad por línea → «revisar»), rechazo /
+    incompleta / JSON inválido / error → «fallido» sin resumen. `cliente.pedir` acepta el esquema y detecta el
+    rechazo del modelo.
+  - Migración **0026** `ia_summaries` (sin borrado ni cambios). Misma huella + misma versión del prompt = no se
+    vuelve a llamar. Comando `python -m app.cli ia resumir --nro N` (copia legible en `data/exports/`).
+  - 16 pruebas nuevas en `tests/test_ia_resumen.py` (OpenAI SIMULADO). **709 passed.**
+  - **Primer resumen real (29/10, Ivania):** `20261002824` (UNA, cámaras) → OK, entrada 28 755 · salida 3 390
+    tokens, **0,045705 USD**; recomendación preliminar «Descartar» (sin encaje). Revisado por Claude: 18 líneas con
+    cantidad y cita, 11 requisitos, plazos y monto coinciden con SICOP; el modelo además señaló que el cronograma
+    dice 28/10 y SICOP 4/11. La salida quedó cerca del tope (3 390 de 4 000).
+  - ~~Respaldo y `migrate` (0026)~~ **hecho por Ivania (29/10):** respaldo `sicop_20261029-151241` (esquema 0025,
+    integridad ok) → `migrate` aplicó la 0026; `doctor`: esquema 0026, `IA_PROMPT_VERSION v1`. Falta subir el ZIP
+    al Drive.
+  - ~~Pendiente · Ivania: con Oscar, el criterio de Hermatix y 10 carteles que él
+    conozca; generar sus resúmenes (anotar el costo), revisarlos con él y guardar los ajustes como `v2`. Si un
+    resumen sale «incompleta · max_output_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 8000)~~ **hecho:** el
+    prompt `v2` lleva el criterio de Oscar (hoy va por v5, v8 propuesto); `IA_MAX_OUTPUT_TOKENS=8000` desde el 12/11.
 - **Botón «Ver» en los documentos del cartel (pedido de Oscar, 2026-10-29, rama `desarrollo`, solo local):** leer
   sin descargar. Plan aprobado por Ivania: parte 1 + Excel. `app/visor.py` (solo lee; sin migración ni dependencias
   nuevas: `openpyxl` ya estaba).
@@ -493,7 +1511,7 @@
   - Probado en la base local (solo lectura) con los 167 documentos guardados: 88 PDF, 3 imágenes, 16 Excel (1 con
     más de 500 filas) y 46 de 50 ZIP (242 PDF y 9 Excel adentro) se ven. Los otros 4 ZIP (`20260802815`, partes III,
     IV y VI) tampoco se pudieron leer al guardarlos (`BadZipFile`): muestran «no se puede abrir» y «Descargar».
-  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** **Pendiente · Ivania:** mostrárselo a Oscar. Parte 2 (Word, con `python-docx`) si
+  - ~~Probarlo en el panel local~~ **probado por Ivania (29/10): sirve.** ~~Pendiente · Ivania: mostrárselo a Oscar~~ **hecho (30/10)**. Parte 2 (Word, con `python-docx`) si
     Oscar la quiere.
 
 - **Mejoras de la exposición final con Oscar (2026-10-26):** se hacen una por una.
@@ -549,8 +1567,55 @@
     integridad ok, huella igual al manifiesto, ZIP creado) → `migrate` (0015); base local con integridad ok.
     Probado por Ivania en el panel local (2026-10-26): funciona.
     ZIP `sicop_20261026-093951.zip` subido por Ivania al Drive de Hermatix (confirmado el 2026-10-26).
-  - **Siguiente:** paso 1B, el correo al nuevo encargado. Etapas del paso 5 **aprobadas** (26/10): preparando ·
-    enviada · ganada · perdida.
+  - ~~Siguiente: paso 1B~~ **Paso 1B hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local;
+    plan aprobado por Ivania):** correo al nuevo encargado (`app/aviso_encargado.py`, detalle en
+    `GESTOR_DOCUMENTOS.md`). Al asignar queda «preparado» en la outbox (migración **0024**: motivo `asignacion`; la
+    tabla se reconstruye con todas sus filas, como en la 0013) y sale con el ciclo diario, aunque la fuente falle.
+    Un correo por encargado; solo lo vigente (reasignado o desactivado: no sale); un cartel cerrado sí sale; no se
+    prepara si el administrador se asigna a sí mismo; no entra en el correo diario; se reintenta en «Avisos». El
+    expediente dice «Le llegará un correo con el ciclo diario de las 8:00». 11 pruebas nuevas en
+    `tests/test_aviso_encargado.py` (SINTÉTICO, envío SIMULADO). ~~Respaldo y `migrate` (0024) en la base local~~
+    **hecho por Ivania (29/10):** respaldo `sicop_20261029-115027` (ZIP subido al Drive) → esquema 0024, integridad
+    ok, outbox con sus 48 filas, 5 revisiones y 4 usuarios (comprobado por Claude en solo lectura). 687 passed.
+    ~~Pendiente · Ivania: probar asignando un cartel y mirar la vista previa del ciclo de mañana~~ **hecho
+    (confirmado por Ivania el 12/11):** en la outbox hay 1 correo de asignación del 30/10 (15:44), `aceptado`.
+  - **Paso 5 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
+    Ivania):** etapas del seguimiento, preparando · enviada · ganada · perdida (migración **0025**,
+    `seguimiento_etapas`, sin borrado). Empieza «preparando»; la cambian el encargado vigente y los administradores
+    (botones en el expediente, CSRF, `audit_log`); cualquier cambio vale, también volver atrás; historial en el
+    expediente; se ve en la marca del cartel, del panel y en «Seguimiento». No cambia «Ofertada» ni «No se oferta»:
+    en «enviada» solo sugiere marcar «Ofertada». 5 pruebas nuevas en `tests/test_seguimiento.py` (SINTÉTICO; la de
+    acceso se comprobó con la regla rota a propósito: falla). 692 passed.
+    ~~Respaldo y `migrate` (0025) en la base local~~ **hecho por Ivania (29/10):** respaldo `sicop_20261029-132603`
+    (esquema 0024, integridad ok; 13271 carteles, 5 revisiones, 48 avisos, 4 usuarios; documentos 228 archivos) →
+    `migrate` aplicó la 0025; `doctor`: esquema 0025. Probado por Ivania en el panel (29/10): funciona. ~~Pendiente · Ivania: subir el ZIP
+    del respaldo al Drive~~ **hecho (30/10)**. **Siguiente:**
+    paso 2 (archivos). Ideas sin pedir: aviso al cambiar la etapa; ligar «ganada/perdida» con las adjudicaciones.
+  - **Paso 2 hecho (2026-10-29, Claude a pedido de Ivania, rama `desarrollo`, solo local; plan aprobado por
+    Ivania):** archivos del expediente (detalle en `GESTOR_DOCUMENTOS.md`; 733 passed). Migración **0027**
+    `seguimiento_archivos`; `app/expediente_archivos.py`; PDF, Word, Excel y ZIP con su contenido comprobado;
+    `EXPEDIENTE_MAX_MB=10` y `EXPEDIENTES_DIR=data/expedientes` (variables nuevas); guardados con su huella; «Ver»
+    (PDF, Excel, ZIP) y «Descargar»; solo el encargado vigente y los administradores; el respaldo incluye la
+    carpeta. 21 pruebas nuevas. Respaldo, `migrate` (0027) y prueba en el panel hechos por Ivania (29/10): funciona.
+    ~~Siguiente: paso 3 (notas)~~ y paso 4 (descargar el expediente completo).
+  - **Paso 3 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** notas con autor y
+    fecha (detalle en `GESTOR_DOCUMENTOS.md`). Migración **0028** `seguimiento_notas` (sin borrado ni cambios; hasta
+    2000 caracteres); `seguimiento.escribir_nota` / `notas_de`; ruta `POST /seguimiento/{nro}/notas` (CSRF,
+    `puede_entrar`); sección «Notas» del expediente; `audit_log` «escribir_nota» sin el texto. 4 pruebas nuevas en
+    `tests/test_seguimiento.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
+    ~~Pendiente · Ivania: respaldo y `migrate` (0028)~~ **hecho (Claude a pedido de Ivania, 30/10):** respaldo
+    `sicop_20261030-084755` (esquema 0027, integridad ok; ZIP de documentos y de expedientes) → `migrate` aplicó la
+    0028; `doctor`: esquema 0028; conteos iguales (13462 carteles, 5 revisiones, 4 usuarios, 66 avisos).
+    ~~Pendiente · Ivania: probar las notas en el panel~~ **probado por Ivania (30/10): funciona y se ve bien.**
+    ~~Pendiente · Ivania: subir el respaldo al Drive~~ **hecho (30/10)**.
+  - **Paso 4 hecho (2026-10-30, Claude a pedido de Ivania, rama `desarrollo`, solo local):** «Descargar todo el
+    expediente (ZIP)»: `archivos/` + `expediente.txt` (cartel, encargado, historial, etapas, notas, archivos con
+    huella). Detalle en `GESTOR_DOCUMENTOS.md`. `app/expediente_descarga.py`, ruta `GET /seguimiento/{nro}/descargar`
+    (`puede_entrar`), `audit_log` «descargar_expediente». Sin migración. 6 pruebas nuevas en
+    `tests/test_expediente_descarga.py` (SINTÉTICO; la de acceso falla con la regla rota a propósito).
+    ~~Pendiente · Ivania: probarlo en el panel~~ **probado por Ivania (30/10): el expediente se descarga y se ve
+    bien.** **Con esto, los 5 pasos
+    del gestor de documentos están hechos** y Ivania se los mostró a Oscar (30/10).
 - **Regla nueva (2026-10-26, Ivania): un cartel vencido sale solo del panel** en cuanto pasa su cierre (el plazo se
   calcula en cada consulta; no hay tarea programada). Se ve con el filtro «Vencido»; la exportación a Excel hace lo
   mismo; sigue en «Seguimiento»; nada se borra (`app/panel.py`, `listar`). 506 passed (pruebas del panel
@@ -706,7 +1771,8 @@
     archivo se borra. El ciclo ya lo manejaba bien.
   - 476 passed (6 nuevas en `test_panel.py`, `test_reintentos.py` y `test_carga.py`; 5 fallan con el código
     anterior). Commit `42a3386`, con push de `desarrollo` a GitHub (iba 11 commits adelante, nada nuevo de Oscar).
-  - **Pendiente · Ivania:** abrir en la web el PR `main` ← `desarrollo` para Oscar (`gh` no está instalado).
+  - ~~Pendiente · Ivania: abrir en la web el PR `main` ← `desarrollo` para Oscar (`gh` no está instalado)~~
+    **hecho (PR #3 y #5).**
   - **Menores, también corregidos el 23/10 (a pedido de Ivania):**
     - **Líneas huérfanas** (`app/importers/lineas.py`, `carteles.py`): las que llegaron antes que su cartel no
       entraban nunca (el mismo archivo no se importa dos veces). Ahora, al importar un cartel nuevo, se recuperan
@@ -765,7 +1831,12 @@
     **2026-10-26 (Ivania):** la parte del servidor de la sección 6 quedó escrita **como plan**. **Queda · Ivania:**
     completarla con los resultados reales de la lección 15 y de los 5 simulacros en el servidor (`OPERACION.md` §7).
     **2026-10-29:** esquema de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (lo nuevo desde el 26/10, marcado
-    «(nuevo)»). **Queda · Ivania:** pasarlo al Google Doc con sus palabras.
+    «(nuevo)»). ~~Queda · Ivania: pasarlo al Google Doc con sus palabras~~ (reemplazado por lo del 12/11).
+    **2026-11-12:** datos de apoyo de las secciones 6 y 9 al día en `docs/INFORME_FINAL.md` (marcado «(nuevo 12/11)»).
+    **Hecho (Ivania, 12/11, en el Google Doc; Claude no lo ha leído):** sección 9 con sus palabras, ordenada por
+    valor y con horas. **Queda · Ivania:** la parte del servidor de la sección 6, cuando se actualice el servidor y
+    se hagan allí los simulacros. ~~Anotar en `docs/METRICAS.md` las horas del 30/10 al 12/11~~ **hecho (12/11):**
+    7 h por día hábil, semanas 4 (completa), 5 y 6; total del proyecto **193,5 h**.
 - **A3 · Calidad de reglas (2026-10-23, Claude a pedido de Ivania, rama `desarrollo`):** `python -m app.cli
   score-rules` (`app/calidad.py`) mide precisión y cobertura por familia con el YAML actual, contra el golden set
   (filas confirmadas) y las revisiones (encaja: «Interesa», «Revisar requisitos», «Ofertada»; no encaja: «No
@@ -811,8 +1882,9 @@
 - **PR #4 `main` ← `desarrollo` abierto (2026-10-27, Ivania, en la web):** 15 commits sobre `main` = `2dc0e52`
   (enriquecimiento lecciones 1 a 4, obtención en dos turnos, bajas de usuarios; migraciones 0016 a 0022). Texto
   redactado por Claude (no se guardó en `docs/PR_DESARROLLO.md`, que sigue con el del #3). Ivania mencionó a Oscar
-  en un comentario (la sección «Reviewers» no le aparece). **Pendiente · Oscar:** revisar y unir el #4; decidir lo
-  de «Para decidir». Si pide cambios, se hacen en `desarrollo` y el #4 se actualiza solo.
+  en un comentario (la sección «Reviewers» no le aparece). ~~Pendiente · Oscar: revisar y unir el #4~~ **Unido el
+  29/10** (ver «PR #4 unido por error», en Pendientes): Oscar subió `main` a `b51b532` directamente y el #4 se unió
+  después con los 4 commits de ese día.
 - **PR #3: unido por Oscar** (visto el 2026-10-27): `main` de GitHub llegó hasta `2dc0e52` (26/10).
 - **PR #3 `main` ← `desarrollo` abierto (2026-10-23, Ivania, en la web):** título y descripción de
   `docs/PR_DESARROLLO.md`; apunta a `a828c90` (58 commits sobre `main` = `162afe8`). Espera la revisión de Oscar.
@@ -839,9 +1911,10 @@
       (iot_frio 5, gps_flotas 4, cámaras corporales 1, rastreo de activos 1); 13 cédulas ganadoras sin nombre.
   - 452 passed (15 nuevas en `tests/test_competencia.py`, datos SINTÉTICOS).
   - **Pendiente · Ivania/Oscar:**
-    - poner nombre a las cédulas ganadoras en `config/competidores.yaml` (Registro Nacional o ficha del
+    - ~~poner nombre a las cédulas ganadoras en `config/competidores.yaml`~~ **hecho 2026-11-12: 29 cédulas con
+      nombre, ninguna empresa ganadora sin nombre** (Registro Nacional o ficha del
       proveedor en SICOP); **avance 2026-10-26 (Ivania):** 7 empresas con nombre (las 7 que compiten de verdad). De las
-      13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); `0702950024` es persona física
+      13: 5 solo ganaron otras líneas de compras mezcladas de la CCSS (no se buscan); una cédula es de persona física
       (sin nombre, para no guardar datos personales en Git; a confirmar con Oscar).
       Hallazgo: la página cuenta como competidor a quien ganó cualquier línea de un cartel de la familia (mejora aparte;
       ejemplo: `3101941043` sale primera en `iot_frio` con 2 carteles, por líneas que no eran de Hermatix);

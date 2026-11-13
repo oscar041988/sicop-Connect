@@ -193,7 +193,7 @@ def evaluar_base(conn: sqlite3.Connection, reglas: Reglas, ahora: datetime | Non
     r = ResultadoEvaluacion(reglas.version)
     carteles = conn.execute(f"SELECT nro_sicop, descripcion, fecha_cierre_recepcion FROM tenders {filtro}",
                             params).fetchall()
-    conn.execute("BEGIN")
+    conn.execute("BEGIN IMMEDIATE")
     try:
         for nro, descripcion, cierre in carteles:
             r.carteles += 1

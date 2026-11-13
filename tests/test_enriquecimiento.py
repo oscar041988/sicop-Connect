@@ -80,21 +80,50 @@ def test_sin_coincidencia_no_entra(tmp_path):
     assert _cola(settings) == [(ABARROTES, "nunca enriquecido")]
 
 
-def test_la_ficha_manda_sobre_los_datos_abiertos_y_entra_si_cierra_pronto(tmp_path):
+def _version(settings, nro, visto, huella):
+    """Una versión del cartel en los datos abiertos, vista por primera vez en `visto` (como la guarda el importador)."""
+    _sql(settings, "INSERT INTO raw_snapshots (import_id, entity, natural_key, content_hash, payload, captured_at)"
+                   " VALUES (1, 'cartel', ?, ?, '{}', ?)", (nro, huella, visto))
+
+
+def test_con_ficha_no_vuelve_aunque_cierre_pronto(tmp_path):
     settings = _base(tmp_path)
     _ficha(settings, SANTA_ANA, "2026-10-27T09:38:00-06:00", "2026-10-30T23:59:00-06:00")
-    # El 27/10 faltan más de 3 días; el 28/10 ya no (y la ficha dice que sigue abierto).
+    # La ficha manda sobre los datos abiertos (dice que sigue abierto), pero ya tiene su ficha: no se busca otra vez,
+    # ni el 28/10, cuando ya cierra en 3 días o menos (Ivania, 2026-11-10).
     assert SANTA_ANA not in dict(_cola(settings))
-    assert dict(_cola(settings, datetime(2026, 10, 28, 10, 0, tzinfo=HORA_CR)))[SANTA_ANA] == \
-        "cierra en 3 días o menos"
+    assert SANTA_ANA not in dict(_cola(settings, datetime(2026, 10, 28, 10, 0, tzinfo=HORA_CR)))
 
 
-def test_entra_otra_vez_si_los_datos_abiertos_son_mas_nuevos(tmp_path):
+def test_vuelve_solo_si_sicop_modifico_el_cartel(tmp_path):
     settings = _base(tmp_path)
     _ficha(settings, ABARROTES, "2026-10-20T10:00:00-06:00", "2026-11-09T08:30:00-06:00")
-    assert dict(_cola(settings))[ABARROTES] == "los datos abiertos lo vieron después de la última ficha"
-    _ficha(settings, ABARROTES, "2026-10-27T08:30:00-06:00", "2026-11-09T08:30:00-06:00")
-    assert ABARROTES not in dict(_cola(settings))  # ya está al día y no cierra pronto
+    _version(settings, ABARROTES, "2026-10-10T08:00:00-06:00", "v1")
+    # Cada carga actualiza last_seen aunque el cartel no cambie: eso ya no lo mete en la cola.
+    _sql(settings, "UPDATE tenders SET last_seen = '2026-10-27T08:00:00-06:00' WHERE nro_sicop = ?", (ABARROTES,))
+    assert ABARROTES not in dict(_cola(settings))
+    _version(settings, ABARROTES, "2026-10-25T08:00:00-06:00", "v2")          # SICOP lo modificó después de la ficha
+    assert dict(_cola(settings))[ABARROTES] == "SICOP modificó el cartel después de la última ficha"
+    _ficha(settings, ABARROTES, "2026-10-26T10:00:00-06:00", "2026-11-09T08:30:00-06:00")
+    assert ABARROTES not in dict(_cola(settings))                              # la ficha nueva ya tiene ese cambio
+
+
+def test_vuelve_si_faltaron_documentos_hasta_tres_veces(tmp_path):
+    settings = _base(tmp_path)
+    _ficha(settings, ABARROTES, "2026-10-20T10:00:00-06:00", "2026-11-09T08:30:00-06:00")
+    (detalle,) = _sql(settings, "SELECT id FROM tender_details WHERE nro_sicop = ?", (ABARROTES,))[0]
+
+    def consulta(dia, fallidos):
+        _sql(settings, "INSERT INTO enrich_consultas (nro_sicop, iniciada_en, resultado, detalle_id, documentos_fallo)"
+                       " VALUES (?, ?, 'nueva', ?, ?)", (ABARROTES, f"2026-10-{dia}T10:00:00-06:00", detalle, fallidos))
+    consulta(20, 0)
+    assert ABARROTES not in dict(_cola(settings))                              # tiene todos sus documentos
+    consulta(21, 1)
+    assert dict(_cola(settings))[ABARROTES] == "faltan documentos de la consulta anterior"
+    consulta(22, 1)
+    assert ABARROTES in dict(_cola(settings))
+    consulta(23, 1)
+    assert ABARROTES not in dict(_cola(settings))                              # 3 veces: no se pide más
 
 
 def test_lo_consultado_hoy_no_vuelve_y_cuenta_para_el_maximo(tmp_path):
@@ -179,6 +208,16 @@ def test_desactivado_no_abre_el_navegador(tmp_path):
     sicop = _Sicop()
     assert _correr(settings, sicop).estado == "desactivado"
     assert sicop.peticiones == [] and _sql(settings, "SELECT * FROM enrich_runs") == []
+
+
+def test_cola_vacia_no_abre_sicop_ni_escribe_el_resumen(tmp_path):
+    settings = _base(tmp_path, encajes={GPS: "sin_coincidencia"})          # nada que enriquecer
+    sicop = _Sicop()
+    corrida = _correr(settings, sicop)
+    assert corrida.estado == "sin_cola" and corrida.consultas == [] and sicop.peticiones == []
+    assert _sql(settings, "SELECT estado, en_cola, resumen_estado, terminada_en IS NOT NULL FROM enrich_runs") == \
+        [("sin_cola", 0, None, 1)]                                         # queda en la bitácora, sin resumen
+    assert not list(settings.exports_dir.glob("resumen-enriquecimiento-*.txt"))
 
 
 @navegador
@@ -475,3 +514,30 @@ def test_si_reevaluar_falla_lo_dice_y_no_se_cae(tmp_path, monkeypatch):
     with closing(sqlite3.connect(settings.database_path)) as conn:
         assert en.reevaluar(conn, [GPS], avisos.append) == 0
     assert "YAML roto" in avisos[0] and "evaluate" in avisos[0]
+
+
+class _Gmail:
+    """Proveedor falso: anota lo que se le pide enviar."""
+    enviados: list = []
+
+    def __init__(self, settings):
+        pass
+
+    def enviar(self, para, asunto, html, texto):
+        _Gmail.enviados.append((para, asunto))
+
+
+@pytest.mark.parametrize("encendido, enviado", [("false", False), ("true", True)])
+def test_correos_del_enriquecimiento_solo_con_enrich_emails(tmp_path, encendido, enviado):
+    """Decisión de Ivania (2026-11-09): con avisos en envío real, el resumen sale solo si ENRICH_EMAILS=true."""
+    settings = _base(tmp_path, NOTIFICATIONS_ENABLED="true", NOTIFICATIONS_DRY_RUN="false", ENRICH_EMAILS=encendido)
+    _Gmail.enviados = []
+    estados = []
+
+    texto = en._avisar(settings, "Asunto", "Cuerpo", "resumen-enriquecimiento-1", _Gmail, estados.append)
+
+    assert (_Gmail.enviados == [("alertas@ejemplo.test", "Asunto")]) is enviado
+    assert estados == (["incierta", "aceptada"] if enviado else ["vista_previa"])
+    if not enviado:
+        assert "correos del enriquecimiento apagados" in texto
+        assert (settings.exports_dir / "resumen-enriquecimiento-1.txt").exists()

@@ -287,6 +287,72 @@ corrida. Se puede correr a mano: `enrich run`.
 **Resumen diario:** al terminar cada corrida, «N consultados, M FALLO» con lo nuevo de cada cartel (a
 `OBTAIN_ALERT_TO`; en dry-run, `data\exports\resumen-enriquecimiento-<n>.txt`).
 
+### 3.3 Resúmenes con IA (`ia cola`, Reporte con IA, lección 5)
+
+La misma tarea de las 10:00, **después** del enriquecimiento, corre `ia cola`: pide a OpenAI el resumen ejecutivo
+de los carteles que lo necesitan y lo deja en la página del cartel («Resumen ejecutivo · Generado por IA ·
+verificar con el pliego»). Decisiones de Ivania del 30/10, provisionales hasta que Oscar decida (`DECISION_IA.md`).
+
+| Comando | Qué hace |
+|---|---|
+| `ia cola --ver` | La cola de hoy y el presupuesto, **sin llamar a OpenAI** |
+| `ia cola` | La corrida automática (la tarea de las 10:00) |
+| `ia resumir --nro N` | Un cartel a mano (no cuenta en la cola, pero su costo sí cuenta en el del día) |
+
+**Segunda oportunidad a las 14:00** (desde el 2026-11-11, pedido de Ivania): la tarea «SICOP CONNECT - resumenes IA»
+corre solo `ia cola` (`sicop-enriquecimiento.ps1 -SoloIa`), de lunes a viernes. Si la de las 10:00 salió bien no
+gasta nada (salta lo resumido y respeta el tope del día); si falló (el 10/11 la base estaba ocupada por una carga en
+el panel y el 11/11 faltaba una migración), hace los resúmenes del día. Mismo registro, bloque «ia cola».
+
+**Qué entra en la cola:** carteles **Alta, Media o Baja** (los del panel), ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
+resumen de su expediente actual con la versión vigente del prompt. Alta → Media → Baja y, dentro de cada uno, el
+que cierra antes (Baja agregado por Ivania el 30/10). Si llega una ficha o un documento nuevo, el expediente cambia y el cartel vuelve a la cola; el
+resumen anterior queda en el historial. Lo ya intentado hoy no se repite hoy (un fallido se reintenta otro día).
+
+**Presupuesto diario** (`.env`; OpenAI no tiene límite mensual, así que este es el único freno):
+`IA_MAX_SUMMARIES_PER_DAY` (10) resúmenes nuevos y `IA_MAX_DAILY_COST` (1.00) USD de costo estimado de toda la
+IA del día. Antes de cada llamada se suma lo gastado hoy y lo máximo que podría costar ese resumen; si no cabe, se
+detiene y el resto queda para mañana. Para subir o bajar el presupuesto, cambiar esos dos valores (sin reiniciar
+nada: la tarea los lee cada día). Necesita `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD`.
+
+**Apagar la IA:** `AI_MODE=none` en `.env`. La tarea sigue corriendo el enriquecimiento; `ia cola` no hace nada y el
+panel no muestra el bloque del resumen. Todo lo demás funciona igual.
+
+**Si un resumen falla** (respuesta incompleta, error de OpenAI): queda «fallido» con su motivo y la cola sigue con
+los demás. **Si OpenAI dice que no hay saldo o rechaza la clave** (401/403), la cola se **detiene**: avisar a Oscar
+para que revise el proyecto en OpenAI. El registro: `data\logs\enriquecimiento-AAAA-MM.log`, bloque «ia cola».
+
+**Cambiar de modelo o de versión del prompt:** `OPENAI_MODEL` (y sus precios) o `IA_PROMPT_VERSION` en `.env`. Con
+una versión nueva del prompt, todos los carteles vuelven a la cola (a 10 por día).
+
+### 3.4 Asistente de elegibilidad (lección 5 de su guía)
+
+El asistente pregunta, cartel por cartel, si Hermatix cumple lo que pide el pliego y calcula «¿podemos
+participar?». Lo usan el encargado del cartel y los administradores. Maneja documentos internos de Hermatix: por
+eso se enciende a propósito y todo queda registrado.
+
+**Encender o apagar:** `ASSISTANT_ENABLED=true` o `false` en `.env` (viene en `false`). No hace falta reiniciar: el
+panel lo lee en cada clic. Apagado, en el cartel no aparecen el asistente ni el botón «Lista de verificación para el
+asistente», y sus direcciones dicen «no encontrado». **No se borra nada**: al encenderlo, todo sigue donde estaba.
+El perfil (`/perfil`) funciona igual con el asistente apagado.
+
+**Sin IA (`AI_MODE=none`):** el asistente sigue funcionando como formulario. Las preguntas las arma la app y el
+resultado lo calcula la app; solo falta la explicación redactada por la IA. Con la IA encendida, sus preguntas y su
+explicación cuentan en el presupuesto del día (`IA_MAX_DAILY_COST`, sección 3.3).
+
+**Documentos de Hermatix:** `ASSISTANT_SEND_DOCUMENTS=false`. Oscar decidió el 04/11 que su texto **no** va a la IA
+(`DECISION_IA.md` §7). Los archivos se guardan en `PROFILE_DOCS_DIR` (perfil) y `ASSISTANT_DOCS_DIR` (respuestas),
+fuera de Git, y entran en el respaldo (`backup` crea `…_perfil.zip` y `…_asistente.zip`, sección 6.1).
+
+**Revisar el registro:** menú **Administración → Registro del asistente** (solo administradores). Muestra quién
+generó o corrigió la lista, respondió, vio o descargó un documento, calculó el resultado, marcó «¿Cumple?» o cambió
+el perfil, y cuándo. Nada de eso se borra.
+
+**Renovar un documento vencido del perfil:** el panel de carteles avisa arriba cuando hay elementos vencidos o que
+vencen en 30 días o menos («Perfil de Hermatix: …»; el detalle está en `/perfil`). Un administrador entra al
+elemento, hace clic en «Reemplazar o actualizar» y carga la versión nueva con su fecha de vencimiento. La anterior
+queda en el historial.
+
 ## 4. Enviar avisos
 
 ### 4.1 Qué se avisa
@@ -490,3 +556,40 @@ La guía pide practicar la recuperación cuando no hay emergencia y anotar el re
 | 3 | Restaurar un respaldo en otra carpeta | Se lee una revisión conocida. | Windows, 2026-10-13 y 2026-10-19 (`sicop_20261019-114809`: huella igual al manifiesto, `migrate` al día, revisiones #1–#5 presentes); 2026-10-23 en la instalación limpia (`sicop_20261023-111021`: huella igual, base restaurada con la hora del respaldo, `migrate` al día, la revisión de `20261002859` presente). Falta en el servidor. |
 | 4 | Ciclo con fuente fallida | Queda error o cobertura desactualizada, nunca «cero compras». | Windows, 2026-10-19: ciclo #22 sin archivos → «FALLO · no llegó ningún archivo nuevo… (no significa que no haya compras)», código 1, no avisó. Falta en el servidor. |
 | 5 | Repetir el ciclo | No se duplican avisos. | Windows, dry-run, 2026-10-22: el ciclo #28 importó datos nuevos y actualizó 9 evaluaciones con los mismos destinatarios: 0 avisos nuevos; los 6 ya preparados el 21/10 (ciclo #25) no se repitieron. En la base (consulta de solo lectura, 26/10): 24 avisos en la outbox, 24 claves de deduplicación distintas. Archivo repetido: «YA IMPORTADO», sin duplicar (ciclo #16 y en la instalación limpia del 23/10). Falta en el servidor y con envío real. |
+
+## 8. Mantener la ayuda al día
+
+La ayuda («¿Cómo se usa?», `docs/ayuda/`) explica botones y pantallas de la app. Si una pantalla cambia y la misión
+no, la ayuda manda a buscar un botón que ya no está. Por eso, **antes de unir cualquier cambio**, se hace la pregunta:
+
+> **¿Este cambio afecta alguna misión de la ayuda?**
+
+Afecta si cambia el nombre de un botón o de una sección, el orden de los pasos, lo que se ve en una pantalla o
+quién puede hacer algo (encargado o administrador). Si la respuesta es sí:
+
+1. **Corregir la misión** en `docs/ayuda/misiones/NN-*.md` con las reglas de `docs/ayuda/ESTILO.md` (frases cortas,
+   el nombre del botón exacto entre «»). Si la pantalla es nueva, agregarla a `config/ayuda.yaml` para que su
+   botón «?» lleve a la misión.
+2. **Rehacer las capturas** de esa misión, siempre con la base de EJEMPLO (nunca con datos reales):
+
+   ```
+   python -m app.cli ayuda capturas --mision NN
+   ```
+
+   Sin `--mision` rehace todas (tarda más). Mirar las imágenes nuevas en `app/web/static/ayuda/NN-*/` antes del
+   commit: que se vea lo que dice el paso.
+3. **Correr las pruebas de la ayuda**:
+
+   ```
+   python -m pytest -q tests/test_ayuda_pagina.py tests/test_ayuda_viva.py tests/test_ayuda_capturas.py
+   ```
+
+   `test_cada_boton_que_nombra_una_mision_existe_en_la_app` falla si una misión dice «haz clic en «X»» o «pulsa
+   «X»» y X ya no aparece en ninguna plantilla ni en el código. El mensaje dice qué misión y qué botón; se corrige
+   la misión (o el botón, si el cambio fue un error).
+
+**Qué dicen las personas.** Al final de cada misión está «¿Te sirvió esta ayuda?» (Sí / No y un comentario
+opcional). Los administradores ven en `/ayuda`, sección «Cómo les fue con la ayuda», cuántos «sí» y «no» tiene cada
+misión y el último comentario, con las de más «no» primero. Una vez al mes (o después de un cambio grande) se
+revisan las primeras de la tabla: esas son las que más confunden. Los votos no se borran (tabla `ayuda_votos`,
+migración 0037).

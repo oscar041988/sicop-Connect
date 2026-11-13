@@ -6,9 +6,12 @@ hace al desplegar (decisión de Ivania, 2026-10-27).
 
 * Desactivado por defecto (ENRICH_ENABLED=false). Un solo enrich run a la vez (bloqueo del sistema operativo).
 * Cola: los carteles del panel (encaje alta, media o baja en la evaluación vigente) con plazo abierto, y que nunca
-  se enriquecieron, o que los datos abiertos vieron después de la última ficha, o que cierran en NOTIFY_CLOSING_DAYS
-  días o menos. Sin los ya consultados hoy; hasta ENRICH_MAX_PER_DAY por día. Orden: Alta → Media → Baja y, dentro
-  de cada uno, el que cierra antes (DECISION_OBTENCION.md §9, Oscar, 2026-10-27).
+  se enriquecieron, o que SICOP modificó después de la última ficha (una versión nueva en raw_snapshots), o cuya
+  consulta anterior no pudo guardar algún documento (hasta REINTENTOS_DOCUMENTOS veces). Un cartel que ya tiene su
+  ficha y sus documentos no se vuelve a buscar (Ivania, 2026-11-10). Sin los ya consultados hoy; hasta
+  ENRICH_MAX_PER_DAY por día. Orden: Alta → Media → Baja y, dentro de cada uno, el que cierra antes
+  (DECISION_OBTENCION.md §9, Oscar, 2026-10-27).
+* Cola vacía: no se abre SICOP ni el navegador y, si tampoco hubo borrados al cierre, no se escribe el resumen.
 * Cada cartel con su ficha y sus documentos (lecciones 2 y 3), con pausa. Un FALLO no detiene la cola. Ante un
   CAPTCHA o bloqueo se espera ENRICH_RETRY_WAIT_MINUTES (15) con el navegador cerrado y se reintenta UNA vez (el
   CAPTCHA nunca se resuelve); si vuelve a salir, se detiene todo y se manda una alerta inmediata.
@@ -45,6 +48,7 @@ NUMERO = re.compile(r"^\d+$")
 PRIORIDAD = {"alta": 0, "media": 1, "baja": 2}  # los encajes del panel, en el orden en que se consultan
 ETIQUETAS = {"alta": "Alta", "media": "Media", "baja": "Baja"}
 CONSERVAR = ("interesa", "ofertada")  # una revisión así en algún momento: no se borra al cierre
+REINTENTOS_DOCUMENTOS = 3  # consultas con algún documento fallido, como máximo, antes de dejar de reintentar
 NOMBRES = {"nueva": "ficha nueva", "sin_cambios": "sin cambios", "fallo": "FALLO", "control": "CAPTCHA o bloqueo"}
 
 
@@ -100,15 +104,42 @@ def consultados_hoy(conn: sqlite3.Connection, hoy: date) -> set[str]:
                                        " substr(iniciada_en, 1, 10) = ?", (hoy.isoformat(),))}
 
 
+def _version_nueva_desde(conn: sqlite3.Connection, nro: str, consultado: str) -> bool:
+    """¿Los datos abiertos trajeron una versión nueva del cartel después de su última ficha? raw_snapshots guarda cada
+    versión UNA vez, con la fecha en que apareció (como app/avisos.py). last_seen no sirve: cambia en cada carga."""
+    desde = _fecha(consultado)
+    if desde is None:
+        return False
+    for (visto,) in conn.execute("SELECT captured_at FROM raw_snapshots WHERE entity = 'cartel' AND natural_key = ?",
+                                 (nro,)):
+        if (_fecha(visto) or desde) > desde:
+            return True
+    return False
+
+
+def _faltan_documentos(conn: sqlite3.Connection, nro: str) -> bool:
+    """La última consulta con ficha no pudo guardar algún documento. Se reintenta hasta REINTENTOS_DOCUMENTOS veces
+    en total: un documento que siempre falla no se pide todos los días."""
+    ultima = conn.execute("SELECT documentos_fallo FROM enrich_consultas WHERE nro_sicop = ? AND detalle_id IS NOT NULL"
+                          " ORDER BY id DESC LIMIT 1", (nro,)).fetchone()
+    if not ultima or not ultima[0]:
+        return False
+    veces = conn.execute("SELECT count(*) FROM enrich_consultas WHERE nro_sicop = ? AND documentos_fallo > 0",
+                         (nro,)).fetchone()[0]
+    return veces < REINTENTOS_DOCUMENTOS
+
+
 def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[EnCola]:
-    """Todos los carteles que hoy tocaría enriquecer, Alta → Media → Baja y por cierre (sin aplicar el máximo)."""
+    """Todos los carteles que hoy tocaría enriquecer, Alta → Media → Baja y por cierre (sin aplicar el máximo).
+
+    Un cartel que ya tiene su ficha y sus documentos NO vuelve (Ivania, 2026-11-10), salvo que SICOP lo haya
+    modificado después de la última ficha o que la consulta anterior no pudiera guardar algún documento."""
     version = version_vigente(conn)
     if version is None:
         return []
     hoy = consultados_hoy(conn, ahora.date())
     filas = conn.execute(
-        "SELECT t.nro_sicop, t.descripcion, t.fecha_cierre_recepcion, t.last_seen, d.cierre_recepcion,"
-        "       d.consultado_en, a.rango"
+        "SELECT t.nro_sicop, t.descripcion, t.fecha_cierre_recepcion, d.cierre_recepcion, d.consultado_en, a.rango"
         " FROM tenders t"
         " JOIN (SELECT nro_sicop, min(CASE encaje WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END) AS rango"
         "       FROM opportunity_assessments WHERE rules_version = ? AND encaje IN ('alta', 'media', 'baja')"
@@ -116,10 +147,9 @@ def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[
         " LEFT JOIN (SELECT nro_sicop, max(id) AS id FROM tender_details GROUP BY nro_sicop) u"
         "        ON u.nro_sicop = t.nro_sicop"
         " LEFT JOIN tender_details d ON d.id = u.id", (version,)).fetchall()
-    pronto = timedelta(days=settings.notify_closing_days)
     lista = []
     encaje_de = {rango: encaje for encaje, rango in PRIORIDAD.items()}
-    for nro, descripcion, cierre_datos, visto, cierre_ficha, consultado, rango in filas:
+    for nro, descripcion, cierre_datos, cierre_ficha, consultado, rango in filas:
         if nro in hoy:
             continue
         cierre_iso = cierre_ficha or cierre_datos  # la ficha es más reciente que los datos abiertos
@@ -128,12 +158,12 @@ def cola(conn: sqlite3.Connection, settings: Settings, ahora: datetime) -> list[
             continue
         if consultado is None:
             motivo = "nunca enriquecido"
-        elif (_fecha(visto) or ahora) > (_fecha(consultado) or ahora):
-            motivo = "los datos abiertos lo vieron después de la última ficha"
-        elif cierre - ahora <= pronto:
-            motivo = f"cierra en {settings.notify_closing_days} días o menos"
+        elif _version_nueva_desde(conn, nro, consultado):
+            motivo = "SICOP modificó el cartel después de la última ficha"
+        elif _faltan_documentos(conn, nro):
+            motivo = "faltan documentos de la consulta anterior"
         else:
-            continue
+            continue  # ya tiene su ficha y sus documentos: pasa al siguiente
         lista.append(EnCola(nro, descripcion or "", cierre_iso, motivo, encaje_de[rango]))
     return sorted(lista, key=lambda e: (PRIORIDAD[e.encaje], _fecha(e.cierre)))
 
@@ -143,16 +173,17 @@ def cupo_de_hoy(conn: sqlite3.Connection, settings: Settings, ahora: datetime, m
     return restante if maximo is None else min(restante, maximo)
 
 
-def limpiar_grabaciones(conn: sqlite3.Connection, settings: Settings, hoy: date) -> int:
+def limpiar_grabaciones(conn: sqlite3.Connection | None, settings: Settings, hoy: date,
+                        conservar: set[str] | None = None) -> int:
     """Borra las grabaciones de más de RECORDINGS_KEEP_DAYS días, menos las de una consulta con FALLO o CAPTCHA que
     nadie marcó revisada en el panel (migración 0022).
-    Solo toca carpetas de día (AAAA-MM-DD) dentro de RECORDINGS_DIR. Devuelve cuántas carpetas de cartel borró."""
+    Solo toca carpetas de día (AAAA-MM-DD) dentro de RECORDINGS_DIR. Devuelve cuántas carpetas de cartel borró.
+    conservar: «AAAA-MM-DD/nro» ya calculado en otra base (enrich remoto: lo manda el servidor); entonces no se usa conn."""
     raiz = settings.recordings_dir
     if not raiz.is_dir():
         return 0
-    conservar = {"/".join(g.split("/")[:2]) for (g,) in conn.execute(
-        "SELECT grabacion FROM enrich_consultas c WHERE resultado IN ('fallo', 'control') AND grabacion IS NOT NULL"
-        "   AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)")}
+    if conservar is None:
+        conservar = grabaciones_a_conservar(conn)
     limite = hoy - timedelta(days=settings.recordings_keep_days)
     borradas = 0
     for dia in raiz.iterdir():
@@ -165,6 +196,13 @@ def limpiar_grabaciones(conn: sqlite3.Connection, settings: Settings, hoy: date)
         if not any(dia.iterdir()):
             dia.rmdir()
     return borradas
+
+
+def grabaciones_a_conservar(conn: sqlite3.Connection) -> set[str]:
+    """«AAAA-MM-DD/nro» de las consultas con FALLO o CAPTCHA que nadie marcó revisadas en el panel."""
+    return {"/".join(g.split("/")[:2]) for (g,) in conn.execute(
+        "SELECT grabacion FROM enrich_consultas c WHERE resultado IN ('fallo', 'control') AND grabacion IS NOT NULL"
+        "   AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)")}
 
 
 def _cierre_mas_tardio(*fechas: str | None) -> datetime | None:
@@ -342,15 +380,18 @@ def _html(texto: str) -> str:
 
 def _avisar(settings: Settings, asunto: str, cuerpo: str, nombre: str, proveedor: Callable | None,
             marcar: Callable[[str], None]) -> str:
-    """Vista previa en EXPORTS_DIR, o envío real si se permite (mismas reglas que automatico._alertar)."""
-    real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
+    """Vista previa en EXPORTS_DIR, o envío real si se permite (mismas reglas que automatico._alertar, y además
+    ENRICH_EMAILS=true: apagado, nunca se envía)."""
+    real = (settings.enrich_emails and settings.notifications_enabled and not settings.notifications_dry_run
+            and settings.obtain_alert_to)
     if not real or proveedor is None:
         ruta = settings.exports_dir / f"{nombre}.txt"
         ruta.parent.mkdir(parents=True, exist_ok=True)
         ruta.write_text(f"Para: {settings.obtain_alert_to or '(falta OBTAIN_ALERT_TO)'}\nAsunto: {asunto}\n\n"
                         f"{cuerpo}\n", encoding="utf-8")
         marcar("vista_previa")
-        return f"vista previa en {ruta} (avisos en dry-run, no se envió)"
+        motivo = "avisos en dry-run" if settings.enrich_emails else "correos del enriquecimiento apagados"
+        return f"vista previa en {ruta} ({motivo}, no se envió)"
     marcar("incierta")  # antes de llamar a Gmail: si se cae, no se reenvía sola
     try:
         proveedor(settings).enviar(settings.obtain_alert_to, asunto, f"<pre>{_html(cuerpo)}</pre>", cuerpo)
@@ -406,6 +447,20 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
         lista = cola(conn, settings, inicio)
         hoy = lista[:cupo_de_hoy(conn, settings, inicio, maximo)]
         corrida.en_cola = len(lista)
+        if not hoy:
+            # Nada que enriquecer (Ivania, 2026-11-10): no se abre SICOP; queda la línea en la bitácora. El resumen
+            # solo sale si hubo borrados al cierre, para que quede constancia de lo borrado.
+            corrida.estado = "sin_cola"
+            avisar("Nada que enriquecer hoy: no se abrió SICOP.")
+            with transaccion(conn):
+                conn.execute("UPDATE enrich_runs SET terminada_en = ?, estado = 'sin_cola', en_cola = ?,"
+                             " grabaciones_borradas = ? WHERE id = ?",
+                             (reloj().isoformat(timespec="seconds"), corrida.en_cola, corrida.grabaciones_borradas,
+                              run_id))
+            if not borrados:
+                return corrida
+            reevaluar(conn, borrados, avisar)
+            return _resumir(conn, settings, corrida, inicio, reloj, proveedor, run_id)
         avisar(f"En cola: {len(lista)} · se consultan hoy: {len(hoy)} (máximo {settings.enrich_max_per_day} por día).")
         for i, item in enumerate(hoy):
             if i:
@@ -448,12 +503,16 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
                           corrida.grabaciones_borradas, run_id))
         reevaluar(conn, [c.nro_sicop for c in corrida.consultas if c.resultado in ("nueva", "sin_cambios")] + borrados,
                   avisar)
+        return _resumir(conn, settings, corrida, inicio, reloj, proveedor, run_id)
 
-        def marcar_resumen(estado):
-            with transaccion(conn):
-                conn.execute("UPDATE enrich_runs SET resumen_estado = ?, resumen_en = ? WHERE id = ?",
-                             (estado, reloj().isoformat(timespec="seconds"), run_id))
-        asunto, cuerpo = texto_resumen(settings, corrida, inicio, dias_habiles_sin_corrida(conn, inicio.date(), run_id))
-        corrida.resumen = _avisar(settings, asunto, cuerpo, f"resumen-enriquecimiento-{run_id}", proveedor,
-                                  marcar_resumen)
+
+def _resumir(conn: sqlite3.Connection, settings: Settings, corrida: Corrida, inicio: datetime,
+             reloj: Callable[[], datetime], proveedor: Callable | None, run_id: int) -> Corrida:
+    """El resumen de la corrida: vista previa o correo, una sola vez (resumen_estado)."""
+    def marcar_resumen(estado):
+        with transaccion(conn):
+            conn.execute("UPDATE enrich_runs SET resumen_estado = ?, resumen_en = ? WHERE id = ?",
+                         (estado, reloj().isoformat(timespec="seconds"), run_id))
+    asunto, cuerpo = texto_resumen(settings, corrida, inicio, dias_habiles_sin_corrida(conn, inicio.date(), run_id))
+    corrida.resumen = _avisar(settings, asunto, cuerpo, f"resumen-enriquecimiento-{run_id}", proveedor, marcar_resumen)
     return corrida

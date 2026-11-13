@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Oferta {{ d.procedimiento }}</title>
+{# Oferta completa (app/propuesta.py; DECISION_PROPUESTA.md §12). Forma de la oferta de NAVSAT (IAFA, 2026): portada,
+   el pliego copiado sección por sección con «Respuesta Sección NN – Título», y el listado de anexos. Membrete de
+   Hermatix (lo pone oferta_economica.pdf). Lo pendiente sale en rojo: no se esconde nada. Todo el texto va escapado. #}
+<style>
+  @page { size: Letter; }
+  :root { --azul: #000; --fondo: #e7e7e7; --rojo: #c00000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.35; color: #000;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  p { margin: 0 0 8px; }
+  .nueva-pagina { break-before: page; }
+
+  /* Portada */
+  .portada { text-align: center; color: var(--azul); font-weight: 700; padding-top: 10mm; }
+  .portada .inst { font-size: 13pt; margin-bottom: 30px; }
+  .portada .oferta { font-size: 16pt; margin: 0 0 8px; }
+  .portada .tipo { font-size: 15pt; margin: 0 0 8px; }
+  .portada .proc { font-size: 14pt; font-style: italic; margin-bottom: 34px; }
+  .portada .objeto { font-size: 12.5pt; margin: 0 auto 40px; max-width: 150mm; }
+  .portada .oferente { font-size: 14pt; font-variant: small-caps; margin: 0 0 10px; }
+  .portada .version { font-size: 10pt; font-weight: 400; color: #555; margin-top: 18px; }
+  .borrador { border: 2px solid var(--rojo); color: var(--rojo); padding: 8px 12px; margin: 26px 0 0; text-align: left;
+              font-weight: 400; font-size: 10pt; break-inside: avoid; }
+  .borrador strong { display: block; font-size: 12pt; margin-bottom: 4px; }
+  .borrador ul { margin: 4px 0 0 18px; padding: 0; }
+
+  /* Pliego respondido */
+  .bloque { margin: 0 0 16px; }
+  .bloque h2 { font-size: 11.5pt; color: var(--azul); text-decoration: underline; margin: 14px 0 6px;
+               break-after: avoid; }
+  .texto { white-space: pre-line; text-align: justify; }
+  .respuesta { color: var(--azul); font-style: italic; font-weight: 700; margin: 6px 0 0; break-inside: avoid; }
+  .respuesta.pendiente { color: var(--rojo); font-style: normal; border-left: 3px solid var(--rojo); padding-left: 8px; }
+  .respuesta span { display: block; font-weight: 400; }
+
+  /* Listado de anexos */
+  h1 { font-size: 14pt; color: var(--azul); margin: 0 0 14px; }
+  table.anexos { width: 100%; border-collapse: collapse; }
+  table.anexos th, table.anexos td { border: 1px solid #000; padding: 5px 7px; text-align: left; vertical-align: top; }
+  table.anexos th { background: var(--fondo); color: #000; }
+  .falta { color: var(--rojo); font-weight: 700; }
+</style>
+</head>
+<body>
+{% set r = d.representante or {} %}
+<section class="portada">
+  <p class="inst">{{ (c.institucion or d.institucion or "") | upper }}</p>
+  <p class="oferta">OFERTA</p>
+  <p class="tipo">{{ (d.tipo_procedimiento or "Procedimiento de contratación") | upper }},</p>
+  <p class="proc">{{ d.procedimiento }}</p>
+  <p class="objeto">{{ (d.objeto or "") | upper }}</p>
+  <p class="oferente">Oferente</p>
+  <p class="oferente">{{ d.empresa.nombre }}</p>
+  <p class="oferente">Cédula Jurídica {{ d.empresa.cedula_juridica }}</p>
+  <p class="version">Versión {{ version or 1 }}</p>
+  {% if pendientes %}
+  <div class="borrador">
+    <strong>BORRADOR: hay {{ pendientes | length }} punto(s) sin resolver. No firmar ni subir a SICOP todavía.</strong>
+    <ul>{% for p in pendientes %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+</section>
+
+<section class="nueva-pagina">
+{% set n = namespace(s=0) %}
+{% for b in bloques %}
+  <div class="bloque">
+    {% if b.titulo or b.numero %}<h2>{% if b.numero %}{{ b.numero }}. {% endif %}{{ b.titulo }}</h2>{% endif %}
+    <div class="texto">{{ b.texto }}</div>
+    {% if b.respuesta is not none %}
+    {% set n.s = n.s + 1 %}
+    <p class="respuesta{% if b.pendiente %} pendiente{% endif %}">Respuesta Sección {{ "%02d" | format(n.s) }}{% if b.titulo %} – {{ b.titulo | titulo_es }}{% endif %}
+      {% for linea in b.respuesta %}<span>{{ linea }}</span>{% endfor %}</p>
+    {% endif %}
+  </div>
+{% endfor %}
+</section>
+
+<section class="nueva-pagina">
+  <h1>Listado de Anexos:</h1>
+  <table class="anexos">
+    <thead><tr><th>Sección</th><th>No. Anexo</th><th>Documento</th></tr></thead>
+    <tbody>
+      <tr><td>1. {{ GRUPOS[1] }}</td><td>Anexo 1.1</td><td>Oferta Económica y Desglose del Precio
+        {% if precio_pendiente %}<br><span class="falta">PRECIO PENDIENTE: {{ precio_pendiente }}.</span>{% endif %}</td></tr>
+      {% for grupo in [2, 3, 4] %}
+      {% set del_grupo = anexos | selectattr("grupo", "equalto", grupo) | list %}
+      {% for a in del_grupo %}
+      <tr><td>{% if loop.first %}{{ grupo }}. {{ GRUPOS[grupo] }}{% endif %}</td><td>Anexo {{ a.numero }}</td>
+        <td>{{ a.titulo }}{% if a.pendiente %}<br><span class="falta">PENDIENTE: {{ a.pendiente }}.</span>{% endif %}</td></tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Resumen semanal{% endblock %}
+{% block contenido %}
+{# El resumen semanal en el panel (Ivania, 13/11): el mismo cuerpo que el correo de los lunes, armado con los datos de
+   hoy porque el correo no se guarda. #}
+<section>
+  <h1>Resumen semanal</h1>
+  <p class="sub">El mismo resumen que llega por correo los lunes a las 8:00, armado ahora con los datos de hoy.
+    La semana es la misma; los pendientes y los próximos cierres pueden haber cambiado desde el correo.</p>
+  <p>{% if envio %}Último envío: <strong>{{ envio.momento | fecha }}</strong>
+    {% if envio.aceptados %}· aceptado por Gmail para {{ envio.aceptados }} persona{{ "s" if envio.aceptados != 1 }}{% endif %}
+    {% if envio.fallidos %}· <span class="falta">falló para {{ envio.fallidos }}</span>{% endif %}
+    {% if envio.inciertos %}· <span class="falta">incierto para {{ envio.inciertos }}</span>{% endif %}
+    {% else %}Todavía no se ha enviado ningún resumen semanal.{% endif %}</p>
+</section>
+<section class="resumen-semanal">
+  {% if c %}
+  {% include "correo/_resumen_cuerpo.html" %}
+  {% else %}
+  <p class="vacio">Todavía no hay evaluaciones: el resumen sale cuando se importen y evalúen carteles.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -51,7 +51,7 @@ def test_migrate_crea_las_tablas_de_16_3(db):
                                    "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql", "0010_solicitudes_estados.sql",
                                    "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                    "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql"]
+                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql", "0024_aviso_encargado.sql", "0025_seguimiento_etapas.sql", "0026_ia_resumenes.sql", "0027_expediente_archivos.sql", "0028_expediente_notas.sql", "0029_perfil.sql", "0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql"]
 
     with closing(sqlite3.connect(db)) as conn:
         tablas = {fila[0] for fila in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
@@ -204,7 +204,7 @@ def test_0004_conserva_revisiones_y_rellena_tipo_de_procedimiento(tmp_path, db):
                                     "0007_ciclo.sql", "0008_evaluaciones.sql", "0009_solicitudes_sicop.sql", "0010_solicitudes_estados.sql",
                                     "0011_alerta_obtencion.sql", "0012_adjudicaciones.sql", "0013_cierre_y_resumen.sql",
                                     "0014_calidad_reglas.sql", "0015_seguimiento.sql",
-                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql"]
+                                   "0016_baja_usuarios.sql", "0017_obtencion_dos_turnos.sql", "0018_fichas.sql", "0019_documentos.sql", "0020_bitacora_enriquecimiento.sql", "0021_retiro_al_cierre.sql", "0022_grabaciones_revisadas.sql", "0023_ia_usage.sql", "0024_aviso_encargado.sql", "0025_seguimiento_etapas.sql", "0026_ia_resumenes.sql", "0027_expediente_archivos.sql", "0028_expediente_notas.sql", "0029_perfil.sql", "0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql"]
 
     with closing(_conn(db)) as conn:
         assert conn.execute("SELECT tipo_procedimiento FROM tenders").fetchone()[0] == "Licitación Reducida"
@@ -251,4 +251,84 @@ def test_migracion_con_error_no_deja_nada_a_medias(tmp_path, db):
 
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute("SELECT name FROM sqlite_master WHERE name = 'tabla_nueva'").fetchone() is None
-        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023"]
+        assert [v for (v,) in conn.execute("SELECT version FROM schema_migrations")] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029", "0030", "0031", "0032", "0033", "0034", "0035", "0036", "0037", "0038", "0039", "0040", "0041", "0042", "0043", "0044", "0045"]
+
+
+def test_connect_espera_si_otro_programa_esta_escribiendo(tmp_path):
+    """Ciclo del 2026-11-05: «database is locked» porque otro programa escribía. Ahora connect() espera."""
+    import threading
+    import time
+
+    from app.database import ESPERA_BASE_OCUPADA_S, connect, transaccion
+
+    db = tmp_path / "sicop.db"
+    with closing(connect(db)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == ESPERA_BASE_OCUPADA_S * 1000
+
+    otro = sqlite3.connect(db, isolation_level=None, check_same_thread=False)  # lo suelta el temporizador
+    otro.execute("BEGIN IMMEDIATE")  # «el panel» tiene la base tomada para escribir
+    otro.execute("INSERT INTO t VALUES (1)")
+    soltar = threading.Timer(1.0, lambda: (otro.execute("COMMIT"), otro.close()))
+    soltar.start()
+    inicio = time.monotonic()
+    with closing(connect(db)) as conn:
+        with transaccion(conn):  # antes fallaba a los 5 s si el otro tardaba más; ahora espera hasta 30
+            conn.execute("INSERT INTO t VALUES (2)")
+        assert conn.execute("SELECT x FROM t ORDER BY x").fetchall() == [(1,), (2,)]
+    soltar.join()
+    assert time.monotonic() - inicio >= 0.9  # esperó a que el otro terminara
+
+
+def test_las_tareas_programadas_esperan_mas_que_el_panel(tmp_path):
+    """2026-11-10, 10:00: una carga grande en «Cargar archivo» ocupó la base más de 2 min y el enriquecimiento y la
+    cola de IA se cayeron a los 30 s. Las tareas programadas esperan ESPERA_TAREAS_S; el panel, lo de siempre."""
+    from app import cli
+    from app.database import ESPERA_BASE_OCUPADA_S, ESPERA_TAREAS_S, connect, espera_de_tarea
+
+    def espera_ms():
+        with closing(connect(tmp_path / "sicop.db")) as conn:
+            return conn.execute("PRAGMA busy_timeout").fetchone()[0]
+
+    assert espera_ms() == ESPERA_BASE_OCUPADA_S * 1000
+    with espera_de_tarea():
+        assert espera_ms() == ESPERA_TAREAS_S * 1000 == 600_000
+    assert espera_ms() == ESPERA_BASE_OCUPADA_S * 1000                 # al salir vuelve la espera normal
+    tareas = [["run-cycle", "--origen", "real"], ["enrich", "run"], ["enrich", "remoto"], ["ia", "cola"],
+              ["obtain", "auto"]]
+    assert all(cli._es_tarea_programada(cli.build_parser().parse_args(a)) for a in tareas)
+    assert not any(cli._es_tarea_programada(cli.build_parser().parse_args(a))
+                   for a in (["doctor"], ["enrich", "status"], ["obtain", "status"], ["migrate"]))
+
+
+def test_transaccion_que_lee_y_escribe_no_se_traba_con_otro_programa(tmp_path):
+    """Con BEGIN normal, leer y luego escribir mientras otro escribe fallaba en los dos («database is locked»)."""
+    import threading
+    import time
+
+    from app.database import connect, transaccion
+
+    db = tmp_path / "sicop.db"
+    with closing(connect(db)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+    otro = sqlite3.connect(db, isolation_level=None, timeout=30, check_same_thread=False)
+    errores = []
+
+    def panel():  # otro programa que escribe mientras el ciclo trabaja
+        try:
+            with transaccion(otro):
+                otro.execute("INSERT INTO t VALUES (1)")
+                time.sleep(0.5)
+        except sqlite3.OperationalError as exc:
+            errores.append(exc)
+
+    with closing(connect(db)) as conn:
+        with transaccion(conn):
+            hilo = threading.Thread(target=panel)
+            hilo.start()
+            time.sleep(0.1)
+            conn.execute("SELECT count(*) FROM t").fetchone()   # el ciclo lee…
+            conn.execute("INSERT INTO t VALUES (2)")            # …y después escribe
+        hilo.join()
+        assert errores == [] and sorted(conn.execute("SELECT x FROM t").fetchall()) == [(1,), (2,)]
+    otro.close()

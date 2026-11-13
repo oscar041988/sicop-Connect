@@ -27,6 +27,9 @@
 
 /* 2. Base */
 * { box-sizing: border-box; }
+/* La página nunca se mueve de lado (Ivania, 2026-11-06, touchpad): sin el gesto de «volver» del touchpad y sin
+   desplazamiento horizontal; lo ancho (tablas) se desplaza dentro de su caja (.tabla-scroll). */
+html { overscroll-behavior-x: none; overflow-x: clip; }
 body { margin: 0; font-family: Manrope, system-ui, "Segoe UI", sans-serif; background: var(--g0); color: var(--ink); line-height: 1.5; }
 /* Ningún texto largo debe estirar la página: se corta dentro de su caja. */
 h1, h2, h3, p, dd, td, li, .inst, .tag { overflow-wrap: anywhere; }
@@ -80,6 +83,8 @@ h3 { margin: 0; }
 .btn.p:hover, button:hover { background: var(--hx-azul); }
 .btn.o { background: #fff; border-color: var(--line); color: var(--ink); }
 .btn.o:hover { border-color: var(--g5); }
+.btn.azul { background: var(--hx-azul); color: #fff; }               /* para que resalte: «Lista de verificación» */
+.btn.azul:hover { background: var(--hx-azul-osc); }
 
 /* 6. Chips de estado, búsqueda y filtros */
 .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -127,6 +132,12 @@ h3 { margin: 0; }
 .tag.g { background: var(--no-bg); color: var(--no); }     /* vencido / no interesa */
 .tag.r { background: var(--azul-bg); color: var(--azul); } /* revisar requisitos */
 .tag.seg, .en-seguimiento { background: var(--azul-bg); color: var(--azul); border: 1px solid var(--azul); } /* gestor de documentos */
+/* Gestor de documentos, paso 5: etapas del seguimiento */
+.etapas { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.etapas .vigente { background: var(--g5); color: #fff; }
+.tag.etapa-enviada { background: var(--azul-bg); color: var(--azul); }
+.tag.etapa-perdida { background: var(--no-bg); color: var(--no); }
+.aviso-etapa { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 10px; }
 .en-seguimiento { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .seguimiento-acciones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0 0 16px; }
 .score { text-align: center; min-width: 78px; }
@@ -168,6 +179,19 @@ mark { background: #C8F0D6; color: var(--g9); padding: 0 .15em; border-radius: 4
 .datos div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
 .tarjeta { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 10px; }
 .tarjeta p { margin: 4px 0; }
+/* Seguimiento: 3 tarjetas por línea; en tableta 2 y en celular 1. El botón queda abajo en todas. */
+.rejilla-seguimiento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.rejilla-seguimiento .tarjeta { margin-top: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.rejilla-seguimiento .titulo-tarjeta { font-weight: 600; }
+.rejilla-seguimiento .pie-tarjeta { margin-top: auto; padding-top: 8px; }
+.rejilla-seguimiento .vacio { grid-column: 1 / -1; }
+/* Expediente (notas y archivos): el título arriba del recuadro y el botón separado debajo, a la izquierda. */
+.form-nota { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 8px 0; }
+.form-nota label { display: flex; flex-direction: column; gap: 6px; width: 100%; font-weight: 600; }
+.form-nota textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; }
+.form-nota input[type="file"] { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; max-width: 100%; }
+@media (max-width: 1000px) { .rejilla-seguimiento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rejilla-seguimiento { grid-template-columns: minmax(0, 1fr); } }
 
 table.lista { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 10px; }
 table.lista th, table.lista td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -295,3 +319,454 @@ table.lista.auto .btn { white-space: nowrap; }
 @media (max-width: 760px) {
   table.lista.auto th:nth-child(2), table.lista.auto td:nth-child(2) { display: table-cell; }
 }
+/* Reporte con IA, lección 5: el resumen en la página del cartel (una fila como los documentos, con «Ver» y
+   «Descargar») y en su propia página como documento (resumen.html). Nunca parece un dato oficial de SICOP: lo marca
+   la etiqueta «Generado por IA» (la línea azul de la izquierda se quitó; no gustó en la prueba con usuario, 30/10). */
+.resumen-ia details { margin-top: 12px; }
+.resumen-ia summary { cursor: pointer; color: var(--azul); font-weight: 600; }
+.etiqueta-ia { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: .78rem;
+  font-weight: 700; background: var(--azul-bg); color: var(--azul); vertical-align: middle; }
+.recomendacion-etiqueta { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 700;
+  background: var(--azul-bg); color: var(--azul); white-space: nowrap; }
+.rec-dar_seguimiento.recomendacion-etiqueta { background: var(--g1); color: var(--g7); }
+.rec-descartar.recomendacion-etiqueta { background: var(--no-bg); color: var(--no); }
+
+.doc-acciones { max-width: 860px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.doc-resumen { max-width: 860px; width: 100%; margin: 0 auto; box-sizing: border-box; background: #fff;
+  border: 1px solid var(--line); border-radius: 14px; padding: 40px 48px; box-shadow: 0 2px 10px rgba(16, 48, 80, .06); }
+.doc-cabecera { text-align: center; border-bottom: 3px solid var(--hx-verde); padding-bottom: 18px; margin-bottom: 20px; }
+.doc-marca { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
+.doc-cabecera h1 { font-size: 1.45rem; line-height: 1.3; }
+.doc-institucion { margin: 6px 0 10px; color: var(--mut); font-weight: 600; }
+.doc-cabecera .etiqueta-ia { margin: 0; }
+.doc-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 0; }
+.doc-datos div { background: var(--g0); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.doc-datos dt { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
+.doc-datos dd { margin: 2px 0 0; font-weight: 700; color: var(--g9); }
+.doc-indicadores dd { font-weight: 600; }
+.doc-nota { margin: 8px 0 0; font-size: .8rem; color: var(--mut); text-align: center; }
+.doc-alerta { margin-top: 16px; background: var(--warn-bg); color: var(--warn); padding: 10px 14px; border-radius: 10px; }
+.doc-alerta ul { margin: 6px 0 0; padding-left: 20px; }
+.doc-recomendacion { margin: 22px 0 6px; padding: 16px 20px; border-radius: 12px; background: var(--azul-bg);
+  border-left: 5px solid var(--azul); }
+.doc-recomendacion.rec-dar_seguimiento { background: var(--g1); border-left-color: var(--g5); }
+.doc-recomendacion.rec-descartar { background: var(--no-bg); border-left-color: var(--no); }
+.doc-recomendacion span { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.doc-recomendacion strong { display: block; font-size: 1.25rem; color: var(--g9); margin: 2px 0 6px; }
+.doc-recomendacion p { margin: 0 0 4px; }
+.doc-resumen h2 { font-size: 1.05rem; color: var(--g9); margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.doc-resumen p { margin: 0 0 8px; }
+.doc-tabla { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.doc-tabla th, .doc-tabla td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.doc-tabla thead th { background: var(--g0); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); }
+.doc-tabla tbody th { width: 34%; font-weight: 600; color: var(--g9); }
+.doc-tabla ul, .doc-lista { margin: 0; padding-left: 18px; }
+ul.sin-vinetas, .doc-tabla ul.sin-vinetas { list-style: none; padding-left: 0; }   /* especificaciones y riesgos: sin viñetas (Ivania, 05/11) */
+.doc-lista li { margin-bottom: 6px; }
+.excluyente { color: var(--rojo); }
+.cita { color: var(--mut); font-size: .82rem; white-space: nowrap; }
+/* «¿Cumple?» en el resumen (2026-11-05): verde cumple, rojo no cumple, ámbar falta o revisar, gris sin evaluar. */
+.cumple { font-weight: 700; white-space: nowrap; color: var(--mut); }
+.cumple-cumple { color: var(--g7); }
+.cumple-no_cumple { color: var(--rojo); }
+.cumple-falta, .cumple-revisar { color: var(--warn); }
+.marcar-cumple { margin-top: 6px; }
+.marcar-cumple summary { cursor: pointer; color: var(--azul); font-size: .85rem; }
+.marcar-cumple form { display: grid; gap: 6px; margin-top: 6px; min-width: 180px; }
+.marcar-cumple button { padding: 4px 10px; }
+.doc-pie { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--mut); text-align: center; }
+@media (max-width: 760px) {
+  .doc-resumen { padding: 22px 16px; }
+}
+/* Imprimir o «Guardar como PDF»: solo el documento, sin el menú del panel. */
+@media print {
+  @page { margin: 16mm; }
+  body { background: #fff; }
+  header, footer, .no-imprimir, .boton-ayuda { display: none !important; }
+  main { padding: 0; max-width: none; }
+  .doc-resumen { max-width: none; border: 0; box-shadow: none; padding: 0; }
+  .doc-resumen h2, .doc-tabla tr, .doc-recomendacion, .doc-datos div { break-inside: avoid; }
+  .doc-resumen h2 { break-after: avoid; }
+  .doc-datos div, .doc-tabla thead th, .doc-recomendacion { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .doc-resumen a { color: inherit; text-decoration: none; }
+}
+
+/* Ayuda «¿Cómo se usa?» (ayuda, lección 3): letra grande, botones grandes y buen contraste. */
+.ayuda { font-size: 1.125rem; }
+.ayuda h1 { font-size: 1.9rem; margin-bottom: 6px; }
+.ayuda h2 { margin-top: 32px; }
+.mision-ayuda { max-width: 860px; }
+.mision-ayuda ol { padding-left: 1.6em; }
+.mision-ayuda li { margin: 10px 0; }
+.mision-ayuda li p { margin: 4px 0; }
+.mision-ayuda h3 { margin-top: 28px; color: var(--g9); }
+.te-sirvio { max-width: 860px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--g1); }
+.te-sirvio form { display: grid; gap: 8px; }
+.te-sirvio h2 { margin: 0; font-size: 1.25rem; }
+.te-sirvio textarea { width: 100%; }
+.botones-voto { display: flex; gap: 10px; }
+.votos-ayuda td:nth-child(2), .votos-ayuda td:nth-child(3) { text-align: center; }
+.captura-ayuda { margin: 10px 0 14px; }
+.captura-ayuda img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(16, 48, 80, .08); }
+.captura-ayuda.pendiente { padding: 14px 16px; border: 1px dashed var(--line); border-radius: 10px; color: var(--mut);
+  font-size: .95rem; background: #fff; }
+.buscar-ayuda { margin: 20px 0 8px; }
+.buscar-ayuda label { display: block; font-weight: 700; margin-bottom: 6px; }
+.buscar-ayuda div { display: flex; gap: 8px; flex-wrap: wrap; }
+.buscar-ayuda input { flex: 1 1 260px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; font-size: 1.05rem; }
+.resultados-ayuda li { margin: 6px 0; }
+.rejilla-ayuda { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.tarjeta-ayuda { display: flex; flex-direction: column; gap: 6px; padding: 18px; background: #fff; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 14px; text-decoration: none; min-height: 120px; }
+.tarjeta-ayuda:hover, .tarjeta-ayuda:focus-visible { border-color: var(--azul); box-shadow: 0 4px 14px rgba(7, 128, 238, .15); }
+.tarjeta-ayuda .numero { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  border-radius: 50%; background: var(--azul-bg); color: var(--g9); font-weight: 800; font-size: .95rem; }
+.tarjeta-ayuda strong { color: var(--g9); font-size: 1.1rem; }
+.glosario { display: grid; gap: 10px; }
+.glosario div { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.glosario dt { font-weight: 800; color: var(--g9); }
+.glosario dd { margin: 4px 0 0; }
+@media (max-width: 1000px) { .rejilla-ayuda { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rejilla-ayuda { grid-template-columns: minmax(0, 1fr); } }
+
+/* Botón «?» fijo: abre la misión de la pantalla (config/ayuda.yaml). */
+.boton-ayuda { position: fixed; right: 20px; bottom: 20px; z-index: 6; width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--g9); color: #fff; font-size: 1.6rem;
+  font-weight: 800; text-decoration: none; box-shadow: 0 4px 14px rgba(16, 48, 80, .35); }
+.boton-ayuda:hover { background: var(--azul); }
+
+/* Palabras del glosario: la explicación sale al pasar el mouse o con el teclado (sin JavaScript). */
+.termino { position: relative; border-bottom: 1px dotted currentColor; cursor: help; }
+.termino:hover::after, .termino:focus::after { content: attr(data-def); position: absolute; left: 0; top: calc(100% + 6px);
+  z-index: 20; width: max-content; max-width: 280px; padding: 8px 10px; border-radius: 8px; background: var(--g9);
+  color: #fff; font-size: .82rem; font-weight: 500; line-height: 1.4; text-transform: none; letter-spacing: 0;
+  white-space: normal; text-align: left; box-shadow: 0 4px 14px rgba(16, 48, 80, .3); }
+.score .termino:hover::after, .score .termino:focus::after { left: auto; right: 0; }
+
+/* Perfil de Hermatix (asistente de elegibilidad, lección 1). */
+.estado-perfil { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .85rem; font-weight: 700; }
+.estado-vigente { background: var(--g1); color: var(--g7); }
+.estado-por_vencer { background: var(--warn-bg); color: var(--warn); }
+.estado-vencido { background: var(--rojo-bg); color: var(--rojo); }
+.estado-pendiente { background: var(--no-bg); color: var(--no); }
+.sugerencias-perfil { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.sugerencias-perfil p { flex-basis: 100%; }
+.sugerencias-perfil form { margin: 0; }
+
+form.en-linea { display: inline; margin-left: 8px; }
+
+/* Asistente de elegibilidad (lección 3), en el detalle del cartel. */
+.asistente { margin: 8px 0 24px; }
+.asistente progress { width: 100%; height: 10px; margin: 0 0 8px; }
+.asistente .avance { margin: 8px 0 4px; }
+.pregunta-asistente .pregunta { font-size: 1.05rem; font-weight: 600; margin: 6px 0 12px; overflow-wrap: anywhere; }
+.perfil-dato { background: var(--g1); border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; }
+.perfil-dato p { margin: 0 0 8px; }
+.perfil-dato form.en-linea { margin-left: 0; }
+.asistente fieldset.si-no { border: 0; padding: 0; margin: 0; display: flex; gap: 16px; }
+.botones-asistente { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.respuestas-asistente { margin-top: 14px; }
+.respuestas-asistente li { margin-bottom: 8px; overflow-wrap: anywhere; }
+.asistente .revision label.casilla { flex-direction: row; align-items: center; gap: 8px; }
+
+/* Resultado de elegibilidad (lección 4): titular, explicación, aviso fijo y tabla por requisito */
+.resultado-eleg { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 12px; }
+.resultado-titular { font-size: 1.15rem; padding: 10px 14px; border-radius: 12px; background: var(--g1); color: var(--g7); }
+.resultado-titular.puede_si_completa, .resultado-titular.falta_informacion { background: var(--warn-bg); color: var(--warn); }
+.resultado-titular.no_cumple_excluyente { background: var(--no-bg); color: var(--no); }
+.resultado-explicacion p { margin: 0 0 6px; overflow-wrap: anywhere; }
+.resultado-aviso { font-size: .9rem; color: var(--mut); font-style: italic; }
+.botones-resultado { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.tabla-resultado { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.tabla-resultado th, .tabla-resultado td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+/* La columna «Estado» toma lo que mide su etiqueta: «No cumple» nunca se parte en pedazos (Ivania, 2026-11-04) */
+.tabla-resultado th:nth-child(2), .tabla-resultado td:nth-child(2) { width: 1%; white-space: nowrap; overflow-wrap: normal; }
+.tabla-resultado .tag { white-space: nowrap; overflow-wrap: normal; display: inline-block; }
+.revision-rapida { margin-top: 16px; display: grid; gap: 8px; }
+.revision-rapida ul { margin: 0; padding-left: 20px; }
+.resultado-titular.rapido-fuera { background: var(--no-bg); color: var(--no); }
+.resultado-titular.rapido-faltan { background: var(--warn-bg); color: var(--warn); }
+.revisar-requisito { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.revisar-requisito input[type="text"] { flex: 1 1 160px; }
+
+/* Detalle del cartel (2026-11-06, segunda versión): franja blanca a lo ancho con lo esencial y una sola acción verde;
+   debajo, 4 pestañas en una fila y el contenido en filas (etiqueta | valor), sin cajas dentro de cajas.
+   Botones de al menos 44 px de alto. */
+.cartel-franja { background: #fff; border: 1px solid var(--line); border-top: 5px solid var(--hx-azul-osc);
+                 border-radius: 14px; padding: 18px 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 18px; }
+.cartel-franja p { margin: 0; }
+.cartel-franja .btn, .cartel-franja button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.cf-arriba { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cf-institucion { font-size: .82rem; color: var(--mut); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.cf-titulo { font-size: 1.35rem; line-height: 1.3; margin: 0; color: var(--hx-azul-osc); }
+.cf-titulo mark { background: none; color: inherit; padding: 0;text-decoration: underline 2px var(--hx-verde); text-underline-offset: 3px; }
+.cf-numeros { font-size: .85rem; color: var(--mut); }
+.ct-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ct-chip { padding: 3px 10px; border-radius: 999px; background: var(--no-bg); color: var(--hx-azul-osc); font-size: .8rem; font-weight: 700; }
+
+.cf-medio { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+            border-top: 1px solid var(--line); padding-top: 12px; margin-top: 4px; }
+.cf-participar { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.ct-circulo { --pct: 0; --color: var(--warn); flex: 0 0 60px; height: 60px; border-radius: 50%; display: grid; place-items: center;
+              background: conic-gradient(var(--color) calc(var(--pct) * 1%), var(--no-bg) 0); }
+.ct-circulo span { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center;
+                   font-weight: 800; font-size: .9rem; color: var(--hx-azul-osc); }
+.cf-pregunta { font-size: .78rem; color: var(--mut); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.cf-estado { font-weight: 800; font-size: 1.1rem; }
+.cf-desglose { font-size: .85rem; color: var(--mut); }
+/* veredicto: verde puede, ámbar falta o completa, rojo no cumple */
+.cf-v-puede_participar { --color: var(--g7); } .cf-estado.cf-v-puede_participar { color: var(--g7); }
+.cf-v-puede_si_completa, .cf-v-falta_informacion { --color: var(--warn); }
+.cf-estado.cf-v-puede_si_completa, .cf-estado.cf-v-falta_informacion { color: var(--warn); }
+.cf-v-no_cumple_excluyente { --color: var(--rojo); } .cf-estado.cf-v-no_cumple_excluyente { color: var(--rojo); }
+.cf-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.cf-acciones form { margin: 0; }
+
+.cf-cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0;
+             border-top: 1px solid var(--line); padding-top: 12px; }
+.cf-cifras div { padding: 0 14px; border-left: 1px solid var(--line); }
+.cf-cifras div:first-child { padding-left: 0; border-left: 0; }
+.cf-cifras dt { font-size: .75rem; color: var(--mut); text-transform: uppercase; letter-spacing: .03em; }
+.cf-cifras dd { margin: 2px 0 0; font-weight: 700; color: var(--hx-azul-osc); overflow-wrap: anywhere; }
+.cf-cifras dd small { display: block; font-weight: 400; font-size: .8rem; }
+.cf-cifras dd.cf-cerrado { color: var(--rojo); }
+.cf-enlaces { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .9rem; font-weight: 600; }
+/* Botón «Oferta» del cartel (app/propuesta.py): el botón y su explicación en una fila */
+.cf-oferta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 10px 0 0; }
+.cf-oferta small { flex: 1 1 260px; color: var(--mut, #55606b); }
+
+/* Pestañas: una fila, subrayado en la activa */
+.cartel-pasos { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }  /* minmax(0, 1fr): nunca más ancha que la pantalla */
+.panel-paso, .revision-cartel { min-width: 0; }
+.pasos-cartel { display: flex; gap: 4px; border-bottom: 2px solid var(--line); overflow-x: auto; }
+.paso-pill { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; margin-bottom: -2px;
+             color: var(--mut); font-weight: 700; text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; }
+.paso-pill:hover { color: var(--hx-azul-osc); }
+.paso-pill.activa { color: var(--hx-azul-osc); border-bottom-color: var(--hx-verde); }
+.panel-paso { background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 14px 14px; padding: 20px 22px; }
+.panel-paso[hidden] { display: none; }
+.panel-paso > h2:first-child { margin-top: 0; }
+.cartel-cerrado { margin: 12px 0 0; }
+.frase-cartel { font-size: 1.15rem; line-height: 1.45; font-weight: 600; color: var(--hx-azul-osc); margin: 0 0 8px; overflow-wrap: anywhere; }
+.panel-paso .etiqueta-ia { margin-left: 0; }
+
+/* Datos en filas: etiqueta a la izquierda, valor a la derecha (sin cajas) */
+.tarjetas-cartel { display: grid; margin: 14px 0; }
+.tarjetas-cartel article { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 4px 16px; padding: 10px 0;
+                           border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.tarjetas-cartel article:last-child { border-bottom: 0; }
+.tarjetas-cartel article > * { grid-column: 2; margin: 0; }
+.tarjetas-cartel h3 { grid-column: 1; grid-row: 1 / span 4; margin: 0; font-size: .82rem; color: var(--mut);
+                      text-transform: uppercase; letter-spacing: .03em; padding-top: 2px; }
+.tarjetas-cartel ul { margin: 0; }
+.valor-corto { font-weight: 700; color: var(--hx-azul-osc); }
+.dos-lineas { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--mut); font-size: .92rem; }
+.tarjetas-cartel details summary { cursor: pointer; color: var(--azul); font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.requisitos-cartel, .documentos-cartel { list-style: none; padding: 0; margin: 0 0 16px; }
+.requisitos-cartel li, .documentos-cartel li { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.requisitos-cartel li > div, .documentos-cartel li > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.requisitos-cartel p, .documentos-cartel p { margin: 0; }
+.punto { flex: 0 0 12px; height: 12px; border-radius: 50%; }
+.punto.verde { background: var(--g5); } .punto.rojo { background: var(--rojo); } .punto.ambar { background: #E0A100; }
+.pildora { padding: 4px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.pildora.verde { background: var(--g1); color: var(--g7); } .pildora.rojo { background: var(--rojo-bg); color: var(--rojo); }
+.pildora.ambar { background: var(--warn-bg); color: #7A4A00; }
+.documentos-cartel .botones { display: flex; gap: 8px; flex-wrap: wrap; }
+.barra-familia { margin-bottom: 12px; }
+.barra-familia p { margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.barra { height: 10px; border-radius: 999px; background: var(--no-bg); overflow: hidden; }
+.barra span { display: block; height: 100%; background: var(--g5); }
+.barra .nivel-alta { width: 100%; } .barra .nivel-media { width: 66%; background: var(--hx-azul); }
+.barra .nivel-baja { width: 33%; background: #7A869A; } .barra .nivel-sin_coincidencia { width: 4%; background: #7A869A; }
+
+/* Revisión: compacta, decisión como botones de opción en una fila y motivo y comentario lado a lado */
+.revision-cartel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin-top: 18px; }
+.revision-cartel h2 { margin-top: 0; }
+.revision-cartel .revision { max-width: none; border: 0; padding: 0; margin: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.revision-cartel .revision > fieldset, .revision-cartel .revision > p, .revision-cartel .revision > button { grid-column: 1 / -1; }
+.revision-cartel .revision > button { justify-self: start; }
+.revision-cartel fieldset { gap: 8px; }
+.revision-cartel fieldset label { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+                                  border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+.revision-cartel fieldset label:has(input:checked) { border-color: var(--g5); background: var(--g1); color: var(--g7); font-weight: 700; }
+.revision-cartel textarea { min-height: 44px; }
+
+@media (max-width: 760px) {
+  .cartel-franja, .panel-paso, .revision-cartel { padding: 14px; }
+  .cf-medio { align-items: stretch; }
+  .cf-acciones { width: 100%; }
+  .cf-acciones > *, .cf-acciones form button { flex: 1 1 auto; }
+  .cf-cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 0; }
+  .cf-cifras div:nth-child(3) { padding-left: 0; border-left: 0; }
+  .tarjetas-cartel article { grid-template-columns: minmax(0, 1fr); }
+  .tarjetas-cartel article > *, .tarjetas-cartel h3 { grid-column: 1; grid-row: auto; }
+  .revision-cartel .revision { grid-template-columns: minmax(0, 1fr); }
+  .documentos-cartel li { flex-wrap: wrap; }
+  .documentos-cartel li > div { flex-basis: 100%; }
+}
+
+/* Panel de carteles · lista compacta (2026-11-06, pedido de Ivania): una fila por cartel, ~8 por pantalla.
+   Columnas: cartel | monto | cierre | prioridad. Toda la fila abre el cartel (el enlace del título se estira). */
+.list.compacta { gap: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.compacta .fila-encabezado, .compacta .fila-cartel { display: grid; grid-template-columns: minmax(0, 1fr) 170px 150px 84px;
+                                                    gap: 16px; align-items: center; }
+.compacta .fila-encabezado { padding: 10px 18px; background: var(--g0); border-bottom: 1px solid var(--line);
+                             font-size: .75rem; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .03em; }
+.compacta .fila-encabezado span:last-child { text-align: center; }
+.compacta .card { position: relative; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 12px 18px; gap: 4px; }
+.compacta .card:last-child { border-bottom: 0; }
+.compacta .card:hover { background: #F7FAFD; }
+.compacta .card.si { border-left: 5px solid var(--g5); padding-left: 13px; }
+.compacta .card.no, .compacta .card.vencido { opacity: .75; }
+.compacta .card h3 { margin: 0; font-size: 1rem; line-height: 1.35; max-width: none; }
+.compacta .card h3 a::after { content: ""; position: absolute; inset: 0; }     /* toda la fila es clic */
+.compacta .inst { font-size: .85rem; }
+.compacta .tags { margin-top: 4px; gap: 6px; }
+.compacta .tag { padding: 1px 9px; font-size: .75rem; }
+.compacta .meta { display: contents; }          /* sus dos datos se acomodan en las columnas de la fila */
+.compacta .meta dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }  /* el encabezado lo dice */
+.compacta .meta dd { margin: 0; font-weight: 600; font-size: .92rem; }
+.compacta .meta small { display: block; font-weight: 400; }
+.compacta .meta small.pronto { color: var(--warn); font-weight: 700; }
+.compacta .score { min-width: 0; }
+.compacta .score b { font-size: 1.05rem; }
+.compacta details { position: relative; z-index: 1; width: max-content; max-width: 100%; }   /* encima del enlace estirado */
+.compacta details[open] { width: auto; }
+.compacta details summary { font-size: .82rem; color: var(--azul); font-weight: 600; cursor: pointer; padding: 2px 0; }
+.compacta .termino { position: relative; z-index: 1; }
+@media (max-width: 760px) {
+  .compacta .fila-encabezado { display: none; }
+  .compacta .fila-cartel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px 12px; align-items: start; }
+  .compacta .fila-principal { grid-column: 1 / -1; }
+  .compacta .meta dt { position: static; width: auto; height: auto; overflow: visible; clip-path: none;
+                       font-size: .72rem; font-weight: 400; color: var(--mut); }
+  .compacta .meta > div { min-width: 0; }
+}
+.compacta .tags { align-items: center; }
+.compacta .tags .inst { margin-right: 4px; }
+.compacta .tags details[open] { flex-basis: 100%; }
+.compacta .score span { font-size: .7rem; }
+/* Lista compacta, segunda pasada (2026-11-06): la decisión del equipo resalta y la familia es neutra; flecha «›» que
+   dice que la fila se abre; montos a la derecha; sin la palabra «prioridad» repetida (la dice el encabezado). */
+.compacta .tag.fam { background: transparent; border: 1px solid var(--line); color: var(--mut); }
+.compacta .tag.dec-si { background: var(--g5); color: #fff; }
+.compacta .card, .compacta .fila-encabezado { padding-right: 40px; }
+.compacta .card::after { content: "›"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+                         font-size: 1.6rem; line-height: 1; color: #B5C0CC; pointer-events: none; }
+.compacta .card:hover::after { color: var(--azul); }
+.compacta .card:hover h3 a { color: var(--azul); }
+.compacta .fila-encabezado span:nth-child(2), .compacta .meta > div:first-child dd { text-align: right; }
+.compacta .fila-encabezado, .compacta .fila-cartel { grid-template-columns: minmax(0, 1fr) 150px 140px 70px; gap: 24px; }
+.compacta .score span { display: none; }
+@media (max-width: 760px) {
+  .compacta .fila-cartel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px 12px; }
+  .compacta .meta > div:first-child dd { text-align: left; }
+  .compacta .score span { display: block; }
+  .compacta .card { padding-right: 32px; }
+  .compacta .card::after { right: 10px; }
+}
+/* Con datos reales (2026-11-06): títulos de SICOP de hasta 3 líneas → 2 líneas y «…» (el título completo, al pasar el
+   mouse y en el cartel); «Sin coincidencia» no cabía en la columna de prioridad. */
+.compacta .card h3 a { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.compacta .fila-encabezado, .compacta .fila-cartel { grid-template-columns: minmax(0, 1fr) 150px 140px 92px; }
+.compacta .score b { font-size: 1rem; line-height: 1.2; }
+@media (max-width: 760px) {
+  .compacta .fila-cartel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .compacta .card h3 a { -webkit-line-clamp: 3; }
+}
+
+
+/* Asistente como chat (DECISION_IA.md §10; ASSISTANT_CHAT; diseño de la maqueta aprobada por Oscar, 11/11). La persona
+   a la derecha (azul oscuro), la IA y la app a la izquierda; lo que dice la app (lo guardado, la pregunta siguiente)
+   lleva borde verde para distinguirlo de lo que dice la IA. */
+.chat-asistente { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+.chat-gasto { margin: 0; }
+.chat-mensajes { list-style: none; margin: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+                 background: #fff; border: 1px solid var(--line); border-radius: 12px; max-height: 70vh; overflow-y: auto; }
+.chat-mensajes .msg { display: flex; flex-direction: column; gap: 3px; max-width: 86%; }
+.chat-mensajes .msg .autor { font-size: .72rem; font-weight: 700; color: var(--mut); letter-spacing: .03em; }
+.chat-mensajes .msg .burbuja { padding: 10px 14px; border-radius: 14px; white-space: pre-line; overflow-wrap: anywhere; }
+.chat-mensajes .msg.persona { align-self: flex-end; }
+.chat-mensajes .msg.persona .autor { text-align: right; }
+.chat-mensajes .msg.persona .burbuja { background: var(--hx-azul-osc); color: #fff; border-top-right-radius: 4px; }
+.chat-mensajes .msg.asistente, .chat-mensajes .msg.app { align-self: flex-start; }
+.chat-mensajes .msg.asistente .burbuja { background: var(--g0); border: 1px solid var(--line); border-top-left-radius: 4px; }
+.chat-mensajes .msg.app .burbuja { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--g5);
+                                   border-top-left-radius: 4px; }
+.chat-adjunto { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; }
+.chat-adjunto::before { content: "Archivo: "; font-weight: 500; }
+.chat-listo { display: flex; flex-direction: column; gap: 8px; background: var(--g1); border: 1px solid #BFE3CF;
+              border-radius: 12px; padding: 12px 14px; }
+.chat-listo strong { color: var(--g7); }
+.chat-redactar { display: flex; flex-direction: column; gap: 8px; }
+.chat-redactar label[for="chat-mensaje"] { font-weight: 700; }
+.chat-redactar textarea { width: 100%; resize: vertical; }
+.chat-acciones { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-end; justify-content: space-between; }
+.chat-archivo { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; min-width: 0; }
+/* Paso 4: cambios propuestos a la oferta («Aplicar» / «No») y sus versiones. */
+.chat-cambio { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--azul-bg); white-space: normal;
+               display: flex; flex-direction: column; gap: 6px; }
+.chat-cambio.aplicada { background: var(--g1); }
+.chat-cambio.rechazada { background: var(--no-bg); }
+.chat-cambio-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+.chat-versiones { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--line);
+                  border-radius: 12px; padding: 12px 14px; }
+.chat-versiones .historial form { display: inline-flex; gap: 6px; margin-left: 6px; }
+.chat-versiones .historial .btn { padding: 4px 10px; font-size: .82rem; }
+
+/* Página del asistente (2026-11-12, pedido de Ivania): el diseño de la maqueta del chat. Ficha del cartel arriba y dos
+   columnas: el asistente a la izquierda; avance, archivos y oferta a la derecha (una sola columna en pantallas chicas). */
+.asis-ficha { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
+              display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 12px 0 16px; }
+.asis-ficha h1 { margin: 0; font-size: 1.3rem; line-height: 1.3; color: var(--g9); overflow-wrap: break-word; }
+.asis-ids { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .82rem; color: var(--mut); }
+.asis-ids span { min-width: 0; }
+.asis-nro { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; color: var(--g9); }
+.asis-etiquetas { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.asis-columnas { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .asis-columnas { grid-template-columns: minmax(0, 1fr); } }
+.asis-principal { min-width: 0; }
+.asis-principal .asistente { margin-top: 0; }
+.asis-lateral { display: grid; gap: 16px; min-width: 0; }
+.asis-caja { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+             display: grid; gap: 10px; }
+.asis-caja h3 { margin: 0; font-size: .95rem; color: var(--g9); }
+.asis-caja p { margin: 0; }
+.asis-caja progress { width: 100%; }
+.asis-avance strong { font-size: 1.6rem; color: var(--g9); font-variant-numeric: tabular-nums; }
+.asis-reqs, .asis-docs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .85rem; }
+.asis-reqs { max-height: 460px; overflow-y: auto; padding-right: 4px; }
+.asis-reqs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
+                padding-bottom: 6px; border-bottom: 1px dashed var(--line); overflow-wrap: anywhere; }
+.asis-reqs li:last-child { border-bottom: 0; padding-bottom: 0; }
+.asis-docs li { display: grid; gap: 2px; overflow-wrap: anywhere; }
+.asis-caja form.en-linea { display: flex; flex-wrap: wrap; gap: 8px; }
+.asistente-abrir .btn { display: inline-block; }
+/* Bitácora: persona picando mientras una corrida de enrich run está «en curso» (Oscar, 13/11). Solo CSS: el brazo
+   con el pico gira sobre el hombro y saltan chispas al golpear la roca. Sin animación si el sistema pide menos
+   movimiento. */
+.trabajando { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 18px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--azul-bg); }
+.trabajando h2 { margin: 0 0 4px; font-size: 1.15rem; }
+.trabajando p { margin: 0; }
+.minero { flex: none; color: var(--azul); }
+.minero .persona circle { fill: currentColor; }
+.minero .persona path, .minero .brazos path { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; }
+.minero .brazos .mango { stroke: #8a5a2b; stroke-width: 4; }
+.minero .brazos .punta { stroke: #5b6470; stroke-width: 5; }
+.minero .roca { fill: #9aa5b1; }
+.minero .piso { fill: #000; opacity: .08; }
+.minero .chispas path { stroke: #f2a900; stroke-width: 3; stroke-linecap: round; }
+.minero .brazos { transform-box: view-box; transform-origin: 44px 38px; animation: picar 1.2s ease-in infinite; }
+.minero .chispas { opacity: 0; animation: chispas 1.2s linear infinite; }
+@keyframes picar { 0% { transform: rotate(-25deg); } 55% { transform: rotate(72deg); } 65% { transform: rotate(66deg); }
+  100% { transform: rotate(-25deg); } }
+@keyframes chispas { 0%, 52% { opacity: 0; } 56%, 66% { opacity: 1; } 72%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .minero .brazos, .minero .chispas { animation: none; } }
+/* Último correo de cada tipo, arriba del panel de carteles, y el resumen semanal en el panel (Ivania, 13/11). El
+   cuerpo del resumen es el del correo, con sus estilos en línea; aquí solo se limita el ancho. */
+.ultimos-correos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; font-size: .88rem; color: var(--mut); }
+.ultimos-correos strong { color: var(--ink); }
+.resumen-semanal { max-width: 640px; }

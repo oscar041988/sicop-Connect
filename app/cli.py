@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import getpass
 import json
 import sqlite3
@@ -14,10 +15,13 @@ from typing import Sequence
 
 from app import __version__
 from app.config import DEFAULTS, SENSITIVE_KEYS, Settings, load_settings
-from app.database import MigrationError, apply_migrations, check_database, connect
+from app.database import MigrationError, apply_migrations, check_database, connect, espera_de_tarea
+from app.historial import TERMINAL as QUIEN_TERMINAL
 from app.compras import Compra, detalle_compra
 from app.ai import cliente as ia_cliente
 from app.ai import expediente as ia_expediente
+from app.ai import reporte as ia_reporte
+from app.ai import resumen as ia_resumen
 from app.importers.carteles import import_carteles
 from app.importers import adjudicaciones, zip_pliegos
 from app.importers.catalogo import import_catalogo
@@ -26,7 +30,7 @@ from app.importers.instituciones import import_instituciones
 from app.importers.lineas import import_lineas
 from app.matching.evaluar import ENCAJES, ResultadoEvaluacion, evaluar_base
 from app.matching.reglas import REGLAS_PATH, ReglasError, cargar_reglas
-from app import avisos, calidad, ciclo, respaldo, resumen, usuarios
+from app import aviso_encargado, avisos, calidad, ciclo, respaldo, resumen, usuarios
 from app.usuarios import UsuarioInvalido, crear_usuario, validar_contrasena
 
 MAX_RECHAZOS_VISIBLES = 20
@@ -194,9 +198,10 @@ def ia_probar_cmd(settings: Settings) -> int:
     except ValueError as exc:
         print(f"Error: {exc}.", file=sys.stderr)
         return 1
-    if modo != "openai":
-        print("La IA está apagada (AI_MODE=none): no se llamó a OpenAI. Para la primera prueba real, con Oscar:"
-              " AI_MODE=openai, OPENAI_API_KEY y OPENAI_MODEL en .env.")
+    if modo == "none":
+        print("La IA está apagada (AI_MODE=none): no se llamó a ninguna IA. Para la primera prueba real, con Oscar:"
+              " AI_MODE=openai (OPENAI_API_KEY y OPENAI_MODEL) o AI_MODE=anthropic (ANTHROPIC_API_KEY y"
+              " ANTHROPIC_MODEL) en .env.")
         return 1
     db = check_database(settings.database_path)
     if db["status"] != "ok":
@@ -214,12 +219,13 @@ def ia_probar_cmd(settings: Settings) -> int:
             return 1
     costo = (f"{ia_cliente.texto_decimal(r.costo)} USD (estimado)" if r.costo is not None
              else "sin precio (faltan IA_PRECIO_ENTRADA_USD e IA_PRECIO_SALIDA_USD)")
-    print(f"Prueba de OpenAI: {r.resultado}{f' ({r.motivo})' if r.motivo else ''} · modelo {r.modelo}")
+    proveedor = "Anthropic" if modo == "anthropic" else "OpenAI"
+    print(f"Prueba de {proveedor}: {r.resultado}{f' ({r.motivo})' if r.motivo else ''} · modelo {r.modelo}")
     print(f"Tokens: entrada {r.tokens_entrada} · salida {r.tokens_salida} · duración {r.duracion_s} s"
           f" · intentos {r.intentos}")
     print(f"Costo: {costo}")
     print(f"Respuesta: {r.texto[:200]}")
-    print(f"Anotado en ia_usage (#{r.uso_id}). Compáralo con el uso que muestra el panel de OpenAI.")
+    print(f"Anotado en ia_usage (#{r.uso_id}). Compáralo con el uso que muestra el panel de {proveedor}.")
     return 0
 
 
@@ -259,6 +265,195 @@ def ia_expediente_cmd(settings: Settings, nro_sicop: str, ver: bool) -> int:
     return 0
 
 
+def ia_verificar_cmd(settings: Settings, nro_sicop: str, cliente=None) -> int:
+    """Asistente, lección 2: genera (o vuelve a generar) la lista de verificación de un cartel con IA. Lo que una
+    persona corrigió, agregó o quitó no se toca. cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
+    from app.ai import verificacion
+    from app.historial import TERMINAL
+
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            g = verificacion.generar(conn, settings, nro_sicop, TERMINAL, cliente=cliente)
+        except verificacion.VerificacionError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        items = verificacion.listar(conn, nro_sicop)
+    print(f"Lista de verificación del cartel {nro_sicop}: {g.items} requisitos · modelo {g.modelo}")
+    for i in items:
+        excluyente = "EXCLUYENTE · " if i.excluyente else ""
+        print(f"  - {excluyente}{i.requisito[:90]} → {i.evidencia_texto} · mínimo: {i.minimo}")
+    print(f"El asistente pregunta sobre ella en el panel: /oportunidades/{nro_sicop}")
+    return 0
+
+
+def ia_preguntas_cmd(settings: Settings, nro_sicop: str | None = None, cliente=None) -> int:
+    """Vuelve a redactar con IA las preguntas del asistente hechas con otra versión del prompt (2026-11-12: las de v1
+    trataban de vos o de tú) y las que arma la app. Las respuestas ya dadas guardan su propia copia: no cambian."""
+    from app import asistente
+    from app.ai import asistente as ia_asistente
+    from app.historial import TERMINAL
+
+    if nro_sicop is not None and not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        nros = [nro_sicop] if nro_sicop else [n for (n,) in conn.execute(
+            "SELECT nro_sicop FROM eligibility_sessions ORDER BY nro_sicop")]
+        fallo = False
+        for nro in nros:
+            try:
+                r = ia_asistente.redactar(conn, settings, nro, TERMINAL, datetime.now(HORA_CR), cliente=cliente,
+                                          viejas=True)
+            except asistente.AsistenteInvalido as exc:
+                print(f"{nro}: {exc}")
+                fallo = True
+                continue
+            print(f"{nro}: {r.redactadas} preguntas redactadas con el prompt {ia_asistente.VERSION}"
+                  + (f" · {r.motivo}" if r.motivo else ""))
+            fallo = fallo or r.motivo is not None
+    return 1 if fallo else 0
+
+
+def ia_reporte_cmd(settings: Settings, nro_sicop: str, forzar: bool = False) -> int:
+    """Reporte con IA, lección 4: el Reporte de cartel Hermatix en PDF (máximo 3 páginas) del resumen vigente."""
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            r = ia_reporte.generar(conn, settings, nro_sicop, QUIEN_TERMINAL, datetime.now(HORA_CR),
+                                   forzar=forzar)
+        except ia_reporte.ReporteError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+    ya = " (ya existía para este resumen: no se generó otro)" if r.reutilizado else ""
+    print(f"Reporte del cartel {nro_sicop}: {r.paginas} página{'s' if r.paginas > 1 else ''} · resumen"
+          f" #{r.ia_summary_id} · SHA-256 {r.sha256[:16]}…{ya}")
+    print(f"Archivo: {r.ruta}")
+    return 0
+
+
+def ia_resumir_cmd(settings: Settings, nro_sicop: str, cliente=None, prompt: str | None = None) -> int:
+    """Lección 3 IA: el resumen ejecutivo de un cartel (salida estructurada). No repite un expediente sin cambios.
+    prompt: otra versión solo para este cartel (probar una versión nueva sin tocar IA_PROMPT_VERSION del .env).
+    cliente solo se cambia en las pruebas (OpenAI SIMULADO)."""
+    if not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    if prompt is not None:
+        settings = dataclasses.replace(settings, raw={**settings.raw, "IA_PROMPT_VERSION": prompt})
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        try:
+            res = ia_resumen.resumir(conn, settings, nro_sicop, cliente=cliente)
+        except (ia_resumen.ResumenError, ia_cliente.IaApagada, ia_cliente.IaConfiguracion, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+    settings.exports_dir.mkdir(parents=True, exist_ok=True)
+    archivo = settings.exports_dir / f"resumen_{nro_sicop}_{datetime.now(HORA_CR):%Y%m%d-%H%M%S}.txt"
+    archivo.write_text(ia_resumen.legible(res), encoding="utf-8")
+    if res.reutilizado:
+        print(f"Ya había un resumen de este expediente con el prompt {res.prompt_version} (#{res.id}, {res.creado_en}):"
+              " no se llamó a OpenAI.")
+    costo = f"{ia_cliente.texto_decimal(res.costo)} USD (estimado)" if res.costo is not None else "sin precio"
+    print(f"Resumen del cartel {nro_sicop}: {ia_resumen.ESTADOS[res.estado].upper()} · prompt {res.prompt_version}"
+          f" · modelo {res.modelo} · resumen #{res.id}")
+    if not res.reutilizado:
+        print(f"Tokens: entrada {res.tokens_entrada} · salida {res.tokens_salida} · costo {costo}")
+    if res.motivo:
+        print(f"Motivo: {res.motivo}" + (" (sin resumen; no se inventa uno)" if res.datos is None else ""))
+    for d in res.diferencias:
+        print(f"  No coincide con SICOP · {d['dato']}: resumen «{d['resumen']}» · SICOP «{d['sicop']}»")
+    if res.datos:
+        print(f"Recomendación preliminar: {ia_resumen.RECOMENDACIONES.get(res.datos['recomendacion'], ia_resumen.NO)}"
+              " (la decisión es del encargado)")
+    print(f"Guardado en: {archivo}")
+    return 0 if res.estado != "fallido" else 1
+
+
+def ia_recomparar_cmd(settings: Settings, nro_sicop: str | None = None) -> int:
+    """Vuelve a comparar con SICOP los resúmenes guardados (regla de comparación nueva), sin llamar a la IA."""
+    if nro_sicop is not None and not ia_expediente.nro_valido(nro_sicop):
+        print(f"Error: {nro_sicop!r} no es un Número SICOP (solo dígitos).", file=sys.stderr)
+        return 1
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    with closing(connect(settings.database_path)) as conn:
+        revisados, cambios = ia_resumen.recomparar(conn, settings, nro_sicop)
+    for antes, ahora in cambios:
+        print(f"{ahora.nro_sicop}: {ia_resumen.ESTADOS[antes.estado].upper()} → {ia_resumen.ESTADOS[ahora.estado].upper()}"
+              f" · resumen #{antes.id} → #{ahora.id}")
+        for d in ahora.diferencias:
+            print(f"  No coincide con SICOP · {d['dato']}: resumen «{d['resumen']}» · SICOP «{d['sicop']}»")
+    print(f"Revisados: {revisados} · cambiaron: {len(cambios)}"
+          + (" · nada que cambiar" if not cambios else "") + " (sin llamar a la IA, sin costo)")
+    return 0
+
+
+def ia_cola_cmd(settings: Settings, ver: bool, cliente=None, **opciones) -> int:
+    """Lección 5 IA: la cola automática de resúmenes (la corre la tarea de las 10:00, después del enriquecimiento).
+    Con --ver solo muestra la cola y el presupuesto, sin llamar a OpenAI. cliente y opciones: solo en las pruebas."""
+    from app.ai import cola as ia_cola
+    from app.bloqueo import CicloOcupado
+    db = check_database(settings.database_path)
+    if db["status"] != "ok":
+        print(f"Error: la base no está lista ({db['detail']}).", file=sys.stderr)
+        return 1
+    hora = f"{datetime.now(HORA_CR):%Y-%m-%d %H:%M}"
+    if ver:
+        ahora = datetime.now(HORA_CR)
+        with closing(connect(settings.database_path)) as conn:
+            lista = ia_cola.cola(conn, settings, ahora)
+            hechos, costo = len(ia_cola.intentados_hoy(conn, ahora.date())), ia_cola.costo_de_hoy(conn, ahora.date())
+        print(f"{hora} · Cola de resúmenes (solo se muestra; no se llamó a OpenAI): {len(lista)}")
+        print(f"Hoy: {hechos} de {settings.ia_max_summaries_per_day} resúmenes · costo de la IA"
+              f" {ia_cliente.texto_decimal(costo)} de {ia_cliente.texto_decimal(settings.ia_max_daily_cost)} USD")
+        for item in lista:
+            print(f"  {item.nro_sicop} · {ia_cola.ETIQUETAS[item.encaje]} · cierre {_fecha_corta(item.cierre)}"
+                  f" · aprox. {item.tokens_estimados} tokens · {legible_corto(item.descripcion)}")
+        return 0
+    try:
+        corrida = ia_cola.correr(settings, cliente=cliente, avisar=print, **opciones)
+    except CicloOcupado as exc:
+        print(f"Error: ya hay otra ia cola en curso ({exc or 'sin detalle'}). No se hizo nada.", file=sys.stderr)
+        return 1
+    except (ia_cliente.IaConfiguracion, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if corrida.estado == "apagada":
+        print(f"{hora} · La IA está apagada (AI_MODE=none): la cola de resúmenes no hizo nada.")
+        return 0
+    fallidos = sum(r.estado == "fallido" for r in corrida.resultados)
+    revisar = sum(r.estado == "revisar" for r in corrida.resultados)
+    print(f"{hora} · Resúmenes: {len(corrida.resultados)} nuevos ({revisar} para revisar, {fallidos} fallidos)"
+          f" · costo de la IA hoy {ia_cliente.texto_decimal(corrida.costo_hoy)} USD"
+          + (f" · quedan {corrida.pendientes} para otro día" if corrida.pendientes else "")
+          + (" · cola vacía" if corrida.estado == "sin_cola" else ""))
+    if corrida.motivo:
+        print(f"Motivo: {corrida.motivo}")
+    return 1 if fallidos or corrida.estado == "detenida" else 0
+
+
 def _imprimir_evaluacion(r: ResultadoEvaluacion) -> None:
     print(f"Carteles evaluados: {r.carteles}")
     print(f"Filas: nuevas {r.nuevas} · actualizadas {r.actualizadas} · sin cambios {r.sin_cambios}"
@@ -283,9 +478,9 @@ def _imprimir_candidatos(conn, version: str, limite: int, nro_sicop: str | None)
         print("Sin coincidencias para mostrar.")
         return
     print("Candidatos (Alta y Media):" if not nro_sicop else "Resultado del cartel:")
-    for nro, desc, familia, producto, encaje, regla, evidencia, plazo, calidad in filas:
+    for nro, desc, familia, producto, encaje, regla, evidencia, plazo, calidad_datos in filas:
         print(f"  {nro} · {ETIQUETAS_ENCAJE[encaje]} · {familia} ({producto}) · {ETIQUETAS_PLAZO[plazo]}"
-              f" · {ETIQUETAS_CALIDAD[calidad]}")
+              f" · {ETIQUETAS_CALIDAD[calidad_datos]}")
         print(f"      {desc}")
         print(f"      regla: {regla}")
         print(f"      evidencia: {evidencia}")
@@ -539,9 +734,19 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
     if not settings.enrich_enabled:
         print("Enriquecimiento desactivado (ENRICH_ENABLED=false en .env): no se consultó SICOP.")
         return 0
+    try:
+        servidor = settings.enrich_server_url
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if servidor:
+        print(f"Esta PC trabaja con el servidor ({servidor}, ENRICH_SERVER_URL): no se escribe en la base local. "
+              "Usa python -m app.cli enrich remoto.", file=sys.stderr)
+        return 1
     print(f"Navegador {'sin' if settings.browser_headless else 'con'} ventana · máximo {settings.enrich_max_per_day} "
           f"por día · pausa de {settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
-    real = settings.notifications_enabled and not settings.notifications_dry_run and settings.obtain_alert_to
+    real = (settings.enrich_emails and settings.notifications_enabled and not settings.notifications_dry_run
+            and settings.obtain_alert_to)
     try:
         corrida = enriquecimiento.correr(settings, maximo=maximo, avisar=print,
                                          proveedor=_crear_proveedor_alerta if real else None, **_opciones_enrich())
@@ -568,6 +773,91 @@ def enrich_run(settings: Settings, maximo: int | None) -> int:
         print(f"Alerta por CAPTCHA o bloqueo: {corrida.alerta}", file=sys.stderr)
     print(f"Resumen: {corrida.resumen}")
     return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
+
+
+def enrich_remoto(settings: Settings, maximo: int | None, transporte=None) -> int:
+    """Fase 2: la PC consulta SICOP y manda todo al servidor. 0 = ok o sin cola · 1 = algún FALLO, falta configurar
+    o el servidor no respondió · 2 = CAPTCHA o bloqueo, u otra corrida en curso en esta PC."""
+    from app.bloqueo import CicloOcupado
+    from app.sources import enriquecimiento_pc as pc
+    if maximo is not None and maximo < 1:
+        print("Error: --max debe ser 1 o más.", file=sys.stderr)
+        return 1
+    if not settings.enrich_enabled:
+        print("Enriquecimiento desactivado (ENRICH_ENABLED=false en .env): no se consultó SICOP.")
+        return 0
+    try:
+        servidor = settings.enrich_server_url
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if not servidor or not settings.enrich_token:
+        print("Error: faltan ENRICH_SERVER_URL y/o ENRICH_TOKEN en el .env (docs/ENVIO_ENRIQUECIMIENTO.md).",
+              file=sys.stderr)
+        return 1
+    print(f"Servidor {servidor} · navegador {'sin' if settings.browser_headless else 'con'} ventana · pausa de "
+          f"{settings.enrich_delay_seconds} s · grabaciones en {settings.recordings_dir}")
+    try:
+        corrida = pc.correr_remoto(settings, transporte or pc.TransporteHttp(servidor, settings.enrich_token),
+                                   maximo=maximo, avisar=print, **_opciones_enrich())
+    except CicloOcupado as exc:
+        print(f"Error: ya hay otra corrida en curso en esta PC ({exc or 'sin detalle'}). No se hizo nada.",
+              file=sys.stderr)
+        return 2
+    except pc.ServidorError as exc:
+        print(f"Error: el servidor no abrió la corrida: {exc}. No se consultó SICOP.", file=sys.stderr)
+        return 1
+    fallos = sum(c.resultado in ("fallo", "control") for c in corrida.consultas)
+    print(f"\nCorrida #{corrida.corrida_id} (servidor): {corrida.estado} · en cola {corrida.en_cola} · consultados "
+          f"{len(corrida.consultas)} · FALLO {fallos} · grabaciones viejas borradas {corrida.grabaciones_borradas}")
+    for c in corrida.consultas:
+        print(f"  {c.nro_sicop} · {c.resultado} · {c.duracion_s} s"
+              + (f" · {c.motivo}" if c.resultado in ("fallo", "control") else ""))
+    if corrida.reintentada is not None:
+        print(f"  Reintento: {corrida.reintentada.nro_sicop} dio CAPTCHA o bloqueo; se esperó "
+              f"{settings.enrich_retry_wait_minutes} min y se reintentó una vez.")
+    if corrida.error:
+        print(f"Se detuvo: {corrida.error}", file=sys.stderr)
+        return 1
+    return 2 if corrida.estado == "detenida" else (1 if fallos else 0)
+
+
+def oferta_economica_cmd(settings: Settings, datos: Path, salida: Path | None) -> int:
+    """La oferta económica en PDF desde un archivo YAML (DECISION_PROPUESTA.md). 0 = PDF hecho · 1 = un dato no
+    sirve (el mensaje dice cuál)."""
+    import yaml
+    from app import oferta_economica as oe
+    try:
+        crudo = yaml.safe_load(datos.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print(f"Error: no existe {datos}.", file=sys.stderr)
+        return 1
+    except yaml.YAMLError as exc:
+        print(f"Error: {datos.name} no es un YAML válido ({exc}).", file=sys.stderr)
+        return 1
+    try:
+        oferta = oe.leer(crudo)
+    except oe.OfertaError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    ahora = datetime.now(HORA_CR)
+    contenido = oe.pdf(oe.html(oferta, ahora.date()), str(crudo["procedimiento"]))
+    if salida is not None:
+        salida.parent.mkdir(parents=True, exist_ok=True)
+        salida.write_bytes(contenido)
+        ruta = salida
+    else:
+        ruta = oe.guardar(contenido, settings.exports_dir, str(crudo["procedimiento"]), ahora)
+    f = lambda m: oe.formato(m, oferta.moneda)  # noqa: E731
+    print(f"Oferta económica · procedimiento {crudo['procedimiento']} · {oferta.moneda}")
+    if oferta.meses:
+        print(f"  Subtotal mensual {f(oferta.subtotal_periodo)} · por {oferta.meses} meses {f(oferta.subtotal)}")
+    print(f"  IVA {f(oferta.iva)} · total {f(oferta.total)}")
+    print(f"  En letras: {oe.monto_en_letras(oferta.total, oferta.moneda)}")
+    print("  Desglose: " + " · ".join(f"{r.nombre} {oe.numero_corto(r.porcentaje)} % = {f(r.monto)}" for r in oferta.rubros))
+    print(f"PDF: {ruta}")
+    print("Revísalo, fírmalo con firma digital y súbelo a SICOP (la app no presenta la oferta).")
+    return 0
 
 
 def _crear_proveedor_alerta(settings: Settings):
@@ -890,6 +1180,18 @@ def _imprimir_resumen(r: resumen.Resultado, dry_run: bool) -> int:
     return 0 if {e.estado for e in r.envios.values()} == {"aceptado"} else 1
 
 
+def _imprimir_encargados(r: aviso_encargado.Resultado, dry_run: bool) -> None:
+    carteles = sum(len(v) for v in r.preparados.values())
+    print(f"Correo a encargados (seguimiento): {len(r.preparados)} encargado(s) · {carteles} cartel(es) asignado(s)")
+    for para, asignados in sorted(r.preparados.items()):
+        print(f"  {para}: " + ", ".join(a.nro_sicop for a in asignados))
+    if dry_run:
+        print(f"Vista previa: {r.vista_previa[0].parent}")
+        return
+    for para, envio in sorted(r.envios.items()):
+        print(f"  {para}: {envio.estado.upper()} · {envio.detalle}")
+
+
 ETIQUETAS_ARCHIVO = {"importado": "IMPORTADO", "ya_importado": "YA IMPORTADO", "error": "ERROR",
                      "en_espera": "EN ESPERA", "ignorado": "IGNORADO"}
 
@@ -947,6 +1249,8 @@ def run_cycle(settings: Settings, origen: str, dry_run: bool) -> int:
         _imprimir_avisos(c.avisos, dry_run)
     if c.resumen:
         _imprimir_resumen(c.resumen, dry_run)
+    if c.encargados and c.encargados.preparados:
+        _imprimir_encargados(c.encargados, dry_run)
     if c.estado == "ok":
         print(f"Ciclo #{c.id}: OK.")
         return 0
@@ -1009,9 +1313,56 @@ def score_rules(settings: Settings, mostrar: int, reglas_path: Path = REGLAS_PAT
     return 0
 
 
+def ayuda_ejemplo_cmd() -> int:
+    """Rehace la base de EJEMPLO de la ayuda (data/ayuda_ejemplo/). Nunca toca la base real."""
+    from app.ayuda import CARPETA_EJEMPLO, ejemplo  # al usarlo: la ayuda importa módulos que importan esta CLI
+
+    try:
+        claves = ejemplo.crear()
+    except ejemplo.EjemploInseguro as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Base de EJEMPLO lista en {CARPETA_EJEMPLO} (datos inventados, origen «sintetico»).")
+    print(f"Para mirarla: DATABASE_PATH={CARPETA_EJEMPLO / 'sicop.db'} y entra con {claves.email} /"
+          f" «{claves.contrasena}».")
+    return 0
+
+
+def ayuda_capturas_cmd(mision: str | None) -> int:
+    """Regenera las capturas de las misiones con la base de EJEMPLO (app/web/static/ayuda/)."""
+    from app.ayuda import CAPTURAS_DIR, capturas, ejemplo, misiones
+
+    try:
+        marcadores = misiones.leer()
+    except misiones.MarcadorInvalido as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if mision:
+        marcadores = [m for m in marcadores if m.mision == mision]
+        if not marcadores:
+            print(f"Error: no hay capturas en la misión «{mision}» (usa el nombre del archivo, p. ej."
+                  " 08-revision).", file=sys.stderr)
+            return 1
+    try:
+        r = capturas.tomar(marcadores)
+    except ejemplo.EjemploInseguro as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Capturas: {len(r.hechas)} de {len(marcadores)} en {CAPTURAS_DIR}")
+    if r.errores:
+        print(f"Faltan {len(r.errores)}: corrige la misión (o app/ayuda/pantallas.py) y vuelve a correr.",
+              file=sys.stderr)
+        for error in r.errores:
+            print(f"  - {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def backup(settings: Settings, output: Path) -> int:
     try:
-        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir)
+        r = respaldo.respaldar(settings.database_path, output, datetime.now(HORA_CR), settings.documents_dir,
+                               settings.expedientes_dir, settings.profile_docs_dir, settings.assistant_docs_dir,
+                               settings.reports_dir)
     except respaldo.RespaldoError as exc:
         print(f"Error: {exc}. No se hizo el respaldo.", file=sys.stderr)
         return 1
@@ -1025,6 +1376,15 @@ def backup(settings: Settings, output: Path) -> int:
         doc = d["documentos"]
         print(f"Documentos: {output / doc['archivo']} · {doc['archivos']} archivos · {doc['bytes']} bytes"
               f" · SHA-256 {doc['sha256'][:16]}…")
+    if "expedientes" in d:
+        exp = d["expedientes"]
+        print(f"Expedientes: {output / exp['archivo']} · {exp['archivos']} archivos · {exp['bytes']} bytes"
+              f" · SHA-256 {exp['sha256'][:16]}…")
+    for clave, titulo in (("perfil", "Perfil"), ("asistente", "Asistente"), ("reportes", "Reportes")):
+        if clave in d:
+            x = d[clave]
+            print(f"{titulo}: {output / x['archivo']} · {x['archivos']} archivos · {x['bytes']} bytes"
+                  f" · SHA-256 {x['sha256'][:16]}…")
     return 0
 
 
@@ -1089,18 +1449,50 @@ def build_parser() -> argparse.ArgumentParser:
     er = en_sub.add_parser("run", help="Enriquecimiento automático: la cola del día con fichas y documentos (tarea "
                                        "programada; solo con ENRICH_ENABLED=true)")
     er.add_argument("--max", type=int, metavar="N", help="Consultar como máximo N carteles (para probar)")
+    ere = en_sub.add_parser("remoto", help="Fase 2: consulta SICOP con esta PC y manda las fichas al servidor "
+                                          "(ENRICH_SERVER_URL y ENRICH_TOKEN; solo con ENRICH_ENABLED=true)")
+    ere.add_argument("--max", type=int, metavar="N", help="Consultar como máximo N carteles (para probar)")
     en_sub.add_parser("cola", help="Muestra la cola de hoy sin consultar SICOP")
     en_sub.add_parser("status", help="Últimas corridas y consultas de la bitácora")
     en.add_argument("--nro", dest="nros", action="append", metavar="NUMERO_SICOP",
                     help="Número SICOP de un cartel ya importado (se puede repetir hasta 3 veces)")
     en.add_argument("--documentos", action="store_true",
                     help="También baja y guarda los documentos de la ficha y extrae el texto de los PDF")
-    ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1) y prueba de la conexión (lección 2)")
+    of = sub.add_parser("oferta", help="Archivos de la oferta de un cartel (DECISION_PROPUESTA.md): la app los formula, "
+                                     "una persona los firma y los sube a SICOP")
+    of_sub = of.add_subparsers(dest="oferta_command", required=True)
+    ofe = of_sub.add_parser("economica", help="Oferta económica en PDF: carta, tabla de precios con el monto en letras, "
+                                             "condiciones, desglose y fórmula de reajuste")
+    ofe.add_argument("--datos", required=True, type=Path, help="Archivo YAML con los datos de la oferta")
+    ofe.add_argument("--salida", type=Path, help="Dónde guardar el PDF (si no, en EXPORTS_DIR/ofertas/)")
+    ia = sub.add_parser("ia", help="Reporte de cartel con IA: expediente (lección 1), prueba de la conexión (lección 2) y resumen (lección 3)")
     ia_sub = ia.add_subparsers(dest="ia_command", required=True)
     ie = ia_sub.add_parser("expediente", help="Arma el expediente de un cartel y lo guarda en EXPORTS_DIR")
     ie.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
     ie.add_argument("--ver", action="store_true", help="También imprime el expediente completo en la terminal")
-    ia_sub.add_parser("probar", help="UNA llamada corta de prueba a OpenAI (solo con AI_MODE=openai); queda en ia_usage")
+    ia_sub.add_parser("probar", help="UNA llamada corta de prueba a la IA de AI_MODE (openai o anthropic); queda en ia_usage")
+    iv = ia_sub.add_parser("verificar", help="Lista de verificación de un cartel con IA (asistente, lección 2)")
+    iv.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
+    ipr = ia_sub.add_parser("preguntas", help="Vuelve a redactar con IA las preguntas del asistente de versiones viejas"
+                                              " del prompt (y las que arma la app)")
+    ipr.add_argument("--nro", metavar="NUMERO_SICOP", help="Solo este cartel (si no, todos los que tienen asistente)")
+    ir = ia_sub.add_parser("resumir", help="Resumen ejecutivo de un cartel con IA (lección 3); queda en ia_summaries")
+    ir.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel ya importado")
+    ir.add_argument("--prompt", metavar="VERSION",
+                    help="Usar esta versión del prompt (v3…) solo para este cartel, sin cambiar IA_PROMPT_VERSION")
+    irc = ia_sub.add_parser("recomparar", help="Vuelve a comparar con SICOP los resúmenes guardados, sin llamar a la IA")
+    irc.add_argument("--nro", metavar="NUMERO_SICOP", help="Solo este cartel (si no, todos)")
+    irp = ia_sub.add_parser("reporte", help="Reporte de cartel Hermatix en PDF, máximo 3 páginas (lección 4)")
+    irp.add_argument("--nro", required=True, metavar="NUMERO_SICOP", help="Número SICOP de un cartel con resumen")
+    irp.add_argument("--nuevo", action="store_true", help="Generar otro aunque el resumen no haya cambiado")
+    ic =ia_sub.add_parser("cola", help="Cola automática de resúmenes (lección 5): Alta, Media y Baja enriquecidos, con el"
+                                        " presupuesto diario (tarea de las 10:00)")
+    ic.add_argument("--ver", action="store_true", help="Solo muestra la cola y el presupuesto; no llama a OpenAI")
+    ay = sub.add_parser("ayuda", help="Ayuda de la app: base de EJEMPLO y capturas de las misiones")
+    ay_sub = ay.add_subparsers(dest="ayuda_command", required=True)
+    ay_sub.add_parser("ejemplo", help="Rehace la base de EJEMPLO (data/ayuda_ejemplo/); nunca toca la base real")
+    ac = ay_sub.add_parser("capturas", help="Rehace la base de EJEMPLO y toma una captura por marcador de las misiones")
+    ac.add_argument("--mision", help="Solo esta misión (nombre del archivo sin .md, p. ej. 08-revision)")
     bk = sub.add_parser("backup", help="Respaldo consistente de la base (API de SQLite) con su manifiesto")
     bk.add_argument("--output", required=True, type=Path,
                     help="Carpeta del respaldo (otra que la de la base; idealmente otro disco)")
@@ -1114,9 +1506,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _es_tarea_programada(args) -> bool:
+    """Los comandos que corren las tareas programadas (deploy/windows, deploy/systemd): esperan más a la base ocupada."""
+    return ((args.command == "run-cycle") or (args.command == "enrich" and args.enrich_command in ("run", "remoto"))
+            or (args.command == "ia" and args.ia_command == "cola")
+            or (args.command == "obtain" and args.obtain_command == "auto"))
+
+
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     args = build_parser().parse_args(argv)
     settings = settings or load_settings()
+    if _es_tarea_programada(args):
+        with espera_de_tarea():
+            return _ejecutar(args, settings)
+    return _ejecutar(args, settings)
+
+
+def _ejecutar(args, settings: Settings) -> int:
     if args.command == "doctor":
         return doctor(settings)
     if args.command == "migrate":
@@ -1158,9 +1564,13 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         if args.obtain_command == "auto":
             return obtain_auto(settings)
         return obtain_check_mail(settings, args.dias)
+    if args.command == "oferta":
+        return oferta_economica_cmd(settings, args.datos, args.salida)
     if args.command == "enrich":
         if args.enrich_command == "run":
             return enrich_run(settings, args.max)
+        if args.enrich_command == "remoto":
+            return enrich_remoto(settings, args.max)
         if args.enrich_command == "cola":
             return enrich_cola(settings)
         if args.enrich_command == "status":
@@ -1173,6 +1583,20 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return ia_expediente_cmd(settings, args.nro.strip(), args.ver)
     if args.command == "ia" and args.ia_command == "probar":
         return ia_probar_cmd(settings)
+    if args.command == "ia" and args.ia_command == "verificar":
+        return ia_verificar_cmd(settings, args.nro.strip())
+    if args.command == "ia" and args.ia_command == "reporte":
+        return ia_reporte_cmd(settings, args.nro.strip(), forzar=args.nuevo)
+    if args.command == "ia" and args.ia_command == "resumir":
+        return ia_resumir_cmd(settings, args.nro.strip(), prompt=args.prompt.strip() if args.prompt else None)
+    if args.command == "ia" and args.ia_command == "preguntas":
+        return ia_preguntas_cmd(settings, args.nro.strip() if args.nro else None)
+    if args.command == "ia" and args.ia_command == "recomparar":
+        return ia_recomparar_cmd(settings, args.nro.strip() if args.nro else None)
+    if args.command == "ia" and args.ia_command == "cola":
+        return ia_cola_cmd(settings, args.ver)
+    if args.command == "ayuda":
+        return ayuda_ejemplo_cmd() if args.ayuda_command == "ejemplo" else ayuda_capturas_cmd(args.mision)
     if args.command == "backup":
         return backup(settings, args.output)
     if args.command == "run-cycle":

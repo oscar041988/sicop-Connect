@@ -1,0 +1,115 @@
+{# El asistente como chat (DECISION_IA.md §10; ASSISTANT_CHAT): va dentro de _asistente.html en lugar de la pregunta de
+   uno en uno. La IA contesta y propone; la app guarda con las reglas de siempre y hace la pregunta siguiente
+   (app/ai/chat.py). Todo el texto va escapado; las citas [DOC n · pág. p] son enlaces. #}
+{% set ch = chat %}
+<div id="chat" class="chat-asistente">
+  <p class="chat-gasto"><small>Gasto de IA hoy: {{ ch.gasto }} de {{ ch.tope }} USD (IA_MAX_DAILY_COST).
+    {% if ch.lee_archivos %}La IA lee el texto de los archivos que suba, sin modificarlos.{% else %}La IA solo ve el
+    nombre de los archivos que suba.{% endif %}</small></p>
+
+  <ol class="chat-mensajes">
+    {% if ch.presentacion %}
+    <li class="msg app"><span class="autor">Asistente</span><div class="burbuja">{{ citar(ch.presentacion) }}</div></li>
+    {% endif %}
+    {% for m in ch.mensajes %}
+    <li class="msg {{ m.rol }}">
+      <span class="autor">{% if m.rol == "persona" %}{{ m.autor_nombre }}{% elif m.rol == "asistente" %}Asistente (IA){% else %}SICOP CONNECT{% endif %}
+        <small>· {{ m.creado_en | fecha }}</small></span>
+      <div class="burbuja">{% if m.rol == "persona" %}{{ m.texto }}{% else %}{{ citar(m.texto) }}{% endif %}
+        {% if m.archivo_nombre %}<span class="chat-adjunto">{{ m.archivo_nombre }}</span>{% endif %}
+        {% set pr = ch.propuestas.get(m.id) %}
+        {% if pr %}
+        <div class="chat-cambio {{ pr.estado }}">
+          {% if pr.estado == "pendiente" %}
+          <span class="sub">Solo se aplica si usted lo confirma. Crea una versión nueva; la anterior se guarda.</span>
+          <div class="chat-cambio-botones">
+            <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/propuestas/{{ pr.id }}/aplicar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit">Aplicar</button>
+            </form>
+            <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/propuestas/{{ pr.id }}/rechazar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn o">No</button>
+            </form>
+          </div>
+          {% else %}
+          <span class="sub">{{ "Aplicado" if pr.estado == "aplicada" else "No aplicado" }} por {{ pr.decidido_por }}, {{ pr.decidido_en | fecha }}</span>
+          {% endif %}
+        </div>
+        {% endif %}</div>
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if ch.perfil %}
+  {% set p = ch.perfil %}
+  <div class="perfil-dato">
+    <p>¿El dato del perfil («{{ p.perfil.titulo }}») sigue siendo correcto para esta pregunta?</p>
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/{{ p.item.id }}/perfil">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Sí, es correcto</button>
+    </form>
+    <small class="sub">Si no, conteste en el chat.</small>
+  </div>
+  {% endif %}
+
+  {% if ch.listo %}
+  <div class="chat-listo" role="status">
+    <strong>Ya está lista la oferta</strong>
+    <span>Todos los requisitos tienen respuesta. Sale con la estructura de siempre y los documentos que se subieron.
+      Lo que no cumple o falta sale en rojo.</span>
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="desde" value="asistente">
+      <button type="submit" name="formato" value="pdf">Pedir la oferta completa (PDF)</button>
+      <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if ch.versiones %}
+  {% set ultima = ch.versiones[-1] %}
+  <div class="chat-versiones">
+    <strong>Oferta · versión {{ ultima.numero }}</strong>
+    <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="desde" value="asistente">
+      <button type="submit" name="formato" value="pdf">Descargar la última (PDF)</button>
+      <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
+    </form>
+    <span class="sub">Pida cambios en el chat («en la sección 3 que diga…», «quite la sección de visita»): cada cambio
+      se aplica solo con su clic y crea una versión nueva. Nunca precios ni el texto del pliego.</span>
+    <details>
+      <summary>Versiones ({{ ch.versiones | length }})</summary>
+      <ol class="historial">
+        {% for v in ch.versiones | reverse %}
+        <li><strong>Versión {{ v.numero }}</strong> · {{ v.descripcion }}
+          <small class="sub">· {{ v.creado_por }}, {{ v.creado_en | fecha }}</small>
+          <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="desde" value="asistente">
+            <input type="hidden" name="version" value="{{ v.numero }}">
+            <button type="submit" name="formato" value="pdf" class="btn o">PDF</button>
+            <button type="submit" name="formato" value="docx" class="btn o">Word</button>
+          </form></li>
+        {% endfor %}
+      </ol>
+    </details>
+  </div>
+  {% endif %}
+
+  <form class="chat-redactar" method="post" enctype="multipart/form-data"
+        action="/oportunidades/{{ c.nro_sicop }}/asistente/chat">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="chat-mensaje">Su respuesta</label>
+    <textarea id="chat-mensaje" name="mensaje" rows="3" maxlength="4000"
+              placeholder="Conteste con sus palabras, pregunte una duda o diga qué archivo sube…"></textarea>
+    <div class="chat-acciones">
+      <label class="chat-archivo">Archivo (PDF, PNG o JPG; máx. {{ ch.limite_mb }} MB)
+        <input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg"></label>
+      <button type="submit">Enviar</button>
+    </div>
+    <small class="sub">La IA tarda unos segundos. Lo que se guarda lo confirma la app debajo de la respuesta; si algo no
+      quedó bien, dígalo en el chat o use «Cambiar» en «Respuestas dadas».</small>
+  </form>
+</div>

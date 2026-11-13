@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% set c = d.compra %}
+{% block titulo %}Asistente · {{ c.nro_sicop }}{% endblock %}
+{% block contenido %}
+{# La página del asistente (pedido de Ivania, 2026-11-12), con el diseño de la maqueta del chat que vio Oscar (11/11):
+   la ficha del cartel arriba; a la izquierda el asistente (pregunta o chat, respuestas y resultado, _asistente.html);
+   a la derecha el avance de los requisitos, los archivos subidos y la oferta. Solo presentación: los mismos datos
+   y las mismas rutas que antes. Todo el texto de SICOP, de la IA y de las personas va escapado (nada de |safe). #}
+<p class="migas"><a href="/oportunidades/{{ c.nro_sicop }}?paso=requisitos">← Volver al cartel</a></p>
+
+{% set e1 = d.evaluaciones | first %}
+<section class="asis-ficha" aria-label="Cartel">
+  <p class="asis-ids"><span class="asis-nro">{{ termino("Número SICOP") }} {{ c.nro_sicop }}</span>
+    <span>{{ d.tipo_procedimiento or "tipo sin dato" }} · {{ c.institucion | legible or "Sin datos de la institución" }}</span></p>
+  <h1>{{ resaltar(c.descripcion or "(sin título)", none, titulo=True) }}</h1>
+  <p class="asis-etiquetas">
+    {% if e1 %}<span class="tag">Encaje {{ ENCAJES.get(e1.encaje, e1.encaje) }} · {{ NOMBRES_FAMILIA.get(e1.familia, e1.familia) }}</span>{% endif %}
+    <span class="tag {{ {'vencido': 'g', 'cierra_7_dias': 'w'}.get(d.plazo, '') }}">Cierre {{ c.fecha_cierre_recepcion | fecha }}{% if regresiva %} · {{ regresiva }}{% endif %}</span>
+    {% if seg %}<span class="tag">{{ seg.encargado or "Sin encargado" }}</span>{% endif %}
+  </p>
+</section>
+
+<div class="asis-columnas">
+  <div class="asis-principal">
+    {% include "_asistente.html" %}
+  </div>
+
+  <aside class="asis-lateral" aria-label="Avance y oferta">
+    {% if asis.sesion %}
+    {% set evs = res_eleg.evaluaciones | sort(attribute="item.excluyente", reverse=true) %}
+    {% set con = evs | rejectattr("respuesta", "none") | list | length %}
+    <section class="asis-caja" aria-label="Avance">
+      <h3>Requisitos del cartel</h3>
+      <p class="asis-avance"><strong>{{ con }} / {{ evs | length }}</strong> con respuesta</p>
+      <progress max="{{ evs | length or 1 }}" value="{{ con }}"></progress>
+      <ul class="asis-reqs">
+        {% for e in evs %}
+        {% set color = {"cumple": "verde", "no_cumple": "rojo"}.get(e.estado, "ambar") %}
+        <li><span>{% if e.item.excluyente %}<span class="tag r">Excluyente</span> {% endif %}{{ e.item.requisito }}</span>
+          <span class="pildora {{ color }}">{{ ELEG.estados.get(e.estado, "Falta") }}</span></li>
+        {% endfor %}
+      </ul>
+      <p class="sub">Todos los requisitos salen en la oferta; nadie los oculta.</p>
+    </section>
+
+    {% set con_archivo = asis.pasos | selectattr("respuesta") | selectattr("respuesta.tiene_archivo") | list %}
+    <section class="asis-caja" aria-label="Archivos subidos">
+      <h3>Archivos subidos ({{ con_archivo | length }})</h3>
+      {% if con_archivo %}
+      <ul class="asis-docs">
+        {% for p in con_archivo %}
+        <li><b>{{ p.respuesta.archivo_nombre }}</b>
+          <small>{{ p.item.requisito }} ·
+            <a href="/oportunidades/{{ c.nro_sicop }}/asistente/respuestas/{{ p.respuesta.id }}/ver" target="_blank" rel="noopener">Ver</a></small></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="sub">Todavía ninguno. Los archivos se suben al responder.</p>{% endif %}
+      <p class="sub">Se guardan tal cual, sin modificarlos.</p>
+    </section>
+    {% endif %}
+
+    <section class="asis-caja" id="oferta" aria-label="Oferta">
+      <h3>Oferta</h3>
+      {% set versiones = chat.versiones if chat.activo else [] %}
+      {% if versiones %}
+      {% set ultima = versiones[-1] %}
+      <p><strong>Versión {{ ultima.numero }}</strong> · {{ ultima.descripcion }}
+        <small class="sub">· {{ ultima.creado_por }}, {{ ultima.creado_en | fecha }}</small></p>
+      {% else %}
+      <p class="sub">El pliego respondido, la oferta económica y los documentos del asistente. Lo que falta sale en
+        rojo.</p>
+      {% endif %}
+      <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="desde" value="asistente">
+        <button type="submit" name="formato" value="pdf">{% if versiones %}Descargar la última (PDF){% else %}Oferta (PDF){% endif %}</button>
+        <button type="submit" name="formato" value="docx" class="btn o">En Word</button>
+      </form>
+      {% if error_oferta %}<p class="error">{{ error_oferta }}</p>{% endif %}
+      <p class="sub">Cada cambio crea una versión nueva; las anteriores y el chat se guardan. La firma y la sube a SICOP
+        una persona.</p>
+    </section>
+  </aside>
+</div>
+
+<script>
+/* El chat del asistente abre en el último mensaje, no en el primero (como cualquier chat). */
+document.querySelectorAll(".chat-mensajes").forEach(function (m) { m.scrollTop = m.scrollHeight; });
+</script>
+{% endblock %}

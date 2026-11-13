@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}{{ mision.titulo }} · Ayuda{% endblock %}
+{% block contenido %}
+{# El cuerpo viene de docs/ayuda/misiones/<misión>.md, convertido por app/ayuda/pagina.py (texto escapado) #}
+<p class="migas"><a href="/ayuda">← Todas las misiones</a> · <a href="/ayuda#glosario">Glosario</a></p>
+<article class="ayuda mision-ayuda">
+  <p class="sub">{{ mision.bloque }}{% if mision.solo_admin %} · solo administradores{% endif %}</p>
+  <h1>{{ mision.titulo }}</h1>
+  {{ cuerpo }}
+</article>
+
+<section class="te-sirvio" id="te-sirvio">
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/ayuda/{{ mision.nombre }}/voto">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h2>¿Te sirvió esta ayuda?</h2>
+    <label for="comentario-voto">Si algo te confundió, cuéntanos qué (opcional)</label>
+    <textarea id="comentario-voto" name="comentario" maxlength="500" rows="2"></textarea>
+    <div class="botones-voto">
+      <button type="submit" name="util" value="si">Sí</button>
+      <button type="submit" name="util" value="no">No</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

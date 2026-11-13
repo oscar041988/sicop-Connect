@@ -110,6 +110,41 @@ def test_respuesta_valida_guarda_tokens_y_costo(db):
     assert _usos(db) == [("prueba", "modelo-simulado-1", 1200, 300, "0.006000", "USD", 1, "ok", None)]
 
 
+
+def _base_ocupada(db, monkeypatch, liberar_tras: int | None):
+    """Otro programa tiene la escritura de la base; se suelta tras ese número de intentos fallidos de anotar
+    (None: nunca). Devuelve la conexión para pedir (espera corta) y la lista de intentos."""
+    otro = sqlite3.connect(db, isolation_level=None)
+    otro.execute("BEGIN IMMEDIATE")
+    intentos, original = [], cliente._insertar_uso
+
+    def insertar(*args):
+        intentos.append(1)
+        try:
+            return original(*args)
+        finally:
+            if liberar_tras is not None and len(intentos) == liberar_tras and otro.in_transaction:
+                otro.execute("ROLLBACK")
+
+    monkeypatch.setattr(cliente, "_insertar_uso", insertar)
+    return sqlite3.connect(db, isolation_level=None, timeout=0.05), intentos, otro
+
+
+def test_base_ocupada_al_anotar_se_reintenta_y_el_gasto_queda(db, monkeypatch):
+    # 2026-11-10: la IA cobró y la base estaba ocupada; sin reintento, el gasto no quedaba en ia_usage.
+    conn, intentos, otro = _base_ocupada(db, monkeypatch, liberar_tras=1)
+    with closing(conn), closing(otro):
+        r = cliente.pedir(conn, _settings(db), "x", TEXTO, "prueba", cliente=OpenAISimulado(respuesta()))
+    assert len(intentos) == 2 and r.resultado == "ok"
+    assert _usos(db) == [("prueba", "modelo-simulado-1", 1200, 300, "0.006000", "USD", 1, "ok", None)]
+
+
+def test_base_ocupada_siempre_se_rinde_tras_tres_intentos(db, monkeypatch):
+    conn, intentos, otro = _base_ocupada(db, monkeypatch, liberar_tras=None)
+    with closing(conn), closing(otro), pytest.raises(sqlite3.OperationalError, match="locked"):
+        cliente.pedir(conn, _settings(db), "x", TEXTO, "prueba", cliente=OpenAISimulado(respuesta()))
+    assert len(intentos) == cliente.INTENTOS_REGISTRO == 3
+
 def test_sin_precio_el_costo_queda_vacio(db):
     r, _ = _pedir(db, OpenAISimulado(respuesta()), IA_PRECIO_SALIDA_USD=None)
     assert r.costo is None
@@ -125,6 +160,7 @@ def test_respuesta_incompleta_se_anota(db):
 @pytest.mark.parametrize("exc, motivo", [
     (error(openai.AuthenticationError, 401, "invalid_api_key"), "AuthenticationError 401 · invalid_api_key"),
     (error(openai.RateLimitError, 429, "insufficient_quota"), "RateLimitError 429 · insufficient_quota"),
+    (error(openai.RateLimitError, 429, "credit_balance_exhausted"), "RateLimitError 429 · credit_balance_exhausted"),
     (error(openai.NotFoundError, 404, "model_not_found"), "NotFoundError 404 · model_not_found"),
     (error(openai.BadRequestError, 400), "BadRequestError 400"),
 ])

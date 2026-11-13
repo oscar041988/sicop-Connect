@@ -1,0 +1,20 @@
+# Cola automática de resúmenes con IA (app/ai/cola.py), una vez al día por sicop-ia-cola.timer (fase 2, 2026-11-09).
+# Resume los carteles Alta, Media y Baja que ya tienen ficha y documentos, dentro del presupuesto diario
+# (IA_MAX_SUMMARIES_PER_DAY, IA_MAX_DAILY_COST). No usa navegador: lee la base y llama a la API de IA (AI_MODE).
+# Antes la corría la tarea de Windows después de enrich run; con la base en el servidor corre aquí (decisión de
+# Ivania, docs/ENVIO_ENRIQUECIMIENTO.md). Con AI_MODE=none no llama a nada.
+# Códigos de salida: 0 = ok · 1 = algún resumen fallido, o la cola se detuvo por la clave o el saldo.
+[Unit]
+Description=Cola de resumenes con IA SICOP CONNECT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=sicop
+Group=sicop
+WorkingDirectory=/opt/sicop-connect
+EnvironmentFile=/etc/sicop-connect/app.env
+ExecStart=/opt/sicop-connect/.venv/bin/python -m app.cli ia cola
+UMask=0077
+TimeoutStartSec=1h

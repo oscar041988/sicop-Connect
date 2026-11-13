@@ -279,6 +279,17 @@ def test_yaml_con_error_no_tumba_la_pagina(cliente):
     yaml.write_text('competidores:\n  "X":\n    cedulas: [3101000000]\n', encoding="utf-8")
     html = c.get("/competencia").text
     assert "entre comillas" in html and "Cédula 0101000001" in html
+    # 0101000001 no es cédula jurídica: se ve como persona física, sin pedir su nombre en el YAML.
+    assert "Persona física · Cédula 0101000001" in html and "su nombre no se guarda (dato personal)" in html
+
+
+def test_cedula_de_persona_fisica_se_etiqueta_sin_nombre():
+    assert [competencia.es_persona_fisica(c) for c in ("3101450326", "3102026972", "2100042005", "4000042147")] == [
+        False] * 4                                          # jurídicas: sociedades, S.R.L., Estado, autónomas
+    assert all(competencia.es_persona_fisica(c) for c in ("0100000001", "100000001", "100000000001"))
+    assert competencia.nombre_competidor("cedula:0100000001") == "Persona física · Cédula 0100000001"
+    assert competencia.nombre_competidor("cedula:3101000002") == "Cédula 3101000002"
+    assert competencia.nombre_competidor("Netway S.A.") == "Netway S.A."
 
 
 def test_sin_adjudicaciones_explica_como_importarlas(db, monkeypatch):

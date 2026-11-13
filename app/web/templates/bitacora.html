@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 {% block titulo %}Bitácora de consultas{% endblock %}
+{# Mientras una corrida trabaja, la página se recarga sola cada 15 s para mostrar el avance #}
+{% block cabeza %}{% if en_curso %}<meta http-equiv="refresh" content="15">{% endif %}{% endblock %}
 {% block contenido %}
+{% if en_curso %}
+<section class="trabajando" role="status">
+  {# Persona picando (Oscar, 13/11): solo dice que el enriquecimiento está trabajando; los datos son los de la base #}
+  <svg class="minero" viewBox="0 0 120 100" width="120" height="100" aria-hidden="true">
+    <ellipse cx="88" cy="88" rx="22" ry="6" class="piso"/>
+    <path d="M72 88 L78 70 L90 64 L102 72 L106 88 Z" class="roca"/>
+    <g class="persona">
+      <circle cx="44" cy="22" r="8"/>
+      <path d="M44 30 L44 60 M44 60 L34 88 M44 60 L56 88"/>
+    </g>
+    <g class="brazos">
+      <path d="M44 38 L62 34"/>
+      <path d="M60 14 L66 56" class="mango"/>
+      <path d="M50 12 Q62 4 74 16" class="punta"/>
+    </g>
+    <g class="chispas"><path d="M74 60 L68 54 M80 58 L80 49 M86 60 L92 53"/></g>
+  </svg>
+  <div>
+    <h2>Enriqueciendo carteles…</h2>
+    <p><strong>{{ en_curso.consultados }}</strong> consultado{{ "s" if en_curso.consultados != 1 }}{% if en_curso.en_cola %} de {{ en_curso.en_cola }} en cola{% endif %}
+      · corrida #{{ en_curso.id }} · empezó {{ en_curso.iniciada_en | fecha }}</p>
+    <p class="sub">La página se actualiza sola cada 15 segundos. Se puede seguir usando el panel mientras tanto.</p>
+  </div>
+</section>
+{% endif %}
 <section>
   <h1>Bitácora de consultas</h1>
   <p class="sub">Lo que hizo el enriquecimiento en SICOP: cada corrida de las 10:00 y cada consulta, con su video y

@@ -1,5 +1,17 @@
 {% extends "base.html" %}
 {% block contenido %}
+{# Último correo de cada tipo (Ivania, 13/11): así se sabe que salió sin entrar a Gmail. «Aceptado» = Gmail lo tomó. #}
+<ul class="ultimos-correos">
+  {% for nombre, e, enlace in ultimos %}
+  <li>{{ nombre }}:
+    {% if e %}<strong>{{ e.momento | fecha }}</strong>
+      {% if e.aceptados %}· aceptado por Gmail para {{ e.aceptados }} persona{{ "s" if e.aceptados != 1 }}{% endif %}
+      {% if e.fallidos %}· <span class="falta">falló para {{ e.fallidos }}</span>{% endif %}
+      {% if e.inciertos %}· <span class="falta">incierto para {{ e.inciertos }}</span>{% endif %}
+    {% else %}todavía no se ha enviado ninguno{% endif %}
+    {% if enlace %}· <a href="{{ enlace }}">Ver el resumen</a>{% endif %}</li>
+  {% endfor %}
+</ul>
 {# Chips de estado de la revisión + búsqueda (diseño del prototipo de Hermatix) #}
 <div class="tools">
   {% for valor, texto in [("", "Todos"), ("no", "Sin revisar"), ("interesa", "Interesa"), ("no_interesa", "No interesa"), ("revisar_requisitos", "Revisar requisitos"), ("ofertada", "Ofertada"), ("no_se_oferta", "No se oferta")] %}
@@ -16,7 +28,7 @@
 <details class="filtros-caja" {% if filtros.familia or filtros.institucion or filtros.plazo or filtros.tipo or filtros.prioridad != "candidatos" %}open{% endif %}>
   <summary>Más filtros</summary>
   <form class="filtros" method="get" action="/oportunidades">
-    <label>Prioridad
+    <label>{{ termino("Prioridad") }}
       <select name="prioridad">
         {% for valor in prioridades %}
         <option value="{{ valor }}" {% if filtros.prioridad == valor %}selected{% endif %}>
@@ -25,7 +37,7 @@
         {% endfor %}
       </select>
     </label>
-    <label>Familia
+    <label>{{ termino("Familia") }}
       <select name="familia">
         <option value="">Todas</option>
         {% for valor, texto in opciones.familias %}
@@ -41,7 +53,7 @@
         {% endfor %}
       </select>
     </label>
-    <label>Plazo
+    <label>{{ termino("Plazo") }}
       <select name="plazo">
         <option value="">Vigentes (sin vencidos)</option>
         {% for valor, texto in PLAZOS.items() %}
@@ -67,56 +79,58 @@
 </details>
 
 <div class="resultados">
-  <p class="sub">{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %} (un cartel puede coincidir con más de una familia) · ordenados por cierre más próximo{% if not filtros.plazo %} · sin los vencidos (para verlos, elige «Vencido» en Plazo){% endif %}</p>
+  <p class="sub"><strong>{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %}</strong> · por cierre más próximo{% if not filtros.plazo %} · sin vencidos{% endif %}
+    <small>(un cartel puede salir una vez por cada familia con la que coincide{% if not filtros.plazo %}; los vencidos, con «Vencido» en Plazo{% endif %})</small></p>
   {% if pagina.total %}<a class="btn o exportar" href="{{ url_exportar }}" download>Exportar a Excel</a>{% endif %}
 </div>
 
 {% if pagina.filas %}
-<div class="list">
+{# Lista compacta (2026-11-06, pedido de Ivania): una fila por cartel. Toda la fila abre el cartel (el enlace del título
+   se estira sobre la fila); «Ver más» abre los datos de la regla sin salir de la lista. En la computadora, las
+   columnas llevan un encabezado; en el celular, cada dato muestra su etiqueta. #}
+<div class="list compacta">
+  <div class="fila-encabezado" aria-hidden="true">
+    <span>Cartel</span><span>Monto estimado</span><span>Cierre de ofertas</span><span>Prioridad</span>
+  </div>
   {% for f in pagina.filas %}
   {% set estado = {"interesa": "si", "ofertada": "si", "no_interesa": "no", "no_se_oferta": "no"}.get(f.decision, "") %}
   <article class="card {{ estado }} {% if f.plazo == 'vencido' %}vencido{% endif %}">
-    <div class="row">
-      <div>
+    <div class="fila-cartel">
+      <div class="fila-principal">
+        <h3><a href="/oportunidades/{{ f.nro_sicop }}" title="{{ f.descripcion | titulo | legible }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
         <div class="tags">
+          <span class="inst">{{ f.institucion | legible or "Sin datos de la institución" }} · {{ f.tipo_procedimiento or "Sin dato" }}</span>
           {% if f.es_nuevo %}<span class="tag new">Nuevo</span>{% endif %}
-          <span class="tag">{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</span>
-          {% if f.plazo == "cierra_7_dias" %}<span class="tag w">{{ regresiva(f.fecha_cierre) }}</span>
-          {% elif f.plazo == "vencido" %}<span class="tag g">Vencido</span>
+          <span class="tag fam">{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</span>
+          {% if f.plazo == "vencido" %}<span class="tag g">Vencido</span>
           {% elif f.plazo == "por_verificar" %}<span class="tag w">Plazo por verificar</span>{% endif %}
-          {% if f.decision == "interesa" %}<span class="tag">Interesa</span>
+          {% if f.decision == "interesa" %}<span class="tag dec-si">Interesa</span>
           {% elif f.decision == "no_interesa" %}<span class="tag g">No interesa</span>
           {% elif f.decision == "revisar_requisitos" %}<span class="tag r">Revisar requisitos</span>
-          {% elif f.decision == "ofertada" %}<span class="tag">Ofertada</span>
+          {% elif f.decision == "ofertada" %}<span class="tag dec-si">Ofertada</span>
           {% elif f.decision == "no_se_oferta" %}<span class="tag g">No se oferta</span>{% endif %}
           {% set s = seguimientos.get(f.nro_sicop) %}
-          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }}</span>{% endif %}
+          {% if s %}<span class="tag seg">En seguimiento · {{ s.encargado or "sin encargado" }} · {{ s.etapa_texto | lower }}</span>{% endif %}
+          <details>
+            <summary>Ver más</summary>
+            <p>Coincide con la familia <b>{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</b> por la regla: {{ f.regla | legible or "—" }}.</p>
+            <dl>
+              <div><dt>N.º SICOP</dt><dd>{{ f.nro_sicop }}</dd></div>
+              <div><dt>N.º de procedimiento</dt><dd>{{ f.nro_procedimiento or "—" }}</dd></div>
+              <div><dt>Fecha de publicación</dt><dd>{{ f.fecha_publicacion | fecha }}</dd></div>
+              <div><dt>Palabras clave detectadas</dt><dd>{{ f.frases | join(", ") | legible or "—" }}</dd></div>
+              <div><dt>Servicio de Hermatix</dt><dd>{{ f.producto or "—" }}</dd></div>
+            </dl>
+          </details>
         </div>
-        <h3><a href="/oportunidades/{{ f.nro_sicop }}">{{ f.descripcion | titulo | legible or "(sin título)" }}</a></h3>
-        <div class="inst">{{ f.institucion | legible or "Sin datos de la institución" }}</div>
       </div>
-      <div class="score score-{{ f.encaje }}"><b>{{ ENCAJES[f.encaje] }}</b><span>prioridad</span></div>
+      <dl class="meta">
+        <div><dt>Monto estimado</dt><dd>{% for moneda, m in f.estimado.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}Sin dato{% endfor %}</dd></div>
+        <div><dt>{{ termino("Cierre", "Cierre de ofertas") }}</dt><dd>{{ f.fecha_cierre | fecha }}{% if f.plazo in ("abierto", "cierra_7_dias") %}<br><small class="{{ 'pronto' if f.plazo == 'cierra_7_dias' else '' }}">{{ regresiva(f.fecha_cierre) }}</small>{% endif %}</dd></div>
+      </dl>
+      <div class="score score-{{ f.encaje }}"><b>{{ ENCAJES[f.encaje] }}</b><span>{{ termino("Prioridad", "prioridad") }}</span></div>
     </div>
 
-    <dl class="meta">
-      <div><dt>Monto estimado</dt><dd>{% for moneda, m in f.estimado.items() %}{{ monto(m.valor, moneda) }}{% if not loop.last %}<br>{% endif %}{% else %}Sin dato{% endfor %}</dd></div>
-      <div><dt>Cierre de ofertas</dt><dd>{{ f.fecha_cierre | fecha }}{% if f.plazo in ("abierto", "cierra_7_dias") %}<br><small>{{ regresiva(f.fecha_cierre) }}</small>{% endif %}</dd></div>
-      <div><dt>Modalidad</dt><dd>{{ f.tipo_procedimiento or "Sin dato" }}</dd></div>
-    </dl>
-
-    <details>
-      <summary>Ver toda la información</summary>
-      <p>Coincide con la familia <b>{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</b> por la regla: {{ f.regla | legible or "—" }}.</p>
-      <dl>
-        <div><dt>N.º SICOP</dt><dd>{{ f.nro_sicop }}</dd></div>
-        <div><dt>N.º de procedimiento</dt><dd>{{ f.nro_procedimiento or "—" }}</dd></div>
-        <div><dt>Institución</dt><dd>{{ f.institucion | legible or "—" }}</dd></div>
-        <div><dt>Fecha de publicación</dt><dd>{{ f.fecha_publicacion | fecha }}</dd></div>
-        <div><dt>Palabras clave detectadas</dt><dd>{{ f.frases | join(", ") | legible or "—" }}</dd></div>
-        <div><dt>Servicio de Hermatix</dt><dd>{{ f.producto or "—" }}</dd></div>
-      </dl>
-      <p><a class="enlace" href="/oportunidades/{{ f.nro_sicop }}">Ver detalle, líneas y revisión →</a></p>
-    </details>
   </article>
   {% endfor %}
 </div>

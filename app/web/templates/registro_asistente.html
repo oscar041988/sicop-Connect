@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Registro del asistente{% endblock %}
+{% block contenido %}
+{# Asistente, lección 5: quién hizo qué y cuándo (audit_log; solo administradores). #}
+<section>
+  <h1>Registro del asistente</h1>
+  <p class="sub">Quién generó o corrigió la lista de verificación, respondió, vio o descargó documentos, calculó el
+    resultado, marcó «¿Cumple?» o cambió el perfil de Hermatix. Del más nuevo al más viejo (los últimos {{ limite }}).
+    Nada de esto se borra.</p>
+  <p class="sub">El asistente está <strong>{{ "encendido" if activo else "apagado" }}</strong>
+    (ASSISTANT_ENABLED={{ "true" if activo else "false" }}).</p>
+  {% if eventos %}
+  <div class="tabla-scroll"><table class="lista auto">
+    <thead><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Detalle</th></tr></thead>
+    <tbody>
+      {% for e in eventos %}
+      <tr><td>{{ e.fecha | fecha }}</td><td>{{ e.actor }}</td><td>{{ acciones.get(e.accion, e.accion) }}</td>
+        <td>{{ e.detalle }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">Todavía no hay actividad del asistente.</p>
+  {% endif %}
+</section>
+{% endblock %}

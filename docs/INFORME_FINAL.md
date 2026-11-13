@@ -4,6 +4,9 @@
 > solo están las partes que pide, los datos que ya existen (con su fuente) y las preguntas a responder. Las cifras
 > son del 2026-10-23: las métricas finales se recalculan en la lección 19 (sección 22 de la guía).
 > Al escribir, reemplazar cada bloque «Escribe tú» por el texto propio y borrar las notas.
+> **Actualizado el 2026-11-12 en todas las secciones.** Lo marcado **(nuevo 12/11)** no estaba en la versión
+> anterior; las cifras nuevas salen de la base local leída en solo lectura el 12/11 (reglas `967ebe5b6cc0`) y de
+> `ESTADO_PROYECTO.md`. Las del servidor siguen pendientes: el servidor no se actualizó.
 
 ---
 
@@ -21,6 +24,14 @@
 
 Escríbelo **al final**, cuando las demás secciones estén listas.
 
+**(nuevo 12/11) Datos para el resumen, en una línea cada uno:**
+- Hoy, en la laptop de Windows: ciclo diario con **envío real** desde el 2/11, enriquecimiento con la ficha y los
+  documentos de SICOP, resúmenes y Reporte PDF con IA, asistente de elegibilidad (como chat) y oferta para SICOP.
+- En el servidor: la versión del 15/10 (`02b569b`), sin ciclo programado. Todo lo demás es solo local hasta que
+  Oscar una el PR `main` ← `desarrollo` (146 commits).
+- Cifras: 15 194 carteles reales importados (48 importaciones, 0 filas rechazadas), 40 carteles Alta o Media,
+  83 avisos aceptados por Gmail sin ningún duplicado, 214 llamadas a la IA por ≈ 5,32 USD estimados.
+
 ---
 
 ## 2. Objetivos O1–O8: cumplido / parcial / bloqueado, con evidencia
@@ -37,6 +48,19 @@ Definiciones: guía, sección «Objetivos» (O1 a O8). Estado propuesto al 23/10
 | O6 | ≥ 3 ampliaciones aceptadas por Oscar | **Parcial**: A2, A4 y A5 hechas y probadas en local; falta aceptación de Oscar (`docs/AMPLIACIONES.md` §4 vacía) y verlas en producción | PR #3; `docs/AMPLIACIONES.md` |
 | O7 | Reinicio, respaldo restaurado y reversión probados | **Pendiente**: restauración y ciclo con fuente fallida probados solo en Windows; nada en el servidor | `docs/OPERACION.md`, sección 7 |
 | O8 | Presentación, manuales verificados, métricas y plan de continuidad | **En curso**: `OPERACION.md` verificado en instalación limpia (23/10) ☑; `DESPLIEGUE.md` sin probar literalmente; lo demás, lecciones 19–20 | `docs/ESTADO_PROYECTO.md` |
+
+**(nuevo 12/11) Cambios desde el 23/10, para confirmar:**
+- **O3:** el golden set creció a **39 casos, 39/39 = 100 %** (reglas `967ebe5b6cc0`, 9/11). `score-rules` del 30/10
+  (reglas `aa5379adc1be`, 36 casos + 3 revisiones): precisión 95,0 % (19/20) y cobertura 100 % (19/19), igual
+  que el 23/10.
+- **O5:** el ciclo programado funciona **en Windows** con envío real desde el 2/11 (83 avisos aceptados por Gmail);
+  en el servidor sigue sin activar. Sigue **parcial**.
+- **O6:** `docs/AMPLIACIONES.md` §4 sigue vacía (sin aceptación formal de A2, A4 y A5). Después del 23/10 Oscar ideó
+  o aprobó otras mejoras: enriquecimiento de carteles, reporte con IA (`DECISION_IA.md`, 29/10), asistente de
+  elegibilidad (2/11) y oferta para SICOP (`DECISION_PROPUESTA.md`, 9/11). Todas solo en local. ¿Cuentan como
+  ampliaciones aceptadas? Confírmalo con Oscar.
+- **O7:** sin cambio en el servidor. En Windows, el ciclo sin datos pasó de verdad del 3 al 6/11 (sección 6).
+- **O8:** `METRICAS.md` al día con las semanas 4 a 6 (12/11); presentación pendiente.
 
 **Escribe tú:** para cada «parcial» o «pendiente», **por qué** y **qué falta exactamente**. ¿Fue por el
 calendario del servidor, por una decisión, por SICOP?
@@ -61,6 +85,12 @@ lo descartado:
 | Obtención automática que se detiene ante un control | Intentar saltar CAPTCHA o bloqueos | `docs/DECISION_OBTENCION.md` §8 |
 | Límite de login en memoria (opción A) | Guardarlo en la base | `ESTADO_PROYECTO.md` (2026-10-12) |
 | Sin datos del día, no se avisa | Mandar el correo igual | `docs/OPERACION.md`, 3 |
+| **(nuevo 12/11)** IA solo para el reporte, el asistente y la oferta; las reglas siguen decidiendo qué se avisa | Que la IA filtre o decida las alertas | `docs/DECISION_IA.md` (aceptado el 29/10) |
+| **(nuevo 12/11)** Proveedor de IA que se elige con `AI_MODE` (OpenAI o Anthropic) | Quedar atado a uno solo | `docs/DECISION_IA.md` §8 (Anthropic aprobado el 5/11) |
+| **(nuevo 12/11)** Resúmenes de IA inmutables: una corrección es una fila nueva | Corregir la fila existente | `ESTADO_PROYECTO.md` (`ia_summaries`, triggers) |
+| **(nuevo 12/11)** Enriquecimiento: la ficha y los documentos se consultan como una persona, con video y pausas, máx. 20 por día | Descargar con un programa (SICOP lo bloqueó el 22/10) | `docs/DECISION_OBTENCION.md`; `docs/ENVIO_ENRIQUECIMIENTO.md` |
+| **(nuevo 12/11)** Todo en local y el servidor se actualiza una sola vez, al final | Actualizar el servidor con cada cambio | decisión de Oscar (21/10); `docs/ACTUALIZACION_SERVIDOR.md` |
+| **(nuevo 12/11)** La oferta la firma y la sube a SICOP una persona | Que la app envíe la oferta | `docs/DECISION_PROPUESTA.md` (aprobado el 9/11) |
 
 **Escribe tú:** con tus palabras, como se lo explicarías a Oscar. Si quieres un diagrama, usa el de
 `docs/ARQUITECTURA.md`, sección 1.
@@ -79,8 +109,19 @@ lo descartado:
 - El portal solo muestra carteles con la recepción abierta; los cerrados solo están en datos abiertos (08/10).
 - La descarga hecha por un programa fue **bloqueada** (prueba real del 22/10).
 
+**(nuevo 12/11) Comprobado después del 23/10:**
+- La **ficha del cartel** en SICOP sí se puede consultar como una persona: 14 corridas del enriquecimiento, 31
+  carteles con ficha y 235 documentos guardados, sin CAPTCHA en las corridas automáticas.
+- La **solicitud automática** del reporte también la bloquea SICOP: primera vuelta real el 10/11 a las 15:00,
+  «control no automatizable» con ID de soporte. El reporte se sigue pidiendo a mano.
+- Los datos abiertos pueden llegar **atrasados**: si SICOP modifica el cartel, la ficha trae el cierre nuevo antes
+  que los datos abiertos (caso Santa Ana `20261001587`: SICOP dice 30/10, los datos abiertos 23/10).
+- Excel, Word e imágenes de los carteles no aportan texto a las reglas ni a la IA.
+- «Adjudicaciones en firme»: 9 155 carteles adjudicados (julio a octubre); el ganador viene solo con su cédula.
+
 **Pendiente:** respuesta de soporte de SICOP (consulta del 22/10) · Reglamento de SICOP (no conseguido) ·
-reporte «Contratos» (no usado).
+reporte «Contratos» (no usado). **(nuevo 12/11)** Decidir con Oscar si se consulta a SICOP con el ID de soporte del
+bloqueo del 10/11.
 
 **Escribe tú:** ¿qué te sorprendió de la fuente? ¿Qué es automático y qué necesita una persona, y por qué?
 (Es también la pregunta del minuto 2–4 de la presentación.)
@@ -98,6 +139,9 @@ reporte «Contratos» (no usado).
 | 09/10 | 29/29 = 100 % | «localizacion satelital» |
 | 12/10 | 33/33 = 100 % | 4 provisionales confirmados |
 | 20/10 | 34/34 = 100 % | exclusión «intraoral» (falso positivo de la CCSS) |
+| **(nuevo 12/11)** 30/10 | 36 casos; `score-rules` sin errores nuevos | exclusión «elaboracion de planos» (paradas de autobús; reglas `aa5379adc1be`) |
+| **(nuevo 12/11)** 30/10 | 37 casos | exclusión «basureros» solo en rastreo_activos (reglas `634dbc4ff81e`) |
+| **(nuevo 12/11)** 9/11 | 39/39 = 100 % | «grabacion de video» pasa a contexto en videotelemática (reglas `967ebe5b6cc0`) |
 
 - Candidatos hoy (reglas `b880e0d350e1`, 12 260 carteles reales): 22 Alta y 7 Media.
 - 14 decisiones de reglas registradas, con fecha, quién decidió y el efecto medido.
@@ -107,6 +151,15 @@ reporte «Contratos» (no usado).
 precisión y la cobertura **por familia** se miden desde el 23/10 con `score-rules` (A3): primera medición, 95,0 %
 de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 4.1).
 
+**(nuevo 12/11) Al 12/11** (base local, reglas `967ebe5b6cc0`, 15 194 carteles):
+- Candidatos: **27 Alta y 14 Media** (40 carteles distintos; uno sale en dos familias).
+- Revisiones humanas: **12** sobre 10 carteles (7 «Interesa», 5 «No interesa»).
+- `score-rules` del 30/10: igual que el 23/10 (95,0 % y 100 %); sin errores nuevos.
+- **Reglas vs IA** (9/11, `docs/revision_reglas_vs_ia_20261109.md`): en 41 carteles con resumen, 10 desacuerdos;
+  2 se habían avisado por correo con la IA diciendo descartar. Arreglados: A1 en las reglas y B1 en el prompt v8.
+  Pendiente de Oscar: A2, los sensores IoT para inundaciones (`20261003868`).
+- Pendiente de Oscar desde el 26/10: bajar «telemetria» a señal media en `iot_frio` (`docs/REGLAS.md`).
+
 **Escribe tú:** ¿cuánto se puede confiar en una alerta? ¿Por qué hay falsos positivos y cómo se corrigen? (Minuto
 9–12 de la presentación.)
 
@@ -114,9 +167,10 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
 
 ## 6. Operación: despliegue, simulacros, recuperación
 
-> Actualizado el 2026-10-29. Ivania ya escribió en el Google Doc (26/10) la parte de **Windows** y la del
-> **servidor como plan**. Lo marcado **(nuevo)** pasó después del 26/10: agrégalo a la parte de Windows. La
-> parte del servidor se completa con los resultados reales de la lección 15 y de los simulacros allí.
+> Actualizado el 2026-11-12. Ivania ya escribió en el Google Doc (26/10) la parte de **Windows** y la del
+> **servidor como plan**. Lo marcado **(nuevo)** pasó entre el 26 y el 29/10, y lo marcado **(nuevo 12/11)**, entre
+> el 30/10 y el 12/11: agrégalo a la parte de Windows. La parte del servidor se completa con los resultados reales
+> de la lección 15 y de los simulacros allí: **el servidor todavía no se actualizó** (espera que Oscar una el PR).
 
 **Datos de apoyo — despliegue:**
 - Instalación del 15/10 en Hostinger, con HTTPS y login: `docs/ACTA_DESPLIEGUE.md`. El servidor sigue en
@@ -131,6 +185,17 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
   subir y el **envío real solo a las 8:00**.
 - Sin verificar en el servidor: Playwright (el enriquecimiento lo necesita) y el espacio en disco para documentos y
   grabaciones.
+- **(nuevo 12/11)** El PR #4 se unió por error el 29/10 desde la cuenta de Ivania (`main` = `7f5c558`; el servidor no
+  cambió). Acuerdo desde entonces: solo Oscar une los PR. Hoy `desarrollo` lleva **146 commits** sobre `main`.
+- **(nuevo 12/11)** Actualización del servidor **preparada, sin ejecutar** (`docs/ACTUALIZACION_SERVIDOR.md`, 09/11):
+  de `02b569b` (esquema 0007) a `desarrollo`; se lleva la base local con sus carpetas; el ciclo de las 8:00 pasa al
+  servidor y se apaga la tarea de Windows (si no, correos dobles). Falta que Oscar una el PR y elija el día.
+- **(nuevo 12/11)** Enriquecimiento hacia el servidor (fase 2, `docs/ENVIO_ENRIQUECIMIENTO.md`, 09/11): la PC consulta
+  SICOP y manda cada cartel al servidor con un token, solo HTTPS. Probado con la PC haciendo de servidor; falta
+  probarlo contra el servidor real. Guía para otra computadora: `docs/TRASPASO_ENRIQUECIMIENTO.md` (11/11).
+- **(nuevo 12/11)** Solicitud automática del reporte: la primera vuelta real (10/11, 15:00) encontró el **bloqueo de
+  SICOP** («control no automatizable», con ID de soporte). El reporte se sigue pidiendo a mano (`SOURCE_MODE=manual`,
+  confirmado con `doctor` el 12/11). `DECISION_OBTENCION.md` §8.
 
 **Datos de apoyo — operación en Windows (hecho):**
 - Tarea «SICOP CONNECT - ciclo diario», lunes a viernes 8:00, siempre dry-run, registro en
@@ -146,10 +211,32 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
   (`-WakeToRun`), solo cuando está conectada al cargador. **Comprobado el 29/10:** ciclo #41 a las 08:00:02, OK.
 - **(nuevo)** Espacio después de un día de enriquecimiento: grabaciones 728 MB (se borran a los 30 días, menos las
   de un fallo sin revisar: podría llegar a ≈ 15 GB; por decidir con Oscar) y documentos 212 MB.
+- **(nuevo 12/11)** **Envío real desde Windows** desde el lunes 2/11 a las 8:00 (antes la tarea corría siempre en
+  dry-run). Del 2 al 12/11 Gmail aceptó **21 avisos de cartel nuevo, 3 de cambio de plazo, 3 de cierre próximo y 7
+  resúmenes semanales**, más el correo de asignación de un encargado (30/10). Los enlaces del correo solo abren en
+  la laptop (`APP_BASE_URL` local).
+- **(nuevo 12/11)** Del 3 al 6/11 **no salió ningún aviso** (según el estado del 9/11, 18 «nueva» quedaron
+  preparados; en la base, los 18 preparados que quedan tienen fecha del 13 al 27/10: por revisar): un día despertó tarde, otro la
+  sesión se abrió después de las 8:00, otro la base estaba ocupada y otro Windows detuvo la tarea. Arreglo (9/11):
+  la tarea corre tarde si se perdió las 8:00 (`StartWhenAvailable`) y la app espera hasta 30 s a la base. Ciclo
+  del 9/11: OK, 12 avisos. Desde el 30/10, **22 cargas y ciclos, todos OK**.
+- **(nuevo 12/11)** Tarea «SICOP CONNECT - resumenes IA» (lunes a viernes 14:00, creada el 11/11): segunda
+  oportunidad si la cola de IA de las 10:00 falló. Las tareas programadas esperan hasta 10 min a la base (el 10/11
+  una carga grande en el panel la ocupó más de 2 min y tumbó el enriquecimiento).
+- **(nuevo 12/11)** Enriquecimiento: **13 corridas** (7 OK, 5 con algún fallo, 1 sin cola). Desde el 10/11 un cartel
+  ya enriquecido no se vuelve a consultar (antes 44 de 173 consultas eran repetidas). Los correos del
+  enriquecimiento se apagaron (9/11, decisión de Ivania).
+- **(nuevo 12/11)** IA en operación: **158 llamadas, ≈ 4,48 USD estimados** del 29/10 al 11/11 (`ia_usage`); 85
+  resúmenes (68 OK, 8 Revisar, 9 fallidos, sin resumen inventado) y 11 reportes PDF. Topes: 10 resúmenes y 5 USD
+  al día. El 12/11, `ia recomparar` corrigió 2 resúmenes marcados Revisar por error, sin llamar a la IA. Falta
+  **1 llamada** en esa cuenta: el 10/11 a las 10:01 la IA respondió (≈ 19 900 tokens) pero la base estaba ocupada y
+  el gasto no se anotó; desde el 12/11 la app reintenta anotarlo hasta 3 veces.
 - Ciclos reales a mano: #23, #25 y #28 importaron ZIP reales con 0 rechazadas.
 - Respaldos: `backup` con manifiesto y huella; copia en ZIP al Drive de Hermatix (23/10; 26/10: `sicop_20261026-093951`
   y `sicop_20261026-115002`; **(nuevo)** 29/10: `sicop_20261026-135112`). **(nuevo)** Desde el 27/10, el respaldo
-  también guarda los documentos de SICOP (`_documentos.zip`).
+  también guarda los documentos de SICOP (`_documentos.zip`). **(nuevo 12/11)** Desde el 4/11 el respaldo va
+  directo a `G:\Mi unidad\sicop-respaldos` (Google Drive para escritorio), carpeta compartida solo con Oscar (5/11);
+  trae también expedientes, perfil, asistente y reportes. Último: `sicop_20261112-083011`.
 - `OPERACION.md` seguido al pie de la letra en una instalación limpia (23/10): 10 trabas encontradas y corregidas.
 
 **Datos de apoyo — simulacros** (`docs/OPERACION.md`, sección 7):
@@ -159,7 +246,7 @@ de precisión y 100 % de cobertura por cartel, con 2 errores (`docs/REGLAS.md`, 
 | 1 | Reiniciar el servicio | no aplica (no hay servicio) | pendiente |
 | 2 | Reiniciar el servidor | no aplica | pendiente |
 | 3 | Restaurar un respaldo | ☑ 13/10, 19/10 y 23/10 (huella igual, revisión presente) | pendiente |
-| 4 | Ciclo con fuente fallida | ☑ 19/10, ciclo #22: «FALLO… no significa que no haya compras», no avisó. También el 28/10, ciclo #38 (el reporte del día no estaba): FALLO, 0 avisos | pendiente |
+| 4 | Ciclo con fuente fallida | ☑ 19/10, ciclo #22: «FALLO… no significa que no haya compras», no avisó. También el 28/10, ciclo #38 (el reporte del día no estaba): FALLO, 0 avisos. **(nuevo 12/11)** Sin simulacro, pasó de verdad del 3 al 6/11: el ciclo no corrió y no salió ningún aviso (ver arriba) | pendiente |
 | 5 | Repetir el ciclo | ☑ 22/10, ciclo #28: 0 avisos nuevos, los 6 del 21/10 no se repitieron; 24 avisos = 24 claves distintas. **(nuevo)** 29/10, ciclo #41: 3 ya avisados antes no se repitieron | pendiente |
 
 **Falta** (lecciones 15 y 16): actualizar el servidor y hacer allí los 5 simulacros, con envío real supervisado.
@@ -178,11 +265,19 @@ base? ¿Y si se pierden los documentos? (Minuto 14–16 de la presentación.)
   no se compara por lección (trabajo en local y ampliaciones, fuera del orden de la guía).
 - Uso de Claude: casi **no registrado**. Semana 1: 24 % semanal al cierre (09/10). Semana 2: solo el 12/10 (29 %
   y 28 % de la ventana, 33 % semanal). Semana 3: no registrado. La guía pedía anotar `/usage` al cerrar cada día.
+- **(nuevo 12/11)** Semana 4 (26–30/10) 35 h · semana 5 (2–6/11) 35 h · semana 6 (9–12/11) 28 h: **total 193,5 h**
+  al 12/11 (7 h por día, informadas por Ivania). Uso de Claude en las semanas 4 a 6: no registrado.
 
 **Para tus lecciones aprendidas** (ejemplos reales del proyecto):
 - La revisión general del 23/10 encontró 3 errores que las 470 pruebas no detectaban.
 - Probar con Python 3.12, el del servidor, encontró una falla de seguridad que en 3.14 no aparecía.
 - Seguir el manual en una instalación limpia encontró 10 trabas que quien lo escribió no veía.
+- **(nuevo 12/11)** Las pruebas de Ivania con la IA real encontraron fallas que las pruebas simuladas no veían: el
+  chat del asistente pasó por 4 versiones (v4 a v7, 12/11), cada una por un caso real.
+- **(nuevo 12/11)** Leer los registros (`data/logs/`) encontró una falla que las 1097 pruebas no detectaban: el
+  gasto de la IA no se anotaba si la base estaba ocupada (10/11; reparado el 12/11).
+- **(nuevo 12/11)** Una cifra o una afirmación sin comprobar en la base se marca «por revisar» antes de entrar al
+  informe (pasó dos veces el 12/11).
 
 **Escribe tú:** ¿dónde estuvo el cuello de botella: Claude, tus horas, el servidor o las decisiones? ¿Qué harías
 distinto? Sé honesta con lo que no se registró: la guía dice que nunca se estima después.
@@ -196,7 +291,12 @@ distinto? Sé honesta con lo que no se registró: la guía dice que nunca se est
 - Semana 2: reto practicado el 20/10 (3 correctas, 1 a medias); el **oficial**, con Oscar, pendiente.
   Autoevaluaciones de las lecciones 9 y 10: las tres correctas en cada una, con ajustes.
 - Semana 3: ampliaciones A2, A4 y A5, obtención automática, revisión general.
-- Semana 4: pendiente.
+- ~~Semana 4: pendiente.~~ **(nuevo 12/11)** Semana 4 (26–30/10): enriquecimiento lecciones 1 a 4, reporte con
+  IA lecciones 1 y 2, envío real desde Windows; autoevaluaciones de enriquecimiento 1 a 4 e IA 1 (29/10).
+- **(nuevo 12/11)** Semana 5 (2–6/11): asistente de elegibilidad lecciones 1 a 5, perfil de Hermatix, Reporte PDF,
+  ayuda «¿Cómo se usa?».
+- **(nuevo 12/11)** Semana 6 (9–12/11): oferta para SICOP, chat del asistente, Anthropic, revisión reglas vs IA.
+- Retos de comprensión: el de la semana 2 sigue pendiente con Oscar; los de las semanas 3 a 6, no registrados.
 
 **Escribe tú:** por semana, 2 o 3 conceptos que ahora entiendes y antes no, con un ejemplo del proyecto. Por
 ejemplo: la huella del archivo frente a la huella del cartel; por qué el temporizador va al final.
@@ -207,51 +307,90 @@ ejemplo: la huella del archivo frente a la huella del cartel; por qué el tempor
 
 **Datos de apoyo:** `docs/ESTADO_PROYECTO.md` («Pendientes») · guía, sección 23.2 (plan de las 160 horas).
 
-> Actualizado el 2026-10-29. Ivania ya escribió esta sección en el Google Doc (26/10). Desde entonces: el PR #3 se
-> unió, se agregaron tres mejoras (enriquecimiento de carteles, reporte con IA y gestor de documentos) y se
-> cerraron varios pendientes. Lo marcado **(nuevo)** no estaba el 26/10.
+> **Pasada al Google Doc por Ivania el 12/11** (ordenada por valor y con horas; Claude no la ha leído).
+> Actualizado el 2026-11-12. Ivania ya escribió esta sección en el Google Doc (26/10). Lo marcado **(nuevo)** no
+> estaba el 26/10; lo marcado **(nuevo 12/11)** pasó entre el 30/10 y el 12/11. Lo «sin novedad registrada» no
+> tiene cambios en `ESTADO_PROYECTO.md` desde el 29/10: confírmalo antes de escribirlo.
 
-**Pendientes conocidos al 29/10, por responsable:**
+**Lo que cambió entre el 30/10 y el 12/11 (nuevo 12/11):** la IA pasó de construida sin clave a **operar todos
+los días** (resúmenes, reporte PDF de hasta 3 páginas, asistente de elegibilidad y su chat); nacieron dos mejoras
+que no estaban en el plan, **la oferta para SICOP** (económica, técnica y completa, en PDF y Word) y el **perfil
+de Hermatix**; el gestor de documentos se terminó (pasos 1B a 5); el envío real de avisos empezó desde Windows; y
+SICOP bloqueó la solicitud automática del reporte.
+
+**Pendientes conocidos al 12/11, por responsable:**
 
 *Para terminar el mes (lo que falta para que funcione solo):*
-- ~~Oscar: revisar y unir el PR #3~~ unido (26/10). **(nuevo)** Oscar: revisar y unir el **PR #4** (26 commits,
-  migraciones 0016 a 0023); cerrar los PR de ramas ya incluidas; decidir «Para decidir» de la descripción.
-- Oscar con Ivania: actualizar el servidor (lección 15) y activarlo según `DESPLIEGUE.md` 9.9 (dos solicitudes al
-  día, recordatorio de descarga, envío real a las 8:00); simulacros allí (lección 16); primera prueba real de punta a
-  punta; sesión de la lección 10 con Oscar.
+- ~~Oscar: revisar y unir el PR #3~~ unido (26/10). ~~Oscar: revisar y unir el PR #4~~ **unido por error el 29/10**
+  (ver sección 6). **(nuevo 12/11)** Oscar: unir el PR `main` ← `desarrollo` (**146 commits**, migraciones hasta la
+  0045; texto en `docs/PR_DESARROLLO.md`) y elegir el día de la actualización.
+- Oscar con Ivania: actualizar el servidor (lección 15) **con la guía `docs/ACTUALIZACION_SERVIDOR.md`** (nuevo
+  12/11); simulacros allí (lección 16); primera prueba real de punta a punta; apagar la tarea del ciclo en Windows
+  el mismo día; probar el envío del enriquecimiento contra el servidor real; correr allí `ia recomparar`. ~~Activar
+  dos solicitudes al día~~ **descartado por ahora: SICOP bloqueó la solicitud automática (10/11).** Sesión de la
+  lección 10 con Oscar: sin novedad registrada.
 - Oscar: cierre del acta (JSON de Google en USB y Mac, cargas del 16 y 19/10, historial del asistente, quitar el
-  permiso de escritura en GitHub del servidor).
-- Respaldos automáticos en el servidor (los hace Oscar).
-- Ivania: autoevaluaciones pendientes (enriquecimiento, lecciones 1 a 4; IA, lección 1).
+  permiso de escritura en GitHub del servidor). Sin novedad registrada.
+- Respaldos automáticos en el servidor (los hace Oscar). Sin novedad registrada. **(nuevo 12/11)** En Windows, el
+  respaldo va al Drive compartido con Oscar desde el 4/11.
+- Ivania: autoevaluaciones pendientes (enriquecimiento, lecciones 1 a 4; IA, lección 1). Sin novedad registrada.
+- **(nuevo 12/11)** Ivania con Oscar: evaluar 5 carteles reales con el asistente de elegibilidad y anotar las
+  diferencias con su criterio (solo se anotó `20261002824`).
 
 *Decisiones abiertas:*
 - ~~Obtención automática: espera la respuesta de SICOP~~ **Decidido por Oscar (26/10):** solicitud automática a las
-  06:30 y 14:00 y descarga a mano con recordatorio, porque SICOP bloquea la descarga hecha por un programa. Sigue
-  sin registrarse la respuesta de soporte de SICOP a la consulta del 22/10.
+  06:30 y 14:00 y descarga a mano con recordatorio. **(nuevo 12/11)** La primera solicitud real (10/11) también
+  quedó bloqueada por SICOP, con un ID de soporte. **Oscar decide** si se consulta a SICOP con ese ID.
 - Falso positivo «telemetría… Acueducto» (`20261000990`) en `iot_frio`: propuesta lista (pasar «telemetria» a señal
-  media); falta que Oscar diga si Osmia IoT vende telemetría para acueductos (`docs/REGLAS.md` §6).
-- Confirmar N = 3 días del cierre próximo y el contenido del resumen semanal.
-- Adjudicaciones que llegan solas: hoy el ciclo queda en «fallo» y no avisa (decisión de Claude, por revisar).
+  media); falta que Oscar diga si Osmia IoT vende telemetría para acueductos (`docs/REGLAS.md` §6). **(nuevo
+  12/11)** Va junto con `20261003868` (64 sensores LoRaWAN para inundaciones, salió Alta y se avisó; la IA dice
+  descartar): ¿interesan los sensores IoT en general o solo frío y temperatura?
+- Confirmar N = 3 días del cierre próximo y el contenido del resumen semanal. Sin novedad registrada.
+- Adjudicaciones que llegan solas: hoy el ciclo queda en «fallo» y no avisa (decisión de Claude, por revisar). Sin
+  novedad registrada.
 - Que Oscar acepte `docs/DECISION_OBTENCION.md`; falta el Reglamento de SICOP. **(nuevo)** Que una persona relea
-  las Condiciones de SICOP para el enriquecimiento (§9, punto 6).
-- **(nuevo)** IA: que Oscar acepte `docs/DECISION_IA.md` y cree el proyecto de OpenAI con límite de gasto, la clave,
-  el modelo y los precios. Sin eso no hay primera llamada real (lección 2 construida sin clave).
-- **(nuevo)** Grabaciones del enriquecimiento: cuántos días guardarlas (728 MB en un día; ≈ 15 GB con 30 días).
+  las Condiciones de SICOP para el enriquecimiento (§9, punto 6). Sin novedad registrada.
+- ~~IA: que Oscar acepte `docs/DECISION_IA.md` y cree el proyecto de OpenAI~~ **hecho:** aceptado el 29/10, clave y
+  primera llamada real el 29/10. **(nuevo 12/11)** Abiertas: que Oscar apruebe el reporte para activar el prompt
+  **v8** y confirme el **v5**; para **Anthropic** (aprobado el 5/11, construido el 11/11 sin llamar a la API real),
+  la clave, el modelo, los precios y la comparación en 3 carteles; cuánto saldo queda en OpenAI.
+- **(nuevo 12/11)** Oferta y chat (`DECISION_IA.md` §10, `DECISION_PROPUESTA.md`): qué significa «terminada» y qué
+  se borra, dónde se guardan los documentos reales, adjuntos en el Word, el tarifario y los datos del representante
+  (`config/oferta.yaml`), cómo se elige la ficha técnica de cada cartel y la oferta técnica de Tarrazú.
+- **(nuevo)** Grabaciones del enriquecimiento: cuántos días guardarlas (728 MB en un día; ≈ 15 GB con 30 días). Sin
+  novedad registrada.
 - **(nuevo)** Revisar con Oscar las evidencias que salen de los PDF y ajustar el YAML si hay más falsos positivos.
-- **(nuevo)** El competidor `0702950024` es persona física: confirmar con Oscar que no se guarda su nombre.
+  **(nuevo 12/11)** Revisión reglas vs IA del 9/11 (`docs/revision_reglas_vs_ia_20261109.md`): 41 carteles, 10
+  desacuerdos; dos arreglados (A1 en las reglas, B1 en el prompt v8) y uno espera a Oscar (A2, arriba).
+- **(nuevo)** Un competidor es persona física: confirmar con Oscar que no se guarda su nombre. Sin
+  novedad registrada.
 
-*Mejoras en curso (nuevo: empezadas después del 26/10, todas solo en local):*
+*Mejoras (nuevo: empezadas después del 26/10; todas solo en local hasta actualizar el servidor):*
 - **Enriquecimiento de carteles** (idea de Oscar): lecciones 1 a 4 hechas. Ficha y documentos desde SICOP, reglas
   sobre el texto de los PDF (como máximo suben a Media), panel con la información de SICOP y bitácora de consultas.
-  Corre todos los días a las 10:00 en Windows.
-- **Reporte de cartel con IA:** lección 1 (el expediente que se le mandaría a la IA; Ivania leyó 3) y lección 2 (el
-  cliente de OpenAI, sin clave y sin llamar). Siguen las demás lecciones de la guía después de la aprobación
-  escrita de Oscar.
-- **Gestor de documentos:** paso 1A hecho (seguimiento y encargado). Siguiente: paso 1B, el correo al nuevo
-  encargado; hasta el paso 5 (etapas preparando · enviada · ganada · perdida, aprobadas el 26/10).
+  Corre todos los días a las 10:00 en Windows. **(nuevo 12/11)** Fase 2 (envío al servidor) construida; falta
+  probarla contra el servidor real.
+- **Reporte de cartel con IA** **(nuevo 12/11: en operación):** cola automática de resúmenes (Alta → Media → Baja,
+  10 al día), citas que abren el documento en su página (revisión de 11 citas en 10 carteles: 0 errores), extracto
+  en el correo diario, Reporte PDF de hasta 3 páginas con «Por qué se recomienda» y «¿Cumple?». Prompt activo v8 desde el 12/11 (aprobado por Oscar; antes v5).
+- **(nuevo 12/11) Asistente de elegibilidad** (lecciones 1 a 5): lista de verificación con IA, preguntas primero de
+  los excluyentes, resultado «¿podemos participar?» con constancia, y desde el 11/11 **como chat**. Prueba completa
+  en 2 de 3 carteles (5/11): funciona. Siguiente: paso 5 del chat, «Oferta terminada» y el borrado de los datos
+  personales (`DECISION_IA.md` §10.4).
+- **(nuevo 12/11) Perfil de Hermatix** (`/perfil`): lo que el asistente usa para responder. La **parte A** (datos,
+  no documentos) está cargada; los documentos delicados van solo al servidor actualizado (decisión de Oscar, 4/11).
+- **(nuevo 12/11) Oferta para SICOP** (pedido de Oscar; `DECISION_PROPUESTA.md` aprobado el 9/11): oferta económica
+  con el formato de la ganadora de Tarrazú (la reproduce al céntimo), respuesta técnica punto por punto y la **oferta
+  completa con un botón**, como la de NAVSAT, en PDF y en Word; se corrige conversando en el chat y cada cambio es
+  una versión. La firma y la sube a SICOP una persona.
+- **Gestor de documentos:** ~~paso 1A hecho~~ **(nuevo 12/11) pasos 1A a 5 hechos (29 y 30/10):** encargado, correo al nuevo
+  encargado (salió el 30/10), notas, descarga del expediente y etapas preparando · enviada · ganada · perdida.
+  **(nuevo 12/11)** Desde el 11/11, «Dar seguimiento» exige una revisión vigente (pedido de Oscar).
 
 *Mejoras con valor para Hermatix:*
-- Competidores: 7 empresas ya tienen nombre en `config/competidores.yaml` (26/10). Falta decidir si se descarga
+- Competidores: ~~7 empresas ya tienen nombre en `config/competidores.yaml` (26/10)~~ **(nuevo 12/11)** todas las
+  empresas ganadoras tienen nombre: **29 cédulas** (Ivania buscó 22 más en la ficha del proveedor de SICOP; solo
+  queda sin nombre, a propósito, la persona física). Falta decidir si se descarga
   «Contratos» y corregir que la página cuente como competidor a quien ganó cualquier línea de un cartel de la
   familia.
 - Más catálogo: buscar por nombre los códigos de las 6 familias que aún no tienen.
@@ -267,11 +406,21 @@ ejemplo: la huella del archivo frente a la huella del cartel; por qué el tempor
 - Playwright en el servidor Ubuntu: pendiente de verificar (ahora lo necesita también el enriquecimiento).
 - **(nuevo)** Dos avisos «FontBBox» al leer un PDF el 28/10: no detuvieron nada; no se revisó si ese PDF perdió
   texto.
-- **(nuevo)** Pruebas: 667 passed (29/10, `desarrollo` = `b51b532`).
+- ~~Pruebas: 667 passed (29/10)~~ **(nuevo 12/11)** Pruebas: **1099 passed** (12/11, `desarrollo` = `c7346bf`).
+- **(nuevo 12/11)** Escaneo de fallas (12/11): análisis del código, seguridad, 98 páginas del panel y todas las rutas
+  con parámetros raros sobre una copia de la base (0 errores) y la base real en solo lectura (integridad OK). Una
+  falla real, reparada: el gasto de la IA no se anotaba si la base estaba ocupada (ver sección 6).
+- **(nuevo 12/11)** Dependencias nuevas: `python-docx` (Word) y `anthropic` (SDK oficial); en el servidor, `pip
+  install -r requirements.lock.txt` con el PR.
+- **(nuevo 12/11)** «database is locked» cuando dos programas escriben a la vez: arreglado el 9 y el 10/11 (`BEGIN
+  IMMEDIATE`; espera de 30 s en el panel y de 10 min en las tareas). Consejo: subir el ZIP antes de las 10:00 o
+  después de las 10:30.
 
 **Datos para estimar horas** (`docs/METRICAS.md`): semana 2, 37,25 h estimadas · 49 h reales (+32 %); semana 3,
-21 h (7 h por día, sin desglose por tarea). Total del mes hasta el 23/10: 95,5 h. **Desde el 24/10 no hay horas
-anotadas:** anótalas antes de estimar. Uso de Claude casi sin registrar: dilo así en la estimación.
+21 h (7 h por día, sin desglose por tarea); **(nuevo)** semana 4 (26–29/10), 28 h (7 h por día). Total del mes
+hasta el 29/10: **123,5 h**. **(nuevo 12/11)** Del 30/10 al 12/11, 7 h por día hábil (10 días, 70 h): semana 4
+completa (26–30/10) 35 h, semana 5 (2–6/11) 35 h y semana 6 (9–12/11) 28 h. Total al 12/11: **193,5 h**. Uso de
+Claude casi sin registrar: dilo así en la estimación.
 
 **Escribe tú:** ordena los pendientes por valor para Hermatix y estima las horas de cada uno con los datos del
 mes (sección 7). Incluye las tres mejoras en curso: ¿cuál va primero y por qué? Este es el entregable E10: lo

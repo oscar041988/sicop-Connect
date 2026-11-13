@@ -1,78 +1,93 @@
 # Pull request de `desarrollo` → `main`
 
-> Texto para pegar en GitHub al abrir el PR (título y cuerpo). Actualizado el 2026-10-23, con `desarrollo` en
-> el commit que agrega este texto.
+> Texto para pegar en GitHub al abrir el PR (título y cuerpo). Actualizado el 2026-11-10. El PR anterior (#4,
+> unido el 29/10) llevó `main` a `7f5c558`.
 
-**Título:** Rama desarrollo: obtención automática (no activada), Competencia, cierre próximo y resumen, Excel,
-revisión general y documentación
+**Título:** Rama desarrollo: gestor de documentos, Reporte con IA, asistente de elegibilidad, oferta económica,
+ayuda y detalle del cartel rediseñado
 
 ---
 
 ## Qué trae esta rama
 
-`desarrollo` junta todo el trabajo en local desde el 19/10: **58 commits** sobre `main`, sin conflictos.
-**Reemplaza a estas ramas**, que ya están adentro: `acta-despliegue`, `leccion-10`, `obtencion-automatica`,
-`doctor-sin-mail-to`, `regla-camaras-intraorales`, `panel-aviso-sin-evaluar` y `zip-pliegos`. Si alguna tiene un
-PR abierto, se puede cerrar sin unir. (`diseno-fenova` no tiene nada que no esté en `main`.)
+**115 commits** sobre `main` (`7f5c558`), sin conflictos. Migraciones **0024 a 0042**. Todo se construyó y se probó
+en local; el servidor sigue en `02b569b`. La actualización está en **`docs/ACTUALIZACION_SERVIDOR.md`**.
 
-### Ampliaciones (semana 3)
-- **A2 · Competencia:** importa el ZIP «Adjudicaciones en firme» (reportes 6, 6.1 y 6.2) y muestra, por familia,
-  quién gana, cuántas veces, con qué instituciones y el monto por moneda. El ganador viene solo con cédula: los
-  nombres se ponen en `config/competidores.yaml`.
-- **A4 · Cierre próximo y resumen semanal:** aviso para lo marcado «Interesa» o «Revisar requisitos» que cierra
-  en 3 días o menos; resumen de la semana anterior los lunes. Decisiones finales nuevas: «Ofertada» y «No se oferta».
-- **A5 · Exportar a Excel** el listado filtrado, con los números SICOP como texto.
-- **A3 · Calidad de reglas:** `score-rules` mide precisión y cobertura por familia contra el golden set y las
-  revisiones, con los errores y su evidencia, y guarda cada medición (migración 0014). Página «Calidad de reglas»
-  en Administración. Primera medición (copia de la base real): precisión 95,0 % (19/20), cobertura 100 % (19/19).
+### Gestor de documentos (pasos 1B a 5)
+- Correo al nuevo encargado con el ciclo diario (0024), etapas del seguimiento: preparando, enviada, ganada y
+  perdida (0025).
+- Expediente del cartel: subir y bajar archivos (0027), notas (0028) y descargar todo en un ZIP.
 
-### Obtención automática (aprobada el 21/10) · construida, **no activada**
-- Lecciones 1 a 4: lector de Gmail de solo lectura, solicitud con navegador (Playwright), espera, descarga y
-  validación, y `obtain auto` (una vuelta cada 15 min, con alerta de FALLO y plan B).
-- En la prueba real del 22/10, **SICOP bloqueó la descarga hecha por el programa**; se reporta como FALLO «control
-  no automatizable», sin reintento. Consulta enviada a soporte de SICOP el 22/10.
-- Con `SOURCE_MODE=manual` (por defecto) no hace nada.
+### Reporte con IA (DECISION_IA.md, aceptado por Oscar el 29/10)
+- Resumen ejecutivo con salida estructurada (0026), cola automática diaria con presupuesto, extracto en el correo.
+- Prompts versionados v1 a v8: criterio de Hermatix (v2), garantías y plazos (v5), explicación detallada de la
+  recomendación (v6–v7), FleetRun no es un taller (v8).
+- **Reporte de cartel en PDF** (0036): hasta **3 páginas** (0039), con «¿Cumple?» (0038) y «Por qué se
+  recomienda» al final.
 
-### Revisión general del 23/10
-- La versión de reglas del panel y de los avisos es la de la última evaluación **completa** (antes, `evaluate --nro`
-  con otro YAML dejaba el panel con un solo cartel).
-- El resumen semanal fallido aparece en «Avisos».
-- Un CSV dañado da un mensaje claro en vez de error 500.
-- Las líneas que llegan antes que su cartel se recuperan solas.
-- Tope a la lista de bloqueos de login; evaluar 10 000 carteles pasó de 21 s a 5 s.
-- El ciclo importa también el ZIP de adjudicaciones.
-- Lector de Gmail: un remitente con formato inválido se rechaza siempre. Con Python 3.12 (el del servidor),
-  «info@sicop.go.cr <falso@otro.test>» se aceptaba como correo de SICOP; con 3.14 no.
+### Asistente de elegibilidad (DECISION_IA.md §7, aprobado el 2/11)
+- Perfil de Hermatix con documentos confidenciales (0029, 0035), lista de verificación con IA (0030), preguntas
+  al encargado (0031–0032, 0034), resultado por requisito y constancia descargable (0033).
+- Interruptor `ASSISTANT_ENABLED`. Los documentos de Hermatix no se mandan a la IA (`ASSISTANT_SEND_DOCUMENTS=false`).
+- La lista de verificación ya no tiene página propia (9/11): «Empezar el asistente» la genera con IA si falta.
 
-### Otros
-- ZIP de pliegos tal como llega, en el ciclo y en el panel · exclusión «intraoral» · aviso de datos sin evaluar ·
-  `doctor` sin `MAIL_TO` · tarea programada de Windows (siempre dry-run).
-- Documentación verificada contra el código y **`docs/ARQUITECTURA.md`** nuevo.
+### Propuestas (DECISION_PROPUESTA.md, aprobado por Oscar el 9/11)
+- **Oferta económica en PDF**, sin IA: carta, tabla de precios con el monto en letras, condiciones, desglose que
+  cuadra al céntimo y fórmula de reajuste. Con los datos de Tarrazú da los mismos montos que la oferta ganadora.
+- **Mismo diseño que la oferta de Tarrazú** (10/11): membrete de Hermatix en cada hoja, tabla con encabezado azul,
+  «Monto en Letras», «DESGLOSE DE PRECIO», «Fórmula Matemática» y firma. Faltan las páginas del equipo (esperan las
+  fichas técnicas).
+- Formulario en el cartel con borrador (0041), solo para quien entra al expediente. Si falta un precio, lo dice
+  junto al botón.
+- **Respuesta técnica**, primera parte sin IA: matriz de cumplimiento (pide · ofrece · prueba · ¿Cumple?) con
+  borrador (0042) y PDF, con el mismo diseño que la oferta económica.
+- Comando: `python -m app.cli oferta economica --datos OFERTA.yaml`.
 
-## Qué cambia al actualizar el servidor (`docs/DESPLIEGUE.md`, 9.8)
-- [ ] Respaldo antes de empezar.
-- [ ] `pip install -r requirements.lock.txt`: se suman `openpyxl`, `playwright`, `greenlet` y `pyee`.
-- [ ] `migrate`: migraciones **0008 a 0014**.
-- [ ] `evaluate` después de `migrate` (desde la 0008 el panel pide una evaluación completa).
-- [ ] Verificar en producción: Competencia (importar el ZIP de adjudicaciones), Excel, cierre próximo y resumen
-      (en dry-run).
-- [ ] Solo si se activa la obtención automática: `playwright install chromium` (no probado en Ubuntu).
+### Ayuda dentro de la app
+- 25 misiones paso a paso con capturas automáticas (base de EJEMPLO), botón «?» en cada pantalla, glosario y
+  «¿Te sirvió?» por misión (0037).
+
+### Panel y reglas
+- Detalle del cartel rediseñado (franja arriba y 4 pestañas) y lista compacta de carteles.
+- Exclusiones «elaboracion de planos», «construccion de paradas» y «basureros»; «grabacion de video» pasa a
+  contexto. Golden set: 39 casos, 39/39.
+- Perfil sin avisos de vencimiento (decisión de Ivania, 9/11).
+
+### Robustez (9/11)
+- Las transacciones empiezan con `BEGIN IMMEDIATE` y la base espera hasta 30 s si está ocupada: el ciclo del 5/11
+  falló con «database is locked».
+- Correos del enriquecimiento apagados por defecto (`ENRICH_EMAILS=false`).
+- Tarea de Windows del ciclo: corre tarde si se perdió las 8:00.
+
+### Documentos nuevos
+- `docs/DECISION_PROPUESTA.md` (**aprobado por Oscar el 9/11**): que la app arme la oferta para SICOP; una persona
+  la firma y la sube.
+- `docs/revision_reglas_vs_ia_20261109.md`: desacuerdos entre las reglas y la IA.
+
+## Qué cambia al actualizar el servidor (`docs/ACTUALIZACION_SERVIDOR.md`)
+- [ ] Respaldo de la base del servidor y de las unidades de systemd.
+- [ ] La base del servidor se reemplaza por **la base local de Ivania** (esquema 0039; `migrate` aplica de la 0040 a la 0042)
+      con sus carpetas de datos.
+- [ ] `pip install -r requirements.lock.txt`: se suman `playwright`, `openpyxl`, `pdfplumber` y `openai`.
+- [ ] Carpetas nuevas en `/var/lib/sicop-connect` y variables nuevas en `app.env` (la clave de OpenAI, Oscar).
+- [ ] El ciclo de las 8:00 y la cola de IA (10:45) pasan al servidor; se apaga la tarea de Windows. El
+      enriquecimiento queda en pausa hasta terminar la fase 2 (`docs/ENVIO_ENRIQUECIMIENTO.md`).
 
 ## Para decidir (Oscar)
-- [ ] Un día en que **solo** llegan adjudicaciones se importan, pero no se avisa y el ciclo queda en «fallo»
-      (no traen carteles nuevos). ¿De acuerdo?
-- [ ] Aviso de cierre próximo a **3 días**, y el contenido del resumen semanal.
-- [ ] Nombres de las cédulas ganadoras en `config/competidores.yaml`.
-- [ ] Hora del ciclo y obtención automática: dependen de la respuesta de SICOP sobre la descarga.
-- [ ] Aceptar `docs/DECISION_OBTENCION.md`.
+- [ ] Aprobar el Reporte PDF con la explicación y activar el prompt **v8**.
+- [ ] ¿Le interesan a Hermatix los sensores IoT en general, no solo de frío y temperatura?
+      (`docs/revision_reglas_vs_ia_20261109.md`, caso A2).
+- [ ] La sección 6 de `docs/DECISION_PROPUESTA.md`: el uso de la IA para la segunda parte de la respuesta técnica.
+- [ ] Mandar las fichas técnicas de los productos, la oferta técnica de Tarrazú y las plantillas de Hermatix.
+- [ ] Fase 2 (lista, `docs/ENVIO_ENRIQUECIMIENTO.md`): la PC manda el enriquecimiento al servidor con un token
+      (`ENRICH_TOKEN`); se activa al actualizar el servidor.
 
 ## Pruebas
-- **486 passed con Python 3.12 (el del servidor) y con 3.14**, en entornos nuevos creados con `requirements-dev.txt`
-  (Windows, 23/10). Lo de SICOP
-  y Gmail se prueba con páginas y correos **SIMULADOS**, sin salir a internet.
+- Suite completa con **Python 3.14** y con **Python 3.12** (el del servidor, entorno limpio con
+  `requirements-dev.txt`): los resultados, en `ESTADO_PROYECTO.md`. Volver a correr las dos justo antes de unir. SICOP, Gmail y la IA se prueban con datos SIMULADOS.
 
 ## Importante
-- Ningún correo real se envía: avisos en dry-run.
-- `Guia_Obtencion_Automatica_SICOP.docx` no se subió a propósito: una captura muestra un enlace real de descarga.
+- Las guías en Word de `docs/` no están en Git (`.gitignore`).
+- Las capturas de la ayuda tampoco: se llevan en el paquete de datos o se generan en el servidor.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

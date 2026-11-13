@@ -445,6 +445,24 @@ def detalle(conn: sqlite3.Connection, nro_sicop: str, version: str | None, ahora
                    Cobertura(origen, archivo, importado, primera, ultima), frases)
 
 
+def decision_vigente(conn: sqlite3.Connection, nro_sicop: str) -> str | None:
+    """La decisión de la última revisión del cartel (una por cartel, la haga quien la haga); None si no tiene."""
+    fila = conn.execute("SELECT decision FROM reviews WHERE nro_sicop = ? ORDER BY id DESC LIMIT 1",
+                        (nro_sicop,)).fetchone()
+    return fila[0] if fila else None
+
+
+def falta_para_seguimiento(decision: str | None) -> str | None:
+    """Por qué no se puede «Dar seguimiento» todavía, o None si se puede. La revisión es obligatoria y tiene que decir
+    «Interesa» o «Revisar requisitos» (pedido de Oscar, 2026-11-11)."""
+    if decision is None:
+        return "Antes de «Dar seguimiento», registre la revisión del cartel (es obligatoria)."
+    if decision not in DECISIONES_EN_CURSO:
+        return (f"La revisión vigente dice «{DECISIONES[decision]}». Para dar seguimiento, registre una revisión "
+                "«Interesa» o «Revisar requisitos».")
+    return None
+
+
 def guardar_revision(conn: sqlite3.Connection, nro_sicop: str, decision: str, motivo: str, comentario: str,
                      user_id: int, ahora: datetime) -> None:
     """Agrega una revisión (nunca cambia ni borra las anteriores). Lanza RevisionInvalida si falta algo.

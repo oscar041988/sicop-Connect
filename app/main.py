@@ -13,9 +13,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import __version__
 from app.config import Settings, load_settings
 from app.database import check_database
-from app.web import carga, seguridad
+from app.web import api_enriquecimiento, carga, seguridad
 from app.web.intentos import LimiteIntentos
-from app.web.rutas import csrf_invalido, router as panel, sin_permiso
+from app.web.rutas import cerrar_asistente_apagado, csrf_invalido, router as panel, sin_permiso
 
 MIN_SECRETO = 32
 log = logging.getLogger(__name__)
@@ -38,11 +38,13 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     app.state.intentos = LimiteIntentos()  # intentos de login fallidos, en memoria
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "web" / "static"), name="static")
     app.include_router(panel)
+    app.include_router(api_enriquecimiento.router)  # fase 2: la PC con su token, sin sesión
     app.add_exception_handler(seguridad.CsrfInvalido, csrf_invalido)
     app.add_exception_handler(seguridad.SinPermiso, sin_permiso)
     app.get("/health")(health)
     # El último middleware agregado es el que se ejecuta primero: la sesión se lee, luego se exige,
-    # y solo con sesión se revisa el tamaño de una subida.
+    # y solo con sesión se revisa el tamaño de una subida y si el asistente está encendido (ASSISTANT_ENABLED).
+    app.middleware("http")(cerrar_asistente_apagado)
     app.middleware("http")(carga.limitar_tamano)
     app.middleware("http")(seguridad.exigir_sesion)
     app.add_middleware(SessionMiddleware, secret_key=_secreto_de_sesion(settings), session_cookie="sicop_sesion",
