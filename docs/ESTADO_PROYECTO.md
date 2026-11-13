@@ -144,8 +144,9 @@ Oscar una el PR)
   - **Pendiente · Oscar:** verla y decir si es lo que imaginaba.
   - Otros del 13/11: guía de la demo para Oscar (página privada de Ivania en claude.ai, fuera del repositorio).
     El resumen semanal salió los lunes 2/11 y 9/11 (registro del ciclo: Gmail lo ACEPTÓ para los 4 y los 3
-    destinatarios) pero Ivania nunca lo vio en licitaciones@. **Pendiente · Ivania:** buscarlo en Gmail
-    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario. Desde el mismo día,
+    destinatarios) pero Ivania nunca lo vio en licitaciones@. ~~Pendiente · Ivania: buscarlo en Gmail
+    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario.~~ **Hecho (Ivania,
+    13/11): lo encontró en Recibidos de Gmail (no en Spam); el envío funciona.** Desde el mismo día,
     el panel muestra cada envío y el resumen (entrada de arriba).
 
 - **El asistente en su propia página (2026-11-12, pedido de Ivania).** Con el diseño de la maqueta del chat que vio
