@@ -112,6 +112,9 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | N
         with closing(sqlite3.connect(f"{origen.resolve().as_uri()}?mode=ro", uri=True)) as fuente, \
                 closing(sqlite3.connect(temporal)) as copia:
             fuente.backup(copia)
+            # La copia hereda el modo WAL de la base (2026-11-13). Un respaldo es un solo archivo: se deja en el modo
+            # normal, sin -wal ni -shm a su lado. Al restaurarlo, migrate lo vuelve a WAL (OPERACION.md 6.2).
+            copia.execute("PRAGMA journal_mode = DELETE")
         with closing(sqlite3.connect(f"{temporal.resolve().as_uri()}?mode=ro", uri=True)) as copia:
             integridad = copia.execute("PRAGMA integrity_check").fetchone()[0]
             esquema = copia.execute("SELECT max(version) FROM schema_migrations").fetchone()[0]

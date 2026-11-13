@@ -332,3 +332,22 @@ def test_transaccion_que_lee_y_escribe_no_se_traba_con_otro_programa(tmp_path):
         hilo.join()
         assert errores == [] and sorted(conn.execute("SELECT x FROM t").fetchall()) == [(1,), (2,)]
     otro.close()
+
+
+def test_migrate_deja_la_base_en_modo_wal_y_el_panel_lee_mientras_otro_escribe(db):
+    """Modo WAL (2026-11-13): queda guardado en la base; un lector no espera a una escritura sin confirmar."""
+    apply_migrations(db)
+    with closing(sqlite3.connect(db)) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert apply_migrations(db) == []  # repetible: con la base ya en WAL no cambia nada
+    escritor = sqlite3.connect(db, isolation_level=None)
+    lector = sqlite3.connect(db, timeout=0)  # sin espera: si la base estuviera trabada, fallaría de inmediato
+    try:
+        escritor.execute("BEGIN IMMEDIATE")
+        _cartel(escritor)
+        assert lector.execute("SELECT count(*) FROM tenders").fetchone()[0] == 0  # lee lo confirmado, sin trabarse
+        escritor.execute("COMMIT")
+        assert lector.execute("SELECT count(*) FROM tenders").fetchone()[0] == 1
+    finally:
+        escritor.close()
+        lector.close()

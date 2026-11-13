@@ -1,15 +1,33 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 («Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 (base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1106 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1108 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **Base en modo WAL (2026-11-13, Ivania; mejora 12 de la lista del 13/11).** `apply_migrations` (`migrate`) deja la
+  base en `PRAGMA journal_mode = WAL`: el panel lee mientras una tarea escribe, sin esperar. Queda guardado en el
+  archivo de la base; junto a ella aparecen `sicop.db-wal` y `sicop.db-shm` (normales). Sin migración nueva.
+  - **Lo que NO arregla:** dos escrituras a la vez siguen esperando su turno. Las fallas del 10/11 (carga en el
+    panel + enriquecimiento) y del 12/11 (gasto de la IA) fueron de ese tipo y ya se arreglaron con las esperas
+    (`ESPERA_TAREAS_S` = 600 s) y los 3 intentos de `_registrar`. Prioridad baja; sirve más en el servidor, donde
+    panel y tareas usarán la misma base todo el día.
+  - **Respaldo:** la copia heredaba el WAL y dejaba `.parcial-shm` sueltos en la carpeta de respaldos (lo atrapó
+    `test_nunca_sobrescribe_un_respaldo`). Ahora `respaldo.respaldar` deja la copia en `journal_mode = DELETE`: el
+    respaldo sigue siendo un solo `.db` con su huella. Al restaurarlo, el `migrate` del paso 5 lo vuelve a WAL.
+  - **Restaurar a mano** (`OPERACION.md` 6.2, Windows y servidor): la base dañada se aparta **con** sus `-wal` y
+    `-shm`; un `-wal` viejo junto a otra base la dañaría.
+  - Archivos: `app/database.py`, `app/respaldo.py`, `docs/OPERACION.md`. 2 pruebas nuevas
+    (`test_migraciones.py`: WAL y lector que no espera a una escritura sin confirmar; `test_respaldo.py`: respaldo
+    en un solo archivo). Suite: 1108 passed.
+  - **Pendiente · Ivania:** pasar la base real a WAL: con el panel cerrado y sin tareas corriendo (no a las 8:00,
+    10:00 ni 14:00), `python -m app.cli backup --output CARPETA` y después `python -m app.cli migrate`.
 
 - **«Último correo» y el resumen semanal en el panel (2026-11-13, pedido de Ivania).** El resumen semanal salía los
   lunes y nadie lo veía (Gmail lo aceptaba, pero licitaciones@ lo envía y lo recibe). Ahora:

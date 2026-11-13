@@ -146,6 +146,11 @@ def apply_migrations(path: Path, directory: Path = MIGRATIONS_DIR) -> list[str]:
                 if sin_llaves:
                     conn.execute("PRAGMA foreign_keys = ON")
             done.append(migration.name)
+        # Modo WAL (Ivania, 2026-11-13): el panel lee mientras una tarea escribe, sin esperar. Dos escrituras a la vez
+        # siguen esperando su turno (ESPERA_BASE_OCUPADA_S, ESPERA_TAREAS_S). Queda guardado en el archivo de la
+        # base, por eso basta con hacerlo aquí: migrate corre con el panel y las tareas cerrados. Junto a la base
+        # aparecen sicop.db-wal y sicop.db-shm; al restaurar un respaldo se apartan con ella (OPERACION.md 6.2).
+        conn.execute("PRAGMA journal_mode = WAL")
         return done
 
 

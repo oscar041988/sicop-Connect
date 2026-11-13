@@ -502,7 +502,9 @@ Restaurar el último respaldo (`DESPLIEGUE.md`, 9.7).
 
 1. Detener el timer y el panel.
 2. Comprobar el SHA-256 del `.db` contra el manifiesto.
-3. Copiar el `.db` como `DATABASE_PATH` (en el servidor: propietario `sicop`, permisos `600`).
+3. Apartar la base dañada **con sus archivos `-wal` y `-shm`, si están** (modo WAL, desde el 2026-11-13: nunca se
+   deja un `-wal` viejo junto a otra base; SQLite lo aplicaría y la dañaría). Copiar el `.db` como `DATABASE_PATH`
+   (en el servidor: propietario `sicop`, permisos `600`).
 4. Arrancar `sicop-migrate.service` y luego `sicop-web.service`.
 5. Abrir una revisión conocida para confirmar.
 
@@ -519,9 +521,11 @@ la carpeta del proyecto y con el entorno activado:
    (Get-FileHash "$r\$n.db" -Algorithm SHA256).Hash.ToLower()
    (Get-Content "$r\$n.json" -Raw | ConvertFrom-Json).sha256
    ```
-3. Guardar aparte la base dañada (no borrarla) y poner la del respaldo:
+3. Guardar aparte la base dañada (no borrarla), con sus archivos `-wal` y `-shm` si están, y poner la del
+   respaldo. Desde el 2026-11-13 la base usa el modo WAL: un `-wal` viejo junto a otra base la dañaría.
    ```powershell
    Rename-Item .\data\sicop.db sicop-antes-de-restaurar.db
+   foreach ($x in "wal", "shm") { if (Test-Path ".\data\sicop.db-$x") { Rename-Item ".\data\sicop.db-$x" "sicop-antes-de-restaurar.db-$x" } }
    Copy-Item "$r\$n.db" .\data\sicop.db
    ```
 4. **Comprobar que se restauró:** `Get-ChildItem .\data\*.db` debe mostrar **dos** archivos,

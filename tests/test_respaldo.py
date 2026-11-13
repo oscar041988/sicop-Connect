@@ -93,3 +93,14 @@ def test_comando_backup(base, tmp_path, capsys):
     assert "notification_outbox 0" in salida
     assert main(["backup", "--output", str(base.parent)], settings) == 1
     assert "No se hizo el respaldo" in capsys.readouterr().err
+
+
+def test_la_base_en_wal_se_respalda_en_un_solo_archivo(base, tmp_path):
+    """La base usa el modo WAL (2026-11-13); su respaldo es un .db suelto, sin -wal ni -shm, que se abre solo."""
+    with closing(sqlite3.connect(base)) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    r = respaldo.respaldar(base, tmp_path / "respaldos", AHORA)
+    with closing(sqlite3.connect(r.base)) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+        assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    assert not any(p.name.endswith(("-wal", "-shm")) for p in (tmp_path / "respaldos").iterdir())
