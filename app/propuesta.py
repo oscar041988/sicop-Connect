@@ -80,6 +80,7 @@ class Anexo:
     extension: str = ""
     pendiente: str | None = None          # por qué falta
     registrar: object = None              # función que anota el acceso en el historial
+    item_id: int | None = None            # el requisito del asistente de donde sale (para «Resolver»)
 
 
 @dataclass
@@ -309,7 +310,7 @@ def anexos(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: 
         elemento = perfil.obtener(conn, item.perfil_item_id) if item.perfil_item_id else None
         grupo = GRUPO_PERFIL.get(elemento.tipo, 3) if elemento else GRUPO_REQUISITO.get(item.tipo, 2)
         titulo = item.perfil_titulo or _sin_citas(item.requisito)[:140]
-        anexo = Anexo(grupo, titulo=titulo)
+        anexo = Anexo(grupo, titulo=titulo, item_id=item.id)
         if r is not None and r.tiene_archivo:
             hallado = asistente.documento(conn, settings.assistant_docs_dir, nro_sicop, r.id)
             if hallado:
@@ -453,6 +454,59 @@ def preparar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien
             pendientes += avisos
     return Preparada(compra, datos, bloques, lista, pendientes, oferta, precio_pendiente,
                      datos["procedimiento"] or nro_sicop, motivo_ia, hoy, elegida.numero if elegida else None)
+
+
+_GRAVEDAD = {"no_cumple": 0, "revisar": 1, "falta": 2}
+
+
+@dataclass
+class Falta:
+    """Un punto que haría salir la oferta como BORRADOR, con dónde se arregla."""
+    texto: str
+    item_id: int | None = None            # se resuelve en el asistente, en esa pregunta
+    donde: str | None = None              # se resuelve fuera del panel: quién y dónde
+
+
+def lo_que_falta(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, ahora: datetime,
+                 tarifas: dict | None = None) -> list[Falta]:
+    """Lo que saldría en rojo en la oferta, para verlo ANTES de pedirla (Ivania, 2026-11-13). Lo mismo que junta
+    preparar(), sin armar la oferta ni llamar a la IA: la IA solo dice dónde empieza cada sección del pliego, y eso no
+    cambia qué falta. No incluye los avisos de cambios pedidos en el chat que ya no se pueden aplicar (necesitan las
+    secciones). Un punto por pregunta del asistente: el anexo de un requisito ya listado no se repite (la portada sí
+    los lista por separado). No escribe nada."""
+    compra = detalle_compra(conn, nro_sicop)
+    if compra is None:
+        return []
+    faltas = []
+    if not ia_oferta.paginas_del_pliego(conn, nro_sicop):
+        faltas.append(Falta("Falta el pliego con texto: sin él no se puede armar la oferta.",
+                            donde="lo trae el enriquecimiento de las 10:00"))
+    hoy = ahora.astimezone(HORA_CR).date()
+    if asistente.sesion(conn, nro_sicop) is None:
+        evaluaciones = []
+        faltas.append(Falta("El asistente de elegibilidad no se ha empezado: ningún requisito está comprobado."))
+    else:
+        evaluaciones, _ = elegibilidad.evaluacion_actual(conn, nro_sicop, hoy)
+    # Lo más grave primero: no cumple → revisar → falta; dentro de cada uno, los excluyentes antes.
+    abiertas = sorted((e for e in evaluaciones if e.estado != "cumple"),
+                      key=lambda e: (_GRAVEDAD.get(e.estado, 3), not e.item.excluyente))
+    faltas += [Falta(f"{e.estado_texto}{' (excluyente)' if e.item.excluyente else ''}: "
+                     f"{_sin_citas(e.item.requisito)} — {e.motivo}", item_id=e.item.id) for e in abiertas]
+    _, datos, precio_pendiente = economica(conn, nro_sicop, compra, oferta_economica.configuracion(),
+                                           tarifario() if tarifas is None else tarifas, hoy)
+    if precio_pendiente:
+        faltas.append(Falta(f"PRECIO PENDIENTE: {precio_pendiente}.", donde="Oscar, en config/tarifario.yaml"))
+    if not datos["representante"].get("nombre"):
+        faltas.append(Falta("Faltan el nombre y la cédula del representante legal.",
+                            donde="Oscar, en config/oferta.yaml"))
+    for a in anexos(conn, settings, nro_sicop, None, evaluaciones):
+        if a.ruta is not None and a.extension == ".pdf" and not _pdf_valido(a.ruta):
+            a.pendiente = "el PDF no se pudo abrir (¿protegido?): adjuntarlo a mano"
+        # Un anexo de un requisito que ya está en la lista no se repite: se arregla en la misma pregunta.
+        if a.pendiente and (a.item_id is None or a.item_id not in {f.item_id for f in faltas}):
+            faltas.append(Falta(f"Anexo {a.numero} · {a.titulo}: {a.pendiente}.", item_id=a.item_id,
+                                donde=None if a.item_id else "Oscar: falta decidir cómo se elige"))
+    return faltas
 
 
 def _anotar(conn: sqlite3.Connection, quien: Quien, nro_sicop: str, p: Preparada, accion: str) -> None:

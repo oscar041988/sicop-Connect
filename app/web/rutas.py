@@ -506,6 +506,8 @@ def _render_asistente(request: Request, conn: sqlite3.Connection, nro_sicop: str
         "d": datos, "seg": seguimiento.estado(conn, nro_sicop), "puede_entrar": True, "asistente_activo": True,
         "regresiva": panel.cuenta_regresiva(datos.compra.fecha_cierre_recepcion, ahora),
         "error_oferta": request.session.pop("error_oferta", None),
+        # Lo que saldría en rojo, antes de pedir la oferta (Ivania, 13/11). Sin IA: no gasta al abrir la página.
+        "falta_oferta": propuesta.lo_que_falta(conn, load_settings(), nro_sicop, ahora),
         **_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra),
     }, status_code=status_code)
 

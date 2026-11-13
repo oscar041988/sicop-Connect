@@ -327,3 +327,53 @@ def test_el_boton_entrega_el_pdf_y_guarda_una_copia(panel_oferta, db, tmp_path):
     assert r.content.startswith(b"%PDF") and f"oferta_{NRO}_" in r.headers["content-disposition"]
     assert list((tmp_path / "exports" / "ofertas").rglob("oferta_*.pdf"))
     assert _acciones(db, "generar_oferta") == 1
+
+
+# --- Lo que falta, antes de pedir la oferta (Ivania, 2026-11-13) ----------------------------------------------------
+
+def _falta(db, settings, tarifas=None):
+    with closing(connect(db)) as conn:
+        return propuesta.lo_que_falta(conn, settings, NRO, AHORA, tarifas=tarifas)
+
+
+def test_lo_que_falta_dice_lo_mismo_que_la_portada_sin_llamar_a_la_ia(db, tmp_path, monkeypatch):
+    settings = _settings(db, tmp_path)
+    _pliego(db)
+    ids = _requisitos(db, settings)
+
+    def sin_ia(*args, **kwargs):
+        raise AssertionError("lo_que_falta no debe pedir las secciones a la IA")
+
+    monkeypatch.setattr(ia_oferta, "secciones", sin_ia)
+    faltas = _falta(db, settings, tarifas={})
+    monkeypatch.undo()
+
+    requisito = next(f for f in faltas if f.texto.startswith("No cumple: Reporte de posición"))
+    assert requisito.item_id == ids["reporte"] and "[DOC" not in requisito.texto     # se resuelve en esa pregunta
+    precio = next(f for f in faltas if f.texto.startswith("PRECIO PENDIENTE"))
+    assert precio.donde == "Oscar, en config/tarifario.yaml" and precio.item_id is None
+    ficha = next(f for f in faltas if "Ficha técnica del equipo ofertado" in f.texto)
+    assert ficha.donde.startswith("Oscar") and ficha.item_id is None
+    assert not any("patente" in f.texto.lower() or "declaración" in f.texto.lower() for f in faltas)  # ya subidos
+    # Lo que no depende de las secciones del pliego sale igual en la portada de la oferta armada.
+    armada = _armar(db, settings, OpenAISimulado(), Impresora(), tarifas={})
+    for f in faltas:
+        if f.item_id is None:
+            assert f.texto in armada.pendientes or f.texto.rstrip(".") in " ".join(armada.pendientes), f.texto
+
+
+def test_lo_que_falta_sin_pliego_ni_asistente(db, tmp_path):
+    settings = _settings(db, tmp_path, ia=False)
+    faltas = _falta(db, settings, tarifas={})
+    assert faltas[0].texto.startswith("Falta el pliego") and faltas[0].donde.startswith("lo trae el enriquecimiento")
+    assert any("no se ha empezado" in f.texto for f in faltas)
+
+
+def test_la_caja_oferta_del_asistente_muestra_lo_que_falta_con_enlace(panel_oferta, db, tmp_path):
+    oscar = panel_oferta["oscar"]
+    _dar_seguimiento(oscar)
+    _pliego(db)
+    ids = _requisitos(db, _settings(db, tmp_path, ia=False))
+    html = oscar.get(f"/oportunidades/{NRO}/asistente").text
+    assert "Antes de pedirla:" in html and "Así saldría como BORRADOR." in html
+    assert f'/oportunidades/{NRO}/asistente?pregunta={ids["reporte"]}#pregunta">Resolver</a>' in html

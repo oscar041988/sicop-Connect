@@ -1,15 +1,33 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 («7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 (lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1109 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1112 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **Lo que falta antes de pedir la oferta (2026-11-13, Ivania; mejora 16 de la lista del 13/11).** En la página
+  del asistente, caja «Oferta»: «Antes de pedirla: N puntos por resolver. Así saldría como BORRADOR.», con
+  «Resolver» (abre esa pregunta: `?pregunta=<id>#pregunta`, como «Cambiar») o dónde se arregla fuera del panel.
+  - `propuesta.lo_que_falta`: lo mismo que junta `preparar()` (pliego, asistente, requisitos que no cumplen,
+    tarifario, representante, anexos y PDF que no abren) **sin armar la oferta ni llamar a la IA** (la IA solo marca
+    las secciones; eso no cambia qué falta). No incluye los avisos de cambios del chat que ya no se aplican
+    (necesitan las secciones). No escribe nada. `Anexo.item_id` nuevo, para enlazar el anexo con su pregunta.
+  - **Con datos reales** (`20261003280`, solo lectura, 0,18 s) salían 148 puntos: se ordenó lo más grave primero
+    (no cumple → revisar → falta; excluyentes antes), un punto por pregunta (el anexo de un requisito ya listado no
+    se repite; la portada del PDF sí los lista aparte) y dos grupos: «En el asistente» (5 a la vista, el resto en
+    un desplegable) y «Fuera del asistente». Quedan 90: 87 en el asistente y 3 de Oscar (tarifa, representante,
+    ficha técnica). Mientras Oscar no decida la ficha técnica, la lista nunca queda vacía.
+  - Archivos: `app/propuesta.py`, `app/web/rutas.py`, `asistente.html`, `estilo.css`. 3 pruebas nuevas en
+    `tests/test_propuesta.py` (dice lo mismo que la portada y no llama a la IA; sin pliego ni asistente; la caja con
+    su enlace). Suite: 1112 passed. Sin migración.
+  - **Pendiente · Ivania:** verla en el asistente de `20261003280` y decir si se entiende (Claude no la vio en
+    pantalla: haría falta la sesión del panel).
 
 - **«7 de 20» en la animación de la Bitácora (2026-11-13, Ivania; mejora 14 de la lista del 13/11).** Las corridas
   locales guardaban `en_cola` solo al terminar, así que la persona picando decía «7 consultados» sin el total.

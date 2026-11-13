@@ -770,3 +770,14 @@ form.en-linea { display: inline; margin-left: 8px; }
 .ultimos-correos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; font-size: .88rem; color: var(--mut); }
 .ultimos-correos strong { color: var(--ink); }
 .resumen-semanal { max-width: 640px; }
+/* Asistente, caja «Oferta»: lo que falta antes de pedirla (Ivania, 13/11). Con muchos requisitos la lista se
+   desplaza en su caja, como la de requisitos. */
+.oferta-falta { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: var(--rojo-bg); }
+.oferta-falta p { margin: 0 0 6px; color: var(--rojo); }
+.oferta-falta ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-height: 260px; overflow-y: auto;
+  font-size: .86rem; }
+.oferta-falta a { font-weight: 600; white-space: nowrap; }
+.oferta-falta p.grupo { margin: 10px 0 4px; font-size: .8rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--ink); }
+.oferta-falta details summary { cursor: pointer; margin-top: 6px; font-size: .86rem; font-weight: 600; color: var(--azul); }
+.oferta-falta details ul { margin-top: 6px; }

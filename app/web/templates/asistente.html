@@ -70,6 +70,42 @@
       <p class="sub">El pliego respondido, la oferta económica y los documentos del asistente. Lo que falta sale en
         rojo.</p>
       {% endif %}
+      {# Lo que falta, antes de pedirla (Ivania, 13/11): lo mismo que diría la portada «BORRADOR», con dónde se arregla #}
+      {% if falta_oferta %}
+      {% set dentro = falta_oferta | selectattr("item_id") | list %}
+      {% set fuera = falta_oferta | rejectattr("item_id") | list %}
+      <div class="oferta-falta">
+        <p><strong>Antes de pedirla: {{ falta_oferta | length }} punto{{ "s" if falta_oferta | length != 1 }} por resolver.</strong>
+          Así saldría como BORRADOR.</p>
+        {% if dentro %}
+        <p class="grupo">En el asistente ({{ dentro | length }}), lo más grave primero</p>
+        <ul>
+          {% for f in dentro[:5] %}
+          <li>{{ f.texto }} <a href="/oportunidades/{{ c.nro_sicop }}/asistente?pregunta={{ f.item_id }}#pregunta">Resolver</a></li>
+          {% endfor %}
+        </ul>
+        {% if dentro | length > 5 %}
+        <details><summary>Ver los {{ dentro | length - 5 }} restantes</summary>
+          <ul>
+            {% for f in dentro[5:] %}
+            <li>{{ f.texto }} <a href="/oportunidades/{{ c.nro_sicop }}/asistente?pregunta={{ f.item_id }}#pregunta">Resolver</a></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+        {% endif %}
+        {% if fuera %}
+        <p class="grupo">Fuera del asistente ({{ fuera | length }})</p>
+        <ul>
+          {% for f in fuera %}
+          <li>{{ f.texto }}{% if f.donde %} <small class="sub">· {{ f.donde }}</small>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="hecho">Según el asistente, el tarifario y los anexos, no queda nada por resolver.</p>
+      {% endif %}
       <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="desde" value="asistente">
