@@ -130,6 +130,7 @@ class Pagina:
     total: int
     pagina: int
     paginas: int
+    escondidos: int = 0   # «No interesa» que cumplen los demás filtros pero no salen en esta lista
 
 
 @dataclass
@@ -237,6 +238,12 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
         # se calcula con «ahora» en cada consulta. Se ve eligiendo «Vencido» en el filtro; nada se borra, y la
         # página «Seguimiento» lo sigue mostrando (las etapas «enviada», «ganada» y «perdida» son después del cierre).
         condiciones.append("plazo != 'vencido'")
+    if f.q:
+        # LIKE sin distinguir mayúsculas (solo letras sin tilde); los comodines del usuario se toman literales.
+        condiciones.append("(descripcion LIKE :q ESCAPE '!' OR institucion LIKE :q ESCAPE '!'"
+                           " OR nro_sicop LIKE :q ESCAPE '!')")
+        params["q"] = "%" + re.sub(r"([!%_])", r"!\1", f.q) + "%"
+    escondidos = 0
     if f.revisado == "si":
         condiciones.append("decision IS NOT NULL")
     elif f.revisado == "no":
@@ -244,11 +251,12 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
     elif f.revisado:
         condiciones.append("decision = :decision")
         params["decision"] = f.revisado
-    if f.q:
-        # LIKE sin distinguir mayúsculas (solo letras sin tilde); los comodines del usuario se toman literales.
-        condiciones.append("(descripcion LIKE :q ESCAPE '!' OR institucion LIKE :q ESCAPE '!'"
-                           " OR nro_sicop LIKE :q ESCAPE '!')")
-        params["q"] = "%" + re.sub(r"([!%_])", r"!\1", f.q) + "%"
+    else:
+        # «No interesa» sale de «Todos» y queda solo en su chip (pedido de Oscar por Ivania, 2026-11-13): seguía en
+        # el panel y confundía. Nada se borra; se cuenta para avisar cuántos quedaron escondidos.
+        escondidos = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {' AND '.join(condiciones)}"
+                                  " AND decision = 'no_interesa'", params).fetchone()[0]
+        condiciones.append("decision IS NOT 'no_interesa'")
     donde = " AND ".join(condiciones)
 
     total = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {donde}", params).fetchone()[0]
@@ -270,7 +278,7 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
     montos = estimados(conn, [f.nro_sicop for f in resultado])
     for fila in resultado:
         fila.estimado = montos.get(fila.nro_sicop, {})
-    return Pagina(resultado, total, pagina, paginas)
+    return Pagina(resultado, total, pagina, paginas, escondidos)
 
 
 def estimados(conn: sqlite3.Connection, nros: list[str]) -> dict[str, dict[str, Monto]]:

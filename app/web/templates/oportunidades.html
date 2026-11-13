@@ -80,7 +80,9 @@
 
 <div class="resultados">
   <p class="sub"><strong>{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %}</strong> · por cierre más próximo{% if not filtros.plazo %} · sin vencidos{% endif %}
-    <small>(un cartel puede salir una vez por cada familia con la que coincide{% if not filtros.plazo %}; los vencidos, con «Vencido» en Plazo{% endif %})</small></p>
+    <small>(un cartel puede salir una vez por cada familia con la que coincide{% if not filtros.plazo %}; los vencidos, con «Vencido» en Plazo{% endif %})</small>
+    {% if pagina.escondidos %}<br><span class="escondidos">{{ pagina.escondidos }} más en «No interesa», fuera de esta lista ·
+      <a href="{{ url_chip('no_interesa') }}">Verlos</a></span>{% endif %}</p>
   {% if pagina.total %}<a class="btn o exportar" href="{{ url_exportar }}" download>Exportar a Excel</a>{% endif %}
 </div>
 

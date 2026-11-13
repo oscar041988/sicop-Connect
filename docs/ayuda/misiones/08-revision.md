@@ -28,6 +28,7 @@
    La de arriba dice «(vigente)»: es la que vale ahora.
 
 Tu decisión también se ve en el panel, en las etiquetas de la fila del cartel.
+Si elegiste «No interesa», el cartel sale de «Todos». Queda en el botón «No interesa», arriba del panel.
 
 **Dónde quedaste:** al final del cartel, en «Historial».
 
@@ -38,6 +39,9 @@ Guarda otra revisión con la decisión correcta. La nueva queda como la vigente.
 
 **¿Y si sale un error al guardar «No interesa»?**
 Falta el «Motivo». Elige uno y vuelve a guardar.
+
+**¿Y si quiero volver a ver un cartel que marqué «No interesa»?**
+Haz clic en «No interesa», arriba del panel. Si cambias de opinión, guarda otra revisión: vuelve a «Todos».
 
 **¿Y si la decisión es de otra persona?**
 Escríbelo en el «Comentario», por ejemplo «decisión de Oscar».

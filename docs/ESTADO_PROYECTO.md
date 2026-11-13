@@ -11,6 +11,14 @@ Oscar una el PR)
 
 ## Último resultado
 
+- **«No interesa» sale de «Todos» (2026-11-13, pedido de Oscar por Ivania).** Un cartel marcado «No interesa» seguía
+  en el panel y confundía a Oscar. Ahora `panel.listar` lo esconde de «Todos» (y de la búsqueda sin chip) y queda
+  solo en el chip «No interesa»; nada se borra y otra revisión lo devuelve. Debajo del número de resultados:
+  «N más en «No interesa», fuera de esta lista · Verlos» (el enlace conserva la búsqueda y los filtros).
+  «Exportar a Excel» sigue los mismos filtros, así que «Todos» tampoco los exporta. Las otras decisiones (incluida
+  «No se oferta») siguen en «Todos». Misión 08: una línea y un ¿Y si…?. 3 pruebas nuevas en `tests/test_panel.py`
+  (62 passed). Suite: **1119 passed**. Sin migración. Decisión de Ivania: solo «No interesa» se esconde.
+
 - **Hoja «De qué trata, explicado en detalle» (2026-11-13, pedido de Oscar por Ivania).** Una página más que amplía
   «De qué trata» con palabras sencillas: qué compran y para qué, cómo tiene que ser cada cosa, cómo y cuándo se
   entrega, qué piden para participar y cómo se escoge al ganador, con sus citas. Sale en el **reporte PDF** (hoja
