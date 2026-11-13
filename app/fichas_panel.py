@@ -12,7 +12,7 @@ import json
 import re
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -244,9 +244,30 @@ _CONSULTA = ("SELECT c.id, c.iniciada_en, c.nro_sicop, c.resultado, c.motivo, c.
              " LEFT JOIN enrich_runs e ON e.id = c.run_id")
 
 
-def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False) -> dict:
+# Una corrida «en curso» más vieja que esto se cortó (apagón, PC cerrada) y no la cerró nadie: no se anima.
+EN_CURSO_MAXIMO = timedelta(hours=6)
+
+
+def corrida_en_curso(conn: sqlite3.Connection, ahora: datetime | None = None) -> dict | None:
+    """La corrida de enrich run que está trabajando ahora (para la animación de la bitácora), o None.
+    Lleva cuántos carteles consultó hasta ahora (sin los reintentos) y cuántos hay en cola (0 si aún no se sabe)."""
+    fila = conn.execute("SELECT id, iniciada_en, en_cola FROM enrich_runs WHERE estado = 'en_curso'"
+                        " ORDER BY id DESC LIMIT 1").fetchone()
+    if fila is None:
+        return None
+    inicio = datetime.fromisoformat(fila[1])
+    ahora = ahora or datetime.now(timezone.utc)
+    if inicio.tzinfo is None or ahora - inicio > EN_CURSO_MAXIMO:
+        return None
+    consultados = conn.execute("SELECT count(*) FROM enrich_consultas WHERE run_id = ? AND es_reintento = 0",
+                               (fila[0],)).fetchone()[0]
+    return {"id": fila[0], "iniciada_en": fila[1], "en_cola": fila[2], "consultados": consultados}
+
+
+def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False, ahora: datetime | None = None) -> dict:
     donde = (" WHERE c.resultado IN ('fallo', 'control') AND r.id IS NULL" if solo_por_revisar else "")
     return {
+        "en_curso": corrida_en_curso(conn, ahora),
         "corridas": conn.execute("SELECT id, iniciada_en, terminada_en, estado, en_cola, consultados, fallos,"
                                  " resumen_estado FROM enrich_runs ORDER BY id DESC LIMIT 15").fetchall(),
         "consultas": [Consulta(*f[:9], bool(f[9]), *f[10:]) for f in conn.execute(

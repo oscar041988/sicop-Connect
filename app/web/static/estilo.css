@@ -744,3 +744,24 @@ form.en-linea { display: inline; margin-left: 8px; }
 .asis-docs li { display: grid; gap: 2px; overflow-wrap: anywhere; }
 .asis-caja form.en-linea { display: flex; flex-wrap: wrap; gap: 8px; }
 .asistente-abrir .btn { display: inline-block; }
+/* Bitácora: persona picando mientras una corrida de enrich run está «en curso» (Oscar, 13/11). Solo CSS: el brazo
+   con el pico gira sobre el hombro y saltan chispas al golpear la roca. Sin animación si el sistema pide menos
+   movimiento. */
+.trabajando { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 18px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--azul-bg); }
+.trabajando h2 { margin: 0 0 4px; font-size: 1.15rem; }
+.trabajando p { margin: 0; }
+.minero { flex: none; color: var(--azul); }
+.minero .persona circle { fill: currentColor; }
+.minero .persona path, .minero .brazos path { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; }
+.minero .brazos .mango { stroke: #8a5a2b; stroke-width: 4; }
+.minero .brazos .punta { stroke: #5b6470; stroke-width: 5; }
+.minero .roca { fill: #9aa5b1; }
+.minero .piso { fill: #000; opacity: .08; }
+.minero .chispas path { stroke: #f2a900; stroke-width: 3; stroke-linecap: round; }
+.minero .brazos { transform-box: view-box; transform-origin: 44px 38px; animation: picar 1.2s ease-in infinite; }
+.minero .chispas { opacity: 0; animation: chispas 1.2s linear infinite; }
+@keyframes picar { 0% { transform: rotate(-25deg); } 55% { transform: rotate(72deg); } 65% { transform: rotate(66deg); }
+  100% { transform: rotate(-25deg); } }
+@keyframes chispas { 0%, 52% { opacity: 0; } 56%, 66% { opacity: 1; } 72%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .minero .brazos, .minero .chispas { animation: none; } }

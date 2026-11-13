@@ -1,13 +1,33 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-12 (escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
+Última actualización: 2026-11-13 (persona picando en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
+escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1102 passed · `desarrollo` en GitHub: al día
-con la copia local (push del 12/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una
-el PR)
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1103 passed · `desarrollo` en GitHub: la copia
+local va adelante (commit del 13/11 sin push) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
+Oscar una el PR)
 
 ## Último resultado
+
+- **Persona picando en la Bitácora (2026-11-13, pedido de Oscar por medio de Ivania).** Oscar quería ver una
+  persona picando mientras el enriquecimiento trabaja. Ivania eligió la Bitácora (el panel no arranca el
+  enriquecimiento: corre a las 10:00 o con `enrich run`). Mientras la última corrida está «en curso», arriba de la
+  Bitácora sale un dibujo SVG que pica una roca, con los carteles consultados hasta ahora (sin los reintentos), «de N
+  en cola» si ya se sabe (en las corridas locales `en_cola` se guarda al final; en las remotas, al empezar), la
+  corrida y la hora de inicio. La página se recarga sola cada 15 s (`<meta http-equiv="refresh">` en el bloque nuevo
+  `cabeza` de `base.html`), solo durante la corrida.
+  - Una corrida «en curso» de más de 6 h se toma por cortada (apagón, PC cerrada) y no se anima
+    (`fichas_panel.EN_CURSO_MAXIMO`, `corrida_en_curso`). Sin animación con `prefers-reduced-motion`. Solo CSS, sin
+    JavaScript ni dependencias. Sin migración.
+  - Archivos: `app/fichas_panel.py`, `bitacora.html`, `base.html`, `estilo.css`. 1 prueba nueva en
+    `tests/test_panel_enriquecimiento.py` (sin corrida, con corrida, más de 6 h, terminada). Suite: 1103 passed.
+  - Vista previa fuera del repositorio: `vista-minero.html` en el Escritorio de Ivania (datos de ejemplo).
+  - **Pendiente · Oscar:** verla y decir si es lo que imaginaba.
+  - Otros del 13/11: guía de la demo para Oscar (página privada de Ivania en claude.ai, fuera del repositorio).
+    El resumen semanal salió los lunes 2/11 y 9/11 (registro del ciclo: Gmail lo ACEPTÓ para los 4 y los 3
+    destinatarios) pero Ivania nunca lo vio en licitaciones@. **Pendiente · Ivania:** buscarlo en Gmail
+    (`subject:"Resumen semanal"`, también en Enviados y Spam) o preguntar a otro destinatario.
 
 - **El asistente en su propia página (2026-11-12, pedido de Ivania).** Con el diseño de la maqueta del chat que vio
   Oscar (11/11): `GET /oportunidades/{nro}/asistente` (`pagina_asistente` y `_render_asistente` en
