@@ -550,6 +550,11 @@ form.en-linea { display: inline; margin-left: 8px; }
 .panel-paso > h2:first-child { margin-top: 0; }
 .cartel-cerrado { margin: 12px 0 0; }
 .frase-cartel { font-size: 1.15rem; line-height: 1.45; font-weight: 600; color: var(--hx-azul-osc); margin: 0 0 8px; overflow-wrap: anywhere; }
+/* «De qué trata, explicado en detalle» (prompt v9): párrafos cómodos de leer, en el panel y en el resumen. */
+.detalle-cartel { max-width: 75ch; margin: 0 0 12px; }
+.detalle-cartel summary { cursor: pointer; color: var(--azul); font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.detalle-cartel p { line-height: 1.55; margin: 0 0 8px; overflow-wrap: anywhere; }
+.detalle-cartel h3 { font-size: 1rem; margin: 8px 0 6px; }
 .panel-paso .etiqueta-ia { margin-left: 0; }
 
 /* Datos en filas: etiqueta a la izquierda, valor a la derecha (sin cajas) */

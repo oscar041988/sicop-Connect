@@ -294,6 +294,11 @@ Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`,
   requerimientos, 8 criterios, 5 riesgos, 6 plazos, 10 fuentes, textos de hasta 300 caracteres). Si no cabe en 3,
   se rehace con los de antes (`LIMITES_MEDIOS`) y luego con los cortos. Medido con los 35 carteles reales con
   resumen y una explicación de 250 palabras: 31 en 3 páginas, 4 en 2, ninguno pasó de 3.
+- **Desde el 2026-11-13: una hoja más, máximo 4 páginas** (Oscar, `DECISION_IA.md` regla 9). Al final, en hoja
+  aparte (`break-before: page`), «De qué trata, explicado en detalle» (prompt v9, campo `explicacion_cartel`, 400 a
+  550 palabras con citas; tope de 4 200 caracteres para que no pase de una página). Sin la hoja, el máximo sigue
+  siendo 3. La misma explicación sale en la página del cartel («Leer de qué trata, explicado en detalle») y en el
+  resumen. Migración 0046: el CHECK de `ia_reports.paginas` pasa a 1–4.
 - **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
   partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
 - **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo

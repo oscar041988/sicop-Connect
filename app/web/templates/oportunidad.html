@@ -147,6 +147,12 @@
       {{ vigente.diferencias | map(attribute="dato") | join(", ") | lower }}. Los datos oficiales son los de SICOP.</p>
     {% endif %}
     <p class="frase-cartel">{{ r.de_que_trata or NO }}</p>
+    {% if r.explicacion_cartel and r.explicacion_cartel != NO %}
+    <details class="detalle-cartel">
+      <summary>Leer de qué trata, explicado en detalle</summary>
+      {% for parrafo in r.explicacion_cartel.splitlines() if parrafo.strip() %}<p>{{ parrafo }}</p>{% endfor %}
+    </details>
+    {% endif %}
     <p><span class="etiqueta-ia">Generado por IA · verificar con el pliego</span>
       <span class="recomendacion-etiqueta rec-{{ r.recomendacion }}">{{ termino("Recomendación preliminar") }}: {{ IA.recomendaciones.get(r.recomendacion, IA.NO) }}</span></p>
     <p class="sub">{{ r.justificacion }} La decisión es del encargado.</p>

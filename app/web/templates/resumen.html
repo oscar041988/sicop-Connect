@@ -50,6 +50,13 @@
 
   <h2>De qué trata</h2>
   <p>{{ r.de_que_trata }}</p>
+  {# Hoja aparte del reporte (prompt v9; Oscar, 2026-11-13): amplía «de qué trata» con palabras sencillas. #}
+  {% if r.explicacion_cartel and r.explicacion_cartel != IA.NO %}
+  <section class="detalle-cartel" id="explicado">
+    <h3>Explicado en detalle</h3>
+    {% for parrafo in r.explicacion_cartel.splitlines() if parrafo.strip() %}<p>{{ parrafo }}</p>{% endfor %}
+  </section>
+  {% endif %}
 
   <h2>Encaje con Hermatix</h2>
   <p><strong>{{ r.encaje_hermatix.producto }}</strong> <span class="sub">({{ r.encaje_hermatix.familia }})</span><br>

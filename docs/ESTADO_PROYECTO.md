@@ -1,15 +1,31 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 (hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1113 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1116 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **Hoja «De qué trata, explicado en detalle» (2026-11-13, pedido de Oscar por Ivania).** Una página más que amplía
+  «De qué trata» con palabras sencillas: qué compran y para qué, cómo tiene que ser cada cosa, cómo y cuándo se
+  entrega, qué piden para participar y cómo se escoge al ganador, con sus citas. Sale en el **reporte PDF** (hoja
+  aparte al final), en el **panel** (página del cartel, desplegable debajo de «De qué trata») y en el **resumen**.
+  - Prompt **v9** = v8 + campo `explicacion_cartel` (400 a 550 palabras); v8 no se tocó. Esquema en
+    `app/ai/resumen.py`; un resumen anterior a v9 no la trae y la hoja no sale (normalizar → «no encontrado»).
+  - Reporte: máximo **4 páginas** solo si trae la hoja; sin ella, 3 como antes. Tope de 4 200 caracteres para que la
+    hoja no pase de una página. **Migración 0046**: CHECK de `ia_reports.paginas` 1–4 (igual que la 0039).
+  - Docs: `DECISION_IA.md` regla 9, `RESUMEN_IA.md`, `.env.example`, misión 25 (paso 9); ejemplo de la ayuda con el
+    campo.
+  - Pruebas nuevas (3): la hoja es exactamente una página más y va al final; el reporte largo con hoja llega a 4;
+    panel y resumen la muestran y sin el campo no; v9 en el esquema y el texto. Suite: **1116 passed**.
+  - **Pendiente de Ivania:** `IA_PROMPT_VERSION=v9` en `.env` y `python -m app.cli migrate` (la base real pasa a
+    0046). Los resúmenes viejos no traen la hoja hasta generarlos de nuevo (cuesta otra llamada a la IA). Si salen
+    «incompleta · max_tokens», subir `IA_MAX_OUTPUT_TOKENS` (p. ej. 6000). Rehacer las capturas de la misión 25.
 
 - **La caja «Oferta» primero en el asistente (2026-11-13, pedido de Ivania).** Ivania la revisó en pantalla con
   `20261003280`: se ve bien, pero la quiere antes de «Requisitos del cartel» y «Archivos subidos». En

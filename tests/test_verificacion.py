@@ -301,7 +301,7 @@ def test_0030_conserva_ia_usage_y_las_referencias_de_los_resumenes(tmp_path):
         conn.execute("INSERT INTO ia_summaries (nro_sicop, prompt_version, modelo, huella, estado, motivo, ia_usage_id,"
                      " creado_en) VALUES (?, 'v1', 'm', ?, 'fallido', 'prueba', 1, 't')", (NRO, "a" * 64))
         conn.commit()
-    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql"]
+    assert apply_migrations(base) == ["0030_lista_verificacion.sql", "0031_asistente.sql", "0032_archivo_pendiente.sql", "0033_resultado_elegibilidad.sql", "0034_revision_rapida.sql", "0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql", "0046_reporte_cuatro_paginas.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, proposito FROM ia_usage").fetchall() == [(1, "resumen")]
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []

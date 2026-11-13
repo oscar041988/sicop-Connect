@@ -50,6 +50,10 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
    página que explican en detalle la recomendación (las tres: dar seguimiento, revisar requisitos y descartar), con
    citas. La escribe el modelo en el mismo resumen (prompt v6, campo `explicacion_recomendacion`); migración 0039.
    Prompt v7 (Ivania, mismo día): igual, sin mencionar documentos que no se pudieron leer.
+   **Cambio del 2026-11-13 (Oscar, por Ivania): una hoja más, hasta 4 páginas.** Al final, en hoja aparte, «De qué
+   trata, explicado en detalle»: una página (400 a 550 palabras) que amplía «de qué trata» con palabras sencillas,
+   con citas. También sale en el panel (página del cartel) y en el resumen. Prompt v9, campo `explicacion_cartel`;
+   migración 0046. Sin la hoja (resumen anterior a v9), el reporte sigue en 3 páginas como máximo.
 7. Las pruebas automáticas usan siempre un **modelo simulado** (no gastan dinero).
 8. Con la IA apagada (`AI_MODE=none`), el sistema funciona igual que antes.
 

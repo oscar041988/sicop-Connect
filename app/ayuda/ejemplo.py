@@ -274,6 +274,14 @@ def _resumen_de_ejemplo() -> dict:
             "[DOC 1 · pág. 1]. Lo que decide es qué piden, y eso se alinea con Hermatix.\n"
             "Falta confirmar si piden un técnico en planilla [DOC 1 · pág. 1]; no impide dar seguimiento, pero "
             "conviene preguntarlo antes de ofertar."),
+        "explicacion_cartel": (
+            "EJEMPLO: la institución quiere saber en todo momento dónde están sus 12 vehículos. Para eso contrata un "
+            "servicio de rastreo GPS: un aparato pequeño en cada vehículo envía su ubicación a una página web "
+            "[DOC 1 · pág. 1].\n"
+            "El servicio dura 24 meses. La empresa que gane instala los aparatos y da el soporte durante ese "
+            "tiempo [DOC 1 · pág. 1].\n"
+            "Para participar hay que presentar la garantía de participación, un depósito que asegura que la "
+            "empresa mantiene su oferta [DOC 1 · pág. 1]."),
     }
 
 

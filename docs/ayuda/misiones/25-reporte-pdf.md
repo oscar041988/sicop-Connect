@@ -1,7 +1,7 @@
 # ¿Cómo leo y descargo el Reporte de cartel?
 
 **Para qué sirve:** para entender en 2 minutos qué pide un cartel y compartirlo o imprimirlo. Es un PDF de
-máximo 3 páginas con la identidad de Hermatix.
+máximo 3 páginas con la identidad de Hermatix, más una hoja que explica el cartel en detalle.
 
 **Antes de empezar:** el cartel debe tener su resumen con IA (misión 05).
 
@@ -25,6 +25,10 @@ máximo 3 páginas con la identidad de Hermatix.
    - Cada cita [DOC n · pág. p] dice dónde comprobarlo en el pliego.
 8. Al final, lee «Por qué se recomienda»: media página que explica la recomendación con los datos del pliego.
    Si recomienda descartar, dice qué tendría que pedir el cartel para que valiera la pena.
+9. En la última hoja, lee «De qué trata, explicado en detalle».
+   Cuenta con palabras sencillas qué compran, cómo tiene que ser, cuándo se entrega, qué piden para participar y
+   cómo escogen al ganador. La misma explicación está en el cartel, debajo de «De qué trata».
+   Si no aparece, el resumen es anterior a esta hoja: genera el resumen de nuevo.
 
 **Dónde quedaste:** con el PDF descargado, listo para compartir o imprimir.
 

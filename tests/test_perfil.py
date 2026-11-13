@@ -136,7 +136,7 @@ def test_0035_conserva_los_elementos_sus_versiones_y_las_referencias(tmp_path):
         conn.execute("INSERT INTO company_profile_versions (item_id, numero, cargado_por_nombre, created_at)"
                      " VALUES (1, '8', 'Ana', 't')")
         conn.commit()
-    assert apply_migrations(base) == ["0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql"]
+    assert apply_migrations(base) == ["0035_perfil_tipos_nuevos.sql", "0036_reportes_cartel.sql", "0037_ayuda_votos.sql", "0038_cumplimiento_resumen.sql", "0039_reporte_tres_paginas.sql", "0040_enriquecimiento_remoto.sql", "0041_oferta_borrador.sql", "0042_respuesta_tecnica.sql", "0043_oferta_completa.sql", "0044_asistente_chat.sql", "0045_oferta_versiones.sql", "0046_reporte_cuatro_paginas.sql"]
     with closing(connect(base)) as conn:
         assert conn.execute("SELECT id, tipo, titulo FROM company_profile_items").fetchall() == [
             (1, "experiencia", "Años de experiencia")]

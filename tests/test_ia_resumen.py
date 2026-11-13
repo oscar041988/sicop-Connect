@@ -408,3 +408,16 @@ def test_v6_explicacion_de_la_recomendacion_en_el_esquema_y_el_texto():
     assert resumen.normalizar({})["explicacion_recomendacion"] == resumen.NO
     assert "== POR QUÉ SE RECOMIENDA ==\nno encontrado" in resumen.legible(
         resumen.Resultado(2, NRO, "ok", False, "2026-10-30", "modelo-simulado", "v5", "a" * 64, viejo))
+
+
+def test_v9_de_que_trata_explicado_en_detalle():
+    """Oscar (2026-11-13): una página que amplía «de qué trata» con palabras sencillas (prompt v9)."""
+    assert "explicacion_cartel" in resumen.ESQUEMA["required"]
+    v9 = resumen.cargar_prompt("v9")
+    assert "explicacion_cartel" in v9 and "Hermatix no es un taller" in v9 and "No menciones en" in v9
+    assert "explicacion_cartel" not in resumen.cargar_prompt("v8")             # v8 no se tocó
+    assert resumen.normalizar({})["explicacion_cartel"] == resumen.NO          # resumen anterior a v9
+    datos = resumen.normalizar({"de_que_trata": "Compran GPS (SINTÉTICO).",
+                                "explicacion_cartel": "La municipalidad quiere saber dónde está cada carro (SINTÉTICO)."})
+    texto = resumen.legible(resumen.Resultado(1, NRO, "ok", False, "2026-11-13", "modelo-simulado", "v9", "a" * 64, datos))
+    assert "== DE QUÉ TRATA, EXPLICADO EN DETALLE ==\nLa municipalidad quiere saber dónde está cada carro" in texto

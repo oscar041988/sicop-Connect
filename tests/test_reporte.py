@@ -96,8 +96,13 @@ def test_cartel_corto_y_cartel_largo_caben_en_3_paginas(base):
         largo_texto = "Texto SINTÉTICO muy largo. " * 200
         _guardar_resumen(conn, _resumen(n_reqs=120, n_lineas=40, texto=largo_texto, explicacion="Muy larga. " * 400))
         largo = reporte.generar(conn, settings, NRO, ANA, AHORA)
-    assert reporte.MAX_PAGINAS == 3
-    assert 1 <= corto.paginas <= 3 and 1 <= largo.paginas <= 3
+    assert reporte.MAX_PAGINAS == 4
+    assert 1 <= corto.paginas <= 3 and 1 <= largo.paginas <= 3          # sin la hoja aparte (v9), 3 como antes
+    with closing(connect(db)) as conn:                                   # con la hoja: el largo llega a 4
+        _guardar_resumen(conn, {**_resumen(n_reqs=120, n_lineas=40, texto=largo_texto, explicacion="Muy larga. " * 400),
+                                "explicacion_cartel": "Muy detallada. " * 300})
+        largo_con_hoja = reporte.generar(conn, settings, NRO, ANA, AHORA)
+    assert largo_con_hoja.paginas == largo.paginas + 1 <= reporte.MAX_PAGINAS
     assert reporte.contar_paginas(largo.ruta.read_bytes()) == largo.paginas
     assert corto.ruta.is_file() and largo.ruta.is_file() and corto.ruta != largo.ruta   # el anterior no se borra
 
@@ -227,3 +232,44 @@ def test_si_cambian_los_topes_el_reporte_se_rehace(base, monkeypatch):
         monkeypatch.setattr(reporte, "LIMITES", {**reporte.LIMITES, "requerimientos": 3})
         nuevo = reporte.generar(conn, settings, NRO, ANA, datetime(2026, 10, 1, 16, 0, tzinfo=timezone.utc))
     assert not nuevo.reutilizado and nuevo.id != primero.id
+
+
+DETALLE = "\n".join(f"Párrafo SINTÉTICO {i}: la municipalidad contrata el monitoreo GPS de su flotilla para saber dónde"
+                    f" está cada vehículo [DOC 1 · pág. {i}]. " + "Explicado con palabras sencillas. " * 12
+                    for i in range(1, 6))   # 5 párrafos, unas 450 palabras
+
+
+def test_hoja_aparte_explica_de_que_trata_en_una_pagina(base):
+    """Oscar (2026-11-13, prompt v9): una hoja más al final que amplía «De qué trata»; sin el campo, no sale."""
+    db, settings = base
+    with closing(connect(db)) as conn:
+        _guardar_resumen(conn, _resumen())                                     # anterior a v9: sin la hoja
+        sin_hoja = reporte.generar(conn, settings, NRO, ANA, AHORA)
+        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": DETALLE})
+        d = reporte.datos(conn, NRO, AHORA)
+        con_hoja = reporte.generar(conn, settings, NRO, ANA, AHORA)
+        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": "palabra " * 1000})   # pasa del tope
+        tope = reporte.generar(conn, settings, NRO, ANA, AHORA)
+    html = reporte.html(d)
+    assert len(d["explicacion_cartel"]) == 5 and d["explicacion_cartel"][0].startswith("Párrafo SINTÉTICO 1")
+    assert html.index("De qué trata, explicado en detalle") > html.index("<h2>Fuentes</h2>")   # al final
+    assert 'class="hoja-aparte"' in html and "explicado en detalle" not in reporte.html({**d, "explicacion_cartel": []})
+    assert con_hoja.paginas == sin_hoja.paginas + 1 == tope.paginas                 # exactamente una página más
+    assert len(reporte._explicacion("palabra " * 1000, reporte.MAX_EXPLICACION_CARTEL)[0]) <= 4200
+
+
+def test_panel_y_resumen_muestran_la_explicacion_detallada(base):
+    db, _ = base
+    with closing(connect(db)) as conn:
+        usuarios.crear_usuario(conn, "ana@ejemplo.test", "Ana Sintética", CONTRASENA)
+        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": DETALLE})
+    cliente = TestClient(app)
+    assert iniciar_sesion(cliente, "ana@ejemplo.test").status_code == 303
+    resumen_html = cliente.get(f"/oportunidades/{NRO}/resumen").text
+    assert "Explicado en detalle" in resumen_html and resumen_html.count("Párrafo SINTÉTICO") == 5
+    cartel_html = cliente.get(f"/oportunidades/{NRO}").text
+    assert "Leer de qué trata, explicado en detalle" in cartel_html and "Párrafo SINTÉTICO 5" in cartel_html
+    with closing(connect(db)) as conn:
+        _guardar_resumen(conn, _resumen())                                     # resumen anterior a v9
+    assert "explicado en detalle" not in cliente.get(f"/oportunidades/{NRO}").text
+    assert "Explicado en detalle" not in cliente.get(f"/oportunidades/{NRO}/resumen").text
