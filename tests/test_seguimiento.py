@@ -185,6 +185,24 @@ def test_cualquier_usuario_da_seguimiento_y_aparece_en_la_pagina(clientes):
     assert _dar_seguimiento(ana).status_code == 303  # dos veces: no falla ni duplica
 
 
+def test_solo_los_mios_muestra_los_carteles_de_quien_entra(clientes, db):
+    """«Solo los míos» (Ivania, 2026-11-13): el encargado vigente ve solo los suyos; por defecto salen todos."""
+    oscar, ivania = clientes["oscar"], clientes["ivania"]
+    for nro in (NRO, OTRO):
+        assert _dar_seguimiento(oscar, nro).status_code == 303
+    _asignar(oscar, _id(db, "ivania@ejemplo.test"), NRO)
+    _asignar(oscar, _id(db, "ana@ejemplo.test"), OTRO)
+
+    todos = ivania.get("/seguimiento").text
+    assert f">{NRO}</a>" in todos and f">{OTRO}</a>" in todos
+    assert "Todos (2)" in todos and "Solo los míos (1)" in todos
+    mios = ivania.get("/seguimiento?mios=1").text
+    assert f">{NRO}</a>" in mios and f">{OTRO}</a>" not in mios
+    assert 'href="/seguimiento?mios=1" aria-pressed="true"' in mios
+    vacio = oscar.get("/seguimiento?mios=1").text                     # Oscar asigna, pero no tiene ninguno
+    assert "No tienes carteles a tu cargo." in vacio and f">{NRO}</a>" not in vacio
+
+
 def test_la_revision_es_obligatoria_antes_de_dar_seguimiento(clientes, db):
     ana = clientes["ana"]
     pagina = ana.get(f"/oportunidades/{NRO}").text

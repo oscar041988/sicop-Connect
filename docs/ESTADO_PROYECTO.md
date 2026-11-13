@@ -1,15 +1,24 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 («Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1112 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1113 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **«Solo los míos» en Seguimiento (2026-11-13, Ivania; mejora 15 de la lista del 13/11).** Arriba de las tarjetas,
+  dos botones como los del panel: «Todos (N)» (lo de siempre, al entrar) y «Solo los míos (M)»
+  (`/seguimiento?mios=1`): los carteles de los que el usuario es el encargado vigente (`Estado.encargado_id`). Sin
+  ninguno: «No tienes carteles a tu cargo. Un administrador asigna el encargado en el expediente.» Solo filtra la
+  página: el acceso al expediente no cambia (`puede_entrar`).
+  - Archivos: `app/web/rutas.py` (`pagina_seguimiento`), `seguimiento.html`. 1 prueba nueva en
+    `tests/test_seguimiento.py`. Suite: 1113 passed. Sin migración.
+  - **Pendiente · Ivania:** una línea sobre el botón en la misión 9 de la ayuda, cuando se actualice.
 
 - **Lo que falta antes de pedir la oferta (2026-11-13, Ivania; mejora 16 de la lista del 13/11).** En la página
   del asistente, caja «Oferta»: «Antes de pedirla: N puntos por resolver. Así saldría como BORRADOR.», con

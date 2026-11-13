@@ -1027,15 +1027,18 @@ def registros_competencia(request: Request, familia: str = "", competidor: str =
 # El nivel del usuario de la sesión es el que el middleware leyó de la base en esta misma petición.
 
 @router.get("/seguimiento", response_class=HTMLResponse)
-def pagina_seguimiento(request: Request) -> Response:
+def pagina_seguimiento(request: Request, mios: str = "") -> Response:
     if (error := _base_no_lista(request)) is not None:
         return error
     ahora = _ahora()
     usuario = seguridad.usuario_actual(request)
     with closing(connect(load_settings().database_path)) as conn:
         filas = seguimiento.listar(conn)
+    # «Solo los míos» (Ivania, 13/11): los carteles de los que el usuario es el encargado vigente. Por defecto, todos.
+    propias = [f for f in filas if usuario and f.estado.encargado_id == usuario.get("id")]
     return PLANTILLAS.TemplateResponse(request, "seguimiento.html", {
-        "seccion": "seguimiento", "filas": filas,
+        "seccion": "seguimiento", "filas": propias if mios == "1" else filas,
+        "solo_mios": mios == "1", "total": len(filas), "total_mios": len(propias),
         "puede_entrar": lambda estado: seguimiento.puede_entrar(usuario, estado),
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre, ahora),
     })

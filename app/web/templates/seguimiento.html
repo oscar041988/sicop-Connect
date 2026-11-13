@@ -6,6 +6,12 @@
   <p class="sub">Carteles que alguien está trabajando. Todos ven quién es el encargado; el expediente lo abren
     solo su encargado y los administradores. Para agregar uno, entra al cartel y usa «Dar seguimiento».</p>
 
+  {# «Solo los míos» (Ivania, 13/11): mismos botones que los del panel de carteles. #}
+  <div class="tools">
+    <a class="chip" href="/seguimiento" aria-pressed="{{ 'false' if solo_mios else 'true' }}">Todos ({{ total }})</a>
+    <a class="chip" href="/seguimiento?mios=1" aria-pressed="{{ 'true' if solo_mios else 'false' }}">Solo los míos ({{ total_mios }})</a>
+  </div>
+
   {# Rejilla de 3 tarjetas por línea (2 en tableta, 1 en celular). #}
   <div class="rejilla-seguimiento">
   {% for f in filas %}
@@ -25,7 +31,8 @@
     {% endif %}
   </div>
   {% else %}
-  <p class="vacio">Todavía no hay carteles en seguimiento.</p>
+  <p class="vacio">{% if solo_mios %}No tienes carteles a tu cargo. Un administrador asigna el encargado en el
+    expediente.{% else %}Todavía no hay carteles en seguimiento.{% endif %}</p>
   {% endfor %}
   </div>
 </section>
