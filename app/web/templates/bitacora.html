@@ -22,7 +22,8 @@
   </svg>
   <div>
     <h2>Enriqueciendo carteles…</h2>
-    <p><strong>{{ en_curso.consultados }}</strong> consultado{{ "s" if en_curso.consultados != 1 }}{% if en_curso.en_cola %} de {{ en_curso.en_cola }} en cola{% endif %}
+    <p>{% if en_curso.hoy %}<strong>{{ en_curso.consultados }} de {{ en_curso.hoy }}</strong> consultados hoy{% if en_curso.en_cola > en_curso.hoy %} ({{ en_curso.en_cola }} en cola; el resto, otro día){% endif %}
+      {% else %}<strong>{{ en_curso.consultados }}</strong> consultado{{ "s" if en_curso.consultados != 1 }}{% endif %}
       · corrida #{{ en_curso.id }} · empezó {{ en_curso.iniciada_en | fecha }}</p>
     <p class="sub">La página se actualiza sola cada 15 segundos. Se puede seguir usando el panel mientras tanto.</p>
   </div>

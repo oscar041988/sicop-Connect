@@ -339,6 +339,10 @@ def test_la_bitacora_anima_a_la_persona_picando_solo_con_una_corrida_en_curso(en
         tarde = datetime.fromisoformat(inicio) + timedelta(hours=7)
         assert fichas_panel.corrida_en_curso(conn, tarde) is None
         assert fichas_panel.corrida_en_curso(conn)["consultados"] == 2
+    # Con la cola del día guardada al empezar (13/11): «2 de 3» y, si la cola pasa del máximo, cuántos quedan.
+    _sql(db, "UPDATE enrich_runs SET en_cola = 5, cola_json = ? WHERE id = ?", (json.dumps([NRO, OTRO, "x"]), run))
+    html = admin.get("/bitacora").text
+    assert "<strong>2 de 3</strong> consultados hoy" in html and "(5 en cola; el resto, otro día)" in html
     _sql(db, "UPDATE enrich_runs SET estado = 'ok', terminada_en = ? WHERE id = ?", (inicio, run))
     assert "Enriqueciendo carteles" not in admin.get("/bitacora").text
 

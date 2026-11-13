@@ -1,15 +1,28 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 («7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1108 passed · `desarrollo` en GitHub: al día
+de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1109 passed · `desarrollo` en GitHub: al día
 con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
 Oscar una el PR)
 
 ## Último resultado
+
+- **«7 de 20» en la animación de la Bitácora (2026-11-13, Ivania; mejora 14 de la lista del 13/11).** Las corridas
+  locales guardaban `en_cola` solo al terminar, así que la persona picando decía «7 consultados» sin el total.
+  Ahora `enriquecimiento.correr` guarda al empezar `en_cola` (toda la cola) y `cola_json` (los de hoy), como la
+  corrida remota; en una local nadie valida con `cola_json` (`remoto._corrida_abierta` exige origen «remoto»).
+  - La Bitácora muestra «**7 de 20** consultados hoy» y, si la cola pasa del máximo por día, «(22 en cola; el resto,
+    otro día)». El avance se cuenta sobre los de hoy, no sobre toda la cola: así llega al final. Sin `cola_json`
+    (corridas viejas) sigue «7 consultados». `fichas_panel.corrida_en_curso` devuelve `hoy`.
+  - Archivos: `app/sources/enriquecimiento.py`, `app/fichas_panel.py`, `bitacora.html`. 2 pruebas: 1 nueva en
+    `tests/test_enriquecimiento.py` (sin navegador: mira la base justo antes de la primera consulta) y una
+    ampliada en `tests/test_panel_enriquecimiento.py`. Suite: 1109 passed. Sin migración.
+  - `vista-minero.html` del Escritorio, actualizado con el texto nuevo. **Pendiente · Ivania:** verla el lunes 16/11
+    con la Bitácora abierta antes de las 10:00.
 
 - **Base en modo WAL (2026-11-13, Ivania; mejora 12 de la lista del 13/11).** `apply_migrations` (`migrate`) deja la
   base en `PRAGMA journal_mode = WAL`: el panel lee mientras una tarea escribe, sin esperar. Queda guardado en el

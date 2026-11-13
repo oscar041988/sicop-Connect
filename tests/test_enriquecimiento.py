@@ -4,6 +4,7 @@ cierre) con SICOP SIMULADO.
 La cola, la retención y los textos se prueban sin navegador sobre una base temporal. Las corridas usan la página
 SIMULADA de test_ficha.py (Chromium sin ventana, red cortada). Todas las carpetas van en tmp_path."""
 
+import json
 import sqlite3
 from contextlib import closing
 from datetime import date, datetime, timedelta
@@ -279,6 +280,25 @@ def test_max_para_probar_con_pocos(tmp_path):
     settings, archivos = _dos_abiertos(tmp_path)
     corrida = _correr(settings, _Sicop(archivos=archivos), maximo=1)
     assert [c.nro_sicop for c in corrida.consultas] == [GPS] and corrida.en_cola == 2
+
+
+def test_la_corrida_guarda_su_cola_al_empezar_para_la_bitacora(tmp_path, monkeypatch):
+    """«7 de 20» en la Bitácora (13/11): antes de la primera consulta ya están en_cola y los de hoy (cola_json)."""
+    settings, _ = _dos_abiertos(tmp_path)
+    vista = {}
+
+    class Alto(Exception):
+        pass
+
+    def consultar_uno(conn, *args, **kwargs):   # sin navegador: mira la base en ese momento y corta la corrida
+        vista["fila"] = conn.execute("SELECT estado, en_cola, cola_json FROM enrich_runs").fetchone()
+        raise Alto
+
+    monkeypatch.setattr(en, "consultar_uno", consultar_uno)
+    with pytest.raises(Alto):
+        _correr(settings, _Sicop(), maximo=1)
+    estado, en_cola, cola = vista["fila"]
+    assert (estado, en_cola, json.loads(cola)) == ("en_curso", 2, [GPS])   # 2 en cola, 1 hoy (máximo 1)
 
 
 def test_otro_run_en_curso_sale_con_codigo_2(tmp_path, capsys):

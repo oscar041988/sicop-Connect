@@ -250,8 +250,9 @@ EN_CURSO_MAXIMO = timedelta(hours=6)
 
 def corrida_en_curso(conn: sqlite3.Connection, ahora: datetime | None = None) -> dict | None:
     """La corrida de enrich run que está trabajando ahora (para la animación de la bitácora), o None.
-    Lleva cuántos carteles consultó hasta ahora (sin los reintentos) y cuántos hay en cola (0 si aún no se sabe)."""
-    fila = conn.execute("SELECT id, iniciada_en, en_cola FROM enrich_runs WHERE estado = 'en_curso'"
+    Lleva cuántos carteles consultó hasta ahora (sin los reintentos), cuántos se consultan hoy (cola_json; None si aún
+    no se sabe) y cuántos hay en toda la cola (0 si aún no se sabe; puede pasar del máximo por día)."""
+    fila = conn.execute("SELECT id, iniciada_en, en_cola, cola_json FROM enrich_runs WHERE estado = 'en_curso'"
                         " ORDER BY id DESC LIMIT 1").fetchone()
     if fila is None:
         return None
@@ -261,7 +262,8 @@ def corrida_en_curso(conn: sqlite3.Connection, ahora: datetime | None = None) ->
         return None
     consultados = conn.execute("SELECT count(*) FROM enrich_consultas WHERE run_id = ? AND es_reintento = 0",
                                (fila[0],)).fetchone()[0]
-    return {"id": fila[0], "iniciada_en": fila[1], "en_cola": fila[2], "consultados": consultados}
+    return {"id": fila[0], "iniciada_en": fila[1], "en_cola": fila[2], "consultados": consultados,
+            "hoy": len(json.loads(fila[3])) if fila[3] else None}
 
 
 def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False, ahora: datetime | None = None) -> dict:

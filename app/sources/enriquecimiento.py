@@ -25,6 +25,7 @@ hace al desplegar (decisión de Ivania, 2026-10-27).
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import sqlite3
@@ -462,6 +463,11 @@ def correr(settings: Settings, *, maximo: int | None = None, reloj: Callable[[],
             reevaluar(conn, borrados, avisar)
             return _resumir(conn, settings, corrida, inicio, reloj, proveedor, run_id)
         avisar(f"En cola: {len(lista)} · se consultan hoy: {len(hoy)} (máximo {settings.enrich_max_per_day} por día).")
+        # Al empezar, como la corrida remota: la Bitácora muestra «7 de 20» mientras trabaja (Ivania, 13/11). En una
+        # corrida local nadie valida con cola_json (eso es solo de la remota, remoto._corrida_abierta).
+        with transaccion(conn):
+            conn.execute("UPDATE enrich_runs SET en_cola = ?, cola_json = ? WHERE id = ?",
+                         (corrida.en_cola, json.dumps([c.nro_sicop for c in hoy]), run_id))
         for i, item in enumerate(hoy):
             if i:
                 avisar(f"Pausa de {settings.enrich_delay_seconds} s antes del siguiente cartel…")
