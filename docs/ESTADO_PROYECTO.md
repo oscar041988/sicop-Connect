@@ -106,8 +106,9 @@ Oscar una el PR)
   - Archivos: `app/database.py`, `app/respaldo.py`, `docs/OPERACION.md`. 2 pruebas nuevas
     (`test_migraciones.py`: WAL y lector que no espera a una escritura sin confirmar; `test_respaldo.py`: respaldo
     en un solo archivo). Suite: 1108 passed.
-  - **Pendiente · Ivania:** pasar la base real a WAL: con el panel cerrado y sin tareas corriendo (no a las 8:00,
-    10:00 ni 14:00), `python -m app.cli backup --output CARPETA` y después `python -m app.cli migrate`.
+  - ~~Pendiente · Ivania: pasar la base real a WAL: con el panel cerrado y sin tareas corriendo (no a las 8:00,
+    10:00 ni 14:00), `python -m app.cli backup --output CARPETA` y después `python -m app.cli migrate`.~~
+    **Hecho (13/11, con el `migrate` de la 0046; comprobado en solo lectura: `journal_mode = wal`).**
 
 - **«Último correo» y el resumen semanal en el panel (2026-11-13, pedido de Ivania).** El resumen semanal salía los
   lunes y nadie lo veía (Gmail lo aceptaba, pero licitaciones@ lo envía y lo recibe). Ahora:
