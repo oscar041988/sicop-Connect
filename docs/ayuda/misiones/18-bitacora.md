@@ -67,6 +67,10 @@ La consulta a SICOP la hace una computadora de Hermatix con el navegador abierto
 aquí. El video y las capturas se quedan en esa computadora: pídeselos a quien la usa, con la carpeta que dice la
 página.
 
+**¿Y si arriba sale una persona picando?**
+Una corrida está trabajando ahora. Dice cuántos carteles lleva, por ejemplo «7 de 20 consultados hoy». La página se
+actualiza sola cada 15 segundos. Cuando la corrida termina, desaparece.
+
 **¿Y si no hay ninguna corrida?**
 La consulta diaria todavía no ha corrido. Revisa mañana después de las 10:00.
 

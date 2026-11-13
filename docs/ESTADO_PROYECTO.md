@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 («Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-13 (ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
@@ -11,6 +11,16 @@ Oscar una el PR)
 
 ## Último resultado
 
+- **Ayuda al día con los cambios del 13/11 (Ivania; `OPERACION.md` §8).** Misiones: **9** (paso nuevo «Solo los
+  míos», con captura, y ¿Y si…? cuando no muestra nada), **23** (sección «Antes de pedir la oferta», pasos 17–19 con
+  captura; «Para tener en cuenta» pasa a 20), **19** (¿Y si…? «no sé si el correo salió» y «leer el resumen semanal
+  en la app») y **18** (¿Y si…? «una persona picando»). `app/ayuda/pantallas.py`: objetivos de las dos capturas
+  nuevas; `config/ayuda.yaml`: el «?» de `/resumen-semanal` abre la misión 19.
+  - Capturas rehechas con la base de EJEMPLO: misiones 2, 9 y 23, revisadas una por una. Están fuera de Git
+    (`.gitignore`: `app/web/static/ayuda/`): **en el servidor hay que rehacerlas** con `ayuda capturas` al actualizar.
+  - De ahí salió el ajuste de la caja «Oferta» (ver la entrada de la mejora 16).
+  - Pruebas de la ayuda y de la oferta: 70 passed. Suite: 1113 passed.
+
 - **«Solo los míos» en Seguimiento (2026-11-13, Ivania; mejora 15 de la lista del 13/11).** Arriba de las tarjetas,
   dos botones como los del panel: «Todos (N)» (lo de siempre, al entrar) y «Solo los míos (M)»
   (`/seguimiento?mios=1`): los carteles de los que el usuario es el encargado vigente (`Estado.encargado_id`). Sin
@@ -18,7 +28,7 @@ Oscar una el PR)
   página: el acceso al expediente no cambia (`puede_entrar`).
   - Archivos: `app/web/rutas.py` (`pagina_seguimiento`), `seguimiento.html`. 1 prueba nueva en
     `tests/test_seguimiento.py`. Suite: 1113 passed. Sin migración.
-  - **Pendiente · Ivania:** una línea sobre el botón en la misión 9 de la ayuda, cuando se actualice.
+  - ~~Pendiente · Ivania: una línea sobre el botón en la misión 9 de la ayuda~~ **hecho (13/11, entrada de arriba).**
 
 - **Lo que falta antes de pedir la oferta (2026-11-13, Ivania; mejora 16 de la lista del 13/11).** En la página
   del asistente, caja «Oferta»: «Antes de pedirla: N puntos por resolver. Así saldría como BORRADOR.», con
@@ -32,6 +42,10 @@ Oscar una el PR)
     se repite; la portada del PDF sí los lista aparte) y dos grupos: «En el asistente» (5 a la vista, el resto en
     un desplegable) y «Fuera del asistente». Quedan 90: 87 en el asistente y 3 de Oscar (tarifa, representante,
     ficha técnica). Mientras Oscar no decida la ficha técnica, la lista nunca queda vacía.
+    **Ajustado el mismo día** (al rehacer las capturas de la ayuda, la caja no cabía en la pantalla de una laptop):
+    arriba lo que bloquea (sin pliego, asistente sin empezar); del asistente, 3 a la vista y el resto en «Ver los …
+    restantes»; tarifa, representante y ficha técnica en el desplegable «Lo resuelve un administrador»
+    (`Falta.de_administrador`).
   - Archivos: `app/propuesta.py`, `app/web/rutas.py`, `asistente.html`, `estilo.css`. 3 pruebas nuevas en
     `tests/test_propuesta.py` (dice lo mismo que la portada y no llama a la IA; sin pliego ni asistente; la caja con
     su enlace). Suite: 1112 passed. Sin migración.

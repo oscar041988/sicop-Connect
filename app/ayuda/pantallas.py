@@ -111,6 +111,7 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     # Seguimiento y expediente
     ("Seguimiento", "una tarjeta"): Objetivo(selector=".rejilla-seguimiento .tarjeta"),
     ("Seguimiento", "«Sin encargado»"): Objetivo(selector=".rejilla-seguimiento .tag.w"),
+    ("Seguimiento", "«Solo los míos»"): Objetivo(selector="a.chip[href='/seguimiento?mios=1']"),
     ("Expediente", "la etiqueta «En seguimiento»"): Objetivo(selector=".op-etiquetas .en-seguimiento"),
     ("Expediente", "«Asignar el encargado»"): Objetivo(texto="Asignar el encargado",
                                                       url="/seguimiento/{sin_encargado}"),
@@ -145,6 +146,7 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     ("Asistente", "el avance"): Objetivo(selector=".asistente .avance", url="/oportunidades/{sin_encargado}/asistente"),
     ("Asistente", "la pregunta"): Objetivo(selector=".pregunta-asistente"),
     ("Asistente", "el dato del perfil"): Objetivo(selector=".perfil-dato"),
+    ("Asistente", "la lista «Antes de pedirla»"): Objetivo(selector=".oferta-falta"),
     ("Revisión rápida", "el resultado rápido"): Objetivo(selector="#revision-rapida"),
     ("Resultado", "la sección «Resultado»"): Objetivo(selector="#resultado"),
     ("Resultado", "el resultado"): Objetivo(selector=".resultado-eleg .resultado-titular"),

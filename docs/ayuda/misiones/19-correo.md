@@ -26,6 +26,13 @@ destinatarios (la maneja un administrador, misión 15).
 **¿Y si hoy no llegó el correo?**
 Puede ser que no hubo carteles nuevos. Revisa también la carpeta de spam.
 
+**¿Y si no sé si el correo salió?**
+Abre el «Panel de carteles». Arriba dice «Último correo diario» y «Último resumen semanal»: cuándo salió y para
+cuántas personas. «Aceptado» quiere decir que Gmail lo tomó para entregarlo.
+
+**¿Y si quiero leer el resumen semanal en la app?**
+En el «Panel de carteles», haz clic en «Ver el resumen». Se arma con los datos de hoy.
+
 **¿Y si dice «Resumen con IA: todavía no está»?**
 Se prepara después de las 10:00. Míralo en la app más tarde.
 

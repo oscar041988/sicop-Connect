@@ -26,13 +26,16 @@
    Ahí están todos los carteles que el equipo está trabajando.
 7. Busca tu cartel en las tarjetas.
    [captura: Seguimiento · resaltar una tarjeta]
-8. Lee la tarjeta de arriba abajo.
+8. Para ver solo los carteles a tu cargo, haz clic en «Solo los míos».
+   [captura: Seguimiento · resaltar «Solo los míos»]
+   «Todos» vuelve a mostrar los de todo el equipo.
+9. Lee la tarjeta de arriba abajo.
    - Arriba: el encargado, o «Sin encargado», y la etapa.
    - Luego: el número SICOP, el título y la institución.
    - Después: cuánto falta para el cierre.
    - Al final: quién le dio seguimiento y cuándo.
-9. Pide a un administrador que le ponga encargado. Lo hace con la misión 14.
-   Al encargado le llega un correo en el próximo envío de las 8:00.
+10. Pide a un administrador que le ponga encargado. Lo hace con la misión 14.
+    Al encargado le llega un correo en el próximo envío de las 8:00.
 
 **Dónde quedaste:** en la página «Seguimiento».
 
@@ -43,6 +46,9 @@ Alguien ya le dio seguimiento. Lo ves en la etiqueta «En seguimiento».
 
 **¿Y si en vez del botón veo «Abrir expediente»?**
 Ya está en seguimiento y tú eres su encargado o administrador. Sigue con la misión 10.
+
+**¿Y si «Solo los míos» no muestra nada?**
+No tienes carteles a tu cargo. Un administrador te asigna uno con la misión 14.
 
 **¿Y si no veo «Abrir expediente» en la tarjeta?**
 Solo lo abren su encargado y los administradores. Pide que te pongan de encargado.

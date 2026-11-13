@@ -24,6 +24,8 @@ pantallas:
     mision: 10-expediente
   - ruta: /seguimiento
     mision: 09-seguimiento
+  - ruta: /resumen-semanal
+    mision: 19-correo
   - ruta: /competencia*
     mision: 11-competencia
   - ruta: /cargar

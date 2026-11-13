@@ -79,9 +79,21 @@ Lo usan su encargado y los administradores.
 16. Responde otra vez y haz clic en «Guardar respuesta».
     La respuesta anterior no se borra: queda guardada.
 
+### Antes de pedir la oferta
+
+17. Mira la caja «Oferta», a la derecha.
+    [captura: Asistente · resaltar la lista «Antes de pedirla»]
+    Dice cuántos puntos faltan. Con alguno pendiente, la oferta saldría como «BORRADOR».
+    Lo más grave sale primero: «No cumple», después «Revisar» y al final «Falta».
+18. Haz clic en «Resolver» junto a un punto.
+    Se abre esa pregunta. Respóndela como en los pasos 5 a 9.
+19. Abre «Ver los … restantes» para ver los demás puntos del asistente.
+    Abre «Lo resuelve un administrador» para ver la tarifa, el representante legal y la ficha técnica.
+    Esos no se arreglan en el asistente: avísale a un administrador.
+
 ### Para tener en cuenta
 
-17. Abre «Para tener en cuenta», al final.
+20. Abre «Para tener en cuenta», al final.
     [captura: Asistente · resaltar «Para tener en cuenta»]
     Son las multas y condiciones de la institución. No se preguntan.
     Sirven para saber qué pasa si Hermatix gana.

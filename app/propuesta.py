@@ -466,6 +466,11 @@ class Falta:
     item_id: int | None = None            # se resuelve en el asistente, en esa pregunta
     donde: str | None = None              # se resuelve fuera del panel: quién y dónde
 
+    @property
+    def de_administrador(self) -> bool:
+        """Tarifa, representante o ficha técnica: lo resuelve Oscar fuera del panel, igual en todos los carteles."""
+        return bool(self.donde) and self.donde.startswith("Oscar")
+
 
 def lo_que_falta(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, ahora: datetime,
                  tarifas: dict | None = None) -> list[Falta]:
