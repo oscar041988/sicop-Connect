@@ -7,7 +7,7 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0046 (la 0047 espera `migrate`) · Suite: **1122 passed** (16/11,
+de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1122 passed** (16/11,
 con v10) · `desarrollo` en GitHub: al día con la copia local (push del 16/11) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
@@ -28,8 +28,13 @@ con v10) · `desarrollo` en GitHub: al día con la copia local (push del 16/11) 
   - Docs: `DECISION_IA.md` regla 9, `RESUMEN_IA.md`, `.env.example` (~700 tokens más que v9). Pruebas: 1 nueva
     (v10) y las del reporte con hoja de 2 páginas (incluye texto en muchos párrafos cortos); resumen, reporte,
     migraciones y respaldo: 72 passed. Listas de migraciones de las pruebas con la 0047.
-  - **Pendiente · Ivania:** con el panel cerrado (y si quiere, `backup` antes), `python -m app.cli migrate` (0047);
-    `IA_PROMPT_VERSION=v10` en el `.env`; abrir el panel y generar de nuevo el resumen de `20261101092` (cierra el
+  - ~~Respaldo y `migrate` (0047)~~ **hecho (Claude a pedido de Ivania, 16/11, 12:32, panel cerrado):** respaldo
+    `C:\Users\User\respaldos-sicop\sicop_20261116-123159` (esquema 0046); esquema 0047. Conteos iguales antes y
+    después (reportes 11, resúmenes 115, revisiones 14, carteles 15 589); `integrity_check` ok, `foreign_key_check`
+    vacío, WAL, CHECK 1–5 y los dos triggers. ~~Subir el respaldo al Drive~~ **hecho (Claude, 16/11):**
+    `G:\Mi unidad\sicop-respaldos\sicop_20261116-123159` (7 archivos, tamaños iguales y huella del `.db` igual al
+    manifiesto).
+  - **Pendiente · Ivania:** `IA_PROMPT_VERSION=v10` en el `.env`; abrir el panel y generar de nuevo el resumen de `20261101092` (cierra el
     17/11 a las 08:00) y revisar la hoja en el panel y en el PDF. Si salen «incompleta · max_tokens», subir
     `IA_MAX_OUTPUT_TOKENS`. Los resúmenes v9 siguen con su hoja de una página hasta generarlos de nuevo.
   - Suite completa: **1122 passed**; push hecho (16/11).
