@@ -756,20 +756,37 @@ form.en-linea { display: inline; margin-left: 8px; }
   border: 1px solid var(--line); border-radius: 14px; background: var(--azul-bg); }
 .trabajando h2 { margin: 0 0 4px; font-size: 1.15rem; }
 .trabajando p { margin: 0; }
+/* Estilo pixel de bloques (Ivania, 16/11): rectángulos sin suavizado y movimiento a saltos (steps), como un juego de
+   pixeles. El brazo con el pico gira sobre el hombro, el bloque tiembla al golpe y saltan chispas cuadradas. */
 .minero { flex: none; color: var(--azul); }
-.minero .persona circle { fill: currentColor; }
-.minero .persona path, .minero .brazos path { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; }
-.minero .brazos .mango { stroke: #8a5a2b; stroke-width: 4; }
-.minero .brazos .punta { stroke: #5b6470; stroke-width: 5; }
-.minero .roca { fill: #9aa5b1; }
-.minero .piso { fill: #000; opacity: .08; }
-.minero .chispas path { stroke: #f2a900; stroke-width: 3; stroke-linecap: round; }
-.minero .brazos { transform-box: view-box; transform-origin: 44px 38px; animation: picar 1.2s ease-in infinite; }
-.minero .chispas { opacity: 0; animation: chispas 1.2s linear infinite; }
-@keyframes picar { 0% { transform: rotate(-25deg); } 55% { transform: rotate(72deg); } 65% { transform: rotate(66deg); }
-  100% { transform: rotate(-25deg); } }
-@keyframes chispas { 0%, 52% { opacity: 0; } 56%, 66% { opacity: 1; } 72%, 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .minero .brazos, .minero .chispas { animation: none; } }
+.minero .camisa { fill: currentColor; }
+.minero .piel { fill: #c98e64; }
+.minero .pelo { fill: #4a3222; }
+.minero .ojo, .minero .zapato { fill: #2b2b2b; }
+.minero .pierna { fill: #4b5563; }
+.minero .pierna2 { fill: #3f4752; }
+.minero .mango { fill: #8a5a2b; }
+.minero .punta { fill: #9ca3af; }
+.minero .piedra { fill: #8b949e; }
+.minero .sombra { fill: #6b7280; }
+.minero .veta { fill: #f2a900; }
+.minero .suelo { fill: #6b4f2a; }
+.minero .chispas rect { fill: #f2a900; }
+.minero .brazos { transform-box: view-box; transform-origin: 44px 38px; animation: picar 1s infinite; }
+.minero .bloque { animation: temblar 1s infinite; }
+.minero .chispas { opacity: 0; animation: chispas 1s infinite; }
+@keyframes picar {
+  0% { transform: rotate(-30deg); animation-timing-function: steps(1, end); }
+  20% { transform: rotate(-10deg); animation-timing-function: steps(1, end); }
+  40% { transform: rotate(30deg); animation-timing-function: steps(1, end); }
+  55% { transform: rotate(80deg); animation-timing-function: steps(1, end); }
+  75% { transform: rotate(30deg); animation-timing-function: steps(1, end); }
+  90% { transform: rotate(-10deg); animation-timing-function: steps(1, end); }
+  100% { transform: rotate(-30deg); } }
+@keyframes temblar { 0%, 54%, 70%, 100% { transform: translate(0, 0); } 55%, 62% { transform: translate(2px, 0); }
+  58%, 66% { transform: translate(-2px, 0); } }
+@keyframes chispas { 0%, 54% { opacity: 0; } 55%, 70% { opacity: 1; } 71%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .minero .brazos, .minero .bloque, .minero .chispas { animation: none; } }
 /* Último correo de cada tipo, arriba del panel de carteles, y el resumen semanal en el panel (Ivania, 13/11). El
    cuerpo del resumen es el del correo, con sus estilos en línea; aquí solo se limita el ancho. */
 .ultimos-correos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; font-size: .88rem; color: var(--mut); }
