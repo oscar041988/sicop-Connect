@@ -1,15 +1,34 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-13 (hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-16 (Bitácora: «Ver solo esas» baja a la lista y el aviso de FALLO o CAPTCHA solo
+el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0043 · Suite: 1116 passed · `desarrollo` en GitHub: al día
-con la copia local (push del 13/11) · `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que
-Oscar una el PR)
+de costo; rama `desarrollo`) · Base local en esquema 0046 · Suite: 1120 passed (16/11) + 1 prueba nueva ·
+`desarrollo` en GitHub: al día con la copia local (push del 16/11, `f7dc56a`) · `main` de GitHub: `7f5c558` (sin
+cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Bitácora y cartel: aviso de hoy y persona picando en el cartel (2026-11-16, pedidos de Ivania; `f7dc56a`).**
+  - **«Ver solo esas» no parecía funcionar:** filtraba bien (base real: las 4 grabaciones sin revisar, de
+    `20261100524` y `20261002408`, 03–06/11), pero la lista quedaba debajo de «Corridas» (15 filas) y la página se
+    veía igual. Ahora el enlace lleva el ancla `#consultas` y baja a la lista; «Ver todas», igual.
+  - **El aviso de arriba solo el día del fallo:** «Hoy: N grabaciones de un FALLO o CAPTCHA esperan revisión» cuenta
+    solo los sin revisar de hoy en hora de Costa Rica (`fichas_panel.por_revisar_hoy`, con `HORA_CR`) y se va al
+    cambiar el día. Los de días pasados siguen «sin revisar» en la lista y sus videos se guardan hasta revisarlos.
+    «Ver solo esas» sigue mostrando todos los sin revisar (los de hoy, primero). Base real el 16/11: 0, sin aviso.
+  - **Persona picando en el cartel:** sale si el cartel está en la cola de hoy de la corrida en curso y todavía no
+    se consultó: «Buscando este cartel en SICOP ahora…» o «Faltan N carteles antes de este»
+    (`fichas_panel.cartel_en_corrida`, orden de `cola_json`). **Sin recarga automática** (se perdería lo que alguien
+    escribe en un formulario): «Recargue la página para ver el avance». El dibujo pasó a `_minero.html`, compartido
+    con la Bitácora.
+  - Archivos: `app/fichas_panel.py`, `app/web/rutas.py`, `bitacora.html`, `oportunidad.html`, `_minero.html`. 2
+    pruebas nuevas en `tests/test_panel_enriquecimiento.py` (20 passed); panel y ayuda: 132 passed. Suite completa:
+    1120 passed antes del cambio del cartel. Sin migración.
+  - **Pendiente · Ivania:** ver la persona picando en un cartel de la cola en la próxima corrida (10:00).
 
 - **«No interesa» sale de «Todos» (2026-11-13, pedido de Oscar por Ivania).** Un cartel marcado «No interesa» seguía
   en el panel y confundía a Oscar. Ahora `panel.listar` lo esconde de «Todos» (y de la búsqueda sin chip) y queda
@@ -96,8 +115,8 @@ Oscar una el PR)
   - Archivos: `app/sources/enriquecimiento.py`, `app/fichas_panel.py`, `bitacora.html`. 2 pruebas: 1 nueva en
     `tests/test_enriquecimiento.py` (sin navegador: mira la base justo antes de la primera consulta) y una
     ampliada en `tests/test_panel_enriquecimiento.py`. Suite: 1109 passed. Sin migración.
-  - `vista-minero.html` del Escritorio, actualizado con el texto nuevo. **Pendiente · Ivania:** verla el lunes 16/11
-    con la Bitácora abierta antes de las 10:00.
+  - `vista-minero.html` del Escritorio, actualizado con el texto nuevo. ~~Pendiente · Ivania: verla el lunes 16/11
+    con la Bitácora abierta antes de las 10:00.~~ **Hecho (Ivania, 16/11): vio la animación.**
 
 - **Base en modo WAL (2026-11-13, Ivania; mejora 12 de la lista del 13/11).** `apply_migrations` (`migrate`) deja la
   base en `PRAGMA journal_mode = WAL`: el panel lee mientras una tarea escribe, sin esperar. Queda guardado en el
