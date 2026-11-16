@@ -7,8 +7,8 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0046 (la 0047 espera `migrate`) · Suite: 1120 passed (16/11);
-la de v10, corriendo · `desarrollo` en GitHub: `e0da2de`; `30aa36a` (v10) solo local, push cuando pase la suite ·
+de costo; rama `desarrollo`) · Base local en esquema 0046 (la 0047 espera `migrate`) · Suite: **1122 passed** (16/11,
+con v10) · `desarrollo` en GitHub: al día con la copia local (push del 16/11) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
@@ -32,7 +32,7 @@ la de v10, corriendo · `desarrollo` en GitHub: `e0da2de`; `30aa36a` (v10) solo 
     `IA_PROMPT_VERSION=v10` en el `.env`; abrir el panel y generar de nuevo el resumen de `20261101092` (cierra el
     17/11 a las 08:00) y revisar la hoja en el panel y en el PDF. Si salen «incompleta · max_tokens», subir
     `IA_MAX_OUTPUT_TOKENS`. Los resúmenes v9 siguen con su hoja de una página hasta generarlos de nuevo.
-  - **Pendiente · Claude:** push de `30aa36a` cuando pase la suite completa.
+  - Suite completa: **1122 passed**; push hecho (16/11).
 
 - **Persona picando en estilo pixel de bloques (2026-11-16, pedido de Ivania; `8122b54`).** El dibujo de
   `_minero.html` (Bitácora y cartel) pasa a bloques: personaje original con la camisa azul de la app (no copia
