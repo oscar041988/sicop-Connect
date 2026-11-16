@@ -299,6 +299,11 @@ Código: `app/ai/reporte.py`, plantilla `app/web/templates/reporte_cartel.html`,
   550 palabras con citas; tope de 4 200 caracteres para que no pase de una página). Sin la hoja, el máximo sigue
   siendo 3. La misma explicación sale en la página del cartel («Leer de qué trata, explicado en detalle») y en el
   resumen. Migración 0046: el CHECK de `ia_reports.paginas` pasa a 1–4.
+- **Desde el 2026-11-16: la hoja, hasta 2 páginas; máximo 5** (Ivania, `DECISION_IA.md` regla 9). Prompt v10: la
+  explicación (800 a 1100 palabras) lleva un párrafo por equipo o servicio con cada característica y su cifra tal
+  como la escribe el pliego, más qué significa en palabras simples («Video Full HD de al menos 1920 × 1080: la
+  imagen se ve nítida…»). Tope de 8 400 caracteres para que no pase de dos páginas. Sin la hoja, el máximo sigue
+  siendo 3. Migración 0047: el CHECK de `ia_reports.paginas` pasa a 1–5.
 - **PDF con el Chromium de Playwright** (`page.pdf`, tamaño carta): sin librerías nuevas. Pie: «Generado con IA a
   partir de datos públicos de SICOP · verificar con el pliego», N.º SICOP y página n de 2.
 - **Archivos y versiones:** `REPORTS_DIR/<nro>/reporte_<nro>_<AAAAMMDD-HHMMSS>.pdf` (fuera de Git, en el respaldo

@@ -54,6 +54,10 @@ Cambia una regla del proyecto: `CLAUDE.md` dice «Sin API de IA». Con esta deci
    trata, explicado en detalle»: una página (400 a 550 palabras) que amplía «de qué trata» con palabras sencillas,
    con citas. También sale en el panel (página del cartel) y en el resumen. Prompt v9, campo `explicacion_cartel`;
    migración 0046. Sin la hoja (resumen anterior a v9), el reporte sigue en 3 páginas como máximo.
+   **Cambio del 2026-11-16 (Ivania): la hoja, hasta 2 páginas; reporte de hasta 5.** «Alta definición» no bastaba:
+   la explicación lleva cada característica que pide el pliego con su cifra y su unidad (p. ej. «Video Full HD de al
+   menos 1920 × 1080») y qué significa en palabras simples; 800 a 1100 palabras. Prompt v10 (v9 sin tocar);
+   migración 0047. Un resumen v9 sigue con su hoja de una página.
 7. Las pruebas automáticas usan siempre un **modelo simulado** (no gastan dinero).
 8. Con la IA apagada (`AI_MODE=none`), el sistema funciona igual que antes.
 

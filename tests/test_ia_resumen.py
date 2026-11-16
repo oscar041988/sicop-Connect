@@ -421,3 +421,15 @@ def test_v9_de_que_trata_explicado_en_detalle():
                                 "explicacion_cartel": "La municipalidad quiere saber dónde está cada carro (SINTÉTICO)."})
     texto = resumen.legible(resumen.Resultado(1, NRO, "ok", False, "2026-11-13", "modelo-simulado", "v9", "a" * 64, datos))
     assert "== DE QUÉ TRATA, EXPLICADO EN DETALLE ==\nLa municipalidad quiere saber dónde está cada carro" in texto
+
+
+def test_v10_la_explicacion_lleva_cada_caracteristica_con_su_cifra():
+    """Ivania (2026-11-16): «alta definición» no basta; cada característica con su cifra y qué significa (v10)."""
+    v9, v10 = resumen.cargar_prompt("v9"), resumen.cargar_prompt("v10")
+    assert "entre 400 y 550 palabras" in v9 and "en una página" in v9              # v9 no se tocó
+    assert "entre 800 y 1100 palabras" in v10 and "en dos páginas" in v10
+    assert "1920 × 1080" in v10 and "la cifra va siempre" in v10
+    assert "[DOC 2 · pág." not in v10                       # el ejemplo no trae una cita que la IA pueda copiar
+    # El resto de v10 es igual a v9: solo cambia la explicación del cartel
+    assert v10.split("- cómo, dónde y cuándo se entrega")[1] == v9.split("- cómo, dónde y cuándo se entrega")[1]
+    assert "Entre 400 y 550" not in resumen.ESQUEMA["properties"]["explicacion_cartel"]["description"]

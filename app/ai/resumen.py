@@ -100,9 +100,11 @@ ESQUEMA = _objeto(
                                      "expediente y sus citas, y qué tendría que cambiar para recomendar otra cosa"),
     # Desde el prompt v9 (Oscar, 2026-11-13): una hoja más en el reporte PDF, el panel y el resumen, que amplía «de
     # qué trata» con palabras sencillas. Un resumen anterior no la trae y normalizar() la deja en «no encontrado».
-    explicacion_cartel=_texto("Entre 400 y 550 palabras, en párrafos cortos y lenguaje sencillo: qué compran y para "
-                              "qué, cómo tiene que ser, cómo y cuándo se entrega, qué piden para participar y cómo "
-                              "se escoge al ganador, con sus citas"),
+    # Desde v10 (Ivania, 2026-11-16) es más larga y lleva cada característica con su cifra: el largo lo dice el
+    # prompt, no esta descripción (el esquema es el mismo para v9 y v10).
+    explicacion_cartel=_texto("En párrafos cortos y lenguaje sencillo, del largo que pide el prompt: qué compran y "
+                              "para qué, qué tiene que tener cada cosa con sus cifras, cómo y cuándo se entrega, qué "
+                              "piden para participar y cómo se escoge al ganador, con sus citas"),
 )
 FORMATO = {"type": "json_schema", "name": "resumen_cartel", "schema": ESQUEMA, "strict": True}
 

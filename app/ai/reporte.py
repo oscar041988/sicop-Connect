@@ -1,4 +1,4 @@
-"""Reporte de cartel Hermatix en PDF, máximo 4 páginas (Reporte con IA, lección 4; DECISION_IA.md regla 9).
+"""Reporte de cartel Hermatix en PDF, máximo 5 páginas (Reporte con IA, lección 4; DECISION_IA.md regla 9).
 
 * La IA no escribe el reporte, lo alimenta: el diseño, el orden, los límites y los KPI de SICOP (monto estimado por
   moneda, líneas, unidades, cierre y días para el cierre, estado, tipo de procedimiento, encaje de las reglas) los
@@ -11,7 +11,8 @@
   media página. Por eso el máximo pasó de 2 a 3 páginas. Un resumen anterior a v6 no la trae y el reporte lo dice.
 * Hoja aparte al final, «De qué trata, explicado en detalle» (prompt v9; Oscar, 2026-11-13): una página que amplía
   «de qué trata» con palabras sencillas. Por eso el máximo pasó a 4. Un resumen anterior a v9 no la trae y la hoja no
-  sale.
+  sale. Desde el prompt v10 (Ivania, 2026-11-16) la hoja es más larga, con cada característica y su cifra, y ocupa
+  hasta dos páginas: máximo 5 (migración 0047).
 * PDF con el Chromium de Playwright (page.pdf), que la app ya usa: sin librerías nuevas. El archivo queda en
   REPORTS_DIR/<nro>/ (fuera de Git, en el respaldo) y su registro en ia_reports (migración 0036): un reporte nuevo
   nunca borra el anterior, y si no cambiaron el resumen ni los estados «¿Cumple?» se reutiliza el último.
@@ -47,9 +48,9 @@ NO = ia_resumen.NO
 PIE = "Generado con IA a partir de datos públicos de SICOP · verificar con el pliego"
 ENCAJES = ("alta", "media", "baja", "ninguno")
 
-MAX_PAGINAS = 4          # 3 del reporte + la hoja «explicado en detalle» (migración 0046)
+MAX_PAGINAS = 5          # 3 del reporte + hasta 2 de la hoja «explicado en detalle» (migración 0047)
 MAX_EXPLICACION = 1800   # caracteres: unas 250 palabras con holgura; es un tope de seguridad, no un recorte normal
-MAX_EXPLICACION_CARTEL = 4200   # unas 550 palabras con holgura: que la hoja aparte no pase de una página
+MAX_EXPLICACION_CARTEL = 8400   # unas 1100 palabras con holgura (v10): que la hoja aparte no pase de dos páginas
 # Máximos por sección. LIMITES aprovecha hasta 3 páginas (Ivania, 2026-11-09: medido con los 35 carteles reales con
 # resumen y una explicación de 250 palabras, ninguno pasó de 3). Si el PDF pasa de MAX_PAGINAS se rehace con
 # LIMITES_MEDIOS (los de cuando el máximo era 2 páginas) y, si tampoco, con LIMITES_CORTOS.
@@ -298,7 +299,7 @@ def generar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien:
         return Reporte(**{**anterior.__dict__, "reutilizado": True})
     for limites in (LIMITES, LIMITES_MEDIOS, LIMITES_CORTOS):
         d = datos(conn, nro_sicop, ahora, limites)
-        maximo = MAX_PAGINAS if d["explicacion_cartel"] else MAX_PAGINAS - 1   # sin la hoja aparte, 3 como antes
+        maximo = MAX_PAGINAS if d["explicacion_cartel"] else MAX_PAGINAS - 2   # sin la hoja aparte, 3 como antes
         contenido = pdf(html(d), nro_sicop)
         paginas = contar_paginas(contenido)
         if 1 <= paginas <= maximo:

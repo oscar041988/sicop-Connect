@@ -96,13 +96,13 @@ def test_cartel_corto_y_cartel_largo_caben_en_3_paginas(base):
         largo_texto = "Texto SINTÉTICO muy largo. " * 200
         _guardar_resumen(conn, _resumen(n_reqs=120, n_lineas=40, texto=largo_texto, explicacion="Muy larga. " * 400))
         largo = reporte.generar(conn, settings, NRO, ANA, AHORA)
-    assert reporte.MAX_PAGINAS == 4
+    assert reporte.MAX_PAGINAS == 5
     assert 1 <= corto.paginas <= 3 and 1 <= largo.paginas <= 3          # sin la hoja aparte (v9), 3 como antes
-    with closing(connect(db)) as conn:                                   # con la hoja: el largo llega a 4
+    with closing(connect(db)) as conn:                    # con la hoja larga (v10, 2 páginas): el largo llega a 5
         _guardar_resumen(conn, {**_resumen(n_reqs=120, n_lineas=40, texto=largo_texto, explicacion="Muy larga. " * 400),
-                                "explicacion_cartel": "Muy detallada. " * 300})
+                                "explicacion_cartel": "Muy detallada. " * 800})
         largo_con_hoja = reporte.generar(conn, settings, NRO, ANA, AHORA)
-    assert largo_con_hoja.paginas == largo.paginas + 1 <= reporte.MAX_PAGINAS
+    assert largo_con_hoja.paginas == largo.paginas + 2 <= reporte.MAX_PAGINAS
     assert reporte.contar_paginas(largo.ruta.read_bytes()) == largo.paginas
     assert corto.ruta.is_file() and largo.ruta.is_file() and corto.ruta != largo.ruta   # el anterior no se borra
 
@@ -239,8 +239,9 @@ DETALLE = "\n".join(f"Párrafo SINTÉTICO {i}: la municipalidad contrata el moni
                     for i in range(1, 6))   # 5 párrafos, unas 450 palabras
 
 
-def test_hoja_aparte_explica_de_que_trata_en_una_pagina(base):
-    """Oscar (2026-11-13, prompt v9): una hoja más al final que amplía «De qué trata»; sin el campo, no sale."""
+def test_hoja_aparte_explica_de_que_trata_en_una_o_dos_paginas(base):
+    """Oscar (2026-11-13, prompt v9): una hoja más al final que amplía «De qué trata»; sin el campo, no sale. Ivania
+    (2026-11-16, prompt v10): más larga, con cada característica y su cifra; hasta dos páginas."""
     db, settings = base
     with closing(connect(db)) as conn:
         _guardar_resumen(conn, _resumen())                                     # anterior a v9: sin la hoja
@@ -248,14 +249,20 @@ def test_hoja_aparte_explica_de_que_trata_en_una_pagina(base):
         _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": DETALLE})
         d = reporte.datos(conn, NRO, AHORA)
         con_hoja = reporte.generar(conn, settings, NRO, ANA, AHORA)
-        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": "palabra " * 1000})   # pasa del tope
+        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": "palabra " * 2000})   # pasa del tope
         tope = reporte.generar(conn, settings, NRO, ANA, AHORA)
+        # Como la escribe v10: muchos párrafos cortos con cifras (cada salto de párrafo ocupa espacio)
+        parrafos = "\n".join(["Video Full HD de al menos 1920 × 1080: se ve nítido (SINTÉTICO). " * 7] * 20)
+        _guardar_resumen(conn, {**_resumen(), "explicacion_cartel": parrafos})
+        en_parrafos = reporte.generar(conn, settings, NRO, ANA, AHORA)
     html = reporte.html(d)
     assert len(d["explicacion_cartel"]) == 5 and d["explicacion_cartel"][0].startswith("Párrafo SINTÉTICO 1")
     assert html.index("De qué trata, explicado en detalle") > html.index("<h2>Fuentes</h2>")   # al final
     assert 'class="hoja-aparte"' in html and "explicado en detalle" not in reporte.html({**d, "explicacion_cartel": []})
-    assert con_hoja.paginas == sin_hoja.paginas + 1 == tope.paginas                 # exactamente una página más
-    assert len(reporte._explicacion("palabra " * 1000, reporte.MAX_EXPLICACION_CARTEL)[0]) <= 4200
+    assert con_hoja.paginas == sin_hoja.paginas + 1                                 # la corta: una página más
+    assert tope.paginas == sin_hoja.paginas + 2                                     # la del tope: nunca más de dos
+    assert en_parrafos.paginas <= sin_hoja.paginas + 2 <= reporte.MAX_PAGINAS
+    assert len(reporte._explicacion("palabra " * 2000, reporte.MAX_EXPLICACION_CARTEL)[0]) <= 8400
 
 
 def test_panel_y_resumen_muestran_la_explicacion_detallada(base):
