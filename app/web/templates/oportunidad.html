@@ -22,6 +22,18 @@
 {% set cerrado = d.plazo == "vencido" %}
 {% set NO = "no encontrado" %}
 
+{% if picando %}
+{# Sin recarga automática (a diferencia de la Bitácora): se perdería lo que alguien escribe en un formulario #}
+<section class="trabajando" role="status">
+  {% include "_minero.html" %}
+  <div>
+    <h2>{% if picando.antes == 0 %}Buscando este cartel en SICOP ahora…{% else %}Este cartel está en la cola de hoy{% endif %}</h2>
+    <p>{% if picando.antes %}Faltan <strong>{{ picando.antes }}</strong> cartel{{ "es" if picando.antes != 1 }} antes de este · {% endif %}corrida #{{ picando.id }}</p>
+    <p class="sub">Al terminar, la ficha y los documentos aparecen en este cartel. Recargue la página para ver el avance.</p>
+  </div>
+</section>
+{% endif %}
+
 <section class="cartel-franja" aria-label="Datos del cartel">
   <div class="cf-arriba">
     <p class="cf-institucion">{{ c.institucion | legible or "Sin datos de la institución" }}</p>

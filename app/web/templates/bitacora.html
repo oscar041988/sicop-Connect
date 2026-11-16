@@ -6,20 +6,7 @@
 {% if en_curso %}
 <section class="trabajando" role="status">
   {# Persona picando (Oscar, 13/11): solo dice que el enriquecimiento está trabajando; los datos son los de la base #}
-  <svg class="minero" viewBox="0 0 120 100" width="120" height="100" aria-hidden="true">
-    <ellipse cx="88" cy="88" rx="22" ry="6" class="piso"/>
-    <path d="M72 88 L78 70 L90 64 L102 72 L106 88 Z" class="roca"/>
-    <g class="persona">
-      <circle cx="44" cy="22" r="8"/>
-      <path d="M44 30 L44 60 M44 60 L34 88 M44 60 L56 88"/>
-    </g>
-    <g class="brazos">
-      <path d="M44 38 L62 34"/>
-      <path d="M60 14 L66 56" class="mango"/>
-      <path d="M50 12 Q62 4 74 16" class="punta"/>
-    </g>
-    <g class="chispas"><path d="M74 60 L68 54 M80 58 L80 49 M86 60 L92 53"/></g>
-  </svg>
+  {% include "_minero.html" %}
   <div>
     <h2>Enriqueciendo carteles…</h2>
     <p>{% if en_curso.hoy %}<strong>{{ en_curso.consultados }} de {{ en_curso.hoy }}</strong> consultados hoy{% if en_curso.en_cola > en_curso.hoy %} ({{ en_curso.en_cola }} en cola; el resto, otro día){% endif %}
@@ -37,8 +24,9 @@
     FALLO o CAPTCHA, hasta que alguien los marque revisados.</p>
   {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
   {% if por_revisar %}
-  <p class="aviso">{{ por_revisar }} grabación{{ "es" if por_revisar != 1 }} de un FALLO o CAPTCHA
-    espera{{ "n" if por_revisar != 1 }} revisión. <a href="/bitacora?por_revisar=1">Ver solo esas</a></p>
+  {# Solo los de hoy (Ivania, 16/11); los de días pasados siguen «sin revisar» en la lista #}
+  <p class="aviso">Hoy: {{ por_revisar }} grabación{{ "es" if por_revisar != 1 }} de un FALLO o CAPTCHA
+    espera{{ "n" if por_revisar != 1 }} revisión. <a href="/bitacora?por_revisar=1#consultas">Ver solo esas</a></p>
   {% endif %}
 </section>
 
@@ -62,9 +50,9 @@
   {% endif %}
 </section>
 
-<section>
+<section id="consultas">
   <h2>Consultas{% if solo_por_revisar %} · solo FALLO o CAPTCHA sin revisar{% endif %}</h2>
-  {% if solo_por_revisar %}<p><a href="/bitacora">Ver todas</a></p>{% endif %}
+  {% if solo_por_revisar %}<p><a href="/bitacora#consultas">Ver todas</a></p>{% endif %}
   {% if consultas %}
   <div class="tabla-scroll"><table class="lista auto">
     <thead><tr><th>Hora</th><th>Cartel</th><th>Resultado</th><th>Duración</th><th>Documentos</th><th>Grabación</th></tr></thead>

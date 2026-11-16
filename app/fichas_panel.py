@@ -19,6 +19,7 @@ from pathlib import Path
 from app import visor
 from app.database import transaccion
 from app.historial import Quien
+from app.importers.comun import HORA_CR
 
 MONEDA = re.compile(r"^[A-Z]{3}$")
 ARCHIVO_GRABACION = re.compile(r"^\d{6}-[A-Za-z0-9_-]+\.(webm|png)$")
@@ -266,6 +267,21 @@ def corrida_en_curso(conn: sqlite3.Connection, ahora: datetime | None = None) ->
             "hoy": len(json.loads(fila[3])) if fila[3] else None}
 
 
+def cartel_en_corrida(conn: sqlite3.Connection, nro_sicop: str, ahora: datetime | None = None) -> dict | None:
+    """Para la persona picando en el cartel (Ivania, 16/11): si la corrida en curso todavía no consultó este cartel,
+    cuántos le faltan antes (0 = lo está buscando ahora; se consultan en el orden de cola_json). None si no está en la
+    cola de hoy, ya se consultó o no hay corrida."""
+    corrida = corrida_en_curso(conn, ahora)
+    if corrida is None or corrida["hoy"] is None:
+        return None
+    cola = json.loads(conn.execute("SELECT cola_json FROM enrich_runs WHERE id = ?", (corrida["id"],)).fetchone()[0])
+    hechos = {f[0] for f in conn.execute("SELECT nro_sicop FROM enrich_consultas WHERE run_id = ?", (corrida["id"],))}
+    pendientes = [nro for nro in cola if nro not in hechos]
+    if nro_sicop not in pendientes:
+        return None
+    return {"id": corrida["id"], "antes": pendientes.index(nro_sicop)}
+
+
 def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False, ahora: datetime | None = None) -> dict:
     donde = (" WHERE c.resultado IN ('fallo', 'control') AND r.id IS NULL" if solo_por_revisar else "")
     return {
@@ -276,10 +292,17 @@ def bitacora(conn: sqlite3.Connection, solo_por_revisar: bool = False, ahora: da
             f"{_CONSULTA}{donde} ORDER BY c.id DESC LIMIT 100")],
         "retiros": conn.execute("SELECT nro_sicop, retirado_en, cierre, documentos, bytes FROM enrich_retiros"
                                 " ORDER BY id DESC LIMIT 20").fetchall(),
-        "por_revisar": conn.execute("SELECT count(*) FROM enrich_consultas c WHERE resultado IN ('fallo', 'control')"
-                                    " AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)"
-                                    ).fetchone()[0],
+        "por_revisar": por_revisar_hoy(conn, ahora),
     }
+
+
+def por_revisar_hoy(conn: sqlite3.Connection, ahora: datetime | None = None) -> int:
+    """FALLO o CAPTCHA sin revisar de hoy (hora de Costa Rica), para el aviso de arriba de la bitácora. Ivania
+    (16/11): el aviso solo sale el día del fallo; los de días pasados siguen «sin revisar» en la lista."""
+    hoy = (ahora or datetime.now(timezone.utc)).astimezone(HORA_CR).date()
+    filas = conn.execute("SELECT iniciada_en FROM enrich_consultas c WHERE resultado IN ('fallo', 'control')"
+                         " AND NOT EXISTS (SELECT 1 FROM enrich_revisiones r WHERE r.consulta_id = c.id)").fetchall()
+    return sum(1 for (iniciada,) in filas if datetime.fromisoformat(iniciada).astimezone(HORA_CR).date() == hoy)
 
 
 def consulta(conn: sqlite3.Connection, consulta_id: int) -> Consulta | None:

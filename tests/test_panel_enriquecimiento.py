@@ -312,12 +312,34 @@ def test_la_bitacora_muestra_corridas_consultas_y_lo_que_falta_revisar(entorno):
          (OTRO,))
     admin = _cliente("admin@ejemplo.test")
     html = admin.get("/bitacora").text
-    assert "1 grabación de un FALLO o CAPTCHA\n    espera revisión" in html
+    # El FALLO es del 27/10: sin aviso arriba (solo sale el día del fallo), pero sigue «sin revisar» en la lista
+    assert "espera revisión" not in html and "sin revisar" in html
+    hoy = datetime.now().astimezone().isoformat(timespec="seconds")
+    _sql(db, "INSERT INTO enrich_consultas (nro_sicop, iniciada_en, resultado, motivo) VALUES (?, ?, 'control', 'CAPTCHA')",
+         (OTRO, hoy))
+    html = admin.get("/bitacora").text
+    assert "Hoy: 1 grabación de un FALLO o CAPTCHA\n    espera revisión" in html
+    # El enlace baja a la lista: sin el ancla, la lista filtrada queda debajo de «Corridas» y parece que no hizo nada
+    assert 'href="/bitacora?por_revisar=1#consultas"' in html and '<section id="consultas">' in html
     assert "Con FALLO" in html and "Ficha nueva" in html and "corrida #1" in html
     assert "no encontró &lt;i&gt;el&lt;/i&gt; cartel" in html  # el motivo se escapa
     assert f'<a href="/oportunidades/{OTRO}">{OTRO}</a>' in html and "2 · 2.5 MB" in html
     solo = admin.get("/bitacora?por_revisar=1").text
     assert solo.count("Ver grabación") == 1 and "Bitácora de consultas" in admin.get("/oportunidades").text
+
+
+def test_el_aviso_de_la_bitacora_solo_cuenta_los_fallos_de_hoy_en_hora_de_costa_rica(entorno):
+    db, _ = entorno
+    for cuando, resultado in (("2026-11-15T23:59:00-06:00", "fallo"),   # ayer en Costa Rica
+                              ("2026-11-16T06:30:00+00:00", "fallo"),   # 00:30 de hoy en Costa Rica
+                              ("2026-11-16T09:00:00-06:00", "control"),
+                              ("2026-11-16T09:05:00-06:00", "nueva")):  # no es FALLO ni CAPTCHA
+        _sql(db, "INSERT INTO enrich_consultas (nro_sicop, iniciada_en, resultado) VALUES (?, ?, ?)",
+             (NRO, cuando, resultado))
+    ahora = datetime.fromisoformat("2026-11-16T15:00:00-06:00")
+    with closing(connect(db)) as conn:
+        assert fichas_panel.por_revisar_hoy(conn, ahora) == 2
+        assert fichas_panel.por_revisar_hoy(conn, ahora + timedelta(days=1)) == 0  # pasó el día: el aviso se va
 
 
 def test_la_bitacora_anima_a_la_persona_picando_solo_con_una_corrida_en_curso(entorno):
@@ -345,6 +367,29 @@ def test_la_bitacora_anima_a_la_persona_picando_solo_con_una_corrida_en_curso(en
     assert "<strong>2 de 3</strong> consultados hoy" in html and "(5 en cola; el resto, otro día)" in html
     _sql(db, "UPDATE enrich_runs SET estado = 'ok', terminada_en = ? WHERE id = ?", (inicio, run))
     assert "Enriqueciendo carteles" not in admin.get("/bitacora").text
+
+
+def test_el_cartel_muestra_a_la_persona_picando_mientras_espera_en_la_corrida(entorno):
+    db, _ = entorno
+    admin = _cliente("admin@ejemplo.test")
+    assert 'class="minero"' not in admin.get(f"/oportunidades/{OTRO}").text  # sin corrida
+    # Corrida SIMULADA en curso: cola de hoy [x, NRO, OTRO]; «x» ya se consultó.
+    inicio = (datetime.now().astimezone() - timedelta(minutes=10)).isoformat(timespec="seconds")
+    run = _sql(db, "INSERT INTO enrich_runs (iniciada_en, maximo, cola_json) VALUES (?, 20, ?)",
+               (inicio, json.dumps(["x", NRO, OTRO])))
+    _sql(db, "INSERT INTO enrich_consultas (run_id, nro_sicop, iniciada_en, resultado) VALUES (?, 'x', ?, 'nueva')",
+         (run, inicio))
+    html = admin.get(f"/oportunidades/{OTRO}").text
+    assert 'class="minero"' in html and "Faltan <strong>1</strong> cartel antes de este" in html
+    assert f"corrida #{run}" in html and 'http-equiv="refresh"' not in html  # el cartel no se recarga solo
+    assert "Buscando este cartel en SICOP ahora" in admin.get(f"/oportunidades/{NRO}").text
+    # Consultado NRO, ahora le toca a OTRO; NRO ya no muestra la animación.
+    _sql(db, "INSERT INTO enrich_consultas (run_id, nro_sicop, iniciada_en, resultado) VALUES (?, ?, ?, 'nueva')",
+         (run, NRO, inicio))
+    assert "Buscando este cartel en SICOP ahora" in admin.get(f"/oportunidades/{OTRO}").text
+    assert 'class="minero"' not in admin.get(f"/oportunidades/{NRO}").text
+    _sql(db, "UPDATE enrich_runs SET estado = 'ok', terminada_en = ? WHERE id = ?", (inicio, run))
+    assert 'class="minero"' not in admin.get(f"/oportunidades/{OTRO}").text  # corrida terminada
 
 
 def test_la_grabacion_muestra_video_y_capturas(entorno):

@@ -270,6 +270,7 @@ def _render_detalle(request: Request, conn: sqlite3.Connection, nro_sicop: str, 
         # Enriquecimiento (lección 4, entrega 4B): la ficha más reciente de SICOP y sus documentos.
         "sicop": fichas_panel.informacion(conn, nro_sicop), "documentos": fichas_panel.documentos(conn, nro_sicop),
         "retiro": fichas_panel.retiro(conn, nro_sicop), "TEXTO_DOC": fichas_panel.TEXTO,
+        "picando": fichas_panel.cartel_en_corrida(conn, nro_sicop, ahora),
         "ESTADO_DOC": fichas_panel.ESTADOS,
         # Reporte con IA (lección 5): la fila del resumen («Ver» y «Descargar»). Con AI_MODE=none no se muestra.
         "ia_visible": ia_visible, "resumenes": resumenes, "IA": _TEXTOS_IA,
