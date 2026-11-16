@@ -1,16 +1,38 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-16 (persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
+Última actualización: 2026-11-16 (prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
+y reporte de hasta 5 páginas, migración 0047; persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
 lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0046 · Suite: 1120 passed (16/11) + 1 prueba nueva ·
-`desarrollo` en GitHub: al día con la copia local (push del 16/11, `8122b54`) · `main` de GitHub: `7f5c558` (sin
-cambios desde el 29/10; espera que Oscar una el PR)
+de costo; rama `desarrollo`) · Base local en esquema 0046 (la 0047 espera `migrate`) · Suite: 1120 passed (16/11);
+la de v10, corriendo · `desarrollo` en GitHub: `e0da2de`; `30aa36a` (v10) solo local, push cuando pase la suite ·
+`main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **«Explicado en detalle» más largo, con cada característica y su cifra (2026-11-16, pedido de Ivania; `30aa36a`).**
+  En `20261101092` (cámaras corporales, resumen #106 con v9) la hoja decía «grabar en alta definición» y se perdía
+  «Full HD de al menos 1920 × 1080»: v9 pedía 400 a 550 palabras en una página y solo «especificaciones
+  principales».
+  - **Prompt v10** (`resumen_cartel_v10.md`; v9 sin tocar): 800 a 1100 palabras, dos páginas. La parte más larga
+    es un párrafo por equipo, sistema o servicio con cada característica que pide el pliego, su cifra y unidad tal
+    como las escribe, y qué significa en palabras simples; la cifra va siempre, nunca una palabra general. Si son
+    muchas, primero las obligatorias y las que más pesan. Lo demás del prompt, igual que v9.
+  - **Reporte PDF:** la hoja ocupa hasta 2 páginas; máximo **5** (`MAX_PAGINAS`; tope de 8 400 caracteres,
+    `MAX_EXPLICACION_CARTEL`). Sin la hoja, 3 como antes. Decisión de Ivania: la versión larga en todo, PDF
+    incluido. **Migración 0047**: CHECK de `ia_reports.paginas` 1–5 (igual que la 0046). La descripción de
+    `explicacion_cartel` en el esquema ya no fija el largo (mismo esquema para v9 y v10).
+  - Docs: `DECISION_IA.md` regla 9, `RESUMEN_IA.md`, `.env.example` (~700 tokens más que v9). Pruebas: 1 nueva
+    (v10) y las del reporte con hoja de 2 páginas (incluye texto en muchos párrafos cortos); resumen, reporte,
+    migraciones y respaldo: 72 passed. Listas de migraciones de las pruebas con la 0047.
+  - **Pendiente · Ivania:** con el panel cerrado (y si quiere, `backup` antes), `python -m app.cli migrate` (0047);
+    `IA_PROMPT_VERSION=v10` en el `.env`; abrir el panel y generar de nuevo el resumen de `20261101092` (cierra el
+    17/11 a las 08:00) y revisar la hoja en el panel y en el PDF. Si salen «incompleta · max_tokens», subir
+    `IA_MAX_OUTPUT_TOKENS`. Los resúmenes v9 siguen con su hoja de una página hasta generarlos de nuevo.
+  - **Pendiente · Claude:** push de `30aa36a` cuando pase la suite completa.
 
 - **Persona picando en estilo pixel de bloques (2026-11-16, pedido de Ivania; `8122b54`).** El dibujo de
   `_minero.html` (Bitácora y cartel) pasa a bloques: personaje original con la camisa azul de la app (no copia
