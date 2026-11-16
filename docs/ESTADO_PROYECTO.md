@@ -383,8 +383,9 @@ cambios desde el 29/10; espera que Oscar una el PR)
   no inventó nada, no usó un archivo que no correspondía y contestó la duda con la cita; 0.003–0.005 USD por mensaje
   (≈ 0.10 USD por cartel). Corregido el mismo día: prompt `chat_asistente_v2.md` (usted; «lo subo después», «no lo
   tenemos» y «no sé» avanzan), la pregunta no se repite entera y muestra como máximo 2 citas (`DECISION_IA.md`
-  §10.7). Archivos de prueba SINTÉTICOS en `data\pruebas\` (fuera de Git). **Pendiente · Ivania:** probar otra vez
-  (el panel toma los cambios solo). **Siguiente:** paso 4, corregir la oferta desde el chat.
+  §10.7). Archivos de prueba SINTÉTICOS en `data\pruebas\` (fuera de Git). ~~Pendiente · Ivania: probar otra vez
+  (el panel toma los cambios solo).~~ **Hecho (Ivania, 12/11): cubierto por sus pruebas del chat con la IA real
+  (respuestas a medias, certificaciones GPS, «Cambiar»), ya con estas correcciones.** **Siguiente:** paso 4, corregir la oferta desde el chat.
 
 - **La oferta también en Word (2026-11-11, pedido de Oscar; `DECISION_IA.md` §10.6 bis).** Junto a «Oferta», el
   botón **«Oferta en Word»** descarga el mismo documento en .docx: portada, pliego respondido, anexos, oferta
