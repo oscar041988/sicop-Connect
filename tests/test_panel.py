@@ -131,7 +131,7 @@ def test_filtro_revisado(db):
 
     assert _nros(_listar(db, revisado="si")) == ["00000000001"]
     assert _nros(_listar(db, revisado="no")) == ["00000000002", "00000000004"]
-    assert _listar(db).filas[0].decision == "interesa"
+    assert _listar(db, revisado="si").filas[0].decision == "interesa"   # «Todos» ya no lo trae: está revisado
 
 
 def test_paginas(db, monkeypatch):
@@ -443,30 +443,43 @@ def test_no_interesa_sale_de_todos_y_queda_en_su_chip(db):
 
     todos = _listar(db)
     assert _nros(todos) == ["00000000001", "00000000004"]
-    assert (todos.total, todos.escondidos) == (2, 1)
+    assert (todos.total, todos.escondidos) == (2, {"no_interesa": 1})
     assert _nros(_listar(db, revisado="no_interesa")) == ["00000000002"]
-    assert _listar(db, revisado="no_interesa").escondidos == 0
+    assert _listar(db, revisado="no_interesa").escondidos == {}
     # La búsqueda también lo esconde, pero lo cuenta: así se sabe dónde buscarlo.
     busqueda = _listar(db, q="flotilla")
-    assert (_nros(busqueda), busqueda.escondidos) == ([], 1)
+    assert (_nros(busqueda), busqueda.escondidos) == ([], {"no_interesa": 1})
 
 
-def test_otra_revision_lo_devuelve_a_todos(db):
+@pytest.mark.parametrize("decision", ["interesa", "revisar_requisitos", "ofertada", "no_se_oferta"])
+def test_toda_revision_saca_el_cartel_de_todos_y_lo_deja_en_su_chip(db, decision):
+    _revisar(db, "00000000002", decision)
+
+    todos = _listar(db)
+    assert _nros(todos) == ["00000000001", "00000000004"]
+    assert todos.escondidos == {decision: 1}
+    assert _nros(_listar(db, revisado=decision)) == ["00000000002"]
+    assert _nros(_listar(db, revisado="si")) == ["00000000002"]
+
+
+def test_otra_revision_lo_cambia_de_chip(db):
     _revisar(db, "00000000002", "no_interesa", motivo="plazo")
     _revisar(db, "00000000002", "interesa")   # la vigente es la última; nada se borra
 
-    assert _nros(_listar(db)) == ["00000000001", "00000000002", "00000000004"]
-    assert _listar(db).escondidos == 0
+    assert _nros(_listar(db)) == ["00000000001", "00000000004"]
+    assert _listar(db).escondidos == {"interesa": 1}
+    assert _nros(_listar(db, revisado="interesa")) == ["00000000002"]
+    assert _nros(_listar(db, revisado="no_interesa")) == []
 
 
-def test_el_panel_avisa_cuantos_quedaron_en_no_interesa(db, cliente):
-    _revisar(db, "00000000002", "no_interesa", motivo="plazo")
+def test_el_panel_avisa_en_que_chip_quedo_cada_revisado(db, cliente):
+    _revisar(db, "00000000002", "no_se_oferta")
 
     texto = cliente.get("/oportunidades", params={"q": "flotilla"}).text
 
     assert "00000000002" not in texto
-    assert "1 más en «No interesa»" in texto
-    assert 'href="/oportunidades?q=flotilla&amp;revisado=no_interesa"' in texto   # el enlace conserva la búsqueda
+    assert "1 en «No se oferta»" in texto
+    assert 'href="/oportunidades?q=flotilla&amp;revisado=no_se_oferta"' in texto   # el enlace conserva la búsqueda
 
 
 def test_nuevo_es_lo_que_llego_en_la_ultima_importacion(db):

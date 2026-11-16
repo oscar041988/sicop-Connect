@@ -130,7 +130,8 @@ class Pagina:
     total: int
     pagina: int
     paginas: int
-    escondidos: int = 0   # «No interesa» que cumplen los demás filtros pero no salen en esta lista
+    # Revisados que cumplen los demás filtros pero no salen en «Todos», por decisión: {"no_interesa": 3, …}
+    escondidos: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -243,7 +244,7 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
         condiciones.append("(descripcion LIKE :q ESCAPE '!' OR institucion LIKE :q ESCAPE '!'"
                            " OR nro_sicop LIKE :q ESCAPE '!')")
         params["q"] = "%" + re.sub(r"([!%_])", r"!\1", f.q) + "%"
-    escondidos = 0
+    escondidos: dict[str, int] = {}
     if f.revisado == "si":
         condiciones.append("decision IS NOT NULL")
     elif f.revisado == "no":
@@ -252,11 +253,14 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
         condiciones.append("decision = :decision")
         params["decision"] = f.revisado
     else:
-        # «No interesa» sale de «Todos» y queda solo en su chip (pedido de Oscar por Ivania, 2026-11-13): seguía en
-        # el panel y confundía. Nada se borra; se cuenta para avisar cuántos quedaron escondidos.
-        escondidos = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {' AND '.join(condiciones)}"
-                                  " AND decision = 'no_interesa'", params).fetchone()[0]
-        condiciones.append("decision IS NOT 'no_interesa'")
+        # Un cartel revisado sale de «Todos» y queda solo en el chip de su decisión (Ivania, 2026-11-16; antes solo
+        # «No interesa», 2026-11-13). Nada se borra; se cuenta por decisión para avisar dónde quedó cada uno.
+        por_decision = conn.execute(f"{_base_sql()} SELECT decision, count(*) FROM base"
+                                    f" WHERE {' AND '.join(condiciones)} AND decision IS NOT NULL GROUP BY decision",
+                                    params).fetchall()
+        cuantos = dict(por_decision)
+        escondidos = {d: cuantos[d] for d in DECISIONES if cuantos.get(d)}
+        condiciones.append("decision IS NULL")
     donde = " AND ".join(condiciones)
 
     total = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {donde}", params).fetchone()[0]

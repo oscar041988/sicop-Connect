@@ -250,7 +250,7 @@ def test_el_expediente_solo_lo_ven_su_encargado_y_los_administradores(clientes, 
     assert ana.status_code == 403 and "Este expediente es de Ivania y de los administradores" in ana.text
     assert clientes["oscar"].get(f"/seguimiento/{NRO}").status_code == 200
     # Ana no entra, pero ve quién lo tiene: en el panel, en el cartel y en la página de seguimiento.
-    assert "En seguimiento · Ivania" in clientes["ana"].get("/oportunidades").text
+    assert "En seguimiento · Ivania" in clientes["ana"].get("/oportunidades?revisado=interesa").text
     detalle = clientes["ana"].get(f"/oportunidades/{NRO}").text
     assert '<span class="ct-chip">Ivania</span>' in detalle and f'href="/seguimiento/{NRO}"' not in detalle
     assert f'href="/seguimiento/{NRO}"' in clientes["ivania"].get(f"/oportunidades/{NRO}").text
@@ -263,7 +263,7 @@ def test_un_cartel_vencido_sale_del_panel_pero_sigue_en_seguimiento(clientes, db
         conn.execute("UPDATE tenders SET fecha_cierre_recepcion = ? WHERE nro_sicop = ?", (vencido, NRO))
 
     assert f'href="/oportunidades/{NRO}"' not in clientes["ana"].get("/oportunidades").text
-    assert f'href="/oportunidades/{NRO}"' in clientes["ana"].get("/oportunidades?plazo=vencido").text
+    assert f'href="/oportunidades/{NRO}"' in clientes["ana"].get("/oportunidades?plazo=vencido&revisado=interesa").text
     assert f'href="/oportunidades/{NRO}"' in clientes["ana"].get("/seguimiento").text
     assert clientes["ana"].get(f"/oportunidades/{NRO}").status_code == 200  # nada se borra
 
@@ -366,7 +366,7 @@ def test_la_etapa_la_cambian_el_encargado_y_los_administradores(clientes, db):
     assert _etapa_de(db) == "ganada"
     # Todos ven la etapa, aunque no entren al expediente.
     assert "Etapa: Ganada" in clientes["ana"].get(f"/oportunidades/{NRO}").text
-    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get("/oportunidades").text
+    assert "En seguimiento · Ivania · ganada" in clientes["ana"].get("/oportunidades?revisado=interesa").text
     assert "etapa-ganada" in clientes["ana"].get("/seguimiento").text
 
 
