@@ -20,8 +20,8 @@ cambios desde el 29/10; espera que Oscar una el PR)
   4 momentos (Playwright, fuera del repositorio); `tests/test_panel_enriquecimiento.py`: 20 passed. Vista previa
   animada con datos de ejemplo: `vista-minero-pixel.html` en el Escritorio de Ivania.
   - **Panel sin recargar:** el panel abierto desde las 08:16 con `--reload` no tomó los cambios del día (seguía
-    «4 grabaciones… esperan revisión»). **Pendiente · Ivania:** cerrarlo con Ctrl+C, volver a abrirlo y recargar la
-    Bitácora con Ctrl+F5.
+    «4 grabaciones… esperan revisión»). ~~Pendiente · Ivania: cerrarlo con Ctrl+C, volver a abrirlo y recargar la
+    Bitácora con Ctrl+F5.~~ **Hecho (Ivania, 16/11, 10:42).**
   - **Pendiente · Oscar:** ver la animación nueva (él pidió la primera, 13/11).
 
 - **Bitácora y cartel: aviso de hoy y persona picando en el cartel (2026-11-16, pedidos de Ivania; `f7dc56a`).**
