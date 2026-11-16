@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-16 (prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
+Última actualización: 2026-11-16 (todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
 y reporte de hasta 5 páginas, migración 0047; persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
 lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
@@ -8,10 +8,26 @@ escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nomb
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
 de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1122 passed** (16/11,
-con v10) · `desarrollo` en GitHub: al día con la copia local (push del 16/11) ·
+con v10; la corrida completa tras el cambio del panel está pendiente) · `desarrollo` en GitHub: al día con la
+copia local (push del 16/11, `57f42f7`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Todo cartel revisado sale de «Todos» (2026-11-16, pedido de Ivania; `57f42f7`).** Antes solo «No interesa» se
+  escondía (13/11). Ahora cualquier revisión vigente (Interesa, Revisar requisitos, Ofertada, No se oferta, No
+  interesa) saca el cartel de «Todos» y queda solo en el chip de su decisión: si le dieron «No se oferta», está en
+  «No se oferta». `panel.listar` filtra `decision IS NULL` cuando no hay chip; `Pagina.escondidos` pasó a ser un
+  conteo por decisión (`{"interesa": 2, …}`). Debajo del total: «Ya revisados, fuera de esta lista: 2 en «Interesa»
+  · 1 en «No se oferta»», cada parte con enlace al chip (conserva la búsqueda y los filtros).
+  - Nada se borra; otra revisión pasa el cartel al chip de la nueva decisión. «Todos» ahora muestra lo mismo que
+    «Sin revisar». Los carteles en seguimiento siguen en «Interesa» y en la página «Seguimiento». «Exportar a
+    Excel» sigue los mismos filtros. Sin migración.
+  - Misión 08 (`08-revision.md`): la línea del panel y el ¿Y si…? hablan de «el botón de tu decisión».
+  - Pruebas: `tests/test_panel.py` (nueva parametrizada por las 4 decisiones, «otra revisión lo cambia de chip», aviso
+    con enlace a «No se oferta»); 3 de `tests/test_seguimiento.py` ahora buscan el cartel en `?revisado=interesa`.
+    Panel + seguimiento: 88 passed; archivos del panel: 290 passed; ayuda: 50 passed.
+  - **Pendiente:** resultado de la suite completa con este cambio.
 
 - **«Explicado en detalle» más largo, con cada característica y su cifra (2026-11-16, pedido de Ivania; `30aa36a`).**
   En `20261101092` (cámaras corporales, resumen #106 con v9) la hoja decía «grabar en alta definición» y se perdía
@@ -76,7 +92,7 @@ con v10) · `desarrollo` en GitHub: al día con la copia local (push del 16/11) 
   «N más en «No interesa», fuera de esta lista · Verlos» (el enlace conserva la búsqueda y los filtros).
   «Exportar a Excel» sigue los mismos filtros, así que «Todos» tampoco los exporta. Las otras decisiones (incluida
   «No se oferta») siguen en «Todos». Misión 08: una línea y un ¿Y si…?. 3 pruebas nuevas en `tests/test_panel.py`
-  (62 passed). Suite: **1119 passed**. Sin migración. Decisión de Ivania: solo «No interesa» se esconde.
+  (62 passed). Suite: **1119 passed**. Sin migración. Decisión de Ivania: solo «No interesa» se esconde. **Ampliado el 16/11 a todas las decisiones** (ver arriba).
 
 - **Hoja «De qué trata, explicado en detalle» (2026-11-13, pedido de Oscar por Ivania).** Una página más que amplía
   «De qué trata» con palabras sencillas: qué compran y para qué, cómo tiene que ser cada cosa, cómo y cuándo se
