@@ -1,16 +1,28 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-16 (Bitácora: «Ver solo esas» baja a la lista y el aviso de FALLO o CAPTCHA solo
-el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
+Última actualización: 2026-11-16 (persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
+lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
 de costo; rama `desarrollo`) · Base local en esquema 0046 · Suite: 1120 passed (16/11) + 1 prueba nueva ·
-`desarrollo` en GitHub: al día con la copia local (push del 16/11, `f7dc56a`) · `main` de GitHub: `7f5c558` (sin
+`desarrollo` en GitHub: al día con la copia local (push del 16/11, `8122b54`) · `main` de GitHub: `7f5c558` (sin
 cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Persona picando en estilo pixel de bloques (2026-11-16, pedido de Ivania; `8122b54`).** El dibujo de
+  `_minero.html` (Bitácora y cartel) pasa a bloques: personaje original con la camisa azul de la app (no copia
+  personajes de ningún juego), bloque de piedra con vetas doradas, pico que se mueve a saltos (`steps(1, end)`),
+  el bloque tiembla al golpe y saltan chispas cuadradas. El brazo va detrás de la cabeza para que el pico no tape la
+  cara. Sin animación con `prefers-reduced-motion`. Archivos: `_minero.html`, `estilo.css`. Revisado con capturas de
+  4 momentos (Playwright, fuera del repositorio); `tests/test_panel_enriquecimiento.py`: 20 passed. Vista previa
+  animada con datos de ejemplo: `vista-minero-pixel.html` en el Escritorio de Ivania.
+  - **Panel sin recargar:** el panel abierto desde las 08:16 con `--reload` no tomó los cambios del día (seguía
+    «4 grabaciones… esperan revisión»). **Pendiente · Ivania:** cerrarlo con Ctrl+C, volver a abrirlo y recargar la
+    Bitácora con Ctrl+F5.
+  - **Pendiente · Oscar:** ver la animación nueva (él pidió la primera, 13/11).
 
 - **Bitácora y cartel: aviso de hoy y persona picando en el cartel (2026-11-16, pedidos de Ivania; `f7dc56a`).**
   - **«Ver solo esas» no parecía funcionar:** filtraba bien (base real: las 4 grabaciones sin revisar, de
