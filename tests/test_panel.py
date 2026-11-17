@@ -126,6 +126,24 @@ def test_filtros(db, filtros, esperado):
     assert _nros(_listar(db, **filtros)) == esperado
 
 
+def test_una_fila_por_cartel_con_la_familia_de_mayor_prioridad_primero(db):
+    # El 4 es Alta en camaras_corporales y Baja en videotelematica: antes salía dos veces (Ivania, 2026-11-17).
+    p = _listar(db, prioridad="todas")
+    assert _nros(p) == ["00000000001", "00000000002", "00000000004"] and p.total == 3
+    cuatro = p.filas[2]
+    assert (cuatro.familia, cuatro.encaje, cuatro.otras) == ("camaras_corporales", "alta", [("videotelematica", "baja")])
+    # Las demás familias siguen los filtros: con «Baja», la Alta no está y la principal es la Baja.
+    baja = _listar(db, prioridad="baja").filas[0]
+    assert (baja.familia, baja.otras) == ("videotelematica", [])
+
+
+def test_la_lista_muestra_las_otras_familias_como_etiquetas(cliente):
+    html = cliente.get("/oportunidades?prioridad=todas").text
+
+    assert html.count('href="/oportunidades/00000000004"') == 1
+    assert 'title="Prioridad Baja en esta familia"' in html and "También con: <b>" in html
+
+
 def test_filtro_revisado(db):
     _revisar(db, "00000000001")
 

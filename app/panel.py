@@ -114,6 +114,9 @@ class FilaLista:
     evidencia: str
     es_nuevo: bool        # apareció por primera vez en la última importación de carteles
     estimado: dict[str, Monto] = field(default_factory=dict)  # total de las líneas, por moneda
+    # Las demás familias del cartel que cumplen los filtros, como (familia, encaje): la fila muestra la de mayor
+    # prioridad y estas como etiquetas (una fila por cartel, Ivania 2026-11-17).
+    otras: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def frases(self) -> list[str]:
@@ -223,6 +226,18 @@ def _base_sql() -> str:
         )"""
 
 
+# Una fila por cartel (Ivania, 2026-11-17; antes, una por cada familia con la que coincidía): de las familias que
+# cumplen los filtros, la principal es la de mayor prioridad (a igual prioridad, por nombre de familia).
+_FILTRADAS_SQL = """,
+        filtradas AS (
+            SELECT *, ROW_NUMBER() OVER (
+                PARTITION BY nro_sicop
+                ORDER BY CASE encaje WHEN 'alta' THEN 0 WHEN 'media' THEN 1 WHEN 'baja' THEN 2 ELSE 3 END, familia
+            ) AS orden
+            FROM base WHERE {donde}
+        )"""
+
+
 def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: datetime, todas: bool = False) -> Pagina:
     """Una página de la lista con los filtros. todas=True: todas las filas en una página (exportar a Excel, A5)."""
     f = filtros.limpios()
@@ -255,31 +270,40 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
     else:
         # Un cartel revisado sale de «Todos» y queda solo en el chip de su decisión (Ivania, 2026-11-16; antes solo
         # «No interesa», 2026-11-13). Nada se borra; se cuenta por decisión para avisar dónde quedó cada uno.
-        por_decision = conn.execute(f"{_base_sql()} SELECT decision, count(*) FROM base"
+        por_decision = conn.execute(f"{_base_sql()} SELECT decision, count(DISTINCT nro_sicop) FROM base"
                                     f" WHERE {' AND '.join(condiciones)} AND decision IS NOT NULL GROUP BY decision",
                                     params).fetchall()
         cuantos = dict(por_decision)
         escondidos = {d: cuantos[d] for d in DECISIONES if cuantos.get(d)}
         condiciones.append("decision IS NULL")
-    donde = " AND ".join(condiciones)
+    con = _base_sql() + _FILTRADAS_SQL.format(donde=" AND ".join(condiciones))
 
-    total = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {donde}", params).fetchone()[0]
+    total = conn.execute(f"{con} SELECT count(*) FROM filtradas WHERE orden = 1", params).fetchone()[0]
     tamaño = max(total, 1) if todas else POR_PAGINA
     paginas = max(1, -(-total // tamaño))
     pagina = min(f.pagina, paginas)
     filas = conn.execute(
-        f"""{_base_sql()}
+        f"""{con}
         SELECT nro_sicop, descripcion, institucion, familia, producto, encaje, plazo, cierre, tipo, decision,
                nro_procedimiento, fecha_publicacion, regla, evidencia, es_nuevo
-        FROM base WHERE {donde}
+        FROM filtradas WHERE orden = 1
         ORDER BY CASE plazo WHEN 'cierra_7_dias' THEN 0 WHEN 'abierto' THEN 1 WHEN 'por_verificar' THEN 2 ELSE 3 END,
                  CASE WHEN plazo = 'vencido' THEN -julianday(cierre) ELSE julianday(cierre) END,
-                 nro_sicop, familia
+                 nro_sicop
         LIMIT :limite OFFSET :desde""",
         {**params, "limite": tamaño, "desde": (pagina - 1) * tamaño},
     ).fetchall()
     resultado = [FilaLista(*fila[:-1], es_nuevo=bool(fila[-1])) for fila in filas]
-    montos = estimados(conn, [f.nro_sicop for f in resultado])
+    por_nro = {fila.nro_sicop: fila for fila in resultado}
+    if por_nro:
+        # Las demás familias (orden > 1, ya por prioridad); sin lista de números en el SQL: en «Exportar a Excel»
+        # la página trae todos los carteles y SQLite limita los parámetros de una consulta.
+        for nro, familia, encaje in conn.execute(
+            f"{con} SELECT nro_sicop, familia, encaje FROM filtradas WHERE orden > 1 ORDER BY nro_sicop, orden", params
+        ):
+            if nro in por_nro:
+                por_nro[nro].otras.append((familia, encaje))
+    montos = estimados(conn, list(por_nro))
     for fila in resultado:
         fila.estimado = montos.get(fila.nro_sicop, {})
     return Pagina(resultado, total, pagina, paginas, escondidos)

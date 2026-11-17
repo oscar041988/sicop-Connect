@@ -80,7 +80,7 @@
 
 <div class="resultados">
   <p class="sub"><strong>{{ pagina.total }} resultado{% if pagina.total != 1 %}s{% endif %}</strong> · por cierre más próximo{% if not filtros.plazo %} · sin vencidos{% endif %}
-    <small>(un cartel puede salir una vez por cada familia con la que coincide{% if not filtros.plazo %}; los vencidos, con «Vencido» en Plazo{% endif %})</small>
+    <small>(una fila por cartel; si coincide con varias familias, primero la de mayor prioridad{% if not filtros.plazo %}; los vencidos, con «Vencido» en Plazo{% endif %})</small>
     {% if pagina.escondidos %}<br><span class="escondidos">Ya revisados, fuera de esta lista:
       {% for decision, n in pagina.escondidos.items() %}<a href="{{ url_chip(decision) }}">{{ n }} en «{{ DECISIONES[decision] }}»</a>{{ " · " if not loop.last }}{% endfor %}</span>{% endif %}</p>
   {% if pagina.total %}<a class="btn o exportar" href="{{ url_exportar }}" download>Exportar a Excel</a>{% endif %}
@@ -104,6 +104,7 @@
           <span class="inst">{{ f.institucion | legible or "Sin datos de la institución" }} · {{ f.tipo_procedimiento or "Sin dato" }}</span>
           {% if f.es_nuevo %}<span class="tag new">Nuevo</span>{% endif %}
           <span class="tag fam">{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</span>
+          {% for familia, encaje in f.otras %}<span class="tag fam" title="Prioridad {{ ENCAJES[encaje] }} en esta familia">{{ NOMBRES_FAMILIA.get(familia, familia) }}</span>{% endfor %}
           {% if f.plazo == "vencido" %}<span class="tag g">Vencido</span>
           {% elif f.plazo == "por_verificar" %}<span class="tag w">Plazo por verificar</span>{% endif %}
           {% if f.decision == "interesa" %}<span class="tag dec-si">Interesa</span>
@@ -116,6 +117,7 @@
           <details>
             <summary>Ver más</summary>
             <p>Coincide con la familia <b>{{ NOMBRES_FAMILIA.get(f.familia, f.familia) }}</b> por la regla: {{ f.regla | legible or "—" }}.</p>
+            {% if f.otras %}<p>También con: {% for familia, encaje in f.otras %}<b>{{ NOMBRES_FAMILIA.get(familia, familia) }}</b> ({{ ENCAJES[encaje] }}){{ ", " if not loop.last }}{% endfor %}. La regla de cada una está en el cartel.</p>{% endif %}
             <dl>
               <div><dt>N.º SICOP</dt><dd>{{ f.nro_sicop }}</dd></div>
               <div><dt>N.º de procedimiento</dt><dd>{{ f.nro_procedimiento or "—" }}</dd></div>
