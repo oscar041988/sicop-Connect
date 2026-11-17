@@ -43,7 +43,7 @@ def clientes(db, monkeypatch):  # noqa: F811
 def test_el_indice_tiene_las_25_misiones_en_orden_y_toda_mision_se_abre(clientes):
     admin, _ = clientes
     nombres = [m.nombre for m in pagina.todas()]
-    assert len(nombres) == 24 and nombres == sorted(nombres)
+    assert len(nombres) == 25 and nombres == sorted(nombres)   # la 22 no existe; la 26 es «Productividad»
     html = admin.get("/ayuda").text
     assert "¿Cómo se usa?" in html and 'id="glosario"' in html
     for nombre in nombres:

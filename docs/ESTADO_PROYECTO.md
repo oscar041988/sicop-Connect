@@ -27,6 +27,14 @@ copia local hasta el push del 17/11 (`575fa91`) ·
     10:45). **Pendiente · Ivania/Oscar:** decidir si se agrega.
   - **Pendiente:** suite con Python 3.12 antes de unir el PR (última: 964 passed, 9/11).
 
+- **Misión 26 de la ayuda: «¿Cómo sé si revisamos a tiempo los carteles?» (2026-11-17, pedido de Ivania).**
+  `docs/ayuda/misiones/26-productividad.md` (bloque nuevo «H. Productividad» en `MISIONES.md`; la 11 sigue con la
+  26), botón «?» de `/productividad` (`config/ayuda.yaml`), pantalla y 4 objetivos en `app/ayuda/pantallas.py`.
+  Base de EJEMPLO: 31 carteles «entran» el martes de la semana pasada y las primeras revisiones de 3 son de esa
+  semana (`ejemplo.SEMANA_PASADA`), para que la vista por defecto no salga vacía: 30 candidatos, 2 revisados, 1
+  cerró sin revisión, Ana y Luis en «Por persona». `ayuda capturas` completo: 164 de 164. Pruebas de la ayuda y
+  productividad: 56 passed (`test_ayuda_pagina`: ahora 25 misiones).
+
 - **Página «Productividad» (2026-11-17, idea de Ivania; maqueta aprobada por Ivania).** Menú principal →
   `/productividad`. Por semana (lunes a domingo, hora de CR; por defecto la última completa; ‹ › para cambiar):
   candidatos nuevos (Alta/Media vistos por primera vez en la semana, uno por cartel), revisados (primera revisión
@@ -40,7 +48,7 @@ copia local hasta el push del 17/11 (`575fa91`) ·
     **1136 passed** (13 min 50 s).
   - **Pendiente · Oscar:** confirmar las opciones provisionales (solo Alta y Media; «Por persona» solo para
     administradores; con tiempos). Maqueta: https://claude.ai/artifact/Bo4b2anLQGazDg7x8Zs1BN (privada: hay que
-    compartirla). Sin misión de ayuda todavía.
+    compartirla). Misión de ayuda: la 26 (17/11, entrada de arriba).
 
 - **Una fila por cartel en el panel (2026-11-17, pedido de Ivania).** Un cartel salía una vez por cada familia con
   la que coincidía (p. ej. `20261101092` en 5 familias). Ahora `panel.listar` agrupa con `ROW_NUMBER()` por cartel:

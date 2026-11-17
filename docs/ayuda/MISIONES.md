@@ -64,6 +64,14 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 | 24 | ¿Cómo sé si podemos participar? | Cartel: «Resultado» → constancia | `24-resultado.md` | Borrador (2026-11-04) |
 | 25 | ¿Cómo leo y descargo el Reporte de cartel? | Cartel: resumen con IA → «Reporte PDF» | `25-reporte-pdf.md` | Borrador (2026-11-04), sin capturas |
 
+## H. Productividad
+
+Para todo el equipo; «Por persona» solo la ven los administradores. Se lee después de la 11 (su «Sigue con»).
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 26 | ¿Cómo sé si revisamos a tiempo los carteles? | Menú → Productividad | `26-productividad.md` | Borrador (2026-11-17) |
+
 ## Dónde se ve la ayuda en la app
 
 - `/ayuda` («¿Cómo se usa?», enlace en el pie de cada página): tarjetas por bloque en el orden de esta lista,

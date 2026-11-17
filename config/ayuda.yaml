@@ -42,3 +42,5 @@ pantallas:
     mision: 18-bitacora
   - ruta: /perfil*
     mision: 21-perfil
+  - ruta: /productividad
+    mision: 26-productividad

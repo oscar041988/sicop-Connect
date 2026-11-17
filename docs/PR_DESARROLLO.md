@@ -63,8 +63,8 @@ hay que hacer cada día o semana sin Ivania, en **`docs/TRASPASO.md`**.
   de video» pasa a contexto. Golden set: 39 casos, 39/39 (reglas `a90bf850e7e5`).
 
 ### Ayuda dentro de la app
-- 25 misiones paso a paso con capturas automáticas (base de EJEMPLO), botón «?» en cada pantalla, glosario y
-  «¿Te sirvió?» por misión (0037). «Productividad» todavía no tiene misión.
+- 25 misiones paso a paso con capturas automáticas (base de EJEMPLO, 164 capturas), botón «?» en cada pantalla,
+  glosario y «¿Te sirvió?» por misión (0037). La 26 es «Productividad».
 
 ### Robustez
 - `BEGIN IMMEDIATE`; las tareas programadas esperan hasta 10 min si la base está ocupada; el panel, 30 s.

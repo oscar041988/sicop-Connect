@@ -51,6 +51,10 @@ SEGUIDO = "20269990002"        # Interesa, en seguimiento con encargado, archivo
 SIN_ENCARGADO = "20269990003"  # en seguimiento, todavía sin encargado
 NUEVO = "20269990004"          # llega en la última importación: etiqueta «Nuevo»
 CON_GRABACION = "20269990006"  # su consulta a SICOP falló: grabación por revisar
+# Productividad (misión 26) abre en la última semana completa: estos carteles «entraron» el martes de la semana
+# pasada y las primeras revisiones de SEGUIDO, 007 y 014 son de esa semana. «20269990005» ya cerró sin revisión.
+# PRINCIPAL y NUEVO siguen siendo de hoy.
+SEMANA_PASADA = (SEGUIDO, "20269990005", "20269990007", *(f"202699900{n:02d}" for n in range(10, 38)))
 
 INSTITUCIONES = [("3999000001", "INSTITUCIÓN DE EJEMPLO A"), ("3999000002", "MUNICIPALIDAD DE EJEMPLO B"),
                  ("3999000003", "MINISTERIO DE EJEMPLO C")]
@@ -367,6 +371,13 @@ def _asistente(conn: sqlite3.Connection, settings, ia_settings, ahora: datetime,
 
 # --- Crear la base ----------------------------------------------------------------------------------------------
 
+def _martes_pasado(ahora: datetime) -> datetime:
+    """El martes de la semana pasada a las 09:00, hora de Costa Rica."""
+    hoy = ahora.astimezone(CR).date()
+    lunes = hoy - timedelta(days=hoy.weekday() + 7)
+    return datetime(lunes.year, lunes.month, lunes.day, 9, tzinfo=CR) + timedelta(days=1)
+
+
 def _sql(conn: sqlite3.Connection, sql: str, params=()) -> int:
     with conn:
         return conn.execute(sql, params).lastrowid
@@ -454,13 +465,18 @@ def crear(carpeta: Path = CARPETA_EJEMPLO, ahora: datetime | None = None) -> Cla
         ana = Quien(admin, ADMIN[1])
 
         hace = lambda horas: ahora - timedelta(hours=horas)  # noqa: E731
+        martes = _martes_pasado(ahora)
+        with conn:
+            conn.executemany("UPDATE tenders SET first_seen = ? WHERE nro_sicop = ?",
+                             [(martes.isoformat(timespec="seconds"), nro) for nro in SEMANA_PASADA])
         panel.guardar_revision(conn, SEGUIDO, "revisar_requisitos", "", "EJEMPLO: confirmar la experiencia pedida.",
-                               luis, hace(30))
+                               luis, martes + timedelta(days=1, hours=1))
         panel.guardar_revision(conn, SEGUIDO, "interesa", "", "EJEMPLO: cumplimos todo, vamos a ofertar.", admin,
                                hace(6))
         panel.guardar_revision(conn, "20269990007", "no_interesa", "no_encaja",
-                               "EJEMPLO: solo compran el aparato, sin servicio.", luis, hace(20))
-        panel.guardar_revision(conn, "20269990014", "ofertada", "", "", admin, hace(10))
+                               "EJEMPLO: solo compran el aparato, sin servicio.", luis,
+                               martes + timedelta(days=2, hours=6))
+        panel.guardar_revision(conn, "20269990014", "ofertada", "", "", admin, martes + timedelta(days=3, hours=2))
 
         seguimiento.abrir(conn, SEGUIDO, ana, hace(5))
         seguimiento.asignar(conn, SEGUIDO, luis, ana, hace(5))

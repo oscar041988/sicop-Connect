@@ -31,6 +31,7 @@ PANTALLAS: dict[str, str] = {
     "Avisos": "/avisos",
     "Calidad de reglas": "/calidad",
     "Bitácora": "/bitacora",
+    "Productividad": "/productividad",   # la última semana completa (ejemplo.SEMANA_PASADA)
     "Grabación": "/bitacora/consultas/{consulta}",
     "Correo": "/ayuda-ejemplo/correo",
     "Perfil": "/perfil",
@@ -136,6 +137,11 @@ ESPECIALES: dict[tuple[str, str], Objetivo] = {
     # Bitácora y grabación
     ("Bitácora", "el aviso de grabaciones por revisar"): Objetivo(selector="p.aviso"),
     ("Grabación", "el video"): Objetivo(selector="video"),
+    # Productividad
+    ("Productividad", "las cuatro cifras"): Objetivo(selector=".prod-cifras"),
+    ("Productividad", "la lista de los que cerraron sin revisión"): Objetivo(selector=".prod-escapados"),
+    ("Productividad", "la tabla «Por persona»"): Objetivo(selector="table.prod-personas"),
+    ("Productividad", "las barras de las últimas semanas"): Objetivo(selector=".prod-historial"),
     # Iniciar sesión
     ("Iniciar sesión", "el título «Iniciar sesión»"): Objetivo(selector="h1"),
     ("Iniciar sesión", "el ojito de «Contraseña»"): Objetivo(selector=".btn-mostrar"),

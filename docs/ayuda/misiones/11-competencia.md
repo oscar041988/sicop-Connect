@@ -24,7 +24,7 @@
 11. Haz clic en el número de «Veces» para ver cada concurso que ganó.
     [captura: Competencia · resaltar un número de «Veces»]
 
-**Dónde quedaste:** en «Competencia». Aquí terminan las misiones para todo el equipo.
+**Dónde quedaste:** en «Competencia». Falta una página para todo el equipo: «Productividad».
 Las misiones 12 a 18 son para administradores.
 
 ## ¿Y si…?
@@ -35,5 +35,4 @@ Faltan los datos de SICOP. Avísale a quien administra la app.
 **¿Y si no aparece ninguna tarjeta?**
 No hubo ganadores en esas fechas. Elige un periodo más largo.
 
-**Sigue con:** [¿Cómo cargo un reporte de SICOP?](12-cargar-archivo.md) (administradores) o
-[¿Cómo leo el correo diario?](19-correo.md)
+**Sigue con:** [¿Cómo sé si revisamos a tiempo los carteles?](26-productividad.md)
