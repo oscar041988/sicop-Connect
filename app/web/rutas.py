@@ -14,7 +14,7 @@ import sqlite3
 import tempfile
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote, urlencode
 
@@ -44,7 +44,7 @@ from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
                  expediente_descarga, exportar, fichas_panel, historial, oferta_cambios, oferta_economica, panel,
-                 perfil, propuesta, reintentos, resumen,
+                 perfil, productividad, propuesta, reintentos, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
 from app.web import carga, citas, seguridad
@@ -223,6 +223,28 @@ def pagina_resumen_semanal(request: Request) -> Response:
         envio = avisos.ultimo_envio(conn, (resumen.MOTIVO,))
     return PLANTILLAS.TemplateResponse(request, "resumen_semanal.html", {
         "c": c, "hasta": c.fin - timedelta(days=1) if c else None, "panel": "", "envio": envio,
+    })
+
+
+@router.get("/productividad", response_class=HTMLResponse)
+def pagina_productividad(request: Request, semana: str = "") -> Response:
+    """Productividad de la revisión por semana (Ivania, 17/11). «Por persona» solo la ven los administradores
+    (opción provisional hasta que Oscar decida). ?semana=AAAA-MM-DD elige la semana de ese día."""
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    try:
+        dia = date.fromisoformat(semana) if semana else None
+    except ValueError:
+        dia = None  # una URL editada a mano muestra la semana por defecto
+    ahora = _ahora()
+    with closing(connect(load_settings().database_path)) as conn:
+        version = panel.version_vigente(conn)
+        datos = productividad.calcular(conn, version, ahora, dia) if version else None
+    es_admin = seguridad.es_admin(request)
+    return PLANTILLAS.TemplateResponse(request, "productividad.html", {
+        "seccion": "productividad", "p": datos, "es_admin": es_admin,
+        "personas": datos.personas if datos and es_admin else [],
+        "regresiva": lambda cierre: panel.cuenta_regresiva(cierre.isoformat(), ahora),
     })
 
 

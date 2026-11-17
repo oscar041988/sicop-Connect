@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block titulo %}Productividad{% endblock %}
+{% block contenido %}
+{# Productividad de la revisión (Ivania, 17/11; diseño de la maqueta). «Por persona» solo para administradores:
+   opción provisional hasta que Oscar decida. #}
+{% set DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"] %}
+{% set MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"] %}
+<section class="prod-cabeza">
+  <div>
+    <h1>Productividad de la revisión</h1>
+    {% if p %}
+    <p class="sub">Semana del lunes {{ p.semana.inicio.day }} de {{ MESES[p.semana.inicio.month - 1] }} al domingo
+      {{ p.semana.ultimo_dia.day }} de {{ MESES[p.semana.ultimo_dia.month - 1] }}{% if not p.siguiente %} (en curso){% endif %}
+      · candidatos = prioridad Alta y Media</p>
+    {% endif %}
+  </div>
+  {% if p %}
+  <nav class="prod-semanas" aria-label="Cambiar de semana">
+    <a class="btn o" href="/productividad?semana={{ p.anterior }}">‹ Semana anterior</a>
+    {% if p.siguiente %}<a class="btn o" href="/productividad?semana={{ p.siguiente }}">Semana siguiente ›</a>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+
+{% if not p %}
+<p class="vacio">Todavía no hay evaluaciones: la productividad sale cuando se importen y evalúen carteles.</p>
+{% else %}
+{% set s = p.semana %}
+<section class="prod-cifras" aria-label="Resumen de la semana">
+  <div class="prod-cifra">
+    <span>Candidatos nuevos</span>
+    <strong>{{ s.candidatos }}</strong>
+    <small>entraron al panel esta semana</small>
+  </div>
+  <div class="prod-cifra">
+    <span>Revisados</span>
+    <strong class="verde">{{ s.revisados }} <em>de {{ s.candidatos }}</em></strong>
+    <div class="prod-barra" aria-hidden="true"><i style="width: {{ (100 * s.revisados / s.candidatos) | round | int if s.candidatos else 0 }}%"></i></div>
+  </div>
+  <div class="prod-cifra{% if s.escapados %} alerta{% endif %}">
+    <span>Cerraron sin revisión</span>
+    <strong>{{ s.escapados | length }}</strong>
+    <small>nadie los miró antes del cierre</small>
+  </div>
+  <div class="prod-cifra">
+    <span>Sin revisar, todavía abiertos</span>
+    <strong class="ambar">{{ s.abiertos }}</strong>
+    <small>{% if s.abiertos_pronto %}{{ s.abiertos_pronto }} cierra{{ "n" if s.abiertos_pronto != 1 }} en 7 días o menos{% else %}ninguno cierra en 7 días{% endif %}</small>
+  </div>
+</section>
+
+<section class="card prod-seccion">
+  <h2>Cerraron sin que nadie los revisara</h2>
+  {% if s.escapados %}
+  <p class="sub">Oportunidades que se escaparon. Toda la fila abre el cartel.</p>
+  <div class="prod-escapados">
+    {% for e in s.escapados %}
+    <a href="/oportunidades/{{ e.nro_sicop }}">
+      <strong>{{ e.titulo | titulo | legible or "(sin título)" }}</strong>
+      <span>{{ e.institucion | legible or "Sin datos de la institución" }}</span>
+      <span class="encaje encaje-{{ e.encaje }}">{{ ENCAJES[e.encaje] }}</span>
+      <span>Cerró {{ DIAS[e.cierre.weekday()][:3] }} {{ e.cierre.strftime("%d/%m") }} · estuvo {{ e.dias_en_panel }} día{{ "s" if e.dias_en_panel != 1 }} en el panel</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="sub">Ninguno: todos los candidatos que cerraron esta semana tuvieron revisión antes del cierre.</p>
+  {% endif %}
+</section>
+
+{% if es_admin %}
+<section class="card prod-seccion">
+  <div class="prod-titulo">
+    <h2>Por persona</h2>
+    <span class="tag r">Solo administradores</span>
+  </div>
+  <p class="sub">Primeras revisiones hechas esta semana (de candidatos de cualquier semana) y qué decidió cada quien.
+    El número va siempre junto a las decisiones, para no premiar la rapidez.</p>
+  {% if personas %}
+  {% set mayor = personas[0].revisados %}
+  <div class="tabla-scroll">
+    <table class="comp prod-personas">
+      <thead><tr><th>Persona</th><th class="c-barra">Revisados</th><th>Interesa</th><th>Revisar requisitos</th>
+        <th>No interesa / no se oferta</th><th>Días hasta revisar</th><th>El día del cierre</th></tr></thead>
+      <tbody>
+        {% for x in personas %}
+        <tr>
+          <td><strong>{{ x.nombre }}</strong></td>
+          <td><div class="prod-fila-barra"><div class="prod-barra gris" aria-hidden="true"><i style="width: {{ (100 * x.revisados / mayor) | round | int }}%"></i></div><strong>{{ x.revisados }}</strong></div></td>
+          <td class="verde"><strong>{{ x.interesa }}</strong></td>
+          <td class="azul"><strong>{{ x.revisar }}</strong></td>
+          <td><strong>{{ x.no }}</strong></td>
+          <td>{{ x.dias_promedio | string | replace(".", ",") if x.dias_promedio is not none else "—" }}</td>
+          <td>{{ x.al_cierre }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="sub">Nadie hizo una primera revisión de un candidato esta semana.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card prod-seccion">
+  <h2>Últimas {{ p.historial | length }} semanas</h2>
+  <p class="sub">De los candidatos de cada semana: verde, revisados; rojo, cerraron sin revisión; gris, siguen abiertos.</p>
+  <div class="prod-historial">
+    {% for h in p.historial %}
+    <div>
+      <span class="prod-nombre-semana">{{ h.inicio.strftime("%d/%m") }}–{{ h.ultimo_dia.strftime("%d/%m") }}</span>
+      <div class="prod-pila" aria-hidden="true">
+        {% if h.candidatos %}
+        <i class="rev" style="width: {{ 100 * h.revisados / h.candidatos }}%"></i><i class="esc" style="width: {{ 100 * (h.escapados | length) / h.candidatos }}%"></i><i class="ab" style="width: {{ 100 * h.abiertos / h.candidatos }}%"></i>
+        {% endif %}
+      </div>
+      <span class="sub">{{ h.revisados }} de {{ h.candidatos }} revisados · {{ h.escapados | length }} sin revisión{% if h.abiertos %} · {{ h.abiertos }} abierto{{ "s" if h.abiertos != 1 }}{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="prod-notas">
+  <strong>Cómo se cuenta</strong>
+  <span>Candidato nuevo: cartel Alta o Media que entró al panel esa semana. Un cartel cuenta una vez, aunque coincida con varias familias.</span>
+  <span>Revisado: su primera revisión (cualquier decisión) fue antes del cierre. «Cerró sin revisión»: el cierre pasó sin ninguna revisión antes.</span>
+  {% if es_admin %}<span>Por persona: cuenta para quien hizo la primera revisión. Días hasta revisar: desde que el cartel entró al panel hasta esa revisión.</span>{% endif %}
+  <span>Los carteles no se asignan: «Cerraron sin revisión» es del equipo, no de una persona.</span>
+</section>
+{% endif %}
+{% endblock %}

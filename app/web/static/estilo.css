@@ -803,3 +803,46 @@ form.en-linea { display: inline; margin-left: 8px; }
   letter-spacing: .04em; color: var(--ink); }
 .oferta-falta details summary { cursor: pointer; margin-top: 6px; font-size: .86rem; font-weight: 600; color: var(--azul); }
 .oferta-falta details ul { margin-top: 6px; }
+
+/* Productividad de la revisión (Ivania, 2026-11-17; diseño de la maqueta). */
+.prod-cabeza { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.prod-semanas { display: flex; flex-wrap: wrap; gap: 8px; }
+.prod-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.prod-cifra { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 4px; align-content: start; }
+.prod-cifra span { font-size: .82rem; font-weight: 700; color: var(--mut); }
+.prod-cifra strong { font-size: 2.1rem; font-weight: 800; line-height: 1.1; color: var(--g9); }
+.prod-cifra strong em { font-style: normal; font-size: 1rem; }
+.prod-cifra strong.verde { color: var(--g7); }
+.prod-cifra strong.ambar { color: var(--warn); }
+.prod-cifra small { font-size: .82rem; color: var(--mut); }
+.prod-cifra.alerta { border: 2px solid #E8B4AE; padding: 17px; }
+.prod-cifra.alerta span, .prod-cifra.alerta strong { color: var(--rojo); }
+.prod-barra { height: 8px; border-radius: 99px; background: var(--g1); overflow: hidden; }
+.prod-barra i { display: block; height: 100%; background: var(--g5); }
+.prod-barra.gris { flex: 1; height: 10px; background: var(--no-bg); }
+.prod-barra.gris i { background: var(--g9); }
+.prod-seccion h2 { margin: 0; }
+.prod-titulo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.prod-escapados { display: grid; gap: 8px; }
+.prod-escapados a { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); text-decoration: none; }
+.prod-escapados a:hover { border-color: var(--azul); }
+.prod-escapados a strong { flex: 999 1 360px; min-width: 0; color: var(--g9); }
+.prod-escapados a span { font-size: .86rem; color: var(--mut); }
+.prod-escapados a span.encaje { color: inherit; }
+table.prod-personas { min-width: 760px; }
+table.prod-personas th { font-size: .8rem; color: var(--mut); }
+table.prod-personas th.c-barra { width: 30%; }
+table.prod-personas td.verde { color: var(--g7); }
+table.prod-personas td.azul { color: var(--azul); }
+.prod-fila-barra { display: flex; align-items: center; gap: 10px; }
+.prod-fila-barra strong { min-width: 22px; text-align: right; }
+.prod-historial { display: grid; gap: 10px; }
+.prod-historial > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.prod-nombre-semana { width: 110px; font-weight: 700; color: var(--g9); font-size: .92rem; }
+.prod-pila { flex: 999 1 380px; display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: var(--no-bg); }
+.prod-pila i { display: block; height: 100%; }
+.prod-pila i.rev { background: var(--g5); }
+.prod-pila i.esc { background: var(--rojo); }
+.prod-pila i.ab { background: #C3CBD4; }
+.prod-notas { display: grid; gap: 4px; font-size: .84rem; color: var(--mut); }
+.prod-notas strong { color: var(--g9); }
