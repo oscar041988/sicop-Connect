@@ -25,7 +25,7 @@ Para que funcione sin la laptop, Oscar tiene que:
 | 8:00 | Ciclo: importa lo que haya en la carpeta de entrada, evalúa y **manda el correo de avisos**. Los lunes, además, el resumen semanal | Laptop («SICOP CONNECT - ciclo diario») | Servidor (`sicop-cycle.timer`) |
 | 10:00 | Enriquecimiento: consulta en SICOP la ficha y los documentos de hasta 20 carteles (abre un navegador) | Laptop («SICOP CONNECT - enriquecimiento») | La PC elegida, que lo manda al servidor |
 | Al terminar el enriquecimiento (en el servidor, 10:45) | Resúmenes con IA de los carteles que ya tienen documentos (máx. 10 y 5 USD al día) | Laptop, en la misma tarea de las 10:00 | Servidor (`sicop-ia-cola.timer`) |
-| 14:00 | Segunda vuelta de los resúmenes, por si la de la mañana falló | Laptop («SICOP CONNECT - resumenes IA») | **Todavía no existe en el servidor** |
+| 14:00 | Segunda vuelta de los resúmenes, por si la de la mañana falló | Laptop («SICOP CONNECT - resumenes IA») | Servidor (el mismo `sicop-ia-cola.timer`) |
 
 ## Lo que tiene que hacer una persona
 

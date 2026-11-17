@@ -81,8 +81,7 @@ hay que hacer cada día o semana sin Ivania, en **`docs/TRASPASO.md`**.
 - [ ] `pip install -r requirements.lock.txt`: se suman `playwright`, `openpyxl`, `pdfplumber`, `openai`,
       `anthropic` y `python-docx`.
 - [ ] Carpetas nuevas en `/var/lib/sicop-connect` y variables nuevas en `app.env` (las claves de la IA, Oscar).
-- [ ] El ciclo de las 8:00 y la cola de IA (10:45) pasan al servidor; se apagan las tareas de Windows. La vuelta
-      de las 14:00 de la cola todavía no existe en el servidor (ver «Pendiente» de la guía).
+- [ ] El ciclo de las 8:00 y la cola de IA (10:45 y 14:00) pasan al servidor; se apagan las tareas de Windows.
 - [ ] El enriquecimiento sigue en una PC con Windows y manda lo suyo al servidor (fase 2).
 
 ## Para decidir (Oscar)

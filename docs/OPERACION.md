@@ -304,6 +304,7 @@ verificar con el pliego»). Decisiones de Ivania del 30/10, provisionales hasta 
 corre solo `ia cola` (`sicop-enriquecimiento.ps1 -SoloIa`), de lunes a viernes. Si la de las 10:00 salió bien no
 gasta nada (salta lo resumido y respeta el tope del día); si falló (el 10/11 la base estaba ocupada por una carga en
 el panel y el 11/11 faltaba una migración), hace los resúmenes del día. Mismo registro, bloque «ia cola».
+En el servidor, las dos vueltas son de `sicop-ia-cola.timer` (10:45 y 14:00; la de las 14:00 desde el 2026-11-17).
 
 **Qué entra en la cola:** carteles **Alta, Media o Baja** (los del panel), ya enriquecidos (con ficha de SICOP), con plazo abierto y sin
 resumen de su expediente actual con la versión vigente del prompt. Alta → Media → Baja y, dentro de cada uno, el

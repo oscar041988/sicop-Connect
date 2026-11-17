@@ -1,4 +1,5 @@
-# Cola automática de resúmenes con IA (app/ai/cola.py), una vez al día por sicop-ia-cola.timer (fase 2, 2026-11-09).
+# Cola automática de resúmenes con IA (app/ai/cola.py), a las 10:45 y a las 14:00 por sicop-ia-cola.timer (fase 2,
+# 2026-11-09; la vuelta de las 14:00 desde el 2026-11-17). Si sigue corriendo a las 14:00, systemd no la repite.
 # Resume los carteles Alta, Media y Baja que ya tienen ficha y documentos, dentro del presupuesto diario
 # (IA_MAX_SUMMARIES_PER_DAY, IA_MAX_DAILY_COST). No usa navegador: lee la base y llama a la API de IA (AI_MODE).
 # Antes la corría la tarea de Windows después de enrich run; con la base en el servidor corre aquí (decisión de

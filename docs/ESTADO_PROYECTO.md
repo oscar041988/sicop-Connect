@@ -23,8 +23,11 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   y `python-docx`, `app.env` con los valores de hoy (v10, chat, documentos a la IA, 5 USD), la tarea «resumenes
   IA» también se apaga. `OPERACION.md`: el ciclo de Windows envía de verdad desde el 30/10 y los documentos del
   chat sí van a la IA (Oscar, 11/11). Solo documentos.
-  - **Hueco encontrado:** la vuelta de las 14:00 de la cola de IA no tiene temporizador en el servidor (solo
-    10:45). **Pendiente · Ivania/Oscar:** decidir si se agrega.
+  - **Hueco encontrado:** la vuelta de las 14:00 de la cola de IA no tenía temporizador en el servidor (solo
+    10:45). **Agregada (Ivania, 17/11):** segunda línea `OnCalendar` en `deploy/systemd/sicop-ia-cola.timer`
+    (lunes a viernes 14:00); si la de las 10:45 salió bien, no gasta. `tests/test_despliegue.py`: las unidades de
+    la cola entran en las pruebas de LF, usuario y comando, más una prueba nueva de los dos horarios (16 passed
+    con Python 3.14 y con 3.12). Se activa con el `enable --now` del paso 10 de la guía, sin otro paso.
   - **Pendiente:** suite con Python 3.12 antes de unir el PR (última: 964 passed, 9/11).
 
 - **Misión 26 de la ayuda: «¿Cómo sé si revisamos a tiempo los carteles?» (2026-11-17, pedido de Ivania).**

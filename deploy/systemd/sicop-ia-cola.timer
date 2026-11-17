@@ -1,12 +1,16 @@
-# Cola de resúmenes con IA: de lunes a viernes a las 10:45, hora de Costa Rica. El enriquecimiento empieza a las
-# 10:00 en la PC de Ivania y tardó de 9 a 21 min en noviembre; lo que llegue después se resume al día siguiente.
+# Cola de resúmenes con IA: de lunes a viernes a las 10:45 y a las 14:00, hora de Costa Rica. El enriquecimiento
+# empieza a las 10:00 en la PC y tardó de 9 a 21 min en noviembre; lo que llegue después se resume a las 14:00 o al
+# día siguiente. La vuelta de las 14:00 es la segunda oportunidad (como la tarea de Windows «SICOP CONNECT -
+# resumenes IA», pedido de Ivania del 2026-11-11; en el servidor desde el 2026-11-17): si la de las 10:45 salió bien
+# no gasta nada, porque la cola salta lo ya resumido y respeta IA_MAX_SUMMARIES_PER_DAY e IA_MAX_DAILY_COST del día.
 # Persistent=false, como los otros horarios: si el servidor estaba apagado, no se recupera la vuelta.
 # Se habilita en docs/ACTUALIZACION_SERVIDOR.md:  sudo systemctl enable --now sicop-ia-cola.timer
 [Unit]
-Description=Cola de resumenes con IA SICOP CONNECT, lunes a viernes 10:45
+Description=Cola de resumenes con IA SICOP CONNECT, lunes a viernes 10:45 y 14:00
 
 [Timer]
 OnCalendar=Mon..Fri *-*-* 10:45:00 America/Costa_Rica
+OnCalendar=Mon..Fri *-*-* 14:00:00 America/Costa_Rica
 Persistent=false
 Unit=sicop-ia-cola.service
 

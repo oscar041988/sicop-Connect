@@ -12,7 +12,7 @@ del día ya salió) y con tiempo para revertir. Nada de esto se ha ejecutado tod
 | Base de datos | la del servidor (vieja) | **la base local de Ivania** (decisión de Ivania, 2026-11-09): trae todo lo hecho desde el 21/10 |
 | Ciclo de las 8:00 (avisos) | tarea de Windows | **en el servidor** (`sicop-cycle.timer`); se apaga la tarea de Windows |
 | Enriquecimiento de las 10:00 (navegador) | tarea de Windows | sigue en una PC con Windows y **manda lo suyo al servidor** (fase 2, paso 11); en pausa hasta ese paso |
-| Cola de resúmenes con IA | tareas de Windows: después del enriquecimiento y otra vuelta a las 14:00 | **en el servidor** (`sicop-ia-cola.timer`, 10:45); la vuelta de las 14:00 no existe todavía en el servidor (ver «Pendiente») |
+| Cola de resúmenes con IA | tareas de Windows: después del enriquecimiento y otra vuelta a las 14:00 | **en el servidor** (`sicop-ia-cola.timer`, 10:45 y 14:00; la de las 14:00 es la segunda oportunidad y no gasta si la primera salió bien) |
 | Paquetes nuevos | — | `playwright`, `openpyxl`, `pdfplumber`, `openai`, `anthropic`, `python-docx` (en `requirements.lock.txt`) |
 
 **Por qué el enriquecimiento se queda en una PC:** necesita un navegador con ventana (SICOP pide resolver un
@@ -250,7 +250,7 @@ avisado. Después:
 
 ```bash
 sudo systemctl enable --now sicop-cycle.timer sicop-ia-cola.timer
-sudo systemctl list-timers 'sicop-*'                 # cycle: lunes a viernes 08:00 · ia-cola: 10:45
+sudo systemctl list-timers 'sicop-*'                 # cycle: lunes a viernes 08:00 · ia-cola: 10:45 y 14:00
 ```
 
 **Al día siguiente:** comprobar que el correo de las 8:00 llegó **una sola vez** (si llega doble, la tarea de
@@ -288,10 +288,6 @@ enriquecimiento queda en pausa (pasos 1 y 7).
 
 ## Pendiente
 
-- **La vuelta de las 14:00 de la cola de IA** (en Windows, la tarea «SICOP CONNECT - resumenes IA») no tiene
-  temporizador en el servidor: solo existe el de las 10:45. Si la de las 10:45 falla, los resúmenes de ese día
-  esperan al siguiente. Se puede agregar una segunda línea `OnCalendar` a `sicop-ia-cola.timer` (decisión de
-  Ivania u Oscar; no está hecho).
 - La fase 2 se probó con la app de la PC haciendo de servidor; contra el servidor real se prueba en el paso 11.
 - Activar la obtención automática (§9.9), si Oscar lo decide.
 - Después de unos días bien, borrar `/opt/sicop-connect-02b569b` y `sicop-02b569b.db` (con un respaldo guardado).
