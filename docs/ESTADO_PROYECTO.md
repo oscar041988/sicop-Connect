@@ -1,7 +1,7 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-17 (exclusión «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas
-`a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
+Última actualización: 2026-11-17 (resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
+«aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas `a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
 y reporte de hasta 5 páginas, migración 0047; persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
 lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
@@ -10,7 +10,7 @@ de todas las empresas ganadoras en Competencia; reporte de cartel con líneas de
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
 de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1126 passed** (17/11,
 con el cambio del panel; golden set 39/39) · `desarrollo` en GitHub: al día con la
-copia local (push del 16/11, `57f42f7`) ·
+copia local hasta el push del 17/11 (`575fa91`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
@@ -64,9 +64,13 @@ copia local (push del 16/11, `57f42f7`) ·
     vacío, WAL, CHECK 1–5 y los dos triggers. ~~Subir el respaldo al Drive~~ **hecho (Claude, 16/11):**
     `G:\Mi unidad\sicop-respaldos\sicop_20261116-123159` (7 archivos, tamaños iguales y huella del `.db` igual al
     manifiesto).
-  - **Pendiente · Ivania:** `IA_PROMPT_VERSION=v10` en el `.env`; abrir el panel y generar de nuevo el resumen de `20261101092` (cierra el
-    17/11 a las 08:00) y revisar la hoja en el panel y en el PDF. Si salen «incompleta · max_tokens», subir
-    `IA_MAX_OUTPUT_TOKENS`. Los resúmenes v9 siguen con su hoja de una página hasta generarlos de nuevo.
+  - ~~Pendiente · Ivania: `IA_PROMPT_VERSION=v10` en el `.env`; generar de nuevo el resumen de `20261101092` y
+    revisar la hoja en el panel y en el PDF.~~ **Hecho (17/11):** `doctor` dice v10. El panel no tiene botón para
+    generar un resumen: se generó con `ia resumir --nro 20261101092` (Claude a pedido de Ivania, 08:43) → resumen
+    **#116**, ok, 1026 palabras en la hoja (#106 con v9: 529), trae «1920x1080p Full HD»; 6092 tokens de salida
+    (tope 8000), 0.082 USD. Reporte #13 (Ivania, 09:37): **5 páginas**, la hoja en las páginas 4–5, sin cortes.
+    Ojo: llega al máximo de 5; vigilar un cartel con más requisitos. Los resúmenes v9 siguen con su hoja de una
+    página hasta generarlos de nuevo.
   - Suite completa: **1122 passed**; push hecho (16/11).
 
 - **Persona picando en estilo pixel de bloques (2026-11-16, pedido de Ivania; `8122b54`).** El dibujo de
