@@ -8,8 +8,8 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1126 passed** (17/11,
-con el cambio del panel; golden set 39/39) · `desarrollo` en GitHub: al día con la
+de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1130 passed** (17/11,
+con una fila por cartel; golden set 39/39) · `desarrollo` en GitHub: al día con la
 copia local hasta el push del 17/11 (`575fa91`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
@@ -23,7 +23,7 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   Sin migración; la base no cambia.
   - Base real (todas las prioridades, vigentes): 25 filas = 25 carteles; 10 con otras familias.
   - Pruebas: 2 nuevas en `tests/test_panel.py` (fallaron sin el cambio). Archivos que tocan la lista o el Excel:
-    376 passed.
+    376 passed. Suite completa: **1130 passed** (13 min 59 s).
 
 - **Exclusión «aislamiento termico» / «aislamientotermico» (2026-11-17, Ivania).** `20261101176` (CCSS, mantenimiento
   de edificios en aislamiento térmico de contenedores) salía dos veces en el panel, Baja en rastreo_activos
@@ -111,8 +111,9 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   - Archivos: `app/fichas_panel.py`, `app/web/rutas.py`, `bitacora.html`, `oportunidad.html`, `_minero.html`. 2
     pruebas nuevas en `tests/test_panel_enriquecimiento.py` (20 passed); panel y ayuda: 132 passed. Suite completa:
     1120 passed antes del cambio del cartel. Sin migración.
-  - **Pendiente · Ivania:** ver la persona picando (estilo pixel) en un cartel de la cola el martes 17/11 a las
-    10:00. La corrida #16 (16/11, 10:00–10:10: 8 consultados, 0 FALLO, «ok») terminó antes de reiniciar el panel.
+  - **Pendiente · Ivania:** ver la persona picando (estilo pixel) en un cartel de la cola, **ahora el miércoles
+    18/11 a las 10:00**. La corrida #16 (16/11, 10:00–10:10: 8 consultados, 0 FALLO, «ok») terminó antes de reiniciar
+    el panel; la #17 (17/11) duró 26 s con 1 cartel en cola (`20261003242`) y no se alcanzó a ver.
 
 - **«No interesa» sale de «Todos» (2026-11-13, pedido de Oscar por Ivania).** Un cartel marcado «No interesa» seguía
   en el panel y confundía a Oscar. Ahora `panel.listar` lo esconde de «Todos» (y de la búsqueda sin chip) y queda
@@ -937,7 +938,8 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   - ~~Pendiente · Ivania: subir el ZIP del respaldo al Drive; probar los cuatro resultados en el panel;~~
     ~~descargar una constancia y ver que se entiende sin abrir la app~~ **hecho (Ivania, confirmado el 12/11).**
     **Sigue pendiente · Ivania con Oscar:** evaluar 5 carteles reales y anotar cada diferencia con su criterio. Las reglas (sobre todo «archivo pendiente» y los «Revisar» excluyentes) se
-    ajustan con lo que diga Oscar.
+    ajustan con lo que diga Oscar. **Lista de los 5 y hoja para anotar (17/11):**
+    `docs/evaluacion_asistente_20261117.md`.
 
 - **Asistente: «Lo tiene · archivo pendiente» (2026-11-04, pedido de Ivania, rama `desarrollo`, solo local).**
   Los documentos de Hermatix son delicados y no se suben hasta que el asistente esté listo; «Todavía no lo sé» no
