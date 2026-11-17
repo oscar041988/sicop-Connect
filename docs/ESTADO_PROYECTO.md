@@ -8,8 +8,8 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1130 passed** (17/11,
-con una fila por cartel; golden set 39/39) · `desarrollo` en GitHub: al día con la
+de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1136 passed** (17/11,
+con la página «Productividad»; golden set 39/39) · `desarrollo` en GitHub: al día con la
 copia local hasta el push del 17/11 (`575fa91`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
@@ -24,7 +24,8 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   migración. `app/productividad.py`, `productividad.html`, estilos `.prod-*`, enlace en `base.html`.
   - Base real: 19/10 → 0 de 3 revisados; 26/10 → 1 de 5; 02/11 → 1 de 2; 09/11 → 3 de 4 (1 se escapó:
     `20261100871`).
-  - Pruebas: `tests/test_productividad.py` (6, datos SINTÉTICOS); rutas y ayuda: 527 passed.
+  - Pruebas: `tests/test_productividad.py` (6, datos SINTÉTICOS); rutas y ayuda: 527 passed. Suite completa:
+    **1136 passed** (13 min 50 s).
   - **Pendiente · Oscar:** confirmar las opciones provisionales (solo Alta y Media; «Por persona» solo para
     administradores; con tiempos). Maqueta: https://claude.ai/artifact/Bo4b2anLQGazDg7x8Zs1BN (privada: hay que
     compartirla). Sin misión de ayuda todavía.
