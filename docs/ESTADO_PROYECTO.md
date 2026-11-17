@@ -111,9 +111,8 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   - Archivos: `app/fichas_panel.py`, `app/web/rutas.py`, `bitacora.html`, `oportunidad.html`, `_minero.html`. 2
     pruebas nuevas en `tests/test_panel_enriquecimiento.py` (20 passed); panel y ayuda: 132 passed. Suite completa:
     1120 passed antes del cambio del cartel. Sin migración.
-  - **Pendiente · Ivania:** ver la persona picando (estilo pixel) en un cartel de la cola, **ahora el miércoles
-    18/11 a las 10:00**. La corrida #16 (16/11, 10:00–10:10: 8 consultados, 0 FALLO, «ok») terminó antes de reiniciar
-    el panel; la #17 (17/11) duró 26 s con 1 cartel en cola (`20261003242`) y no se alcanzó a ver.
+  - ~~Pendiente · Ivania: ver la persona picando (estilo pixel) en un cartel de la cola.~~ **Hecho (Ivania,
+    confirmado el 17/11): se ve bien.**
 
 - **«No interesa» sale de «Todos» (2026-11-13, pedido de Oscar por Ivania).** Un cartel marcado «No interesa» seguía
   en el panel y confundía a Oscar. Ahora `panel.listar` lo esconde de «Todos» (y de la búsqueda sin chip) y queda
