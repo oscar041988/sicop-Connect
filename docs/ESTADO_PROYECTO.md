@@ -15,6 +15,16 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **Una fila por cartel en el panel (2026-11-17, pedido de Ivania).** Un cartel salía una vez por cada familia con
+  la que coincidía (p. ej. `20261101092` en 5 familias). Ahora `panel.listar` agrupa con `ROW_NUMBER()` por cartel:
+  la fila muestra la familia de mayor prioridad (a igual prioridad, por nombre) y las demás que cumplen los filtros
+  van como etiquetas (`FilaLista.otras`) y en «Ver más» («También con: …»). Total y «Ya revisados, fuera de esta
+  lista» cuentan carteles. «Exportar a Excel»: una fila por cartel, «Familia» con todas (la principal primero).
+  Sin migración; la base no cambia.
+  - Base real (todas las prioridades, vigentes): 25 filas = 25 carteles; 10 con otras familias.
+  - Pruebas: 2 nuevas en `tests/test_panel.py` (fallaron sin el cambio). Archivos que tocan la lista o el Excel:
+    376 passed.
+
 - **Exclusión «aislamiento termico» / «aislamientotermico» (2026-11-17, Ivania).** `20261101176` (CCSS, mantenimiento
   de edificios en aislamiento térmico de contenedores) salía dos veces en el panel, Baja en rastreo_activos
   («contenedores», título) y en conteo_pasajeros («Ocupación», pliego pág. 21). SICOP escribe «Aislamientotérmico»
