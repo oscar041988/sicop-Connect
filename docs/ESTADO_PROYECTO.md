@@ -15,6 +15,20 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **Página «Productividad» (2026-11-17, idea de Ivania; maqueta aprobada por Ivania).** Menú principal →
+  `/productividad`. Por semana (lunes a domingo, hora de CR; por defecto la última completa; ‹ › para cambiar):
+  candidatos nuevos (Alta/Media vistos por primera vez en la semana, uno por cartel), revisados (primera revisión
+  antes del cierre), **cerraron sin revisión** (con la lista) y abiertos sin revisar; barras de las últimas 4
+  semanas. **Por persona** (solo administradores): primeras revisiones de candidatos hechas en la semana, con la
+  decisión, días desde que el cartel entró al panel y cuántas el día del cierre o después. Solo lee la base; sin
+  migración. `app/productividad.py`, `productividad.html`, estilos `.prod-*`, enlace en `base.html`.
+  - Base real: 19/10 → 0 de 3 revisados; 26/10 → 1 de 5; 02/11 → 1 de 2; 09/11 → 3 de 4 (1 se escapó:
+    `20261100871`).
+  - Pruebas: `tests/test_productividad.py` (6, datos SINTÉTICOS); rutas y ayuda: 527 passed.
+  - **Pendiente · Oscar:** confirmar las opciones provisionales (solo Alta y Media; «Por persona» solo para
+    administradores; con tiempos). Maqueta: https://claude.ai/artifact/Bo4b2anLQGazDg7x8Zs1BN (privada: hay que
+    compartirla). Sin misión de ayuda todavía.
+
 - **Una fila por cartel en el panel (2026-11-17, pedido de Ivania).** Un cartel salía una vez por cada familia con
   la que coincidía (p. ej. `20261101092` en 5 familias). Ahora `panel.listar` agrupa con `ROW_NUMBER()` por cartel:
   la fila muestra la familia de mayor prioridad (a igual prioridad, por nombre) y las demás que cumplen los filtros
