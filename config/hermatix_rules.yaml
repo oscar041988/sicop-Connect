@@ -158,6 +158,10 @@ familias:
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
       "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
+      # Mantenimiento de edificios en aislamiento térmico de contenedores (20261101176, CCSS; Ivania, 2026-11-17).
+      # SICOP lo escribe pegado («Aislamientotérmico»): van las dos formas. No «edificios» solo: rastrear activos
+      # dentro de un edificio sí puede interesar.
+      "aislamiento termico", "aislamientotermico",
     ]
 
   iot_frio:
@@ -244,6 +248,10 @@ familias:
       "consultoria",                # Hermatix no da consultorias ni asesorias (20260800923, TCM; Ivania, 2026-10-28)
       "elaboracion de planos",      # obra civil, no tecnología: paradas de autobús (20261003260; Ivania, 2026-10-30)
       "construccion de paradas",    # obra civil: «CONSTRUCCIÓN DE PARADAS SIQUIRRES 2026» (20261100575; Ivania, 2026-11-09)
+      # «Ocupación» en el pliego del aislamiento térmico de contenedores (20261101176, CCSS; Ivania, 2026-11-17).
+      # SICOP lo escribe pegado («Aislamientotérmico»): van las dos formas. No «edificios» solo: el aforo de un
+      # edificio sí puede interesar.
+      "aislamiento termico", "aislamientotermico",
     ]
 
   mantenimiento_flotas:
