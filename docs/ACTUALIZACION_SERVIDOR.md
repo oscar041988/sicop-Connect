@@ -45,8 +45,9 @@ acta.
 - [ ] **Decidir con Oscar** los valores que no son secretos de la sección 7: `AI_MODE` (`openai`, como hoy, o
       `anthropic` si ya dio la clave y el modelo), `OBTAIN_ALERT_TO` y si ese día se activa también la obtención
       automática (`docs/DESPLIEGUE.md` §9.9; hoy no: SICOP bloqueó la solicitud automática el 10/11).
-- [ ] Correr la suite completa con **Python 3.12** (el del servidor) en un entorno limpio con
-      `requirements-dev.txt`. Última corrida: 964 passed el 9/11; en Python 3.14, 1136 passed el 17/11.
+- [x] Correr la suite completa con **Python 3.12** (el del servidor) en un entorno limpio con
+      `requirements-dev.txt`: **1136 passed el 17/11** (igual que con Python 3.14). Si después del 17/11 entra otro
+      cambio a `desarrollo`, volver a correrla antes de unir.
 - [ ] Confirmar que en el servidor ya están `/etc/sicop-connect/google_cliente.json` y `google_token.json`
       (§9.4). Sin ellos no salen los correos.
 

@@ -94,9 +94,9 @@ hay que hacer cada día o semana sin Ivania, en **`docs/TRASPASO.md`**.
 - [ ] Qué computadora corre el enriquecimiento cuando Ivania no esté (`docs/TRASPASO_ENRIQUECIMIENTO.md`).
 
 ## Pruebas
-- Suite completa con **Python 3.14**: **1136 passed** (17/11). Con **Python 3.12** (el del servidor) la última
-  corrida fue de 964 (9/11): **volver a correrla antes de unir**. SICOP, Gmail y la IA se prueban con datos
-  SIMULADOS.
+- Suite completa con **Python 3.14** y con **Python 3.12** (el del servidor, entorno limpio con
+  `requirements-dev.txt`): **1136 passed** en los dos (17/11), golden set 39/39. Después se sumó una prueba de
+  despliegue (la vuelta de las 14:00), que pasa en los dos. SICOP, Gmail y la IA se prueban con datos SIMULADOS.
 
 ## Importante
 - Las guías en Word de `docs/` no están en Git (`.gitignore`).

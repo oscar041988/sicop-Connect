@@ -28,7 +28,10 @@ copia local hasta el push del 17/11 (`575fa91`) ·
     (lunes a viernes 14:00); si la de las 10:45 salió bien, no gasta. `tests/test_despliegue.py`: las unidades de
     la cola entran en las pruebas de LF, usuario y comando, más una prueba nueva de los dos horarios (16 passed
     con Python 3.14 y con 3.12). Se activa con el `enable --now` del paso 10 de la guía, sin otro paso.
-  - **Pendiente:** suite con Python 3.12 antes de unir el PR (última: 964 passed, 9/11).
+  - ~~Pendiente: suite con Python 3.12 antes de unir el PR (última: 964 passed, 9/11).~~ **Hecho (17/11):** entorno
+    limpio con Python 3.12.10 y `requirements-dev.txt` (en el scratchpad, fuera del proyecto): **1136 passed** en
+    13 min 32 s, golden set 39/39, con la misión 26 incluida. La prueba nueva de la vuelta de las 14:00 se agregó
+    durante la corrida y se corrió aparte con 3.12: `test_despliegue.py` 16 passed.
 
 - **Misión 26 de la ayuda: «¿Cómo sé si revisamos a tiempo los carteles?» (2026-11-17, pedido de Ivania).**
   `docs/ayuda/misiones/26-productividad.md` (bloque nuevo «H. Productividad» en `MISIONES.md`; la 11 sigue con la
