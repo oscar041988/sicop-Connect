@@ -64,9 +64,9 @@ Cada misión está en `docs/ayuda/misiones/` con la plantilla de `PLANTILLA_MISI
 | 24 | ¿Cómo sé si podemos participar? | Cartel: «Resultado» → constancia | `24-resultado.md` | Borrador (2026-11-04) |
 | 25 | ¿Cómo leo y descargo el Reporte de cartel? | Cartel: resumen con IA → «Reporte PDF» | `25-reporte-pdf.md` | Borrador (2026-11-04), sin capturas |
 
-## H. Productividad
+## H. Productividad (solo administradores)
 
-Para todo el equipo; «Por persona» solo la ven los administradores. Se lee después de la 11 (su «Sigue con»).
+En el menú «Administración» (Ivania, 17/11). Se lee después de la 18 (su «Sigue con») y sigue con la 19.
 
 | # | Misión | Empieza en → termina en | Archivo | Estado |
 |---|---|---|---|---|
@@ -75,7 +75,7 @@ Para todo el equipo; «Por persona» solo la ven los administradores. Se lee des
 ## Dónde se ve la ayuda en la app
 
 - `/ayuda` («¿Cómo se usa?», enlace en el pie de cada página): tarjetas por bloque en el orden de esta lista,
-  buscador y glosario. Las misiones 13 a 18 solo las ven los administradores (`config/ayuda.yaml`).
+  buscador y glosario. Las misiones 13 a 18 y la 26 solo las ven los administradores (`config/ayuda.yaml`).
 - `/ayuda/<misión>`: la misión con sus capturas. Se lee de su archivo: para cambiarla, edita el `.md`.
 - Botón «?» abajo a la derecha de cada pantalla: abre la misión de esa pantalla (mapa en `config/ayuda.yaml`).
 - Algunas palabras del panel muestran su explicación de `GLOSARIO.md` al pasar el mouse.

@@ -15,6 +15,13 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **«Productividad» solo para administradores (2026-11-17, pedido de Ivania al verla).** El enlace pasó del menú
+  principal a «Administración» y la ruta usa `exigir_admin`: un encargado no la ve en el menú y recibe 403 si
+  escribe la dirección. Sin la etiqueta «Solo administradores» en «Por persona» (ya sobra). Misión 26: solo
+  administradores (`config/ayuda.yaml`), pasos «Administración» → «Productividad», sigue a la 18 y la 11 volvió a
+  su «Sigue con»; capturas: 7 de 7. `test_productividad.py` cambiada (403 al encargado, enlace dentro de
+  «Administración»). Productividad, acceso, panel y ayuda: 191 passed.
+
 - **Traspaso y guías del servidor al día (2026-11-17, pedido de Ivania, al cerrar el proyecto).** Hoja nueva
   `docs/TRASPASO.md`: qué corre solo y dónde (hoy todo en la laptop), lo que hace una persona (cargar el ZIP de
   SICOP cada día hábil antes de las 8:00; revisar «Bitácora», porque CAPTCHA y FALLO no llegan por correo;

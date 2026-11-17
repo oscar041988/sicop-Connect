@@ -74,4 +74,4 @@ actualiza sola cada 15 segundos. Cuando la corrida termina, desaparece.
 **¿Y si no hay ninguna corrida?**
 La consulta diaria todavía no ha corrido. Revisa mañana después de las 10:00.
 
-**Sigue con:** [¿Cómo leo el correo diario?](19-correo.md)
+**Sigue con:** [¿Cómo sé si revisamos a tiempo los carteles?](26-productividad.md)

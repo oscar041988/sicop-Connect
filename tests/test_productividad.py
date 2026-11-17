@@ -112,13 +112,17 @@ def _cliente(db, monkeypatch, email):
     return cliente
 
 
-def test_pagina_por_persona_solo_para_administradores(db, monkeypatch):
+def test_la_pagina_es_solo_para_administradores_y_va_en_el_menu_administracion(db, monkeypatch):
     admin = _cliente(db, monkeypatch, "ana@ejemplo.test").get("/productividad").text
-    assert "Por persona" in admin and "Solo administradores" in admin
-    assert 'href="/oportunidades/00000000002"' in admin and "Cerraron sin revisión" in admin
+    assert "Por persona" in admin and "Cerraron sin revisión" in admin
+    assert 'href="/oportunidades/00000000002"' in admin
+    menu_admin = admin.split('<details class="menu-admin">')[1].split("</details>")[0]
+    assert 'href="/productividad"' in menu_admin                       # dentro de «Administración»
+    assert admin.count('href="/productividad"') == 1                    # y no en la fila principal
 
-    encargado = _cliente(db, monkeypatch, "luis@ejemplo.test").get("/productividad").text
-    assert "Por persona" not in encargado and "Cerraron sin revisión" in encargado
+    encargado = _cliente(db, monkeypatch, "luis@ejemplo.test")
+    assert encargado.get("/productividad").status_code == 403
+    assert 'href="/productividad"' not in encargado.get("/oportunidades").text
 
 
 def test_semana_ilegible_muestra_la_de_por_defecto(db, monkeypatch):

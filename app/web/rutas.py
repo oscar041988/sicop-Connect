@@ -226,10 +226,10 @@ def pagina_resumen_semanal(request: Request) -> Response:
     })
 
 
-@router.get("/productividad", response_class=HTMLResponse)
+@router.get("/productividad", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
 def pagina_productividad(request: Request, semana: str = "") -> Response:
-    """Productividad de la revisión por semana (Ivania, 17/11). «Por persona» solo la ven los administradores
-    (opción provisional hasta que Oscar decida). ?semana=AAAA-MM-DD elige la semana de ese día."""
+    """Productividad de la revisión por semana (Ivania, 17/11). Toda la página es solo para administradores y va en
+    el menú «Administración» (Ivania, 17/11). ?semana=AAAA-MM-DD elige la semana de ese día."""
     if (error := _base_no_lista(request)) is not None:
         return error
     try:
@@ -240,10 +240,8 @@ def pagina_productividad(request: Request, semana: str = "") -> Response:
     with closing(connect(load_settings().database_path)) as conn:
         version = panel.version_vigente(conn)
         datos = productividad.calcular(conn, version, ahora, dia) if version else None
-    es_admin = seguridad.es_admin(request)
     return PLANTILLAS.TemplateResponse(request, "productividad.html", {
-        "seccion": "productividad", "p": datos, "es_admin": es_admin,
-        "personas": datos.personas if datos and es_admin else [],
+        "seccion": "productividad", "p": datos, "personas": datos.personas if datos else [],
         "regresiva": lambda cierre: panel.cuenta_regresiva(cierre.isoformat(), ahora),
     })
 

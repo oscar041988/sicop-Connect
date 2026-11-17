@@ -240,7 +240,7 @@ curl -f http://127.0.0.1:8000/health
 - [ ] «Ayuda»: las misiones con sus capturas. Si salen sin imágenes, generarlas en el servidor con el patrón de
       `systemd-run`, `-m app.cli ayuda capturas` (usa una base de EJEMPLO en `/opt/sicop-connect/data/ayuda_ejemplo`).
 - [ ] «Avisos» y «Destinatarios»: los mismos que en local.
-- [ ] «Productividad»: la semana pasada con los mismos números que en local.
+- [ ] «Administración» → «Productividad»: la semana pasada con los mismos números que en local.
 - [ ] En un cartel con oferta (por ejemplo `20261001587`): «Oferta en Word» se descarga.
 
 ## 10. 🐧 SERVIDOR — el ciclo de las 8:00

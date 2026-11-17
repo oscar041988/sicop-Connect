@@ -8,6 +8,7 @@ solo_admin:
   - 16-avisos
   - 17-calidad
   - 18-bitacora
+  - 26-productividad
 
 # Botón «?»: qué misión abre en cada pantalla. Se revisa en orden y gana la primera que coincide.
 # «*» reemplaza cualquier parte de la dirección (p. ej. el Número SICOP). Sin coincidencia, abre /ayuda.

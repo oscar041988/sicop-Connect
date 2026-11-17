@@ -45,7 +45,8 @@ entrada antes de las 8:00. Si nadie lo carga, el ciclo sale en «FALLO · no lle
 
 **Cada semana (lunes):**
 
-- [ ] Panel → «Productividad», la semana pasada: que ningún cartel Alta o Media haya cerrado sin revisión.
+- [ ] Un administrador: «Administración» → «Productividad», la semana pasada. Que ningún cartel Alta o Media haya
+      cerrado sin revisión.
 - [ ] El resumen semanal llegó. También se ve en el panel: «Último correo» → «Último resumen semanal».
 - [ ] Respaldo (`OPERACION.md` §6.1). Mientras siga la laptop: `backup` y el ZIP al Drive de Hermatix. En el
       servidor, el destino y la frecuencia los decide Oscar (pendiente).

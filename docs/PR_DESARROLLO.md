@@ -51,8 +51,8 @@ hay que hacer cada día o semana sin Ivania, en **`docs/TRASPASO.md`**.
 - **Una fila por cartel**: las otras familias van como etiquetas y en «Ver más»; el Excel, igual.
 - Todo cartel revisado sale de «Todos» y queda en el chip de su decisión.
 - «Último correo» arriba de la lista y el resumen semanal en su propia página.
-- **«Productividad»** (menú): por semana, candidatos nuevos, revisados, los que cerraron sin revisión y, para
-  administradores, «Por persona». Solo lee la base.
+- **«Productividad»** (menú «Administración», solo administradores): por semana, candidatos nuevos, revisados,
+  los que cerraron sin revisión y «Por persona». Solo lee la base.
 - Bitácora: «7 de 20 consultados hoy» y una persona picando mientras el enriquecimiento trabaja (también en el
   cartel); el aviso de FALLO o CAPTCHA solo el día del fallo.
 - Competencia: nombre de todas las empresas ganadoras; la cédula de una persona física se etiqueta «Persona física»,
@@ -86,7 +86,8 @@ hay que hacer cada día o semana sin Ivania, en **`docs/TRASPASO.md`**.
 
 ## Para decidir (Oscar)
 - [ ] La clave y el modelo de Anthropic, o seguir con OpenAI.
-- [ ] Las opciones provisionales de «Productividad» (solo Alta y Media; «Por persona» solo para administradores).
+- [ ] Las opciones provisionales de «Productividad» (solo Alta y Media; con tiempos). Ivania decidió el 17/11 que
+      toda la página sea solo para administradores.
 - [ ] La evaluación del asistente con 5 carteles reales (`docs/evaluacion_asistente_20261117.md`).
 - [ ] ¿Le interesan a Hermatix los sensores IoT en general, no solo de frío y temperatura? (caso A2 de
       `docs/revision_reglas_vs_ia_20261109.md`).

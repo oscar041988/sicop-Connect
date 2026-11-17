@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block titulo %}Productividad{% endblock %}
 {% block contenido %}
-{# Productividad de la revisión (Ivania, 17/11; diseño de la maqueta). «Por persona» solo para administradores:
-   opción provisional hasta que Oscar decida. #}
+{# Productividad de la revisión (Ivania, 17/11; diseño de la maqueta). Toda la página es solo para administradores
+   (ruta con exigir_admin, enlace en el menú «Administración»). #}
 {% set DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"] %}
 {% set MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"] %}
 <section class="prod-cabeza">
@@ -68,12 +68,8 @@
   {% endif %}
 </section>
 
-{% if es_admin %}
 <section class="card prod-seccion">
-  <div class="prod-titulo">
-    <h2>Por persona</h2>
-    <span class="tag r">Solo administradores</span>
-  </div>
+  <h2>Por persona</h2>
   <p class="sub">Primeras revisiones hechas esta semana (de candidatos de cualquier semana) y qué decidió cada quien.
     El número va siempre junto a las decisiones, para no premiar la rapidez.</p>
   {% if personas %}
@@ -101,7 +97,6 @@
   <p class="sub">Nadie hizo una primera revisión de un candidato esta semana.</p>
   {% endif %}
 </section>
-{% endif %}
 
 <section class="card prod-seccion">
   <h2>Últimas {{ p.historial | length }} semanas</h2>
@@ -125,7 +120,7 @@
   <strong>Cómo se cuenta</strong>
   <span>Candidato nuevo: cartel Alta o Media que entró al panel esa semana. Un cartel cuenta una vez, aunque coincida con varias familias.</span>
   <span>Revisado: su primera revisión (cualquier decisión) fue antes del cierre. «Cerró sin revisión»: el cierre pasó sin ninguna revisión antes.</span>
-  {% if es_admin %}<span>Por persona: cuenta para quien hizo la primera revisión. Días hasta revisar: desde que el cartel entró al panel hasta esa revisión.</span>{% endif %}
+  <span>Por persona: cuenta para quien hizo la primera revisión. Días hasta revisar: desde que el cartel entró al panel hasta esa revisión.</span>
   <span>Los carteles no se asignan: «Cerraron sin revisión» es del equipo, no de una persona.</span>
 </section>
 {% endif %}

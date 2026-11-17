@@ -822,7 +822,6 @@ form.en-linea { display: inline; margin-left: 8px; }
 .prod-barra.gris { flex: 1; height: 10px; background: var(--no-bg); }
 .prod-barra.gris i { background: var(--g9); }
 .prod-seccion h2 { margin: 0; }
-.prod-titulo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .prod-escapados { display: grid; gap: 8px; }
 .prod-escapados a { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); text-decoration: none; }
 .prod-escapados a:hover { border-color: var(--azul); }
