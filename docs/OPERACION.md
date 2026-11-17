@@ -148,8 +148,9 @@ python -m app.cli run-cycle --origen real --send       # envío real
 - En el servidor lo corre el temporizador `sicop-cycle.timer`, **de lunes a viernes a las 8:00** (hora de Costa
   Rica). **Todavía no está activado** (lección 10): primero en dry-run y después el envío real, siguiendo
   `DESPLIEGUE.md`, 9.6, con autorización de Oscar.
-- **En Windows (local):** una tarea del Programador de tareas corre el mismo ciclo, siempre en dry-run, de lunes
-  a viernes a las 8:00, con registro en `data\logs\`. Cómo crearla, probarla y borrarla:
+- **En Windows (local):** una tarea del Programador de tareas corre el mismo ciclo **con envío real** (`--send`,
+  desde el 30/10; antes, dry-run), de lunes a viernes a las 8:00, con registro en `data\logs\`. Solo corre con la
+  laptop encendida y la sesión abierta; al activar el ciclo del servidor se apaga (si no, salen correos dobles). Cómo crearla, probarla y borrarla:
   `deploy/windows/README.md`.
 - Los archivos importados pasan a `INCOMING_DIR/procesados/<fecha>/`. Uno incompleto, ilegible o no reconocido
   **no se importa**: pasa a `INCOMING_DIR/con_error/<fecha>/` y el ciclo termina en «fallo».
@@ -340,8 +341,9 @@ El perfil (`/perfil`) funciona igual con el asistente apagado.
 resultado lo calcula la app; solo falta la explicación redactada por la IA. Con la IA encendida, sus preguntas y su
 explicación cuentan en el presupuesto del día (`IA_MAX_DAILY_COST`, sección 3.3).
 
-**Documentos de Hermatix:** `ASSISTANT_SEND_DOCUMENTS=false`. Oscar decidió el 04/11 que su texto **no** va a la IA
-(`DECISION_IA.md` §7). Los archivos se guardan en `PROFILE_DOCS_DIR` (perfil) y `ASSISTANT_DOCS_DIR` (respuestas),
+**Documentos de Hermatix:** Oscar decidió el 04/11 que su texto **no** iba a la IA (`DECISION_IA.md` §7) y el 11/11,
+con el chat, que **sí**: con `ASSISTANT_SEND_DOCUMENTS=true` la IA lee el texto de los archivos subidos en el chat,
+sin modificarlos (§10.4). En local está en `true` desde el 11/11; con `false` la IA solo ve el nombre del archivo. Los archivos se guardan en `PROFILE_DOCS_DIR` (perfil) y `ASSISTANT_DOCS_DIR` (respuestas),
 fuera de Git, y entran en el respaldo (`backup` crea `…_perfil.zip` y `…_asistente.zip`, sección 6.1).
 
 **Revisar el registro:** menú **Administración → Registro del asistente** (solo administradores). Muestra quién

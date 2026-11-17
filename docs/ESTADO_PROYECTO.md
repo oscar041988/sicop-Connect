@@ -15,6 +15,18 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **Traspaso y guías del servidor al día (2026-11-17, pedido de Ivania, al cerrar el proyecto).** Hoja nueva
+  `docs/TRASPASO.md`: qué corre solo y dónde (hoy todo en la laptop), lo que hace una persona (cargar el ZIP de
+  SICOP cada día hábil antes de las 8:00; revisar «Bitácora», porque CAPTCHA y FALLO no llegan por correo;
+  «Productividad» los lunes; respaldo), qué hacer si algo falla y qué nunca se hace. `PR_DESARROLLO.md` y
+  `ACTUALIZACION_SERVIDOR.md` al día: 311 commits sobre `main` (320 sobre el servidor), esquema 0047, `anthropic`
+  y `python-docx`, `app.env` con los valores de hoy (v10, chat, documentos a la IA, 5 USD), la tarea «resumenes
+  IA» también se apaga. `OPERACION.md`: el ciclo de Windows envía de verdad desde el 30/10 y los documentos del
+  chat sí van a la IA (Oscar, 11/11). Solo documentos.
+  - **Hueco encontrado:** la vuelta de las 14:00 de la cola de IA no tiene temporizador en el servidor (solo
+    10:45). **Pendiente · Ivania/Oscar:** decidir si se agrega.
+  - **Pendiente:** suite con Python 3.12 antes de unir el PR (última: 964 passed, 9/11).
+
 - **Página «Productividad» (2026-11-17, idea de Ivania; maqueta aprobada por Ivania).** Menú principal →
   `/productividad`. Por semana (lunes a domingo, hora de CR; por defecto la última completa; ‹ › para cambiar):
   candidatos nuevos (Alta/Media vistos por primera vez en la semana, uno por cartel), revisados (primera revisión

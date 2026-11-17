@@ -1,4 +1,4 @@
-# Actualización del servidor: de `02b569b` a `desarrollo` (preparada el 2026-11-09)
+# Actualización del servidor: de `02b569b` a `desarrollo` (preparada el 2026-11-09, al día el 2026-11-17)
 
 Preparada por Ivania con Claude. **Se hace con Oscar presente**, un día hábil **después de las 8:00** (el correo
 del día ya salió) y con tiempo para revertir. Nada de esto se ha ejecutado todavía.
@@ -7,19 +7,20 @@ del día ya salió) y con tiempo para revertir. Nada de esto se ha ejecutado tod
 
 | | Hoy en el servidor | Después |
 |---|---|---|
-| Código | `02b569b` (15/10) | lo unido a `main` desde `desarrollo` (219 commits) |
-| Esquema de la base | 0007 | **0042** |
+| Código | `02b569b` (15/10) | lo unido a `main` desde `desarrollo` (320 commits) |
+| Esquema de la base | 0007 | **0047** |
 | Base de datos | la del servidor (vieja) | **la base local de Ivania** (decisión de Ivania, 2026-11-09): trae todo lo hecho desde el 21/10 |
-| Ciclo de las 8:00 (avisos) | — | **en el servidor** (`sicop-cycle.timer`); se apaga la tarea de Windows |
-| Enriquecimiento de las 10:00 (navegador) | tarea de Windows | **en pausa** hasta la fase 2 (`docs/ENVIO_ENRIQUECIMIENTO.md`) |
-| Cola de resúmenes con IA | tarea de Windows, después del enriquecimiento | **en el servidor** (`sicop-ia-cola.timer`, 10:45) |
-| Paquetes nuevos | — | `playwright`, `openpyxl`, `pdfplumber`, `openai` (en `requirements.lock.txt`) |
+| Ciclo de las 8:00 (avisos) | tarea de Windows | **en el servidor** (`sicop-cycle.timer`); se apaga la tarea de Windows |
+| Enriquecimiento de las 10:00 (navegador) | tarea de Windows | sigue en una PC con Windows y **manda lo suyo al servidor** (fase 2, paso 11); en pausa hasta ese paso |
+| Cola de resúmenes con IA | tareas de Windows: después del enriquecimiento y otra vuelta a las 14:00 | **en el servidor** (`sicop-ia-cola.timer`, 10:45); la vuelta de las 14:00 no existe todavía en el servidor (ver «Pendiente») |
+| Paquetes nuevos | — | `playwright`, `openpyxl`, `pdfplumber`, `openai`, `anthropic`, `python-docx` (en `requirements.lock.txt`) |
 
-**Por qué se pausa el enriquecimiento:** corre en la PC de Ivania (necesita un navegador con ventana) y guarda en
-su base. Con la base en el servidor, lo que guarde ya no llegaría al panel. El envío PC → servidor con token es la
-**fase 2** (`docs/ENVIO_ENRIQUECIMIENTO.md`), en construcción. Mientras tanto, los carteles nuevos se ven en el
-panel, se evalúan y se avisan, pero sin ficha de SICOP ni documentos. La **cola de IA** no usa navegador: pasa al
-servidor desde el primer día y resume lo que ya tiene documentos.
+**Por qué el enriquecimiento se queda en una PC:** necesita un navegador con ventana (SICOP pide resolver un
+CAPTCHA a veces). Con la base en el servidor, lo que guarde en la PC ya no llegaría al panel; por eso la PC lo
+**manda al servidor con un token** (fase 2, `docs/ENVIO_ENRIQUECIMIENTO.md`, construida el 9/11; paso 11 de esta
+guía). Hasta el paso 11, los carteles nuevos se ven en el panel, se evalúan y se avisan, pero sin ficha de SICOP ni
+documentos. Si la PC es otra que la de Ivania: `docs/TRASPASO_ENRIQUECIMIENTO.md`. La **cola de IA** no usa
+navegador: pasa al servidor desde el primer día y resume lo que ya tiene documentos.
 
 **Revisado (2026-11-09):** la base local guarda todas las rutas de archivos como relativas a su carpeta y con `/`
 (documentos, expedientes, perfil, asistente, reportes): funciona igual en el servidor. Suite completa con
@@ -41,9 +42,11 @@ acta.
 ## 0. Antes del día
 
 - [ ] **Oscar une el PR** `desarrollo → main` (texto en `docs/PR_DESARROLLO.md`). Anotar `COMMIT_REVISADO`.
-- [ ] **Decidir con Oscar** los valores que no son secretos de la sección 5: `IA_PROMPT_VERSION` (v8 si aprobó el
-      reporte con la explicación; si no, la que use hoy el `.env` de Ivania), `OPENAI_MODEL` y los precios,
-      `OBTAIN_ALERT_TO`, y si ese día se activa también la obtención automática (`docs/DESPLIEGUE.md` §9.9; hoy no).
+- [ ] **Decidir con Oscar** los valores que no son secretos de la sección 7: `AI_MODE` (`openai`, como hoy, o
+      `anthropic` si ya dio la clave y el modelo), `OBTAIN_ALERT_TO` y si ese día se activa también la obtención
+      automática (`docs/DESPLIEGUE.md` §9.9; hoy no: SICOP bloqueó la solicitud automática el 10/11).
+- [ ] Correr la suite completa con **Python 3.12** (el del servidor) en un entorno limpio con
+      `requirements-dev.txt`. Última corrida: 964 passed el 9/11; en Python 3.14, 1136 passed el 17/11.
 - [ ] Confirmar que en el servidor ya están `/etc/sicop-connect/google_cliente.json` y `google_token.json`
       (§9.4). Sin ellos no salen los correos.
 
@@ -54,7 +57,8 @@ Desde aquí, nada escribe en la base local: es la que se va a llevar.
 ```powershell
 Disable-ScheduledTask -TaskName "SICOP CONNECT - ciclo diario"      # si no, los avisos saldrían dos veces
 Disable-ScheduledTask -TaskName "SICOP CONNECT - enriquecimiento"
-Get-ScheduledTask -TaskName "SICOP CONNECT*" | Select-Object TaskName, State    # los dos: Disabled
+Disable-ScheduledTask -TaskName "SICOP CONNECT - resumenes IA"       # la vuelta de las 14:00
+Get-ScheduledTask -TaskName "SICOP CONNECT*" | Select-Object TaskName, State    # todas: Disabled
 ```
 
 - Cerrar el panel local (Ctrl+C en la ventana de `uvicorn`).
@@ -66,8 +70,8 @@ Get-ScheduledTask -TaskName "SICOP CONNECT*" | Select-Object TaskName, State    
 cd C:\Users\User\sicop-connect
 .\.venv\Scripts\Activate.ps1
 python -m app.cli backup --output C:\Users\User\respaldos-sicop
-# Deja RESPALDO_LOCAL.db, .json (manifiesto con SHA-256 y esquema 0039) y los ZIP _documentos, _expedientes,
-# _perfil, _asistente y _reportes.
+# Deja RESPALDO_LOCAL.db, .json (manifiesto con SHA-256 y esquema 0047) y los ZIP _documentos, _expedientes,
+# _perfil, _asistente y _reportes. La copia sale en modo DELETE (un solo archivo); el migrate del paso 8 la vuelve WAL.
 Compress-Archive -Path data\raw\* -DestinationPath C:\Users\User\respaldos-sicop\RESPALDO_LOCAL_raw.zip
 Compress-Archive -Path app\web\static\ayuda\* -DestinationPath C:\Users\User\respaldos-sicop\RESPALDO_LOCAL_ayuda.zip
 ```
@@ -75,7 +79,9 @@ Compress-Archive -Path app\web\static\ayuda\* -DestinationPath C:\Users\User\res
 - `_raw.zip`: las copias originales de cada archivo importado (para auditoría).
 - `_ayuda.zip`: las capturas de las misiones de ayuda. No están en Git; sin ellas, la ayuda del servidor sale sin
   imágenes. (Otra opción: generarlas en el servidor con `ayuda capturas`, paso 9.)
-- **No** se llevan `data\grabaciones` (1,7 GB, solo del enriquecimiento) ni `data\incoming`.
+- **No** se llevan `data\grabaciones` (1,7 GB, solo del enriquecimiento), `data\incoming` ni `data\exports`
+  (Excel, avisos y ofertas generadas: se vuelven a generar desde el panel). `data\ofertas` tampoco: son los
+  archivos de referencia que mandó Oscar (fichas técnicas, Tarrazú), no datos de la app.
 - `_perfil.zip` y `_asistente.zip` son **confidenciales**. Oscar decide cómo pasan al servidor (por ejemplo `scp`
   desde la Mac); nunca por correo, chat ni una carpeta compartida pública.
 
@@ -164,17 +170,25 @@ BROWSER_HEADLESS=true
 # Enriquecimiento: en pausa hasta la fase 2
 ENRICH_ENABLED=false
 ENRICH_EMAILS=false
-# Asistente de elegibilidad (encendido en local desde el 4/11); los documentos de Hermatix no van a la IA
+# Asistente de elegibilidad y su chat (DECISION_IA §7 y §10, como en local). Con SEND_DOCUMENTS=true la IA lee el
+# texto de los archivos subidos en el chat (Oscar, 11/11: sí, sin modificarlos)
 ASSISTANT_ENABLED=true
-ASSISTANT_SEND_DOCUMENTS=false
-# IA (DECISION_IA.md). La clave la escribe Oscar, en persona.
+ASSISTANT_CHAT=true
+ASSISTANT_SEND_DOCUMENTS=true
+# IA (DECISION_IA.md). Las claves las escribe Oscar, en persona. Valores de hoy en local (doctor, 17/11):
 AI_MODE=openai
 OPENAI_API_KEY=
-OPENAI_MODEL=
-IA_PRECIO_ENTRADA_USD=
-IA_PRECIO_SALIDA_USD=
-IA_PROMPT_VERSION=
-IA_MAX_DAILY_COST=1.00
+OPENAI_MODEL=gpt-6.1-terra
+IA_PRECIO_ENTRADA_USD=1.00
+IA_PRECIO_SALIDA_USD=5.00
+IA_PROMPT_VERSION=v10
+IA_MAX_OUTPUT_TOKENS=8000
+IA_MAX_SUMMARIES_PER_DAY=10
+IA_MAX_DAILY_COST=5.00
+# Solo si AI_MODE=anthropic (DECISION_IA §8): clave, modelo y esfuerzo los da Oscar
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=
+ANTHROPIC_EFFORT=
 # Avisos de las 8:00 desde el servidor (la tarea de Windows ya está apagada)
 NOTIFICATIONS_ENABLED=true
 NOTIFICATIONS_DRY_RUN=false
@@ -185,7 +199,8 @@ OBTAIN_ALERT_TO=
 ```
 
 - Lo que falte toma el valor por defecto de `.env.example` (tamaños máximos, días, topes de la cola).
-- `MAIL_FROM`, `OPENAI_MODEL`, precios, `IA_PROMPT_VERSION` y `OBTAIN_ALERT_TO`: los de la sección 0.
+- `MAIL_FROM`, `AI_MODE` y `OBTAIN_ALERT_TO`: los de la sección 0. Si se pasa a Anthropic, los precios
+  (`IA_PRECIO_…`) se cambian por los del modelo elegido, de la página oficial de Anthropic.
 - `BROWSER_HEADLESS=true` cambia la regla «con ventana» del 27/10, que era para la PC de Ivania; en el servidor no
   hay pantalla. Solo lo usan la obtención (si se activa) y las capturas de la ayuda.
 - **Nota:** las unidades (`sicop-cycle.service`) mandan con `--send`. Si se quiere un primer día en vista previa,
@@ -198,7 +213,7 @@ sudo cp /opt/sicop-connect/deploy/systemd/sicop-* /etc/systemd/system/
 sudo systemd-analyze verify /etc/systemd/system/sicop-*.service /etc/systemd/system/sicop-*.timer
 sudo systemctl daemon-reload
 sudo systemctl start sicop-migrate.service
-sudo journalctl -u sicop-migrate.service -n 20 --no-pager    # la base local llega en 0039: aplica de la 0040 a la 0042
+sudo journalctl -u sicop-migrate.service -n 20 --no-pager    # la base local llega en 0047: no aplica nada y la deja en WAL
 ```
 
 Con el patrón de `systemd-run` (§9.5):
@@ -224,6 +239,8 @@ curl -f http://127.0.0.1:8000/health
 - [ ] «Ayuda»: las misiones con sus capturas. Si salen sin imágenes, generarlas en el servidor con el patrón de
       `systemd-run`, `-m app.cli ayuda capturas` (usa una base de EJEMPLO en `/opt/sicop-connect/data/ayuda_ejemplo`).
 - [ ] «Avisos» y «Destinatarios»: los mismos que en local.
+- [ ] «Productividad»: la semana pasada con los mismos números que en local.
+- [ ] En un cartel con oferta (por ejemplo `20261001587`): «Oferta en Word» se descarga.
 
 ## 10. 🐧 SERVIDOR — el ciclo de las 8:00
 
@@ -250,7 +267,7 @@ sudo cp -a /root/sicop-antes/sicop-* /etc/systemd/system/ && sudo systemctl daem
 sudo systemctl start sicop-web.service
 ```
 
-Y en Windows, `Enable-ScheduledTask` para las dos tareas: la PC vuelve a ser la principal, con su base intacta.
+Y en Windows, `Enable-ScheduledTask` para las tres tareas: la PC vuelve a ser la principal, con su base intacta.
 
 ## 11. Enriquecimiento desde la PC (fase 2, `docs/ENVIO_ENRIQUECIMIENTO.md`)
 
@@ -271,6 +288,10 @@ enriquecimiento queda en pausa (pasos 1 y 7).
 
 ## Pendiente
 
+- **La vuelta de las 14:00 de la cola de IA** (en Windows, la tarea «SICOP CONNECT - resumenes IA») no tiene
+  temporizador en el servidor: solo existe el de las 10:45. Si la de las 10:45 falla, los resúmenes de ese día
+  esperan al siguiente. Se puede agregar una segunda línea `OnCalendar` a `sicop-ia-cola.timer` (decisión de
+  Ivania u Oscar; no está hecho).
 - La fase 2 se probó con la app de la PC haciendo de servidor; contra el servidor real se prueba en el paso 11.
 - Activar la obtención automática (§9.9), si Oscar lo decide.
 - Después de unos días bien, borrar `/opt/sicop-connect-02b569b` y `sicop-02b569b.db` (con un respaldo guardado).
