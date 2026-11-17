@@ -1,18 +1,31 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-16 (todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
+Última actualización: 2026-11-17 (exclusión «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas
+`a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
 y reporte de hasta 5 páginas, migración 0047; persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
 lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
 en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1122 passed** (16/11,
-con v10; la corrida completa tras el cambio del panel está pendiente) · `desarrollo` en GitHub: al día con la
+de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1126 passed** (17/11,
+con el cambio del panel; golden set 39/39) · `desarrollo` en GitHub: al día con la
 copia local (push del 16/11, `57f42f7`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Exclusión «aislamiento termico» / «aislamientotermico» (2026-11-17, Ivania).** `20261101176` (CCSS, mantenimiento
+  de edificios en aislamiento térmico de contenedores) salía dos veces en el panel, Baja en rastreo_activos
+  («contenedores», título) y en conteo_pasajeros («Ocupación», pliego pág. 21). SICOP escribe «Aislamientotérmico»
+  pegado: van las dos formas, solo en esas 2 familias. Simulación sobre los 15 589 carteles (solo lectura): solo
+  cambia ese cartel. Descartadas «edificios» (bajaba además el peaje `20261101795` y el rastreo o el aforo dentro de
+  un edificio pueden interesar) y «mantenimiento de edificios» (0 coincidencias).
+  - Reglas `a90bf850e7e5`; `evaluate`: 459 filas nuevas, el cartel queda «sin coincidencia» en las dos.
+    `score-rules`: 95.5 %, 3 errores, ninguno de este cambio.
+  - Prueba nueva parametrizada en `tests/test_evaluar.py` (título real con NBSP y título bien escrito; falló antes
+    del cambio). No va al golden set: ahí solo cuenta Alta/Media y el cartel ya era Baja, así que no mediría nada.
+    Reglas + golden + calidad: 69 passed.
 
 - **Todo cartel revisado sale de «Todos» (2026-11-16, pedido de Ivania; `57f42f7`).** Antes solo «No interesa» se
   escondía (13/11). Ahora cualquier revisión vigente (Interesa, Revisar requisitos, Ofertada, No se oferta, No
@@ -27,7 +40,8 @@ copia local (push del 16/11, `57f42f7`) ·
   - Pruebas: `tests/test_panel.py` (nueva parametrizada por las 4 decisiones, «otra revisión lo cambia de chip», aviso
     con enlace a «No se oferta»); 3 de `tests/test_seguimiento.py` ahora buscan el cartel en `?revisado=interesa`.
     Panel + seguimiento: 88 passed; archivos del panel: 290 passed; ayuda: 50 passed.
-  - **Pendiente:** resultado de la suite completa con este cambio.
+  - ~~Pendiente: resultado de la suite completa con este cambio.~~ **Hecho (17/11): 1126 passed en 13 min 48 s;
+    golden set 39/39 (reglas `967ebe5b6cc0`).**
 
 - **«Explicado en detalle» más largo, con cada característica y su cifra (2026-11-16, pedido de Ivania; `30aa36a`).**
   En `20261101092` (cámaras corporales, resumen #106 con v9) la hoja decía «grabar en alta definición» y se perdía
