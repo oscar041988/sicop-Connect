@@ -39,7 +39,9 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 pass
     `integrity_check` ok, `foreign_key_check` vacío, WAL, 5 tablas nuevas vacías y sus 12 triggers.
     ~~Subir el respaldo al Drive~~ **hecho (Claude, 18/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261118-093408`
     (7 archivos, ≈391 MB; tamaños iguales y huellas del `.db` y de los 5 zip iguales al manifiesto).
-    **Pendiente · Ivania:** probarlo en un cartel.
+    ~~Pendiente · Ivania: probarlo en un cartel~~ **probado por Ivania (18/11, 10:09–10:10, `20261101926`):**
+    pliego subido (11 páginas con texto), precio en CRC por mes, Fenova IA con su ficha y el representante legal;
+    los cuatro quedaron en la base. Todavía no se pidió la oferta de ese cartel.
   - **Pendiente · Oscar:** aprobarlo (el precio y el representante ya no salen solo de sus archivos).
   - **El chat los pide (18/11, Ivania: «sigue sin preguntarme los cuatro faltantes»).** Con los requisitos
     respondidos, el chat decía «Ya está lista la oferta» aunque faltaran datos. Ahora la app (sin IA) dice cuáles
