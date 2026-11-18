@@ -2,12 +2,19 @@
    el pliego (si el enriquecimiento no lo trajo), el precio de este cartel, el producto con su ficha técnica y el
    representante legal (uno para todas las ofertas; solo administradores). Nada de esto va a la IA. #}
 {% set f = od.form %}
-<section class="tarjeta oferta-datos" id="oferta-datos" aria-label="Lo que pide la oferta">
+{# Dentro del chat (en_chat, _chat.html) solo salen los que faltan; abajo (solo_listos), los que ya están, para verlos
+   o cambiarlos. Sin ninguno de los dos, todos (el chat apagado o todavía con requisitos por responder). #}
+{% set en_chat = en_chat | default(false) %}
+{% set solo_listos = solo_listos | default(false) %}
+<section class="{{ 'oferta-datos en-chat' if en_chat else 'tarjeta oferta-datos' }}" id="oferta-datos" aria-label="Lo que pide la oferta">
+  {% if not en_chat %}
   <h2>Lo que pide la oferta</h2>
   <p class="sub">Además de los requisitos, la oferta necesita esto. Lo escribe una persona: la IA no pone precios ni
     ve estos datos.</p>
+  {% endif %}
 
   {# 1. Pliego #}
+  {% if (not en_chat and not solo_listos) or (en_chat and "pliego" in od.faltan) or (solo_listos and "pliego" not in od.faltan) %}
   <div class="oferta-dato" id="oferta-pliego">
     <h3>Pliego del cartel {% if od.tiene_pliego %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
     {% if od.pliego %}
@@ -31,8 +38,10 @@
     {% endif %}
     {% if od.error and od.error[0] == "pliego" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
   </div>
+  {% endif %}
 
   {# 2. Precio de este cartel #}
+  {% if (not en_chat and not solo_listos) or (en_chat and "precio" in od.faltan) or (solo_listos and "precio" not in od.faltan) %}
   {% set pr = od.precio %}
   {% set base = pr.como_tarifa() if pr else (od.tarifa or {}) %}
   {% set iva_txt = (f.iva_modo == "exento") if f else (base.iva | string).startswith("exento") %}
@@ -82,8 +91,10 @@
     </details>
     {% if od.error and od.error[0] == "precio" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
   </div>
+  {% endif %}
 
   {# 3. Producto y ficha técnica (anexo 3) #}
+  {% if (not en_chat and not solo_listos) or (en_chat and "ficha" in od.faltan) or (solo_listos and "ficha" not in od.faltan) %}
   {% set fi = od.ficha %}
   <div class="oferta-dato" id="oferta-ficha">
     <h3>Producto y ficha técnica {% if fi %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
@@ -107,8 +118,10 @@
     </details>
     {% if od.error and od.error[0] == "ficha" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
   </div>
+  {% endif %}
 
   {# 4. Representante legal: uno para todas las ofertas; solo administradores. Nunca va a la IA. #}
+  {% if (not en_chat and not solo_listos) or (en_chat and "representante" in od.faltan) or (solo_listos and "representante" not in od.faltan) %}
   {% set rep = od.representante %}
   <div class="oferta-dato" id="oferta-representante">
     <h3>Representante legal {% if rep %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
@@ -137,4 +150,5 @@
     <p class="sub">Lo llena un administrador, una sola vez para todas las ofertas.</p>
     {% endif %}
   </div>
+  {% endif %}
 </section>

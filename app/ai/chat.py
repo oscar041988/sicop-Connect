@@ -154,8 +154,9 @@ def siguiente_mensaje(pasos: list[asistente.Paso], sesion: asistente.Sesion) -> 
     if not asistente.ampliada(pasos, sesion):
         return ("Ya están respondidos los requisitos excluyentes. Si el cartel interesa, pulse «Seguir con los demás "
                 "requisitos» para responder el resto.")
-    return ("Ya están respondidos todos los requisitos. Ya puede pedir la oferta completa con los documentos que se "
-            "subieron (en PDF o en Word). Lo que no cumple o falta sale en rojo.")
+    # Lo que falta para la oferta (pliego, precio, ficha, representante) lo pide la app debajo, sin la IA (18/11).
+    return ("Ya están respondidos todos los requisitos. Si a la oferta le falta algún dato (el pliego, el precio, la "
+            "ficha técnica o el representante), se lo pido aquí abajo; después puede pedirla en PDF o en Word.")
 
 
 def listo(pasos: list[asistente.Paso], sesion: asistente.Sesion | None) -> bool:

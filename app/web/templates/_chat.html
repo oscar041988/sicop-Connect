@@ -53,7 +53,20 @@
   </div>
   {% endif %}
 
-  {% if ch.listo %}
+  {# Al terminar los requisitos, la app pide aquí lo que le falta a la oferta (Ivania, 18/11); sin la IA. #}
+  {% if ch.listo and od is defined and od.faltan %}
+  {% set n = od.faltan | length %}
+  <div class="chat-pide" role="status">
+    <p class="msg-app"><span class="autor">SICOP CONNECT</span>
+      Para armar la oferta {{ "falta" if n == 1 else "faltan" }} {{ n }} dato{{ "s" if n != 1 }}:
+      {% set nombres = {"pliego": "el pliego", "precio": "el precio de este cartel", "ficha": "el producto y su ficha técnica",
+                        "representante": "el representante legal"} %}
+      {% for k in od.faltan %}{{ nombres[k] }}{{ ", " if not loop.last and loop.revindex > 2 else (" y " if not loop.last else "") }}{% endfor %}.
+      Escríbalos o súbalos aquí; no pasan por la IA.</p>
+    {% set en_chat = true %}
+    {% include "_oferta_datos.html" %}
+  </div>
+  {% elif ch.listo %}
   <div class="chat-listo" role="status">
     <strong>Ya está lista la oferta</strong>
     <span>Todos los requisitos tienen respuesta. Sale con la estructura de siempre y los documentos que se subieron.

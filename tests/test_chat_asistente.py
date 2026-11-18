@@ -476,6 +476,40 @@ def test_resolver_abre_la_pregunta_aunque_el_chat_este_encendido(web_chat):
     assert _respuesta(db, ids["sicop"]).estado == "respondido" and simulado.llamadas == []
 
 
+def test_al_terminar_los_requisitos_el_chat_pide_lo_que_falta_para_la_oferta(web_chat):
+    """«Sigue sin preguntarme los cuatro faltantes» (Ivania, 18/11): el chat no dice «Ya está lista la oferta» mientras
+    falten el pliego, el precio, la ficha o el representante; los pide ahí, con su formulario y sin la IA."""
+    from app import oferta_datos
+    from tests.test_oferta_datos import DESGLOSE, hacer
+    db, ids, settings, c, u, simulado = web_chat
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        asistente.empezar(conn, NRO, ANA, AHORA)
+    _ampliar(db)
+    for clave, entrada in (("sicop", {"valor_si_no": "1"}), ("anos", {"valor_numero": "14"}),
+                           ("soporte", {"valor_texto": "Sí, 24/7"}), ("cierre", {"estado": "no_se"})):
+        _responder(db, settings, ids[clave], **entrada)
+    _responder(db, settings, ids["patente"], archivo=PDF)
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text
+    assert 'class="chat-pide"' in pagina and "faltan 4 datos" in pagina and "Ya está lista la oferta" not in pagina
+    for ancla in ("oferta-pliego", "oferta-precio", "oferta-ficha", "oferta-representante"):
+        assert pagina.count(f'id="{ancla}"') == 1                        # dentro del chat, no repetido abajo
+    with closing(connect(db)) as conn:
+        oferta_datos.guardar_precio(conn, NRO, moneda="CRC", precio_unitario="1000", periodo="unico", iva_modo="tasa",
+                                    iva_tasa="13", iva_exento="", desglose=DESGLOSE, quien=ANA, ahora=AHORA)
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text
+    assert "faltan 3 datos" in pagina and 'id="oferta-precio"' in pagina   # el precio ya no se pide: queda abajo
+    with closing(connect(db)) as conn:
+        oferta_datos.guardar_pliego(conn, settings, NRO, io.BytesIO(hacer.pdf_con_texto(["1. OBJETO (SINTÉTICO)"])),
+                                    "pliego.pdf", ANA, AHORA)
+        oferta_datos.guardar_ficha(conn, settings, NRO, "fleetmatix", io.BytesIO(PDF), "ficha.pdf", ANA, AHORA)
+        oferta_datos.guardar_representante(conn, nombre="Persona Sintética Uno", cedula="0-0000-0001", calidades="",
+                                           cargo="", quien=ANA, ahora=AHORA)
+    pagina = c["oscar"].get(f"/oportunidades/{NRO}/asistente").text
+    assert 'class="chat-pide"' not in pagina and "Ya está lista la oferta" in pagina
+    assert simulado.llamadas == []                                       # nada de esto pasó por la IA
+
+
 def test_con_el_chat_apagado_sigue_el_formulario_de_siempre(web):
     db, ids, _, c, u = web
     with closing(connect(db)) as conn:

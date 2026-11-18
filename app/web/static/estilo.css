@@ -854,3 +854,8 @@ table.prod-personas td.azul { color: var(--azul); }
 .oferta-dato details summary { cursor: pointer; font-weight: 600; color: var(--azul); }
 .oferta-dato fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 6px; }
 .oferta-dato :target, .oferta-dato:target { scroll-margin-top: 80px; }
+/* En el chat, al terminar los requisitos: lo que falta para la oferta (2026-11-18) */
+.chat-pide { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--rojo-bg); }
+.chat-pide .msg-app { margin: 0 0 8px; }
+.chat-pide .msg-app .autor { display: block; font-size: .8rem; font-weight: 700; color: var(--azul); }
+.oferta-datos.en-chat { margin: 0; background: #fff; border-radius: 10px; padding: 4px 12px; }

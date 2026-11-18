@@ -31,6 +31,11 @@ copia local hasta el push del 17/11 (`575fa91`) ·
     (7 archivos, ≈391 MB; tamaños iguales y huellas del `.db` y de los 5 zip iguales al manifiesto).
     **Pendiente · Ivania:** probarlo en un cartel.
   - **Pendiente · Oscar:** aprobarlo (el precio y el representante ya no salen solo de sus archivos).
+  - **El chat los pide (18/11, Ivania: «sigue sin preguntarme los cuatro faltantes»).** Con los requisitos
+    respondidos, el chat decía «Ya está lista la oferta» aunque faltaran datos. Ahora la app (sin IA) dice cuáles
+    faltan y pone ahí sus formularios; abajo quedan los ya listos, con «Cambiar». «Ya está lista la oferta» solo sale
+    sin faltantes. `_chat.html`, `_oferta_datos.html` (`en_chat` / `solo_listos`), `rutas._datos_oferta` (`faltan`),
+    mensaje final de `ai/chat.py`. Prueba nueva en `test_chat_asistente.py`; chat, oferta y acceso: 129 passed.
   - Pendiente: una línea en la misión de ayuda de la oferta.
 
 - **«Resolver» abre la pregunta con el chat encendido (2026-11-18, falla vista por Ivania).** En «Antes de pedirla»

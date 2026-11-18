@@ -23,7 +23,10 @@
 <div class="asis-columnas">
   <div class="asis-principal">
     {% include "_asistente.html" %}
-    {% include "_oferta_datos.html" %}
+    {# Con el chat terminado y datos por pedir, lo que falta lo pide el chat (_chat.html); aquí quedan los ya listos #}
+    {% if chat.activo and chat.listo and od.faltan %}
+    {% if od.faltan | length < 4 %}{% set solo_listos = true %}{% include "_oferta_datos.html" %}{% endif %}
+    {% else %}{% include "_oferta_datos.html" %}{% endif %}
   </div>
 
   <aside class="asis-lateral" aria-label="Avance y oferta">

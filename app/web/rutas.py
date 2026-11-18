@@ -544,10 +544,14 @@ def _render_asistente(request: Request, conn: sqlite3.Connection, nro_sicop: str
 def _datos_oferta(request: Request, conn, nro_sicop: str, error: tuple[str, str] | None, form: dict | None) -> dict:
     sugerido = propuesta.producto_del_cartel(conn, nro_sicop)
     tarifa = propuesta.tarifario().get(sugerido) if sugerido else None
-    return {"precio": oferta_datos.precio(conn, nro_sicop), "ficha": oferta_datos.ficha(conn, nro_sicop),
-            "pliego": oferta_datos.pliego(conn, nro_sicop), "representante": oferta_datos.representante(conn),
-            "tiene_pliego": bool(ia_oferta.paginas_del_pliego(conn, nro_sicop)), "sugerido": sugerido,
-            "tarifa": tarifa if isinstance(tarifa, dict) else None, "PRODUCTOS": oferta_datos.PRODUCTOS,
+    tarifa = tarifa if isinstance(tarifa, dict) else None
+    datos = {"precio": oferta_datos.precio(conn, nro_sicop), "ficha": oferta_datos.ficha(conn, nro_sicop),
+             "pliego": oferta_datos.pliego(conn, nro_sicop), "representante": oferta_datos.representante(conn),
+             "tiene_pliego": bool(ia_oferta.paginas_del_pliego(conn, nro_sicop))}
+    # Lo que el chat pide al terminar los requisitos, en este orden (Ivania, 18/11: «sigue sin preguntarme»).
+    faltan = [k for k, listo in (("pliego", datos["tiene_pliego"]), ("precio", datos["precio"] or tarifa),
+                                 ("ficha", datos["ficha"]), ("representante", datos["representante"])) if not listo]
+    return {**datos, "faltan": faltan, "sugerido": sugerido, "tarifa": tarifa, "PRODUCTOS": oferta_datos.PRODUCTOS,
             "PERIODOS": oferta_datos.PERIODOS, "RUBROS": oferta_economica.RUBROS,
             "es_admin": seguridad.es_admin(request), "error": error, "form": form or {}}
 
