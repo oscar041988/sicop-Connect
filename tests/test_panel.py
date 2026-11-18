@@ -126,12 +126,30 @@ def test_filtros(db, filtros, esperado):
     assert _nros(_listar(db, **filtros)) == esperado
 
 
+def test_una_fila_por_cartel_con_la_familia_de_mayor_prioridad_primero(db):
+    # El 4 es Alta en camaras_corporales y Baja en videotelematica: antes salía dos veces (Ivania, 2026-11-17).
+    p = _listar(db, prioridad="todas")
+    assert _nros(p) == ["00000000001", "00000000002", "00000000004"] and p.total == 3
+    cuatro = p.filas[2]
+    assert (cuatro.familia, cuatro.encaje, cuatro.otras) == ("camaras_corporales", "alta", [("videotelematica", "baja")])
+    # Las demás familias siguen los filtros: con «Baja», la Alta no está y la principal es la Baja.
+    baja = _listar(db, prioridad="baja").filas[0]
+    assert (baja.familia, baja.otras) == ("videotelematica", [])
+
+
+def test_la_lista_muestra_las_otras_familias_como_etiquetas(cliente):
+    html = cliente.get("/oportunidades?prioridad=todas").text
+
+    assert html.count('href="/oportunidades/00000000004"') == 1
+    assert 'title="Prioridad Baja en esta familia"' in html and "También con: <b>" in html
+
+
 def test_filtro_revisado(db):
     _revisar(db, "00000000001")
 
     assert _nros(_listar(db, revisado="si")) == ["00000000001"]
     assert _nros(_listar(db, revisado="no")) == ["00000000002", "00000000004"]
-    assert _listar(db).filas[0].decision == "interesa"
+    assert _listar(db, revisado="si").filas[0].decision == "interesa"   # «Todos» ya no lo trae: está revisado
 
 
 def test_paginas(db, monkeypatch):
@@ -436,6 +454,50 @@ def test_chips_filtran_por_decision(db):
     assert _nros(_listar(db, revisado="interesa")) == ["00000000001"]
     assert _nros(_listar(db, revisado="no_interesa")) == ["00000000002"]
     assert _nros(_listar(db, revisado="revisar_requisitos")) == []
+
+
+def test_no_interesa_sale_de_todos_y_queda_en_su_chip(db):
+    _revisar(db, "00000000002", "no_interesa", motivo="plazo")
+
+    todos = _listar(db)
+    assert _nros(todos) == ["00000000001", "00000000004"]
+    assert (todos.total, todos.escondidos) == (2, {"no_interesa": 1})
+    assert _nros(_listar(db, revisado="no_interesa")) == ["00000000002"]
+    assert _listar(db, revisado="no_interesa").escondidos == {}
+    # La búsqueda también lo esconde, pero lo cuenta: así se sabe dónde buscarlo.
+    busqueda = _listar(db, q="flotilla")
+    assert (_nros(busqueda), busqueda.escondidos) == ([], {"no_interesa": 1})
+
+
+@pytest.mark.parametrize("decision", ["interesa", "revisar_requisitos", "ofertada", "no_se_oferta"])
+def test_toda_revision_saca_el_cartel_de_todos_y_lo_deja_en_su_chip(db, decision):
+    _revisar(db, "00000000002", decision)
+
+    todos = _listar(db)
+    assert _nros(todos) == ["00000000001", "00000000004"]
+    assert todos.escondidos == {decision: 1}
+    assert _nros(_listar(db, revisado=decision)) == ["00000000002"]
+    assert _nros(_listar(db, revisado="si")) == ["00000000002"]
+
+
+def test_otra_revision_lo_cambia_de_chip(db):
+    _revisar(db, "00000000002", "no_interesa", motivo="plazo")
+    _revisar(db, "00000000002", "interesa")   # la vigente es la última; nada se borra
+
+    assert _nros(_listar(db)) == ["00000000001", "00000000004"]
+    assert _listar(db).escondidos == {"interesa": 1}
+    assert _nros(_listar(db, revisado="interesa")) == ["00000000002"]
+    assert _nros(_listar(db, revisado="no_interesa")) == []
+
+
+def test_el_panel_avisa_en_que_chip_quedo_cada_revisado(db, cliente):
+    _revisar(db, "00000000002", "no_se_oferta")
+
+    texto = cliente.get("/oportunidades", params={"q": "flotilla"}).text
+
+    assert "00000000002" not in texto
+    assert "1 en «No se oferta»" in texto
+    assert 'href="/oportunidades?q=flotilla&amp;revisado=no_se_oferta"' in texto   # el enlace conserva la búsqueda
 
 
 def test_nuevo_es_lo_que_llego_en_la_ultima_importacion(db):

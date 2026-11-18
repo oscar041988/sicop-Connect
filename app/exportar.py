@@ -98,7 +98,9 @@ def libro(conn: sqlite3.Connection, version: str, filtros: panel.Filtros, ahora:
     for n, fila in enumerate(pagina.filas, start=2):
         # legible: como en el panel (SICOP usa espacios especiales que se ven raros en Excel).
         textos = [fila.nro_sicop, fila.nro_procedimiento, panel.legible(panel.formato_titulo(fila.descripcion or "")),
-                  panel.legible(fila.institucion), panel.NOMBRES_FAMILIA.get(fila.familia, fila.familia), fila.producto,
+                  panel.legible(fila.institucion),
+                  ", ".join(panel.NOMBRES_FAMILIA.get(x, x) for x in [fila.familia, *(o for o, _ in fila.otras)]),
+                  fila.producto,
                   panel.ENCAJES.get(fila.encaje, fila.encaje), panel.PLAZOS.get(fila.plazo, fila.plazo)]
         for col, valor in enumerate(textos, start=1):
             _texto(hoja.cell(row=n, column=col), valor)
@@ -127,7 +129,8 @@ def libro(conn: sqlite3.Connection, version: str, filtros: panel.Filtros, ahora:
                   *descripcion_filtros(conn, f),
                   ("Reglas", version),
                   ("Fuente", "Datos abiertos de SICOP. La prioridad indica encaje con el portafolio de Hermatix, "
-                             "no que se pueda participar. Un cartel aparece una vez por cada familia con la que coincide."),
+                             "no que se pueda participar. Una fila por cartel: en «Familia», primero la de mayor "
+                             "prioridad; «Prioridad» y «Palabras clave» son de esa familia."),
                   ("Montos", "Estimado = cantidad × precio unitario de las líneas, por moneda; nunca se convierten.")]
     for n, (clave, valor) in enumerate(filas_info, start=1):
         _texto(info.cell(row=n, column=1), clave)

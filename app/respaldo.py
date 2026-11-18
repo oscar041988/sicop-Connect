@@ -87,10 +87,16 @@ def _respaldar_documentos(documentos: Path, destino: Path) -> dict:
             "sha256": sha256(destino)}
 
 
-def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None) -> Respaldo:
+def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | None = None,
+              expedientes: Path | None = None, perfil: Path | None = None,
+              asistente: Path | None = None, reportes: Path | None = None) -> Respaldo:
     """Copia consistente de `origen` en `carpeta`, con su manifiesto. No sobrescribe nada.
 
-    Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip."""
+    Si `documentos` (DOCUMENTS_DIR) tiene archivos, también sicop_AAAAMMDD-HHMMSS_documentos.zip; si `expedientes`
+    (EXPEDIENTES_DIR, gestor de documentos paso 2) tiene archivos, también sicop_AAAAMMDD-HHMMSS_expedientes.zip; si
+    `perfil` (PROFILE_DOCS_DIR, documentos confidenciales de Hermatix) tiene archivos, también …_perfil.zip; y si
+    `asistente` (ASSISTANT_DOCS_DIR, archivos de las respuestas del asistente) tiene archivos, …_asistente.zip; y si
+    `reportes` (REPORTS_DIR, Reportes de cartel en PDF) tiene archivos, …_reportes.zip."""
     if not origen.is_file():
         raise RespaldoError(f"no existe la base {origen}")
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -106,6 +112,9 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | N
         with closing(sqlite3.connect(f"{origen.resolve().as_uri()}?mode=ro", uri=True)) as fuente, \
                 closing(sqlite3.connect(temporal)) as copia:
             fuente.backup(copia)
+            # La copia hereda el modo WAL de la base (2026-11-13). Un respaldo es un solo archivo: se deja en el modo
+            # normal, sin -wal ni -shm a su lado. Al restaurarlo, migrate lo vuelve a WAL (OPERACION.md 6.2).
+            copia.execute("PRAGMA journal_mode = DELETE")
         with closing(sqlite3.connect(f"{temporal.resolve().as_uri()}?mode=ro", uri=True)) as copia:
             integridad = copia.execute("PRAGMA integrity_check").fetchone()[0]
             esquema = copia.execute("SELECT max(version) FROM schema_migrations").fetchone()[0]
@@ -132,6 +141,14 @@ def respaldar(origen: Path, carpeta: Path, ahora: datetime, documentos: Path | N
     }
     if documentos is not None and documentos.is_dir() and any(p.is_file() for p in documentos.rglob("*")):
         datos["documentos"] = _respaldar_documentos(documentos, carpeta / f"{nombre}_documentos.zip")
+    if expedientes is not None and expedientes.is_dir() and any(p.is_file() for p in expedientes.rglob("*")):
+        datos["expedientes"] = _respaldar_documentos(expedientes, carpeta / f"{nombre}_expedientes.zip")
+    if perfil is not None and perfil.is_dir() and any(p.is_file() for p in perfil.rglob("*")):
+        datos["perfil"] = _respaldar_documentos(perfil, carpeta / f"{nombre}_perfil.zip")
+    if asistente is not None and asistente.is_dir() and any(p.is_file() for p in asistente.rglob("*")):
+        datos["asistente"] = _respaldar_documentos(asistente, carpeta / f"{nombre}_asistente.zip")
+    if reportes is not None and reportes.is_dir() and any(p.is_file() for p in reportes.rglob("*")):
+        datos["reportes"] = _respaldar_documentos(reportes, carpeta / f"{nombre}_reportes.zip")
     with open(manifiesto, "x", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=2)
         f.write("\n")

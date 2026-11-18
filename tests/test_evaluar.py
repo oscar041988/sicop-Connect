@@ -99,6 +99,18 @@ def test_contenedores_y_carga_solo_cuentan_con_rastreo(reglas, titulo, esperado)
     assert (e.encaje if e else None) == esperado
 
 
+@pytest.mark.parametrize("titulo", [
+    # 20261101176 (CCSS): SICOP escribe «Aislamientotérmico» pegado y con espacios duros (Ivania, 2026-11-17).
+    "Mantenimiento\xa0Correctivo\xa0y\xa0preventivo\xa0de\xa0edificios\xa0en\xa0Aislamientotérmico\xa0de\xa0contenedores.",
+    "Mantenimiento de edificios en aislamiento térmico de contenedores",
+])
+def test_aislamiento_termico_de_contenedores_no_es_rastreo_ni_conteo(reglas, titulo):
+    pagina = Texto("Pliego, pág. 21", "Ocupación")  # en el pliego real, «Ocupación» daba Baja en conteo_pasajeros
+    e = {x.familia: x for x in evaluar_textos(reglas, titulo, paginas=[pagina])}
+    assert e["rastreo_activos"].encaje == "sin_coincidencia"
+    assert e["conteo_pasajeros"].encaje == "sin_coincidencia"
+
+
 @pytest.mark.parametrize("titulo, esperado", [
     # Decisiones de Ivania (2026-10-09) sobre gps_flotas.
     ("Servicio de rastreo GPS para la flotilla municipal", "alta"),

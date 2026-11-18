@@ -9,6 +9,7 @@ Orden de prioridad (de mayor a menor):
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -57,22 +58,44 @@ DEFAULTS: dict[str, str] = {
     "DOCUMENTS_DIR": "data/documentos",
     "DOCUMENT_MAX_MB": "50",
     "DOCUMENTS_MAX_MB_PER_TENDER": "100",
+    "EXPEDIENTES_DIR": "data/expedientes",
+    "EXPEDIENTE_MAX_MB": "10",
+    "PROFILE_DOCS_DIR": "data/perfil",
+    "PROFILE_DOC_MAX_MB": "10",
+    "ASSISTANT_DOCS_DIR": "data/asistente",
+    "ASSISTANT_DOC_MAX_MB": "10",
+    "REPORTS_DIR": "data/reportes",
+    "ASSISTANT_ENABLED": "false",
+    "ASSISTANT_SEND_DOCUMENTS": "false",
+    "ASSISTANT_CHAT": "false",
     "ENRICH_ENABLED": "false",
+    "ENRICH_EMAILS": "false",
+    "ENRICH_TOKEN": "",
+    "ENRICH_SERVER_URL": "",
     "ENRICH_MAX_PER_DAY": "20",
     "RECORDINGS_KEEP_DAYS": "30",
     "ENRICH_RETRY_WAIT_MINUTES": "15",
     "IA_MAX_INPUT_TOKENS": "50000",
     "OPENAI_API_KEY": "",
     "OPENAI_MODEL": "",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "",
+    "ANTHROPIC_EFFORT": "",
     "IA_TIMEOUT_SECONDS": "120",
     "IA_MAX_OUTPUT_TOKENS": "4000",
+    "IA_PROMPT_VERSION": "v1",
     "IA_PRECIO_ENTRADA_USD": "",
     "IA_PRECIO_SALIDA_USD": "",
+    "IA_MAX_SUMMARIES_PER_DAY": "10",
+    "IA_MAX_DAILY_COST": "1.00",
 }
 
 # Variables cuyo valor nunca se muestra (solo si están configuradas o pendientes).
-SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY"})
-AI_MODES = ("none", "openai")
+SENSITIVE_KEYS = frozenset({"SESSION_SECRET", "MAIL_FROM", "SICOP_REQUEST_EMAIL", "OBTAIN_ALERT_TO", "OPENAI_API_KEY",
+                            "ANTHROPIC_API_KEY", "ENRICH_TOKEN"})
+AI_MODES = ("none", "openai", "anthropic")
+# Esfuerzo de razonamiento de los modelos de Anthropic (output_config.effort del SDK). Vacío: el del modelo.
+ANTHROPIC_EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -293,6 +316,67 @@ class Settings:
         return self._entero("DOCUMENT_MAX_MB", 1, 500, "MB")
 
     @property
+    def expedientes_dir(self) -> Path:
+        """Archivos subidos a los expedientes (EXPEDIENTES_DIR; data/expedientes). Fuera de Git; entran en el respaldo."""
+        path = Path(self.get("EXPEDIENTES_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def expediente_max_mb(self) -> int:
+        """Tamaño máximo de UN archivo subido a un expediente (EXPEDIENTE_MAX_MB; 10 por ahora, decisión de Oscar)."""
+        return self._entero("EXPEDIENTE_MAX_MB", 1, 500, "MB")
+
+    @property
+    def profile_docs_dir(self) -> Path:
+        """Documentos del perfil de Hermatix (PROFILE_DOCS_DIR; data/perfil). Confidenciales: fuera de Git; entran en
+        el respaldo."""
+        path = Path(self.get("PROFILE_DOCS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def profile_doc_max_mb(self) -> int:
+        """Tamaño máximo de UN documento del perfil (PROFILE_DOC_MAX_MB; 10)."""
+        return self._entero("PROFILE_DOC_MAX_MB", 1, 500, "MB")
+
+    @property
+    def assistant_docs_dir(self) -> Path:
+        """Archivos que se suben al responder el asistente de elegibilidad (ASSISTANT_DOCS_DIR; data/asistente).
+        Confidenciales, como los del perfil: fuera de Git; entran en el respaldo."""
+        path = Path(self.get("ASSISTANT_DOCS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def reports_dir(self) -> Path:
+        """Reportes de cartel en PDF (REPORTS_DIR; data/reportes; Reporte con IA, lección 4): fuera de Git; entran en
+        el respaldo."""
+        path = Path(self.get("REPORTS_DIR"))
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+    @property
+    def assistant_doc_max_mb(self) -> int:
+        """Tamaño máximo de UN archivo del asistente (ASSISTANT_DOC_MAX_MB; 10)."""
+        return self._entero("ASSISTANT_DOC_MAX_MB", 1, 500, "MB")
+
+    @property
+    def assistant_enabled(self) -> bool:
+        """ASSISTANT_ENABLED (false): el asistente de elegibilidad y su lista de verificación se ven en el panel.
+        Apagado no borra nada (asistente, lección 5: se activa a propósito, con Oscar)."""
+        return _as_bool(self.get("ASSISTANT_ENABLED"))
+
+    @property
+    def assistant_send_documents(self) -> bool:
+        """ASSISTANT_SEND_DOCUMENTS (false): si el texto de los documentos que se suben en el chat del asistente va a
+        la IA. Oscar lo aprobó el 2026-11-11 (DECISION_IA.md §10.4): la IA los lee, sin modificarlos. Con false solo
+        recibe el nombre del archivo."""
+        return _as_bool(self.get("ASSISTANT_SEND_DOCUMENTS"))
+
+    @property
+    def assistant_chat(self) -> bool:
+        """ASSISTANT_CHAT (false): el asistente se usa como chat (DECISION_IA.md §10). Necesita la IA encendida;
+        apagado, el asistente pregunta uno por uno como siempre. Cambiarlo no borra nada."""
+        return _as_bool(self.get("ASSISTANT_CHAT"))
+
+    @property
     def documents_max_mb_per_tender(self) -> int:
         """Tope de documentos guardados por cartel (DOCUMENTS_MAX_MB_PER_TENDER; 100; decisión del 2026-10-27)."""
         return self._entero("DOCUMENTS_MAX_MB_PER_TENDER", 1, 5000, "MB")
@@ -301,6 +385,27 @@ class Settings:
     def enrich_enabled(self) -> bool:
         """false (por defecto): enrich run no consulta SICOP. Se activa a mano en .env (lección 4)."""
         return _as_bool(self.get("ENRICH_ENABLED"))
+
+    @property
+    def enrich_emails(self) -> bool:
+        """false (por defecto; decisión de Ivania, 2026-11-09): enrich run no manda el resumen ni la alerta por
+        CAPTCHA a OBTAIN_ALERT_TO, solo deja la vista previa en EXPORTS_DIR (ENRICH_EMAILS)."""
+        return _as_bool(self.get("ENRICH_EMAILS"))
+
+    @property
+    def enrich_token(self) -> str:
+        """Token que comparten el servidor y la PC del enriquecimiento (fase 2, docs/ENVIO_ENRIQUECIMIENTO.md). Vacío:
+        las direcciones /api/enriquecimiento no existen (404)."""
+        return self.get("ENRICH_TOKEN").strip()
+
+    @property
+    def enrich_server_url(self) -> str:
+        """En la PC: el servidor al que enrich remoto pide la cola y manda las fichas (https://…, sin «/» al final).
+        Vacío: la PC trabaja sola con su base (enrich run). http:// solo para 127.0.0.1 o localhost (pruebas)."""
+        url = self.get("ENRICH_SERVER_URL").strip().rstrip("/")
+        if url and not (url.startswith("https://") or url.startswith(("http://127.0.0.1", "http://localhost"))):
+            raise ValueError("ENRICH_SERVER_URL tiene que empezar con https:// (el token no viaja sin cifrar).")
+        return url
 
     @property
     def enrich_max_per_day(self) -> int:
@@ -314,11 +419,23 @@ class Settings:
 
     @property
     def ai_mode(self) -> str:
-        """none (por defecto: la app no llama a ninguna IA) u openai (Reporte con IA, lección 2)."""
+        """none (por defecto: la app no llama a ninguna IA), openai (Reporte con IA, lección 2) o anthropic
+        (DECISION_IA.md §8, aprobado por Oscar el 2026-11-05)."""
         modo = self.get("AI_MODE").strip().lower() or "none"
         if modo not in AI_MODES:
-            raise ValueError(f"AI_MODE debe ser {' u '.join(AI_MODES)}")
+            raise ValueError(f"AI_MODE debe ser {', '.join(AI_MODES[:-1])} o {AI_MODES[-1]}")
         return modo
+
+    @property
+    def ia_activa(self) -> bool:
+        """True con AI_MODE=openai o anthropic: la app puede llamar a la IA."""
+        return self.ai_mode != "none"
+
+    @property
+    def ia_modelo(self) -> str:
+        """El modelo de la IA activa (OPENAI_MODEL o ANTHROPIC_MODEL); vacío con AI_MODE=none."""
+        modo = self.ai_mode
+        return self.openai_model if modo == "openai" else self.anthropic_model if modo == "anthropic" else ""
 
     @property
     def openai_api_key(self) -> str:
@@ -331,12 +448,40 @@ class Settings:
         return self.get("OPENAI_MODEL").strip()
 
     @property
+    def anthropic_api_key(self) -> str:
+        """Clave de la API de Anthropic. Nunca se muestra ni se guarda en la base ni en los registros."""
+        return self.get("ANTHROPIC_API_KEY").strip()
+
+    @property
+    def anthropic_model(self) -> str:
+        """Nombre del modelo de Anthropic (ANTHROPIC_MODEL): lo elige Oscar (§8); nunca va en el código."""
+        return self.get("ANTHROPIC_MODEL").strip()
+
+    @property
+    def anthropic_effort(self) -> str | None:
+        """ANTHROPIC_EFFORT: low, medium, high, xhigh o max. Vacío: el valor por defecto del modelo."""
+        esfuerzo = self.get("ANTHROPIC_EFFORT").strip().lower()
+        if not esfuerzo:
+            return None
+        if esfuerzo not in ANTHROPIC_EFFORTS:
+            raise ValueError(f"ANTHROPIC_EFFORT debe ser {', '.join(ANTHROPIC_EFFORTS[:-1])} o {ANTHROPIC_EFFORTS[-1]}")
+        return esfuerzo
+
+    @property
     def ia_timeout_seconds(self) -> int:
         return self._entero("IA_TIMEOUT_SECONDS", 10, 600, "segundos")
 
     @property
     def ia_max_output_tokens(self) -> int:
         return self._entero("IA_MAX_OUTPUT_TOKENS", 100, 32000, "tokens")
+
+    @property
+    def ia_prompt_version(self) -> str:
+        """Versión del prompt del resumen (IA_PROMPT_VERSION; v1): config/prompts/resumen_cartel_<versión>.md."""
+        version = self.get("IA_PROMPT_VERSION").strip().lower() or "v1"
+        if not re.fullmatch(r"v[0-9]{1,3}", version):
+            raise ValueError("IA_PROMPT_VERSION debe ser v1, v2, v3…")
+        return version
 
     def _precio(self, key: str) -> Decimal | None:
         texto = self.get(key).strip()
@@ -359,6 +504,23 @@ class Settings:
     def ia_precio_salida_usd(self) -> Decimal | None:
         """USD por millón de tokens de salida. Vacío: el costo estimado queda sin calcular («sin precio»)."""
         return self._precio("IA_PRECIO_SALIDA_USD")
+
+    @property
+    def ia_max_summaries_per_day(self) -> int:
+        """Resúmenes nuevos por día de la cola automática (IA_MAX_SUMMARIES_PER_DAY; 10, Ivania 2026-10-30)."""
+        return self._entero("IA_MAX_SUMMARIES_PER_DAY", 0, 200, "resúmenes")
+
+    @property
+    def ia_max_daily_cost(self) -> Decimal:
+        """Tope de costo estimado de la IA por día, en USD (IA_MAX_DAILY_COST; 1.00, Ivania 2026-10-30)."""
+        texto = self.get("IA_MAX_DAILY_COST").strip() or "1.00"
+        try:
+            tope = Decimal(texto)
+        except InvalidOperation:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número con punto decimal (USD por día)") from None
+        if not tope.is_finite() or tope < 0:
+            raise ValueError("IA_MAX_DAILY_COST debe ser un número mayor o igual a 0")
+        return tope
 
     @property
     def recordings_keep_days(self) -> int:

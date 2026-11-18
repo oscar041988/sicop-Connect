@@ -26,7 +26,8 @@ from app.config import load_settings
 
 CAMPO_CSRF = "csrf_token"
 RUTAS_PUBLICAS = ("/health", "/login")
-PREFIJOS_PUBLICOS = ("/static/",)
+# /api/enriquecimiento/: sin sesión del panel, pero con el token de la PC (app/web/api_enriquecimiento.py).
+PREFIJOS_PUBLICOS = ("/static/", "/api/enriquecimiento/")
 # Destino seguro tras el login: una ruta de este sitio («/…»), nunca otro dominio («//otro.com», «/\otro.com»).
 DESTINO_LOCAL = re.compile(r"^/(?![/\\])")
 

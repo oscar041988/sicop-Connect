@@ -1,0 +1,167 @@
+# Perfil de Hermatix (asistente de elegibilidad, lección 1): elementos sugeridos en /perfil.
+# Salen de docs/PERFIL_LISTA_INICIAL.md. Oscar aprobó el 2026-11-04 cargar ya la PARTE A (datos, no documentos);
+# los dan los encargados y administradores del sistema. La parte B (documentos) se carga solo en el servidor,
+# cuando esté actualizado. Para cambiar la lista se edita este archivo: no hace falta tocar código. Un elemento
+# sugerido no existe hasta que un administrador lo agrega desde /perfil.
+# Tipos: experiencia, certificacion, permiso, personal, poliza, financiero, legal, capacidad, evaluacion (0035).
+
+sugerencias:
+  experiencia:
+    # Parte A (datos)
+    - Años de experiencia en GPS y gestión de flotas
+    - Años de experiencia en CCTV y redes
+    - Proyectos terminados por tipo (GPS, CCTV, centros de monitoreo)
+    # Parte B (documentos)
+    - Constancias o cartas de clientes de servicios GPS (últimos 5 años)
+    - Clientes activos con número de vehículos y última factura
+  personal:
+    - Técnicos en planilla y años en el área
+    - Técnicos con carné de trabajo en alturas
+    - Técnicos de instalación y mantenimiento (lista y currículos)
+    - Profesionales en planilla (ingeniería en sistemas, autotrónica)
+  capacidad:
+    - Soporte técnico (horario y tiempo de atención)
+    - Taller o centro de servicio (dirección, correo y teléfonos)
+    - Garantía técnica que ofrece Hermatix (meses)
+    - Marcas que vende Hermatix y distribución autorizada
+  evaluacion:
+    - Condición PYME (certificación del MEIC)
+    - ISO 14001, Bandera Azul u otro programa ambiental
+    - Política de inclusión laboral de mayores de 45 años
+  certificacion:
+    - Carta del fabricante o certificado de marca de los equipos
+    - Certificados de calidad o normas de los equipos
+  permiso:
+    - Patente municipal vigente y constancia de estar al día
+    - Permiso sanitario de funcionamiento
+  poliza:
+    - Póliza de riesgos del trabajo (INS)
+    - Póliza de responsabilidad civil
+    - Seguro de los equipos
+  legal:
+    - Años inscrita en Hacienda en la actividad
+    - Inscrita en SICOP y en el Registro de Proveedores (datos al día)
+    - Citas de inscripción de la sociedad y plazo de la sociedad
+    - Actividad comercial registrada
+    - Firma digital del representante legal
+    - Al día con la CCSS
+    - Al día con FODESAF
+    - Al día con Hacienda (actividad económica afín)
+    - Declaración jurada de prohibiciones (art. 28 y 29 LGCP)
+    - Declaración de beneficiarios finales y propiedad de las acciones
+    - Personería jurídica
+  financiero:
+    - Estados financieros
+
+# Asistente, lección 2: frases que, si aparecen en un requisito del cartel, proponen ese elemento del perfil
+# (sin tildes ni mayúsculas importan). El usuario confirma o cambia la propuesta en la lista de verificación.
+claves:
+  Años de experiencia en GPS y gestión de flotas:
+    - anos de experiencia
+    - experiencia minima
+    - experiencia en labores
+    - experiencia en actividades
+  Años de experiencia en CCTV y redes:
+    - cctv
+    - videovigilancia
+    - video vigilancia
+  Proyectos terminados por tipo (GPS, CCTV, centros de monitoreo):
+    - cantidad de proyectos
+    - proyectos similares
+    - centros de monitoreo
+  Constancias o cartas de clientes de servicios GPS (últimos 5 años):
+    - cartas de recomendacion
+    - cartas de referencia
+    - constancias de procedimientos
+    - certificaciones firmadas
+    - ventas adjudicadas
+  Clientes activos con número de vehículos y última factura:
+    - clientes activos
+  Técnicos en planilla y años en el área:
+    - cantidad de tecnicos
+    - tecnicos con experiencia
+  Técnicos con carné de trabajo en alturas:
+    - trabajo en alturas
+    - trabajos en alturas
+  Técnicos de instalación y mantenimiento (lista y currículos):
+    - curriculo
+    - tecnicos de instalacion
+    - personal tecnico
+  Profesionales en planilla (ingeniería en sistemas, autotrónica):
+    - en planilla
+    - ingeniero en sistemas
+  Soporte técnico (horario y tiempo de atención):
+    - soporte tecnico
+    - atencion de averias
+    - mesa de ayuda
+  Taller o centro de servicio (dirección, correo y teléfonos):
+    - taller
+    - centro de servicio
+  Garantía técnica que ofrece Hermatix (meses):
+    - garantia tecnica
+    - garantia minima
+    - garantia de los equipos
+  Marcas que vende Hermatix y distribución autorizada:
+    - marcas y modelos
+    - marca y modelo
+    - distribuidor autorizado
+  Condición PYME (certificación del MEIC):
+    - pyme
+    - meic
+  ISO 14001, Bandera Azul u otro programa ambiental:
+    - "14001"
+    - bandera azul
+    - gestion integral de residuos
+    - criterio ambiental
+  Política de inclusión laboral de mayores de 45 años:
+    - mayores de 45
+    - mayores de cuarenta y cinco
+  Carta del fabricante o certificado de marca de los equipos:
+    - carta de fabrica
+    - certificado de marca
+    - integrador autorizado
+    - respaldo del fabricante
+  Patente municipal vigente y constancia de estar al día:
+    - patente
+  Permiso sanitario de funcionamiento:
+    - permiso sanitario
+  Póliza de riesgos del trabajo (INS):
+    - riesgos del trabajo
+    - riesgos de trabajo
+  Póliza de responsabilidad civil:
+    - responsabilidad civil
+  Seguro de los equipos:
+    - seguro para los equipos
+  Años inscrita en Hacienda en la actividad:
+    - inscrito en ministerio de hacienda
+    - inscrita en el ministerio de hacienda
+    - anos de estar inscrito
+  Inscrita en SICOP y en el Registro de Proveedores (datos al día):
+    - registro de proveedores
+    - inscrito en sicop
+    - inscrita en sicop
+  Citas de inscripción de la sociedad y plazo de la sociedad:
+    - citas de inscripcion
+    - tomo folio
+    - plazo de la entidad juridica
+  Al día con la CCSS:
+    - ccss
+  Al día con FODESAF:
+    - fodesaf
+  Al día con Hacienda (actividad económica afín):
+    - obligaciones tributarias
+    - hacienda
+    - impuestos nacionales
+  Actividad comercial registrada:
+    - actividad comercial
+    - actividad economica
+  Declaración jurada de prohibiciones (art. 28 y 29 LGCP):
+    - prohibiciones
+  Declaración de beneficiarios finales y propiedad de las acciones:
+    - beneficiario final
+    - beneficiarios finales
+  Firma digital del representante legal:
+    - firma digital
+    - firmada digitalmente
+  Personería jurídica:
+    - personeria juridica

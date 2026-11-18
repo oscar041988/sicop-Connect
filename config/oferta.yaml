@@ -1,0 +1,24 @@
+# Datos de Hermatix para la oferta (app/oferta_economica.py y app/propuesta.py). Lo edita Hermatix.
+# Desde el 2026-11-10 la oferta sale con un solo botón, sin formulario (Oscar, por Ivania): por eso aquí van también
+# los datos del representante legal que firma. Si quedan vacíos, la oferta sale con «[PENDIENTE]» en rojo.
+# Los precios y los porcentajes del desglose están en config/tarifario.yaml.
+empresa:
+  nombre: Hermatix M2M Communication S.A.
+  cedula_juridica: 3-102-705192
+lugar: San José
+destinatario: Proveeduría Institucional
+representante:
+  nombre: ""          # nombre completo de quien firma la oferta
+  cedula: ""          # su cédula de identidad
+  calidades: ""       # p. ej. «mayor, casado, vecino de San José»
+  cargo: representante legal
+condiciones:
+  garantia: Durante todo el período contractual.
+  entrega: ""
+  forma_pago: 30 días naturales o la usual de la institución.
+  validez: ""
+desglose:
+  mano_de_obra: Mano de obra e instalación
+  insumos: Equipos, plataforma y licencias
+  gastos_administrativos: Gastos administrativos y operativos
+  utilidad: Utilidad

@@ -114,6 +114,9 @@ class FilaLista:
     evidencia: str
     es_nuevo: bool        # apareció por primera vez en la última importación de carteles
     estimado: dict[str, Monto] = field(default_factory=dict)  # total de las líneas, por moneda
+    # Las demás familias del cartel que cumplen los filtros, como (familia, encaje): la fila muestra la de mayor
+    # prioridad y estas como etiquetas (una fila por cartel, Ivania 2026-11-17).
+    otras: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def frases(self) -> list[str]:
@@ -130,6 +133,8 @@ class Pagina:
     total: int
     pagina: int
     paginas: int
+    # Revisados que cumplen los demás filtros pero no salen en «Todos», por decisión: {"no_interesa": 3, …}
+    escondidos: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -221,6 +226,18 @@ def _base_sql() -> str:
         )"""
 
 
+# Una fila por cartel (Ivania, 2026-11-17; antes, una por cada familia con la que coincidía): de las familias que
+# cumplen los filtros, la principal es la de mayor prioridad (a igual prioridad, por nombre de familia).
+_FILTRADAS_SQL = """,
+        filtradas AS (
+            SELECT *, ROW_NUMBER() OVER (
+                PARTITION BY nro_sicop
+                ORDER BY CASE encaje WHEN 'alta' THEN 0 WHEN 'media' THEN 1 WHEN 'baja' THEN 2 ELSE 3 END, familia
+            ) AS orden
+            FROM base WHERE {donde}
+        )"""
+
+
 def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: datetime, todas: bool = False) -> Pagina:
     """Una página de la lista con los filtros. todas=True: todas las filas en una página (exportar a Excel, A5)."""
     f = filtros.limpios()
@@ -237,6 +254,12 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
         # se calcula con «ahora» en cada consulta. Se ve eligiendo «Vencido» en el filtro; nada se borra, y la
         # página «Seguimiento» lo sigue mostrando (las etapas «enviada», «ganada» y «perdida» son después del cierre).
         condiciones.append("plazo != 'vencido'")
+    if f.q:
+        # LIKE sin distinguir mayúsculas (solo letras sin tilde); los comodines del usuario se toman literales.
+        condiciones.append("(descripcion LIKE :q ESCAPE '!' OR institucion LIKE :q ESCAPE '!'"
+                           " OR nro_sicop LIKE :q ESCAPE '!')")
+        params["q"] = "%" + re.sub(r"([!%_])", r"!\1", f.q) + "%"
+    escondidos: dict[str, int] = {}
     if f.revisado == "si":
         condiciones.append("decision IS NOT NULL")
     elif f.revisado == "no":
@@ -244,33 +267,46 @@ def listar(conn: sqlite3.Connection, version: str, filtros: Filtros, ahora: date
     elif f.revisado:
         condiciones.append("decision = :decision")
         params["decision"] = f.revisado
-    if f.q:
-        # LIKE sin distinguir mayúsculas (solo letras sin tilde); los comodines del usuario se toman literales.
-        condiciones.append("(descripcion LIKE :q ESCAPE '!' OR institucion LIKE :q ESCAPE '!'"
-                           " OR nro_sicop LIKE :q ESCAPE '!')")
-        params["q"] = "%" + re.sub(r"([!%_])", r"!\1", f.q) + "%"
-    donde = " AND ".join(condiciones)
+    else:
+        # Un cartel revisado sale de «Todos» y queda solo en el chip de su decisión (Ivania, 2026-11-16; antes solo
+        # «No interesa», 2026-11-13). Nada se borra; se cuenta por decisión para avisar dónde quedó cada uno.
+        por_decision = conn.execute(f"{_base_sql()} SELECT decision, count(DISTINCT nro_sicop) FROM base"
+                                    f" WHERE {' AND '.join(condiciones)} AND decision IS NOT NULL GROUP BY decision",
+                                    params).fetchall()
+        cuantos = dict(por_decision)
+        escondidos = {d: cuantos[d] for d in DECISIONES if cuantos.get(d)}
+        condiciones.append("decision IS NULL")
+    con = _base_sql() + _FILTRADAS_SQL.format(donde=" AND ".join(condiciones))
 
-    total = conn.execute(f"{_base_sql()} SELECT count(*) FROM base WHERE {donde}", params).fetchone()[0]
+    total = conn.execute(f"{con} SELECT count(*) FROM filtradas WHERE orden = 1", params).fetchone()[0]
     tamaño = max(total, 1) if todas else POR_PAGINA
     paginas = max(1, -(-total // tamaño))
     pagina = min(f.pagina, paginas)
     filas = conn.execute(
-        f"""{_base_sql()}
+        f"""{con}
         SELECT nro_sicop, descripcion, institucion, familia, producto, encaje, plazo, cierre, tipo, decision,
                nro_procedimiento, fecha_publicacion, regla, evidencia, es_nuevo
-        FROM base WHERE {donde}
+        FROM filtradas WHERE orden = 1
         ORDER BY CASE plazo WHEN 'cierra_7_dias' THEN 0 WHEN 'abierto' THEN 1 WHEN 'por_verificar' THEN 2 ELSE 3 END,
                  CASE WHEN plazo = 'vencido' THEN -julianday(cierre) ELSE julianday(cierre) END,
-                 nro_sicop, familia
+                 nro_sicop
         LIMIT :limite OFFSET :desde""",
         {**params, "limite": tamaño, "desde": (pagina - 1) * tamaño},
     ).fetchall()
     resultado = [FilaLista(*fila[:-1], es_nuevo=bool(fila[-1])) for fila in filas]
-    montos = estimados(conn, [f.nro_sicop for f in resultado])
+    por_nro = {fila.nro_sicop: fila for fila in resultado}
+    if por_nro:
+        # Las demás familias (orden > 1, ya por prioridad); sin lista de números en el SQL: en «Exportar a Excel»
+        # la página trae todos los carteles y SQLite limita los parámetros de una consulta.
+        for nro, familia, encaje in conn.execute(
+            f"{con} SELECT nro_sicop, familia, encaje FROM filtradas WHERE orden > 1 ORDER BY nro_sicop, orden", params
+        ):
+            if nro in por_nro:
+                por_nro[nro].otras.append((familia, encaje))
+    montos = estimados(conn, list(por_nro))
     for fila in resultado:
         fila.estimado = montos.get(fila.nro_sicop, {})
-    return Pagina(resultado, total, pagina, paginas)
+    return Pagina(resultado, total, pagina, paginas, escondidos)
 
 
 def estimados(conn: sqlite3.Connection, nros: list[str]) -> dict[str, dict[str, Monto]]:
@@ -443,6 +479,24 @@ def detalle(conn: sqlite3.Connection, nro_sicop: str, version: str | None, ahora
             frases.setdefault(fuente, []).extend(x for x in lista if x not in frases.get(fuente, []))
     return Detalle(compra, tipo, plazo_estado(compra.fecha_cierre_recepcion, ahora), evaluaciones, revisiones,
                    Cobertura(origen, archivo, importado, primera, ultima), frases)
+
+
+def decision_vigente(conn: sqlite3.Connection, nro_sicop: str) -> str | None:
+    """La decisión de la última revisión del cartel (una por cartel, la haga quien la haga); None si no tiene."""
+    fila = conn.execute("SELECT decision FROM reviews WHERE nro_sicop = ? ORDER BY id DESC LIMIT 1",
+                        (nro_sicop,)).fetchone()
+    return fila[0] if fila else None
+
+
+def falta_para_seguimiento(decision: str | None) -> str | None:
+    """Por qué no se puede «Dar seguimiento» todavía, o None si se puede. La revisión es obligatoria y tiene que decir
+    «Interesa» o «Revisar requisitos» (pedido de Oscar, 2026-11-11)."""
+    if decision is None:
+        return "Antes de «Dar seguimiento», registre la revisión del cartel (es obligatoria)."
+    if decision not in DECISIONES_EN_CURSO:
+        return (f"La revisión vigente dice «{DECISIONES[decision]}». Para dar seguimiento, registre una revisión "
+                "«Interesa» o «Revisar requisitos».")
+    return None
 
 
 def guardar_revision(conn: sqlite3.Connection, nro_sicop: str, decision: str, motivo: str, comentario: str,

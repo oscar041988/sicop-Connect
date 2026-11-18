@@ -42,6 +42,9 @@
   </figure>
   {% endfor %}
   {% endif %}
+  {% elif c.grabacion and c.origen == "remoto" %}
+  <p class="vacio">La consultó la PC del enriquecimiento: el video y las capturas están en esa PC, en la carpeta de
+    grabaciones, {{ c.grabacion }} (se guardan {{ dias }} días; las de un FALLO sin revisar, hasta que se marquen).</p>
   {% elif c.grabacion %}
   <p class="vacio">La grabación ya no está en este equipo (se guardan {{ dias }} días; carpeta {{ c.grabacion }}).</p>
   {% else %}

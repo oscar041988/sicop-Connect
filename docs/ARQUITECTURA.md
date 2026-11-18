@@ -183,7 +183,8 @@ código se reemplaza en cada versión y los datos se respaldan aparte. Pasos: `d
 
 Esto no se puede comprobar desde Windows; queda para la actualización del servidor (lección 15):
 
-- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`) con las migraciones hasta la 0017.
+- Que el servidor tenga instalada la versión de `desarrollo` (hoy tiene `02b569b`, esquema 0007) con las
+  migraciones hasta la 0039. Pasos preparados el 2026-11-09: `docs/ACTUALIZACION_SERVIDOR.md`.
 - Que el proxy HTTPS de Hostinger pase la IP real del visitante (`--proxy-headers`; comprobado el 19/10 con la
   versión vieja).
 - El timer del ciclo y la obtención automática, cuando se activen.

@@ -33,7 +33,7 @@ def test_respaldo_con_manifiesto_que_se_puede_restaurar(base, tmp_path):
     assert (r.base.name, r.manifiesto.name) == ("sicop_20261014-080000.db", "sicop_20261014-080000.json")
     manifiesto = json.loads(r.manifiesto.read_text(encoding="utf-8"))
     assert manifiesto["fecha"] == "2026-10-14T08:00:00-06:00"
-    assert manifiesto["version_esquema"] == "0023"
+    assert manifiesto["version_esquema"] == "0048"
     assert manifiesto["integridad"] == "ok"
     assert manifiesto["sha256"] == respaldo.sha256(r.base)
     assert re.fullmatch(r"[0-9a-f]{40}(\+cambios)?|desconocido", manifiesto["commit"])
@@ -89,7 +89,18 @@ def test_comando_backup(base, tmp_path, capsys):
     assert main(["backup", "--output", str(tmp_path / "respaldos")], settings) == 0
 
     salida = capsys.readouterr().out
-    assert "Respaldo:" in salida and "esquema 0023 · integridad ok" in salida
+    assert "Respaldo:" in salida and "esquema 0048 · integridad ok" in salida
     assert "notification_outbox 0" in salida
     assert main(["backup", "--output", str(base.parent)], settings) == 1
     assert "No se hizo el respaldo" in capsys.readouterr().err
+
+
+def test_la_base_en_wal_se_respalda_en_un_solo_archivo(base, tmp_path):
+    """La base usa el modo WAL (2026-11-13); su respaldo es un .db suelto, sin -wal ni -shm, que se abre solo."""
+    with closing(sqlite3.connect(base)) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    r = respaldo.respaldar(base, tmp_path / "respaldos", AHORA)
+    with closing(sqlite3.connect(r.base)) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+        assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    assert not any(p.name.endswith(("-wal", "-shm")) for p in (tmp_path / "respaldos").iterdir())

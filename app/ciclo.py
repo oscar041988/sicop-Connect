@@ -9,6 +9,8 @@ Reglas:
   NO se avisa: un correo sin los datos de hoy daría a entender que no hubo compras nuevas. La excepción es el
   aviso de cierre próximo (A4): no depende de los datos del día y el plazo corre igual.
 * Los lunes (hora de Costa Rica) el ciclo arma también el resumen semanal (app/resumen.py), con el mismo dry-run.
+* El correo al nuevo encargado de un cartel en seguimiento (app/aviso_encargado.py) sale en cada ciclo, con el
+  mismo dry-run, aunque la fuente haya fallado: no depende de los datos del día.
 * Los archivos importados (o ya importados antes) se mueven a INCOMING_DIR/procesados/<fecha>/.
 * Un archivo «ya importado» que importó el panel («Cargar archivo») o la CLI, y no un ciclo, cuenta como datos
   nuevos: así un ZIP descargado a mano y subido en el panel también produce los avisos (2026-10-26). Cuenta una
@@ -35,7 +37,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from app import avisos, resumen
+from app import aviso_encargado, avisos, resumen
 from app.bloqueo import CicloOcupado, bloqueo
 from app.config import Settings
 from app.database import connect
@@ -95,6 +97,7 @@ class Ciclo:
     avisos: avisos.Resultado | None = None
     aviso_omitido: str | None = None   # por qué no se avisó, si no se avisó
     resumen: resumen.Resultado | None = None  # solo los lunes
+    encargados: aviso_encargado.Resultado | None = None  # correo al nuevo encargado (gestor, paso 1B)
 
     def contar(self, resultado: str) -> int:
         return sum(1 for a in self.archivos if a.resultado == resultado)
@@ -379,7 +382,8 @@ def _paso_a_paso(conn, settings, ciclo: Ciclo, origen, ahora, proveedor, reglas_
         ciclo.aviso_omitido = ("la fuente falló o no trajo datos nuevos: no se avisa con datos incompletos"
                                " (solo los cierres próximos, que no dependen de los datos del día)")
     for problema in (_avisar(conn, settings, ciclo, ahora, proveedor, solo_cierre=bool(errores)),
-                     _resumen_del_lunes(conn, settings, ciclo, ahora, proveedor)):
+                     _resumen_del_lunes(conn, settings, ciclo, ahora, proveedor),
+                     _avisar_encargados(conn, settings, ciclo, ahora, proveedor)):
         if problema:
             problemas.append(problema)
     ciclo.estado = "fallo" if problemas else "ok"
@@ -410,4 +414,17 @@ def _resumen_del_lunes(conn, settings: Settings, ciclo: Ciclo, ahora: datetime, 
     malos = sorted(p for p, e in ciclo.resumen.envios.items() if e.estado != "aceptado")
     if malos:
         return "resumen semanal sin aceptar: " + ", ".join(f"{p} ({ciclo.resumen.envios[p].estado})" for p in malos)
+    return None
+
+
+def _avisar_encargados(conn, settings: Settings, ciclo: Ciclo, ahora: datetime, proveedor) -> str | None:
+    """El correo a los nuevos encargados de carteles en seguimiento. Devuelve el problema, si lo hubo."""
+    try:
+        ciclo.encargados = aviso_encargado.notify(conn, settings, ahora, dry_run=ciclo.dry_run, proveedor=proveedor)
+    except avisos.AvisoError as exc:
+        return f"correo a encargados: {exc}"
+    malos = sorted(p for p, e in ciclo.encargados.envios.items() if e.estado != "aceptado")
+    if malos:
+        return "correo a encargados sin aceptar: " + ", ".join(
+            f"{p} ({ciclo.encargados.envios[p].estado})" for p in malos)
     return None

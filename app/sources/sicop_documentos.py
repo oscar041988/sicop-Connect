@@ -298,10 +298,10 @@ def descargar_documentos(page, contexto, conn: sqlite3.Connection, settings: Set
                          documentos: list[dict], resultados: list[ResultadoDocumento], *, revisar: Callable[[], None],
                          dormir: Callable[[float], None], reloj: Callable[[], datetime],
                          avisar: Callable[[str], None] = lambda _: None,
-                         espera_ms: int = ESPERA_DOCUMENTO_MS) -> None:
+                         espera_ms: int = ESPERA_DOCUMENTO_MS, ya_guardados: frozenset[str] = frozenset()) -> None:
     """Baja y guarda los documentos de la ficha abierta, uno por uno, con pausa. Un fallo de un documento queda
     registrado y se sigue con el siguiente. Ante CAPTCHA o bloqueo lanza _Control. `resultados` se va llenando
-    (aunque se detenga a la mitad)."""
+    (aunque se detenga a la mitad). ya_guardados: los que otra base ya tiene (enrich remoto: los del servidor)."""
     escucha = _EscuchaArchivos()
     contexto.on("response", escucha)
     nuevas: list = []
@@ -323,8 +323,8 @@ def descargar_documentos(page, contexto, conn: sqlite3.Connection, settings: Set
             _registrar(conn, nro, detalle_id, doc, server or "?", ahora, "rechazado", motivo)
             resultados.append(ResultadoDocumento(seq, nombre, "rechazado", motivo=motivo))
             continue
-        if conn.execute("SELECT 1 FROM tender_documents WHERE nro_sicop = ? AND server_file = ? AND"
-                        " estado = 'guardado'", (nro, server)).fetchone():
+        if server in ya_guardados or conn.execute("SELECT 1 FROM tender_documents WHERE nro_sicop = ? AND"
+                                                  " server_file = ? AND estado = 'guardado'", (nro, server)).fetchone():
             resultados.append(ResultadoDocumento(seq, nombre, "ya_guardado", motivo="ya estaba guardado"))
             continue
         mb = _mb_de_la_lista(doc)

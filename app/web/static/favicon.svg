@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Icono de la pestaña: «H» de Hermatix en verde sobre azul oscuro (colores de estilo.css) -->
+  <rect width="32" height="32" rx="7" fill="#103050"/>
+  <path d="M9 8v16M23 8v16M9 16h14" stroke="#30a068" stroke-width="4" stroke-linecap="round" fill="none"/>
+</svg>

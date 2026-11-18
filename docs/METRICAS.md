@@ -84,6 +84,70 @@ métrica que la guía considera más valiosa para Hermatix (sección 22).
 - Informe final escrito por Ivania (Google Docs).
 - Reto de comprensión: el de la semana 2 sigue pendiente con Oscar.
 
+## Semana 4 — enriquecimiento, reporte con IA y mejoras de Oscar (26 al 30/10)
+
+Igual que la semana 3: trabajo en local, fuera del orden de la guía; se registran las horas reales y lo que se hizo.
+El sábado 24 y el domingo 25 no se trabajó.
+
+### Horas reales por día
+
+| Día | Horas | Trabajo | Fuente |
+|---|---|---|---|
+| lun 26/10 | 7 h | mejoras de la exposición con Oscar (ayuda en «Cargar archivo», eliminar usuario, obtención en dos turnos y envío real en código); gestor de documentos paso 1A; los vencidos salen del panel; propuesta «telemetría»; 7 competidores con nombre; informe (secciones 6, 7 y 9); respaldos al Drive | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| mar 27/10 | 7 h | enriquecimiento lecciones 1 a 4 (exploración, fichas, documentos, cola y tarea de las 10:00, panel, reglas sobre los PDF), con 4 pruebas reales; PR #4 | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| mié 28/10 | 7 h | primera corrida automática del enriquecimiento (13 de 13); arreglo del ciclo que no corrió (despertar la computadora); reporte con IA lecciones 1 (expedientes leídos, 3 hallazgos) y 2 (cliente de OpenAI sin clave) | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| jue 29/10 | 7 h | `DECISION_IA.md` aceptado; primera prueba con OpenAI (401); botón «Ver» en los documentos; esquema del informe (6 y 9) al día; autoevaluaciones (enriquecimiento 1 a 4, IA 1); PR #4 | Ivania, 29/10 · `ESTADO_PROYECTO.md` |
+| vie 30/10 | 7 h | envío real desde Windows; resúmenes automáticos con IA (cola de las 10:00) y prompt v2; citas como enlaces y revisión de 11 citas (0 errores); extracto del resumen en el correo; exclusiones «planos» y «basureros»; gestor de documentos pasos 3 y 4 | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| **Total** | **35 h** | | |
+
+### Uso de Claude
+
+No registrado.
+
+## Semana 5 — asistente de elegibilidad, perfil y Reporte PDF (2 al 6/11)
+
+Trabajo en local. Horas informadas por Ivania el 12/11 (7 h por día); el trabajo de cada día sale de
+`ESTADO_PROYECTO.md`.
+
+### Horas reales por día
+
+| Día | Horas | Trabajo | Fuente |
+|---|---|---|---|
+| lun 2/11 | 7 h | asistente lecciones 1 y 2 (guía y lista de verificación); ayuda lecciones 2 y 3 (base de EJEMPLO, capturas, «¿Cómo se usa?»); primer envío automático de avisos | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| mar 3/11 | 7 h | asistente lección 3 (el asistente que pregunta) | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| mié 4/11 | 7 h | reunión con Oscar (PR #5, perfil, excluyentes primero); asistente lección 4 (resultado y «archivo pendiente»); Reporte PDF (lección 4); ayuda viva; perfil con tipos nuevos; prompt v5; respaldo al Drive | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| jue 5/11 | 7 h | asistente lección 5 y prueba completa (2 de 3 carteles); «¿Cumple?» y «Marcar»; «Qué piden» en el asistente; detalle del cartel rediseñado (primera versión) | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| vie 6/11 | 7 h | detalle del cartel, segunda versión; lista compacta de carteles | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| **Total** | **35 h** | | |
+
+### Uso de Claude
+
+No registrado.
+
+## Semana 6 — oferta para SICOP, chat del asistente y Anthropic (9 al 12/11)
+
+Trabajo en local. Horas informadas por Ivania el 12/11 (7 h por día); el trabajo de cada día sale de
+`ESTADO_PROYECTO.md`.
+
+### Horas reales por día
+
+| Día | Horas | Trabajo | Fuente |
+|---|---|---|---|
+| lun 9/11 | 7 h | `DECISION_PROPUESTA.md` y oferta económica; oferta ganadora de Tarrazú revisada; «Por qué se recomienda» en el reporte (prompts v6 y v7); revisión reglas vs IA (v8); actualización del servidor y fase 2 del enriquecimiento preparadas; pulido del código; el ciclo corre tarde | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| mar 10/11 | 7 h | oferta económica con el diseño de Tarrazú; oferta completa con un botón (como NAVSAT); enriquecimiento sin repetir carteles; bloqueo de SICOP a la solicitud automática; arreglo de «database is locked» | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| mié 11/11 | 7 h | borrador y maqueta del chat (Oscar decidió); Anthropic en la app; oferta en Word; asistente como chat y corregir la oferta desde el chat; revisión obligatoria; resúmenes a las 14:00; guía de traspaso del enriquecimiento | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| jue 12/11 | 7 h | líneas desglosadas en el reporte e `ia recomparar`; repaso de pendientes viejos; `SOURCE_MODE` corregido; informe final (secciones 6 y 9) | Ivania, 12/11 · `ESTADO_PROYECTO.md` |
+| **Total** | **28 h** | | |
+
+### Uso de Claude
+
+| Día | Encargos | % de la sesión | % semanal (todos los modelos) |
+|---|---|---|---|
+| lun 9/11 a mié 11/11 | no registrado | no registrado | no registrado |
+| jue 12/11 | no registrado | 12 % (se reinicia a las 18:29) | 20 % (la semana se reinicia el 18/11, 9:59) |
+
+Fuente: `/usage`, copiado por Ivania el 12/11 por la tarde (hora de Guatemala).
+
 ## Métricas del mes (guía, sección 22) — preliminar al 23/10
 
 **Preliminar.** La lección 19 (29/10) calcula las métricas del mes con dos semanas de uso real en el servidor;
@@ -130,7 +194,10 @@ próximo ajuste de reglas.
 | 1 (06–09/10) | 25,5 h | % semanal al cierre: 24 % (09/10) | `docs/BITACORA.md` |
 | 2 (12–20/10) | 49 h | 33 % el 12/10; después, no registrado | sección «Semana 2» |
 | 3 (21–23/10) | 21 h | no registrado | sección «Semana 3» |
-| **Total** | **95,5 h** | incompleto | |
+| 4 (26–30/10) | 35 h | no registrado | sección «Semana 4» |
+| 5 (2–6/11) | 35 h | no registrado | sección «Semana 5» |
+| 6 (9–12/11) | 28 h | 20 % semanal el 12/11; antes, no registrado | sección «Semana 6» |
+| **Total** | **193,5 h** | incompleto | |
 
 Interacciones totales y veces que se agotó la ventana: **no registradas**. Comparación con la estimación del anexo
 A de la guía: pendiente para la lección 19.

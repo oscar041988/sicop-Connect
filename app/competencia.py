@@ -291,8 +291,16 @@ def registros(conn: sqlite3.Connection, version: str, filtro: Filtro, nombres: d
     return sorted(elegidos.values(), key=lambda c: (c.fecha_firme or "", c.nro_sicop), reverse=True)
 
 
+def es_persona_fisica(cedula: str) -> bool:
+    """La cédula jurídica tiene 10 dígitos y empieza en 2 (Estado), 3 (sociedades) o 4 (autónomas); lo demás es de
+    una persona (cédula de identidad o DIMEX). Su nombre no va al YAML: es un dato personal."""
+    return not (len(cedula) == 10 and cedula[0] in "234")
+
+
 def nombre_competidor(clave: str) -> str:
-    """Para mostrar: el nombre del YAML, o «Cédula 3101…» si no tiene nombre."""
+    """Para mostrar: el nombre del YAML, o «Cédula 3101…» si no tiene nombre («Persona física · Cédula …» si es de
+    una persona: así se ve que falta a propósito, sin guardar su nombre)."""
     if clave.startswith(PREFIJO_CEDULA):
-        return f"Cédula {clave[len(PREFIJO_CEDULA):]}"
+        cedula = clave[len(PREFIJO_CEDULA):]
+        return f"Persona física · Cédula {cedula}" if es_persona_fisica(cedula) else f"Cédula {cedula}"
     return clave

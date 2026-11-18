@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block titulo %}{{ nombre }}{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="/oportunidades/{{ nro }}#documentos">← Cartel {{ nro }}</a></p>
+<p class="migas"><a href="{{ volver[0] }}">← {{ volver[1] }}</a></p>
 <section>
   <h1>{{ nombre }}</h1>
   <p class="sub">ZIP con {{ entradas | length }} archivos. Los PDF, imágenes y Excel se ven aquí; Word y lo demás
     solo se pueden descargar con el ZIP completo.</p>
-  <p><a class="btn o" href="/oportunidades/{{ nro }}/documentos/{{ doc_id }}">Descargar el ZIP</a></p>
+  <p><a class="btn o" href="{{ descargar }}">Descargar el ZIP</a></p>
   {% if entradas %}
   <div class="tabla-scroll"><table class="lista auto">
     <thead><tr><th>Archivo</th><th>Tamaño</th><th></th></tr></thead>
@@ -15,7 +15,7 @@
       <tr>
         <td>{{ e.nombre }}</td>
         <td><small>{{ "%.1f" | format(e.tamano / 1000000) }} MB</small></td>
-        <td>{% if e.vista and e.vista != "zip" %}<a class="btn p" href="/oportunidades/{{ nro }}/documentos/{{ doc_id }}/ver/{{ e.indice }}" target="_blank" rel="noopener">Ver</a>{% else %}<small>solo con el ZIP</small>{% endif %}</td>
+        <td>{% if e.vista and e.vista != "zip" %}<a class="btn p" href="{{ ver_base }}/{{ e.indice }}" target="_blank" rel="noopener">Ver</a>{% else %}<small>solo con el ZIP</small>{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

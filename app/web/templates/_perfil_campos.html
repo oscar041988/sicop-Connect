@@ -1,0 +1,24 @@
+{# Campos de una versión del perfil (agregar y reemplazar). `formulario` vuelve a llenarlos si hubo un error. #}
+<label>Dato
+  <input type="text" name="valor" maxlength="1000" value="{{ formulario.get('valor', '') }}"
+         placeholder="Por ejemplo: 14 años en rastreo de flotas">
+</label>
+<label>Número (si el dato es una cantidad)
+  <input type="text" name="numero" inputmode="decimal" maxlength="30" value="{{ formulario.get('numero', '') }}"
+         placeholder="Por ejemplo: 14">
+</label>
+<label>Unidad del número
+  <input type="text" name="unidad" maxlength="40" value="{{ formulario.get('unidad', '') }}" placeholder="años, CRC, USD…">
+</label>
+<label>Vigente desde
+  <input type="date" name="vigente_desde" value="{{ formulario.get('vigente_desde', '') }}">
+</label>
+<label>Vence el
+  <input type="date" name="vence_el" value="{{ formulario.get('vence_el', '') }}">
+</label>
+<label>Documento (PDF, PNG o JPG)
+  <input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg">
+</label>
+<label>Nota
+  <textarea name="nota" rows="2" maxlength="1000">{{ formulario.get('nota', '') }}</textarea>
+</label>

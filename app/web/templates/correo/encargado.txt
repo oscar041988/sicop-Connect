@@ -1,0 +1,17 @@
+{{ asunto }}
+
+Hola. Un administrador te asignó {{ "este cartel" if asignados | length == 1 else "estos carteles" }} en seguimiento: ahora eres
+la persona encargada de su expediente en el panel.
+{% for a in asignados %}
+
+{{ loop.index }}. {{ a.titulo | titulo | legible }}
+   Institución: {{ a.institucion | legible }}
+   Cierre: {{ a.cierre | fecha }} ({{ a.regresiva }}) · Número SICOP {{ a.nro_sicop }}
+   Asignado por {{ a.asignado_por }} el {{ a.asignado_en | fecha }}{% if a.antes %} · antes lo tenía {{ a.antes }}{% else %} · estaba sin encargado{% endif %}
+
+   Abrir el expediente: {{ a.enlace }}
+{% endfor %}
+
+--
+Recibes este correo porque te asignaron un cartel en seguimiento en el panel de SICOP CONNECT
+({{ panel }}/seguimiento). Generado {{ ahora | fecha }}.

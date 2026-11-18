@@ -209,7 +209,7 @@ def importar_reporte(
     resultado.copia_original = _copiar_original(raw, nombre_archivo, file_hash, raw_dir)
     desde, hasta = resultado.periodo = periodo(filas) if periodo else (None, None)
     momento = ahora()
-    conn.execute("BEGIN")
+    conn.execute("BEGIN IMMEDIATE")
     try:
         run_id = source_run_id or conn.execute(
             "INSERT INTO source_runs (started_at, finished_at, mode, data_origin, period_from, period_to, status)"

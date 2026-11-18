@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}¿Cómo se usa?{% endblock %}
+{% block contenido %}
+{# Ayuda, lección 3: las misiones salen de docs/ayuda/MISIONES.md y el glosario de docs/ayuda/GLOSARIO.md #}
+<section class="ayuda">
+  <h1>¿Cómo se usa?</h1>
+  <p class="sub">Elige lo que quieres hacer. Cada misión te lleva paso a paso, con una imagen de la pantalla.
+    En cualquier página, el botón «?» de abajo a la derecha abre la ayuda de esa pantalla.</p>
+
+  <form class="buscar-ayuda" method="get" action="/ayuda" role="search">
+    <label for="q-ayuda">Buscar en la ayuda</label>
+    <div>
+      <input type="search" id="q-ayuda" name="q" value="{{ q }}" placeholder="Por ejemplo: descargar, cierra, encargado">
+      <button type="submit">Buscar</button>
+    </div>
+  </form>
+
+  {% if resultados is not none %}
+  <h2>Resultados para «{{ q }}»</h2>
+  {% if resultados %}
+  <ul class="resultados-ayuda">
+    {% for m in resultados %}
+    <li><a href="/ayuda/{{ m.nombre }}">{{ m.titulo }}</a> <small>· {{ m.bloque }}</small></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="vacio">No encontré ninguna misión con «{{ q }}». Prueba con otra palabra o mira la lista de abajo.</p>
+  {% endif %}
+  <p><a href="/ayuda">Ver todas las misiones</a></p>
+  {% endif %}
+
+  {% for b in bloques %}
+  <h2>{{ b.titulo }}</h2>
+  <div class="rejilla-ayuda">
+    {% for m in b.misiones %}
+    <a class="tarjeta-ayuda" href="/ayuda/{{ m.nombre }}">
+      <span class="numero">{{ m.nombre[:2] | int }}</span>
+      <strong>{{ m.titulo }}</strong>
+      {% if m.para_que %}<span class="sub">{{ m.para_que[:1] | upper }}{{ m.para_que[1:] }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% if votos is not none %}
+  {# Solo administradores: «¿Te sirvió esta ayuda?» por misión, primero las que tienen más «no» #}
+  <h2 id="votos">Cómo les fue con la ayuda</h2>
+  {% if votos %}
+  <div class="tabla-scroll"><table class="lista auto votos-ayuda">
+    <thead><tr><th>Misión</th><th>Sí</th><th>No</th><th>Último comentario</th></tr></thead>
+    <tbody>
+      {% for v in votos %}
+      <tr>
+        <td><a href="/ayuda/{{ v.mision }}">{{ titulos.get(v.mision, v.mision) }}</a></td>
+        <td>{{ v.si }}</td><td>{{ v.no }}</td><td>{{ v.ultimo_comentario or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="vacio">Todavía nadie respondió «¿Te sirvió esta ayuda?» en ninguna misión.</p>
+  {% endif %}
+  {% endif %}
+
+  <h2 id="glosario">Glosario</h2>
+  <p class="sub">Las palabras de la app explicadas en una frase.</p>
+  <dl class="glosario">
+    {% for t in glosario %}
+    <div><dt>{{ t.palabra }}</dt><dd>{{ t.que }}<br><small>Ejemplo: {{ t.ejemplo }}</small></dd></div>
+    {% endfor %}
+  </dl>
+</section>
+{% endblock %}

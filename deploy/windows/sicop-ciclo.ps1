@@ -1,6 +1,7 @@
 # SICOP CONNECT - ciclo diario en Windows (equivalente local de deploy/systemd/sicop-cycle.service).
 # Lo ejecuta la tarea programada "SICOP CONNECT - ciclo diario" (ver deploy/windows/README.md).
-# Siempre en DRY-RUN: prepara los avisos y la vista previa, no envia nada. El envio real seria un cambio aparte.
+# ENVIO REAL (--send, decision de Ivania 2026-10-30): exige NOTIFICATIONS_ENABLED=true y NOTIFICATIONS_DRY_RUN=false
+# en .env; si falta algo, no envia. Al activar el ciclo del servidor, apagar esta tarea para no duplicar correos.
 # Cada ejecucion se agrega a data\logs\ciclo-AAAA-MM.log con su fecha, la salida y el codigo de salida.
 # Codigo de salida: 0 = ok - 1 = fallo (queda en source_runs) - 2 = ya habia otro ciclo en curso.
 # (Sin tildes a proposito: Windows PowerShell 5.1 lee mal los .ps1 en UTF-8 sin BOM.)
@@ -21,7 +22,7 @@ $errores = Join-Path $env:TEMP "sicop-ciclo-$PID-errores.txt"
 $env:PYTHONUTF8 = '1'
 # Start-Process con archivos de salida: en PowerShell 5.1, redirigir 2>&1 de un programa externo marca falsos errores.
 try {
-    $p = Start-Process -FilePath $python -ArgumentList '-m', 'app.cli', 'run-cycle', '--origen', 'real', '--dry-run' `
+    $p = Start-Process -FilePath $python -ArgumentList '-m', 'app.cli', 'run-cycle', '--origen', 'real', '--send' `
         -WorkingDirectory $proyecto -NoNewWindow -Wait -PassThru `
         -RedirectStandardOutput $salida -RedirectStandardError $errores
     $codigo = $p.ExitCode
@@ -30,7 +31,7 @@ try {
     Set-Content -Path $errores -Value "No se pudo ejecutar el ciclo: $($_.Exception.Message)" -Encoding UTF8
 }
 
-$bloque = @(('=' * 70), ('{0:yyyy-MM-dd HH:mm:ss} - run-cycle --origen real --dry-run' -f $ahora))
+$bloque = @(('=' * 70), ('{0:yyyy-MM-dd HH:mm:ss} - run-cycle --origen real --send' -f $ahora))
 if (Test-Path $salida) { $bloque += Get-Content -Path $salida -Encoding UTF8 }
 if ((Test-Path $errores) -and (Get-Item $errores).Length -gt 0) {
     $bloque += '--- errores ---'

@@ -14,7 +14,7 @@ from app.cli import build_parser
 
 SYSTEMD = Path(__file__).resolve().parent.parent / "deploy" / "systemd"
 UNIDADES = ("sicop-web.service", "sicop-migrate.service", "sicop-cycle.service", "sicop-cycle.timer",
-            "sicop-obtain.service", "sicop-obtain.timer")
+            "sicop-obtain.service", "sicop-obtain.timer", "sicop-ia-cola.service", "sicop-ia-cola.timer")
 
 
 def _leer(nombre):
@@ -38,7 +38,8 @@ def test_servicios_sin_root_con_la_configuracion_privada(nombre):
     assert "--reload" not in servicio["ExecStart"]
 
 
-@pytest.mark.parametrize("nombre", ["sicop-migrate.service", "sicop-cycle.service", "sicop-obtain.service"])
+@pytest.mark.parametrize("nombre", ["sicop-migrate.service", "sicop-cycle.service", "sicop-obtain.service",
+                                    "sicop-ia-cola.service"])
 def test_el_comando_de_la_cli_existe(nombre):
     partes = shlex.split(_leer(nombre)["Service"]["ExecStart"])
     assert partes[:3] == ["/opt/sicop-connect/.venv/bin/python", "-m", "app.cli"]
@@ -65,6 +66,17 @@ def test_el_correo_de_avisos_sale_de_lunes_a_viernes_a_las_8_de_costa_rica():
     timer = _leer("sicop-cycle.timer")["Timer"]
     assert timer["OnCalendar"] == "Mon..Fri *-*-* 08:00:00 America/Costa_Rica"
     assert (timer["Persistent"], timer["Unit"]) == ("false", "sicop-cycle.service")
+
+
+def test_la_cola_de_ia_corre_a_las_10_45_y_otra_vez_a_las_14_de_lunes_a_viernes():
+    # Dos líneas OnCalendar: configparser solo guarda la última, por eso se leen del texto.
+    texto = (SYSTEMD / "sicop-ia-cola.timer").read_text(encoding="utf-8")
+    horarios = [linea.split("=", 1)[1] for linea in texto.splitlines() if linea.startswith("OnCalendar=")]
+    assert horarios == ["Mon..Fri *-*-* 10:45:00 America/Costa_Rica", "Mon..Fri *-*-* 14:00:00 America/Costa_Rica"]
+    timer = _leer("sicop-ia-cola.timer")["Timer"]
+    assert (timer["Persistent"], timer["Unit"]) == ("false", "sicop-ia-cola.service")
+    args = build_parser().parse_args(shlex.split(_leer("sicop-ia-cola.service")["Service"]["ExecStart"])[3:])
+    assert (args.command, args.ia_command) == ("ia", "cola")
 
 
 def test_el_panel_solo_escucha_dentro_del_servidor():
