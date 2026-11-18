@@ -21,7 +21,8 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   pedirla» lleva su «Resolver». Detalle y opciones elegidas: `DECISION_PROPUESTA.md` §13. Migración **0048**;
   `app/oferta_datos.py`, `_oferta_datos.html`, `propuesta.py` (el precio del cartel y el representante mandan; la
   ficha va al anexo 3), `ai/oferta.py` (pliego subido como DOC 0). Pruebas: `tests/test_oferta_datos.py` (12, datos
-  SINTÉTICOS) y las de la oferta: 36 passed.
+  SINTÉTICOS) y las de la oferta: 36 passed. Suite completa: 1151 passed y 1 falla (`test_acceso`: la lista de
+  rutas POST con token no tenía las 4 nuevas; agregadas, `test_acceso` + `test_oferta_datos`: 79 passed) → **1152**.
   - ~~Respaldo y `migrate` (0048)~~ **hecho (Claude a pedido de Ivania, 18/11, 09:34, panel cerrado):** respaldo
     `C:\Users\User\respaldos-sicop\sicop_20261118-093408` (esquema 0047, huella del `.db` igual al manifiesto);
     esquema 0048. Conteos iguales antes y después (carteles 15 970, revisiones 19, reportes 14, historial 751);
