@@ -458,6 +458,24 @@ def test_en_la_pagina_el_chat_reemplaza_la_pregunta_y_responde(web_chat):
     assert len(simulado.llamadas) == 1
 
 
+def test_resolver_abre_la_pregunta_aunque_el_chat_este_encendido(web_chat):
+    """«Resolver» (lo que falta antes de la oferta) y «Cambiar» llevan ?pregunta=: antes el chat la tapaba (18/11)."""
+    db, ids, _, c, u, simulado = web_chat
+    with closing(connect(db)) as conn:
+        seguimiento.abrir(conn, NRO, Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        seguimiento.asignar(conn, NRO, u["ivania"], Quien(u["oscar"], "Oscar Sintético"), AHORA)
+        asistente.empezar(conn, NRO, ANA, AHORA)
+    pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente?pregunta={ids['sicop']}").text
+    assert 'id="pregunta"' in pagina and 'name="valor_si_no"' in pagina and 'id="chat"' not in pagina
+    assert "Volver al chat" in pagina
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/{ids['sicop']}/responder",
+              {"estado": "respondido", "valor_si_no": "1"})
+    assert r.status_code == 303
+    pagina = c["ivania"].get(r.headers["location"]).text
+    assert 'id="chat"' in pagina and 'id="pregunta"' not in pagina            # guardada: vuelve al chat
+    assert _respuesta(db, ids["sicop"]).estado == "respondido" and simulado.llamadas == []
+
+
 def test_con_el_chat_apagado_sigue_el_formulario_de_siempre(web):
     db, ids, _, c, u = web
     with closing(connect(db)) as conn:

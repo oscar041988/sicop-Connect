@@ -552,7 +552,8 @@ def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime,
     # Revisión rápida (decisión de Oscar, 2026-11-04): mientras no se amplíe, solo se preguntan los excluyentes.
     # «Cambiar» abre cualquier requisito ya respondido; la pregunta siguiente sale solo de los visibles.
     visibles = asistente.visibles(pasos, sesion)
-    actual = next((p for p in pasos if p.item.id == ver_item), None) or asistente.siguiente(visibles)
+    elegida = next((p for p in pasos if p.item.id == ver_item), None)   # «Resolver» o «Cambiar» (?pregunta=)
+    actual = elegida or asistente.siguiente(visibles)
     # Resultado (lección 4): cómo va cada requisito con las respuestas de hoy y las constancias ya calculadas.
     evaluaciones = elegibilidad.evaluar(pasos, elegibilidad.cierre_de(conn, nro_sicop),
                                         elegibilidad.revisiones(conn, sesion.id)) if sesion else []
@@ -562,7 +563,7 @@ def _contexto_asistente(request: Request, conn, nro_sicop: str, ahora: datetime,
                      "conteo": {k: sum(e.estado == k for e in evaluaciones) for k in elegibilidad.ESTADOS},
                      "rapido": elegibilidad.resultado_rapido(evaluaciones), "RAPIDOS": elegibilidad.RAPIDOS},
         "ELEG": {"resultados": elegibilidad.RESULTADOS, "estados": elegibilidad.ESTADOS, "aviso": elegibilidad.AVISO},
-        "asis": {"sesion": sesion, "pasos": pasos, "actual": actual,
+        "asis": {"sesion": sesion, "pasos": pasos, "actual": actual, "elegida": elegida is not None,
                  "ampliada": asistente.ampliada(pasos, sesion), "visibles": visibles,
                  "avance": asistente.avance(visibles), "info": asistente.informativos(conn, nro_sicop),
                  "es_admin": seguridad.es_admin(request), "limite_mb": settings.assistant_doc_max_mb,

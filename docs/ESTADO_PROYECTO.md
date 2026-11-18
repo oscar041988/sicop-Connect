@@ -15,6 +15,13 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **«Resolver» abre la pregunta con el chat encendido (2026-11-18, falla vista por Ivania).** En «Antes de pedirla»
+  el enlace «Resolver» (y «Cambiar») lleva `?pregunta=`, pero con `ASSISTANT_CHAT=true` la página mostraba siempre el
+  chat y la tarjeta no salía: el clic no hacía nada. Ahora la pregunta elegida sale en su tarjeta, con «Volver al
+  chat»; al guardar, vuelve el chat. `rutas.py` (`asis.elegida`) y `_asistente.html`; sin migración. Prueba nueva en
+  `tests/test_chat_asistente.py` (falló sin el cambio). Asistente, chat y oferta: 64 passed; panel, ayuda y oferta:
+  205 passed. **Pendiente · Ivania:** cerrar el panel con Ctrl+C, abrirlo de nuevo y probar «Resolver».
+
 - **«Productividad» solo para administradores (2026-11-17, pedido de Ivania al verla).** El enlace pasó del menú
   principal a «Administración» y la ruta usa `exigir_admin`: un encargado no la ve en el menú y recibe 403 si
   escribe la dirección. Sin la etiqueta «Solo administradores» en «Por persona» (ya sobra). Misión 26: solo

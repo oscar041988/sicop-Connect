@@ -36,7 +36,8 @@
   {% endif %}
   <progress max="{{ av.total or 1 }}" value="{{ av.respondidos }}"></progress>
 
-  {% if chat.activo %}
+  {# Con el chat encendido, una pregunta elegida («Resolver», «Cambiar») sale igual en su tarjeta (Ivania, 18/11) #}
+  {% if chat.activo and not a.elegida %}
   {% include "_chat.html" %}
   {% elif a.actual %}
   {% set p = a.actual %}
@@ -103,7 +104,8 @@
         {% if t == "documento" %}<button type="submit" name="estado" value="archivo_pendiente" class="btn o" formnovalidate>Lo tiene · subo el archivo después</button>
         <button type="submit" name="estado" value="no_lo_tiene" class="btn o" formnovalidate>Hermatix no lo tiene</button>{% endif %}
         <button type="submit" name="estado" value="no_se" class="btn o" formnovalidate>Todavía no lo sé</button>
-        {% if p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente#asistente">Volver a la siguiente</a>{% endif %}
+        {% if chat.activo %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente#chat">Volver al chat</a>
+        {% elif p.respuesta %}<a class="btn o" href="/oportunidades/{{ c.nro_sicop }}/asistente#asistente">Volver a la siguiente</a>{% endif %}
       </div>
     </form>
   </article>
