@@ -416,6 +416,29 @@ def test_ya_esta_lista_cuando_todo_tiene_respuesta(lista):
         assert "Ya están respondidos todos los requisitos" in ia_chat.siguiente_mensaje(pasos, s)
 
 
+def test_el_mismo_mensaje_enseguida_no_se_repite_ni_va_a_la_ia(lista):
+    """Prueba de Ivania (18/11): «si guarde lo que dije» llegó dos veces con 10 s de diferencia y la IA contestó y
+    guardó dos veces. Otro texto, otra persona o pasados 2 minutos sí cuentan como mensaje nuevo."""
+    from datetime import timedelta
+    db, ids, settings = lista
+    settings = _con_ia(settings)
+    _empezar(db)
+    simulado = IaSimulada(*[{"mensaje": "Gracias.", "respuestas": []}] * 4)
+    _enviar(db, settings, "guarde lo que le dije", simulado)
+    with closing(connect(db)) as conn:
+        with pytest.raises(ia_chat.MensajeRepetido):
+            ia_chat.enviar(conn, settings, NRO, "guarde  lo que le dije", None, ANA, AHORA + timedelta(seconds=10),
+                           cliente=simulado, dormir=lambda s: None)
+    assert len(simulado.llamadas) == 1
+    assert [m.texto for m in _mensajes(db) if m.rol == "persona"] == ["guarde lo que le dije"]
+    with closing(connect(db)) as conn:
+        for texto, quien, segundos in (("otra cosa", ANA, 20), ("otra cosa", Quien(None, "Otra Sintética"), 30),
+                                       ("otra cosa", ANA, 30 + ia_chat.REPETIDO_SEGUNDOS)):
+            ia_chat.enviar(conn, settings, NRO, texto, None, quien, AHORA + timedelta(seconds=segundos),
+                           cliente=simulado, dormir=lambda s: None)
+    assert len(simulado.llamadas) == 4
+
+
 def test_los_mensajes_no_se_borran_ni_se_modifican(lista):
     db, ids, settings = lista
     _empezar(db)
@@ -453,6 +476,10 @@ def test_en_la_pagina_el_chat_reemplaza_la_pregunta_y_responde(web_chat):
     pagina = c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     assert "Sí ofertamos por SICOP &lt;b&gt;ya&lt;/b&gt;" in pagina           # escapado
     assert "Guardado · Ofertar por SICOP" in pagina and "Pregunta 2 de 2" in pagina
+    # Doble clic: el mismo mensaje enseguida vuelve al chat con el aviso, sin otra llamada a la IA.
+    r = _post(c["ivania"], f"/oportunidades/{NRO}/asistente/chat", {"mensaje": "Sí ofertamos por SICOP <b>ya</b>"})
+    assert r.status_code == 303 and r.headers["location"] == f"/oportunidades/{NRO}/asistente#chat"
+    assert "ya se había enviado" in c["ivania"].get(f"/oportunidades/{NRO}/asistente").text
     # Otra encargada no entra; sin token CSRF tampoco.
     assert _post(c["ana"], f"/oportunidades/{NRO}/asistente/chat", {"mensaje": "Hola"}).status_code == 403
     assert len(simulado.llamadas) == 1

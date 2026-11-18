@@ -79,6 +79,10 @@ FORMATO = {"type": "json_schema", "name": "chat_asistente", "schema": ESQUEMA, "
 VERSION_OFERTA = "v1"           # config/prompts/chat_oferta_<v>.md: las reglas extra cuando ya hay una oferta
 
 
+class MensajeRepetido(ValueError):
+    """El mismo mensaje de la misma persona llegó otra vez enseguida (doble clic o reenvío): no se repite."""
+
+
 class ChatInvalido(ValueError):
     """El mensaje no se acepta; el texto es el que ve la persona."""
 
@@ -340,6 +344,22 @@ def _sin_presupuesto(conn: sqlite3.Connection, settings: Settings, ahora: dateti
     return None
 
 
+REPETIDO_SEGUNDOS = 120
+
+
+def _repetido(anteriores: list[Mensaje], texto: str, archivo: str | None, quien: Quien, ahora: datetime) -> bool:
+    """True si el último mensaje de la persona es este mismo (texto y archivo) y llegó hace menos de 2 minutos.
+    Prueba de Ivania, 2026-11-18: «si guarde lo que dije» llegó dos veces con 10 s de diferencia (la IA tarda y se
+    volvió a pulsar «Enviar») y la IA contestó y guardó dos veces."""
+    ultimo = next((m for m in reversed(anteriores) if m.rol == "persona"), None)
+    if ultimo is None or (ultimo.texto, ultimo.archivo_nombre, ultimo.autor_nombre) != (texto, archivo, quien.nombre):
+        return False
+    try:
+        return (ahora - datetime.fromisoformat(ultimo.creado_en)).total_seconds() < REPETIDO_SEGUNDOS
+    except (TypeError, ValueError):
+        return False
+
+
 def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: str,
            archivo: tuple[bytes, str] | None, quien: Quien, ahora: datetime, cliente=None, dormir=None) -> None:
     """Una vuelta del chat: guarda el mensaje, le pregunta a la IA, guarda lo que se pueda y hace la siguiente
@@ -354,6 +374,8 @@ def enviar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, texto: 
     dia = ahora.astimezone(HORA_CR).date()
     pasos = asistente.recorrido(conn, nro_sicop, dia)
     anteriores = mensajes(conn, sesion.id)
+    if _repetido(anteriores, texto or "(archivo)", archivo[1] if archivo else None, quien, ahora):
+        raise MensajeRepetido("Ese mensaje ya se había enviado: no se repitió. La respuesta sale en unos segundos.")
     if not anteriores:                                   # la presentación queda en el registro de la conversación
         _guardar(conn, sesion.id, "app", presentacion(pasos, sesion), ahora)
         anteriores = mensajes(conn, sesion.id)

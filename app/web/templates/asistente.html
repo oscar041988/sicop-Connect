@@ -140,5 +140,12 @@
 <script>
 /* El chat del asistente abre en el último mensaje, no en el primero (como cualquier chat). */
 document.querySelectorAll(".chat-mensajes").forEach(function (m) { m.scrollTop = m.scrollHeight; });
+/* La IA tarda unos segundos: el botón se apaga al enviar para no mandar el mensaje dos veces (Ivania, 18/11). */
+document.querySelectorAll(".chat-redactar").forEach(function (f) {
+  f.addEventListener("submit", function () {
+    var b = f.querySelector('button[type="submit"]');
+    if (b) { setTimeout(function () { b.disabled = true; b.textContent = "Enviando… la IA tarda unos segundos"; }, 0); }
+  });
+});
 </script>
 {% endblock %}

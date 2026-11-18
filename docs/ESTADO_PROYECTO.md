@@ -15,6 +15,13 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **Chat: el mismo mensaje no se procesa dos veces (2026-11-18, visto por Ivania).** «si guarde lo que dije» llegó
+  dos veces (08:48:42 y 08:48:52, sesión 7, mensajes 301 y 302): la IA tarda y se volvió a pulsar «Enviar». La IA
+  contestó dos veces (dos cobros) y la respuesta «Todavía no lo sé» quedó guardada dos veces (iguales; nada se borra).
+  Ahora: el botón se apaga al enviar («Enviando…», `asistente.html`) y `ai/chat.py` no acepta el mismo texto y archivo
+  de la misma persona dentro de 2 minutos (`MensajeRepetido`): vuelve al chat con el aviso, sin llamar a la IA. Otro
+  texto, otra persona o pasados 2 minutos sí entran. 2 pruebas en `test_chat_asistente.py`: 31 passed.
+
 - **El asistente pide todo lo que le falta a la oferta (2026-11-18, pedido de Ivania).** Caja nueva «Lo que pide la
   oferta» en la página del asistente: pliego (subir el PDF si el enriquecimiento no lo trajo), precio de este cartel,
   producto con su ficha técnica y representante legal (una vez, solo administradores). Cada punto de «Antes de

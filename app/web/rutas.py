@@ -815,6 +815,9 @@ def chat_asistente(request: Request, nro_sicop: str, mensaje: str = Form(""),
             subido = (datos, archivo.filename)
         try:
             ia_chat.enviar(conn, settings, nro_sicop, mensaje, subido, _quien(request), _ahora())
+        except ia_chat.MensajeRepetido as exc:            # doble clic: vuelve al chat sin repetir nada
+            request.session["hecho_asistente"] = str(exc)
+            return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#chat", status_code=303)
         except ia_chat.ChatInvalido as exc:
             return _render_asistente(request, conn, nro_sicop, status_code=400, error_asistente=str(exc))
     return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#chat", status_code=303)
