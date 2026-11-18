@@ -86,10 +86,14 @@ Lo usan su encargado y los administradores.
     Dice cuántos puntos faltan. Con alguno pendiente, la oferta saldría como «BORRADOR».
     Lo más grave sale primero: «No cumple», después «Revisar» y al final «Falta».
 18. Haz clic en «Resolver» junto a un punto.
-    Se abre esa pregunta. Respóndela como en los pasos 5 a 9.
-19. Abre «Ver los … restantes» para ver los demás puntos del asistente.
-    Abre «Lo resuelve un administrador» para ver la tarifa, el representante legal y la ficha técnica.
-    Esos no se arreglan en el asistente: avísale a un administrador.
+    Si es una pregunta, se abre. Respóndela como en los pasos 5 a 9.
+    Abre «Ver los … restantes» para ver los demás puntos del asistente.
+19. Llena «Lo que pide la oferta»: el pliego, el precio, el producto con su ficha y el representante legal.
+    Al terminar las preguntas, el chat te los pide; si no, están debajo del asistente.
+    - Pliego: sube el PDF de SICOP solo si dice «Falta».
+    - Precio: vale solo para este cartel. Lo escribes tú; la IA no pone precios.
+    - Representante: se llena una vez para todas las ofertas. Solo lo llena un administrador.
+    Nada de esto pasa por la IA.
 
 ### Para tener en cuenta
 
@@ -119,5 +123,8 @@ Algunas preguntas las armó la app, sin IA. Haz clic para que la IA las escriba 
 
 **¿Y si «Guardar también en el perfil» no aparece?**
 Solo lo ven los administradores, y solo si el requisito tiene un elemento del perfil.
+
+**¿Y si no veo el formulario del representante legal?**
+Solo lo ven los administradores. Si dice «Falta», avísale a un administrador.
 
 **Sigue con:** [Volver al inicio de la ayuda](../MISIONES.md)

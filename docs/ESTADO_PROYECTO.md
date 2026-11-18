@@ -48,7 +48,9 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 pass
     faltan y pone ahí sus formularios; abajo quedan los ya listos, con «Cambiar». «Ya está lista la oferta» solo sale
     sin faltantes. `_chat.html`, `_oferta_datos.html` (`en_chat` / `solo_listos`), `rutas._datos_oferta` (`faltan`),
     mensaje final de `ai/chat.py`. Prueba nueva en `test_chat_asistente.py`; chat, oferta y acceso: 129 passed.
-  - Pendiente: una línea en la misión de ayuda de la oferta.
+  - ~~Pendiente: una línea en la misión de ayuda de la oferta~~ **hecho (18/11, pedido de Ivania):** misión 23
+    (`23-asistente.md`), paso 19 nuevo «Lo que pide la oferta» (reemplaza el que decía que la tarifa, el
+    representante y la ficha no se arreglan en el asistente) y un «¿Y si…?» del representante. Ayuda: 52 passed.
 
 - **«Resolver» abre la pregunta con el chat encendido (2026-11-18, falla vista por Ivania).** En «Antes de pedirla»
   el enlace «Resolver» (y «Cambiar») lleva `?pregunta=`, pero con `ASSISTANT_CHAT=true` la página mostraba siempre el
