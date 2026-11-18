@@ -1445,6 +1445,7 @@ def _cambio_de_usuario(request: Request, cambio, hecho: str, formulario: dict | 
 def _render_ia(request: Request, conn, status_code: int = 200, **contexto) -> Response:
     return PLANTILLAS.TemplateResponse(request, "ia.html", {
         "seccion": "ia", "ia": ia_panel.estado(load_settings()), "proveedores": ia_panel.PROVEEDORES,
+        "consolas": ia_panel.CONSOLAS,
         "historial": historial.ultimos(conn, historial.DE_IA), "acciones": historial.ACCIONES,
         "hecho": request.session.pop("hecho", None), "formulario": {}, **contexto,
     }, status_code=status_code)

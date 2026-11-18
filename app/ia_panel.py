@@ -23,6 +23,8 @@ from app.database import transaccion
 from app.historial import Quien
 
 PROVEEDORES = {"anthropic": "Anthropic (Claude)", "openai": "OpenAI", "none": "Apagada"}
+# La clave no se inventa: la crea el proveedor en su consola, ligada a la cuenta y al saldo de Hermatix (Ivania, 18/11).
+CONSOLAS = {"anthropic": "https://console.anthropic.com/settings/keys", "openai": "https://platform.openai.com/api-keys"}
 # Lo que escribe un administrador: nombres de modelo como claude-opus-5-5 o gpt-6.1-terra.
 MODELO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$")
 CLAVE = re.compile(r"^[A-Za-z0-9_\-.]{20,300}$")

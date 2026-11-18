@@ -134,6 +134,8 @@ def test_la_pagina_muestra_solo_el_final_de_la_clave(entorno):
     pagina = _cliente(entorno).get("/ia").text
     assert "OpenAI" in pagina and "modelo-openai-simulado" in pagina and "termina en …9999" in pagina
     assert "sk-SIMULADA-openai" not in pagina and CLAVE_VIEJA not in pagina and "Anthropic …wxyz" in pagina
+    assert 'href="https://console.anthropic.com/settings/keys"' in pagina       # la clave la crea el proveedor
+    assert 'href="https://platform.openai.com/api-keys"' in pagina
 
 
 def test_sin_la_contrasena_no_cambia_nada(entorno, monkeypatch):

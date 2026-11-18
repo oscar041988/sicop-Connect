@@ -42,6 +42,9 @@
     <label>Clave nueva (vacía: se queda la que hay{% if ia.claves.anthropic %} · Anthropic …{{ ia.claves.anthropic }}{% endif %}{% if ia.claves.openai %} · OpenAI …{{ ia.claves.openai }}{% endif %})
       <input type="password" name="clave" maxlength="300" autocomplete="off" spellcheck="false">
     </label>
+    <p class="sub">La clave la crea el proveedor, no la app. Crear una clave nueva en
+      {% for valor, url in consolas.items() %}<a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ proveedores[valor] }}</a>{{ " o " if not loop.last }}{% endfor %}:
+      se copia una sola vez y se pega aquí. Cuando la nueva funcione, borre la vieja en la misma página.</p>
     <label>Precio de entrada, USD por millón de tokens (de la página oficial de precios)
       <input type="text" name="precio_entrada" inputmode="decimal" maxlength="12"
              value="{{ formulario.get('precio_entrada', ia.precio_entrada) }}">
