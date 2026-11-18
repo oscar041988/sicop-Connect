@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-18 (el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
+Última actualización: 2026-11-18 (primera llamada real a Anthropic, modelo `claude-opus-5-5`, `ia probar` ok; el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
 representante, también dentro del chat, migración 0048; «Resolver» abre la pregunta con el chat encendido; el mismo
 mensaje del chat no se procesa dos veces; antes, 17/11: resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
 «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas `a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
@@ -16,6 +16,17 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 pass
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Primera llamada real a Anthropic (2026-11-18, Ivania).** Oscar le pasó la clave a Ivania y ella la escribió en
+  el `.env` real (Claude no lo lee). Modelo elegido por Oscar: **Opus 5.5** (`claude-opus-5-5`), no Sonnet 5.5 como
+  recomendaba §10.5. `AI_MODE=anthropic`. Las dos primeras pruebas salieron con OpenAI (`ia_usage` #281 y #282:
+  el `.env` todavía decía `AI_MODE=openai`); corregido. `ia probar`: **ok** · 54 tokens de entrada, 4 de salida ·
+  1.29 s · 1 intento · 0.000074 USD estimado (`ia_usage` #283). `OPENAI_API_KEY` sigue en el `.env`: volver a
+  `AI_MODE=openai` deja todo como antes. Sin cambios de código.
+  **Pendiente · Ivania:** revisar que `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD` sean los de Opus 5.5 (página
+  oficial de Anthropic); probar con Claude el chat del asistente, el Reporte de cartel y la oferta (módulos con
+  JSON Schema); comparación en 3 carteles contra OpenAI. **Pendiente · Oscar:** el tope de gasto al día con Opus
+  (más caro que Sonnet: los 8 USD de §10.5 eran para Sonnet).
 
 - **Chat: el mismo mensaje no se procesa dos veces (2026-11-18, visto por Ivania).** «si guarde lo que dije» llegó
   dos veces (08:48:42 y 08:48:52, sesión 7, mensajes 301 y 302): la IA tarda y se volvió a pulsar «Enviar». La IA
@@ -567,7 +578,8 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 pass
   `ANTHROPIC_EFFORT` (`.env.example`). Los módulos preguntan «¿IA activa?» en vez de «¿es OpenAI?»
   (`settings.ia_activa`, `settings.ia_modelo`). 21 pruebas nuevas con Anthropic SIMULADO
   (`tests/test_ia_anthropic.py`). **No se llamó a la API real.** `CLAUDE.md` actualizado.
-  **Pendiente · Oscar:** clave, modelo y precios en el `.env`; `ia probar`; comparación en 3 carteles. **En el
+  ~~**Pendiente · Oscar:** clave, modelo y precios en el `.env`; `ia probar`~~ **hecho el 18/11** (ver «Primera
+  llamada real a Anthropic»); falta la comparación en 3 carteles. **En el
   servidor**, con el PR: `pip install -r requirements.lock.txt` (sin migración).
 
 - **Guía para pasar el enriquecimiento a otra computadora (2026-11-11, pedido de Ivania):**
