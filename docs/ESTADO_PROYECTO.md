@@ -15,6 +15,23 @@ copia local hasta el push del 17/11 (`575fa91`) ·
 
 ## Último resultado
 
+- **El asistente pide todo lo que le falta a la oferta (2026-11-18, pedido de Ivania).** Caja nueva «Lo que pide la
+  oferta» en la página del asistente: pliego (subir el PDF si el enriquecimiento no lo trajo), precio de este cartel,
+  producto con su ficha técnica y representante legal (una vez, solo administradores). Cada punto de «Antes de
+  pedirla» lleva su «Resolver». Detalle y opciones elegidas: `DECISION_PROPUESTA.md` §13. Migración **0048**;
+  `app/oferta_datos.py`, `_oferta_datos.html`, `propuesta.py` (el precio del cartel y el representante mandan; la
+  ficha va al anexo 3), `ai/oferta.py` (pliego subido como DOC 0). Pruebas: `tests/test_oferta_datos.py` (12, datos
+  SINTÉTICOS) y las de la oferta: 36 passed.
+  - ~~Respaldo y `migrate` (0048)~~ **hecho (Claude a pedido de Ivania, 18/11, 09:34, panel cerrado):** respaldo
+    `C:\Users\User\respaldos-sicop\sicop_20261118-093408` (esquema 0047, huella del `.db` igual al manifiesto);
+    esquema 0048. Conteos iguales antes y después (carteles 15 970, revisiones 19, reportes 14, historial 751);
+    `integrity_check` ok, `foreign_key_check` vacío, WAL, 5 tablas nuevas vacías y sus 12 triggers.
+    ~~Subir el respaldo al Drive~~ **hecho (Claude, 18/11):** `G:\Mi unidad\sicop-respaldos\sicop_20261118-093408`
+    (7 archivos, ≈391 MB; tamaños iguales y huellas del `.db` y de los 5 zip iguales al manifiesto).
+    **Pendiente · Ivania:** probarlo en un cartel.
+  - **Pendiente · Oscar:** aprobarlo (el precio y el representante ya no salen solo de sus archivos).
+  - Pendiente: una línea en la misión de ayuda de la oferta.
+
 - **«Resolver» abre la pregunta con el chat encendido (2026-11-18, falla vista por Ivania).** En «Antes de pedirla»
   el enlace «Resolver» (y «Cambiar») lleva `?pregunta=`, pero con `ASSISTANT_CHAT=true` la página mostraba siempre el
   chat y la tarjeta no salía: el clic no hacía nada. Ahora la pregunta elegida sale en su tarjeta, con «Volver al

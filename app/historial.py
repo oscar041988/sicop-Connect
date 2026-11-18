@@ -57,6 +57,10 @@ ACCIONES = {
     "revisar_resultado": "Decidió si un requisito cumple en el resultado de elegibilidad",
     "calcular_resultado": "Calculó el resultado de elegibilidad de un cartel",
     "marcar_cumple_linea": "Marcó si Hermatix cumple una fila de «Qué piden» del resumen",
+    "guardar_precio_oferta": "Escribió el precio de la oferta de un cartel",
+    "subir_ficha_oferta": "Eligió el producto y subió su ficha técnica para la oferta",
+    "subir_pliego_oferta": "Subió el pliego de un cartel para armar la oferta",
+    "guardar_representante": "Guardó los datos del representante legal de las ofertas",
 }
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
@@ -69,7 +73,8 @@ DE_VERIFICACION = ("generar_lista_verificacion", "corregir_item_verificacion", "
                    "quitar_item_verificacion")
 DE_ASISTENTE = ("empezar_asistente", "redactar_preguntas_asistente", "responder_asistente",
                 "confirmar_perfil_asistente", "ver_documento_asistente", "descargar_documento_asistente",
-                "ampliar_asistente", "revisar_resultado", "calcular_resultado", "adjuntar_documento_oferta")
+                "ampliar_asistente", "revisar_resultado", "calcular_resultado", "adjuntar_documento_oferta",
+                "guardar_precio_oferta", "subir_ficha_oferta", "subir_pliego_oferta", "guardar_representante")
 # Registro del asistente (lección 5, solo administradores): lista, preguntas, respuestas, documentos, resultado,
 # «¿Cumple?» del resumen y el perfil con sus accesos.
 REGISTRO_ASISTENTE = DE_VERIFICACION + DE_ASISTENTE + ("marcar_cumple_linea",) + DE_PERFIL + ACCESOS_PERFIL

@@ -34,7 +34,7 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from app import asistente, elegibilidad, historial, oferta_cambios, oferta_economica, perfil
+from app import asistente, elegibilidad, historial, oferta_cambios, oferta_datos, oferta_economica, perfil
 from app.ai import oferta as ia_oferta
 from app.ai import resumen as ia_resumen
 from app.compras import detalle_compra
@@ -270,15 +270,21 @@ def economica(conn: sqlite3.Connection, nro_sicop: str, compra, config: dict, ta
     datos = oferta_economica.valores_iniciales(compra, tipo, config)
     datos["representante"] = {**datos["representante"], **{k: str(v or "") for k, v in
                                                           (config.get("representante") or {}).items()}}
+    # El que guardó un administrador en el asistente manda sobre config/oferta.yaml (2026-11-18).
+    if rep := oferta_datos.representante(conn):
+        datos["representante"] = {**datos["representante"],
+                                  **{k: rep[k] for k in ("nombre", "cedula", "calidades", "cargo") if rep[k]}}
     datos["fecha"] = hoy.isoformat()
     for linea in datos["lineas"]:
         # Sin espacios duros de SICOP (\xa0): con ellos la descripción no se parte y la tabla se sale de la hoja.
         linea["descripcion"] = (linea["descripcion"] or compra.descripcion or "Servicio").replace("\xa0", " ")
     producto = producto_del_cartel(conn, nro_sicop)
-    tarifa = tarifas.get(producto) if producto else None
+    # El precio que escribió una persona para este cartel en el asistente manda sobre el tarifario (2026-11-18).
+    del_cartel = oferta_datos.precio(conn, nro_sicop)
+    tarifa = del_cartel.como_tarifa() if del_cartel else (tarifas.get(producto) if producto else None)
     if not isinstance(tarifa, dict) or tarifa.get("precio") in (None, ""):
-        motivo = (f"no hay tarifa para «{producto}» en config/tarifario.yaml" if producto
-                  else "las reglas no asignaron un producto de Hermatix a este cartel")
+        motivo = (f"no hay precio para este cartel ni tarifa para «{producto}» en config/tarifario.yaml" if producto
+                  else "no hay precio para este cartel y las reglas no le asignaron un producto de Hermatix")
         return None, datos, motivo
     datos["moneda"] = str(tarifa.get("moneda") or "CRC")
     datos["meses"] = meses_de(_vigencia(conn, nro_sicop)) if tarifa.get("periodo") == "mensual" else None
@@ -293,7 +299,8 @@ def economica(conn: sqlite3.Connection, nro_sicop: str, compra, config: dict, ta
     try:
         return oferta_economica.leer(datos), datos, None
     except oferta_economica.OfertaError as exc:
-        return None, datos, f"el tarifario no sirve para este cartel: {str(exc).rstrip('. ')}"
+        origen = "el precio de este cartel" if del_cartel else "el tarifario"
+        return None, datos, f"{origen} no sirve para este cartel: {str(exc).rstrip('. ')}"
 
 
 # --- Anexos: lo que se subió en el asistente (o está en el perfil) -------------------------------------------------
@@ -332,8 +339,20 @@ def anexos(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien: 
         else:
             vistos.add(anexo.ruta.resolve())
         lista.append(anexo)
-    lista.append(Anexo(3, titulo="Ficha técnica del equipo ofertado",
-                       pendiente="falta elegir la ficha técnica del equipo (pendiente de Oscar)"))
+    # La ficha técnica: el producto y su PDF, elegidos en el asistente para este cartel (2026-11-18).
+    elegida = oferta_datos.ficha(conn, nro_sicop)
+    anexo = Anexo(3, titulo="Ficha técnica del equipo ofertado")
+    if elegida is None:
+        anexo.pendiente = "falta elegir el producto y subir su ficha técnica"
+    else:
+        anexo.titulo = f"Ficha técnica del equipo ofertado ({elegida.producto_nombre})"
+        anexo.ruta, anexo.extension = settings.assistant_docs_dir / elegida.ruta, ".pdf"
+        if not anexo.ruta.is_file():
+            anexo.ruta, anexo.pendiente = None, "no se encontró el archivo de la ficha: subirla de nuevo"
+        elif quien is not None:
+            anexo.registrar = lambda: historial.registrar(conn, quien, "adjuntar_documento_oferta",
+                                                          f"{nro_sicop}: ficha técnica · {elegida.nombre}")
+    lista.append(anexo)
     for grupo in (2, 3, 4):
         for n, a in enumerate((a for a in lista if a.grupo == grupo), start=1):
             a.numero = f"{grupo}.{n}"
@@ -435,7 +454,8 @@ def preparar(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, quien
     if precio_pendiente:
         pendientes.append(f"PRECIO PENDIENTE: {precio_pendiente}.")
     if not datos["representante"].get("nombre"):
-        pendientes.append("Faltan el nombre y la cédula del representante legal (config/oferta.yaml).")
+        pendientes.append("Faltan el nombre y la cédula del representante legal (los guarda un administrador en "
+                          "el asistente).")
 
     lista = anexos(conn, settings, nro_sicop, quien, evaluaciones)
     for a in lista:
@@ -464,12 +484,13 @@ class Falta:
     """Un punto que haría salir la oferta como BORRADOR, con dónde se arregla."""
     texto: str
     item_id: int | None = None            # se resuelve en el asistente, en esa pregunta
-    donde: str | None = None              # se resuelve fuera del panel: quién y dónde
+    donde: str | None = None              # quién o cómo se resuelve
+    ancla: str | None = None              # el formulario del asistente que lo resuelve (#oferta-precio, …)
+    solo_admin: bool = False              # el representante: uno para todas las ofertas, lo llena un administrador
 
     @property
     def de_administrador(self) -> bool:
-        """Tarifa, representante o ficha técnica: lo resuelve Oscar fuera del panel, igual en todos los carteles."""
-        return bool(self.donde) and self.donde.startswith("Oscar")
+        return self.solo_admin
 
 
 def lo_que_falta(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, ahora: datetime,
@@ -485,7 +506,7 @@ def lo_que_falta(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, a
     faltas = []
     if not ia_oferta.paginas_del_pliego(conn, nro_sicop):
         faltas.append(Falta("Falta el pliego con texto: sin él no se puede armar la oferta.",
-                            donde="lo trae el enriquecimiento de las 10:00"))
+                            donde="lo trae el enriquecimiento de las 10:00, o súbelo tú", ancla="oferta-pliego"))
     hoy = ahora.astimezone(HORA_CR).date()
     if asistente.sesion(conn, nro_sicop) is None:
         evaluaciones = []
@@ -500,17 +521,20 @@ def lo_que_falta(conn: sqlite3.Connection, settings: Settings, nro_sicop: str, a
     _, datos, precio_pendiente = economica(conn, nro_sicop, compra, oferta_economica.configuracion(),
                                            tarifario() if tarifas is None else tarifas, hoy)
     if precio_pendiente:
-        faltas.append(Falta(f"PRECIO PENDIENTE: {precio_pendiente}.", donde="Oscar, en config/tarifario.yaml"))
+        faltas.append(Falta(f"PRECIO PENDIENTE: {precio_pendiente}.", donde="escríbelo para este cartel",
+                            ancla="oferta-precio"))
     if not datos["representante"].get("nombre"):
         faltas.append(Falta("Faltan el nombre y la cédula del representante legal.",
-                            donde="Oscar, en config/oferta.yaml"))
+                            donde="un administrador, una sola vez para todas las ofertas",
+                            ancla="oferta-representante", solo_admin=True))
     for a in anexos(conn, settings, nro_sicop, None, evaluaciones):
         if a.ruta is not None and a.extension == ".pdf" and not _pdf_valido(a.ruta):
             a.pendiente = "el PDF no se pudo abrir (¿protegido?): adjuntarlo a mano"
         # Un anexo de un requisito que ya está en la lista no se repite: se arregla en la misma pregunta.
         if a.pendiente and (a.item_id is None or a.item_id not in {f.item_id for f in faltas}):
             faltas.append(Falta(f"Anexo {a.numero} · {a.titulo}: {a.pendiente}.", item_id=a.item_id,
-                                donde=None if a.item_id else "Oscar: falta decidir cómo se elige"))
+                                donde=None if a.item_id else "elige el producto y sube su ficha",
+                                ancla=None if a.item_id else "oferta-ficha"))
     return faltas
 
 

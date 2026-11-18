@@ -351,9 +351,11 @@ def test_lo_que_falta_dice_lo_mismo_que_la_portada_sin_llamar_a_la_ia(db, tmp_pa
     requisito = next(f for f in faltas if f.texto.startswith("No cumple: Reporte de posición"))
     assert requisito.item_id == ids["reporte"] and "[DOC" not in requisito.texto     # se resuelve en esa pregunta
     precio = next(f for f in faltas if f.texto.startswith("PRECIO PENDIENTE"))
-    assert precio.donde == "Oscar, en config/tarifario.yaml" and precio.item_id is None
+    assert precio.ancla == "oferta-precio" and precio.item_id is None and not precio.de_administrador
     ficha = next(f for f in faltas if "Ficha técnica del equipo ofertado" in f.texto)
-    assert ficha.donde.startswith("Oscar") and ficha.item_id is None
+    assert ficha.ancla == "oferta-ficha" and ficha.item_id is None and not ficha.de_administrador
+    representante = next(f for f in faltas if "representante legal" in f.texto)
+    assert representante.ancla == "oferta-representante" and representante.de_administrador
     assert not any("patente" in f.texto.lower() or "declaración" in f.texto.lower() for f in faltas)  # ya subidos
     # Lo que no depende de las secciones del pliego sale igual en la portada de la oferta armada.
     armada = _armar(db, settings, OpenAISimulado(), Impresora(), tarifas={})

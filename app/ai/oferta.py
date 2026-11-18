@@ -75,6 +75,12 @@ def paginas_del_pliego(conn: sqlite3.Connection, nro_sicop: str) -> list[Pagina]
                 " ORDER BY archivo_interno, pagina", (d.id,)):
             if texto and texto.strip():
                 paginas.append(Pagina(n, interno or d.archivo or "", pagina, texto))
+    if not paginas:
+        # Sin pliego de SICOP con texto: el que subió una persona en el asistente (app/oferta_datos.py), como DOC 0
+        # para no confundirlo con los documentos del expediente.
+        from app import oferta_datos
+        paginas = [Pagina(0, f"subido: {nombre}", pagina, texto)
+                   for nombre, pagina, texto in oferta_datos.paginas_pliego(conn, nro_sicop) if texto.strip()]
     return paginas
 
 

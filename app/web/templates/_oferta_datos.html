@@ -1,0 +1,140 @@
+{# Lo que el asistente pide para la oferta, además de los requisitos (pedido de Ivania, 2026-11-18; app/oferta_datos.py):
+   el pliego (si el enriquecimiento no lo trajo), el precio de este cartel, el producto con su ficha técnica y el
+   representante legal (uno para todas las ofertas; solo administradores). Nada de esto va a la IA. #}
+{% set f = od.form %}
+<section class="tarjeta oferta-datos" id="oferta-datos" aria-label="Lo que pide la oferta">
+  <h2>Lo que pide la oferta</h2>
+  <p class="sub">Además de los requisitos, la oferta necesita esto. Lo escribe una persona: la IA no pone precios ni
+    ve estos datos.</p>
+
+  {# 1. Pliego #}
+  <div class="oferta-dato" id="oferta-pliego">
+    <h3>Pliego del cartel {% if od.tiene_pliego %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
+    {% if od.pliego %}
+    <p>Subido: <b>{{ od.pliego.nombre }}</b> · {{ od.pliego.paginas }} páginas <small class="sub">· {{ od.pliego.por }},
+      {{ od.pliego.en | fecha }}</small></p>
+    {% elif od.tiene_pliego %}
+    <p class="sub">Lo trajo el enriquecimiento desde SICOP.</p>
+    {% endif %}
+    {% if not od.tiene_pliego or od.pliego %}
+    <details {% if not od.tiene_pliego or (od.error and od.error[0] == "pliego") %}open{% endif %}>
+      <summary>{% if od.pliego %}Subir otro{% else %}Subir el pliego (PDF descargado de SICOP){% endif %}</summary>
+      <form class="revision" method="post" enctype="multipart/form-data"
+            action="/oportunidades/{{ c.nro_sicop }}/asistente/oferta/pliego">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Archivo PDF <input type="file" name="archivo" accept=".pdf,application/pdf" required></label>
+        <small class="sub">Si el enriquecimiento lo trae después, se usa el de SICOP. Un PDF escaneado (sin texto) no
+          sirve.</small>
+        <button type="submit">Subir el pliego</button>
+      </form>
+    </details>
+    {% endif %}
+    {% if od.error and od.error[0] == "pliego" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
+  </div>
+
+  {# 2. Precio de este cartel #}
+  {% set pr = od.precio %}
+  {% set base = pr.como_tarifa() if pr else (od.tarifa or {}) %}
+  {% set iva_txt = (f.iva_modo == "exento") if f else (base.iva | string).startswith("exento") %}
+  <div class="oferta-dato" id="oferta-precio">
+    <h3>Precio de este cartel {% if pr %}<span class="pildora verde">Listo</span>{% elif od.tarifa %}<span class="pildora verde">Del tarifario</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
+    {% if pr %}
+    <p><b>{{ pr.moneda }} {{ pr.precio }}</b> {{ od.PERIODOS[pr.periodo] }} · IVA {{ pr.iva }}
+      <small class="sub">· {{ pr.por }}, {{ pr.en | fecha }}</small></p>
+    {% elif od.tarifa %}
+    <p class="sub">Sale del tarifario ({{ od.PRODUCTOS.get(od.sugerido, od.sugerido) }}). Si este cartel lleva otro
+      precio, escríbelo aquí.</p>
+    {% endif %}
+    <details {% if not pr and not od.tarifa or (od.error and od.error[0] == "precio") %}open{% endif %}>
+      <summary>{% if pr %}Cambiar el precio{% else %}Escribir el precio{% endif %}</summary>
+      <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/oferta/precio">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Moneda
+          <select name="moneda" required>
+            {% for m in ("CRC", "USD") %}<option value="{{ m }}" {% if (f.moneda or base.moneda or "CRC") == m %}selected{% endif %}>{{ {"CRC": "Colones (CRC)", "USD": "Dólares (USD)"}[m] }}</option>{% endfor %}
+          </select></label>
+        <label>Precio por unidad
+          <input type="text" name="precio" inputmode="decimal" maxlength="20" required placeholder="Por ejemplo 27030.00"
+                 value="{{ f.precio or base.precio or '' }}"></label>
+        <small class="sub">Sin separador de miles; punto para los decimales. Cada línea del cartel se cotiza como
+          cantidad × este precio.</small>
+        <label>Es un precio
+          <select name="periodo" required>
+            {% for k, v in od.PERIODOS.items() %}<option value="{{ k }}" {% if (f.periodo or base.periodo or "mensual") == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+          </select></label>
+        <fieldset><legend>IVA</legend>
+          <label class="casilla"><input type="radio" name="iva_modo" value="tasa" {% if not iva_txt %}checked{% endif %}> Tasa
+            <input type="text" name="iva_tasa" inputmode="decimal" maxlength="6" size="4"
+                   value="{{ f.iva_tasa or (base.iva if base.iva is defined and not (base.iva | string).startswith('exento') else '13') }}"> %</label>
+          <label class="casilla"><input type="radio" name="iva_modo" value="exento" {% if iva_txt %}checked{% endif %}> Exento, motivo:
+            <input type="text" name="iva_exento" maxlength="200"
+                   value="{{ f.iva_exento or ((base.iva | string)[8:] if (base.iva | string).startswith('exento') else '') }}"></label>
+        </fieldset>
+        <fieldset><legend>Desglose de la fórmula de reajuste (%; suman 100)</legend>
+          {% for k in od.RUBROS %}
+          <label>{{ k.replace("_", " ") | capitalize }}
+            <input type="text" name="des_{{ k }}" inputmode="decimal" maxlength="6" size="4" required
+                   value="{{ f['des_' ~ k] or (base.desglose or {}).get(k, '') }}"></label>
+          {% endfor %}
+        </fieldset>
+        <button type="submit">Guardar el precio</button>
+      </form>
+    </details>
+    {% if od.error and od.error[0] == "precio" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
+  </div>
+
+  {# 3. Producto y ficha técnica (anexo 3) #}
+  {% set fi = od.ficha %}
+  <div class="oferta-dato" id="oferta-ficha">
+    <h3>Producto y ficha técnica {% if fi %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
+    {% if fi %}
+    <p><b>{{ fi.producto_nombre }}</b> · {{ fi.nombre }} <small class="sub">· {{ fi.por }}, {{ fi.en | fecha }}</small></p>
+    {% endif %}
+    <details {% if not fi or (od.error and od.error[0] == "ficha") %}open{% endif %}>
+      <summary>{% if fi %}Cambiar{% else %}Elegir el producto y subir su ficha{% endif %}</summary>
+      <form class="revision" method="post" enctype="multipart/form-data"
+            action="/oportunidades/{{ c.nro_sicop }}/asistente/oferta/ficha">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% set elegido = f.producto or (fi.producto if fi else od.sugerido) %}
+        <label>Producto que se oferta
+          <select name="producto" required>
+            <option value="">Elegir…</option>
+            {% for k, v in od.PRODUCTOS.items() %}<option value="{{ k }}" {% if elegido == k %}selected{% endif %}>{{ v }}{% if k == od.sugerido %} (el que sugieren las reglas){% endif %}</option>{% endfor %}
+          </select></label>
+        <label>Ficha técnica (PDF) <input type="file" name="archivo" accept=".pdf,application/pdf" required></label>
+        <button type="submit">Guardar la ficha</button>
+      </form>
+    </details>
+    {% if od.error and od.error[0] == "ficha" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
+  </div>
+
+  {# 4. Representante legal: uno para todas las ofertas; solo administradores. Nunca va a la IA. #}
+  {% set rep = od.representante %}
+  <div class="oferta-dato" id="oferta-representante">
+    <h3>Representante legal {% if rep %}<span class="pildora verde">Listo</span>{% else %}<span class="pildora rojo">Falta</span>{% endif %}</h3>
+    {% if rep %}
+    <p>Firma: <b>{{ rep.nombre }}</b>, {{ rep.cargo }} <small class="sub">· vale para todas las ofertas</small></p>
+    {% endif %}
+    {% if od.es_admin %}
+    <details {% if not rep or (od.error and od.error[0] == "representante") %}open{% endif %}>
+      <summary>{% if rep %}Cambiar{% else %}Escribir los datos (una sola vez){% endif %}</summary>
+      <form class="revision" method="post" action="/oportunidades/{{ c.nro_sicop }}/asistente/oferta/representante">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Nombre completo <input type="text" name="nombre" maxlength="150" required autocomplete="off"
+               value="{{ f.nombre or (rep.nombre if rep else '') }}"></label>
+        <label>Cédula <input type="text" name="cedula" maxlength="20" required autocomplete="off" placeholder="1-1234-0567"
+               value="{{ f.cedula or (rep.cedula if rep else '') }}"></label>
+        <label>Calidades <input type="text" name="calidades" maxlength="200" placeholder="mayor, casado, vecino de San José"
+               value="{{ f.calidades or (rep.calidades if rep else '') }}"></label>
+        <label>Cargo <input type="text" name="cargo" maxlength="80"
+               value="{{ f.cargo or (rep.cargo if rep else 'representante legal') }}"></label>
+        <small class="sub">Vale para todas las ofertas. No pasa por la IA.</small>
+        <button type="submit">Guardar</button>
+      </form>
+    </details>
+    {% if od.error and od.error[0] == "representante" %}<p class="error">{{ od.error[1] }}</p>{% endif %}
+    {% elif not rep %}
+    <p class="sub">Lo llena un administrador, una sola vez para todas las ofertas.</p>
+    {% endif %}
+  </div>
+</section>

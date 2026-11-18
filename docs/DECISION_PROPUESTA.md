@@ -294,3 +294,28 @@ descarga y guarda una copia en `EXPORTS_DIR/ofertas/<procedimiento>/oferta_<fech
 
 **Pendiente · Oscar:** llenar `config/tarifario.yaml` y los datos del representante en `config/oferta.yaml`; decidir
 cómo se elige la ficha técnica de cada cartel.
+
+## 13. Construido: el asistente pide todo lo que le falta a la oferta (2026-11-18, pedido de Ivania)
+
+Ivania: «si aún faltan puntos por resolver, necesito que el asistente lo pida; que pida todo». Antes, el precio, el
+representante y la ficha técnica quedaban «Lo resuelve un administrador» en archivos de configuración, y el pliego
+solo llegaba con el enriquecimiento. Ahora la página del asistente tiene la caja **«Lo que pide la oferta»**, con un
+formulario por punto, y cada punto rojo de «Antes de pedirla» lleva su «Resolver». Opciones elegidas por Ivania:
+
+- **Precio de este cartel:** moneda, precio por unidad, por mes o único, IVA (tasa o exento con motivo) y los cuatro
+  porcentajes del desglose (suman 100). Lo escribe una persona (regla 3 de `DECISION_IA.md`: la IA no pone precios).
+  Manda sobre `config/tarifario.yaml` **solo en ese cartel**; el tarifario no cambia. Si hay tarifa, el formulario
+  la trae de punto de partida.
+- **Representante legal:** nombre, cédula (texto), calidades y cargo, **una vez para todas las ofertas**, solo un
+  administrador. No pasa por la IA; el historial no guarda la cédula y la página solo se la muestra al administrador.
+  Manda sobre `config/oferta.yaml`.
+- **Producto y ficha técnica (anexo 3):** se elige el producto (las reglas sugieren uno) y se sube su ficha en PDF,
+  por cartel. Reemplaza el «siempre pendiente» de la sección 12.
+- **Pliego:** si el enriquecimiento no trajo uno con texto, una persona sube el PDF de SICOP. Se guarda aparte de los
+  documentos de SICOP (`oferta_pliegos`, no `tender_documents`) y entra como «DOC 0 · subido: <nombre>». Si después
+  llega el de SICOP, se usa el de SICOP. Un PDF escaneado sin texto se rechaza.
+- Migración **0048** (`oferta_precios`, `oferta_fichas`, `oferta_pliegos` + texto, `representante_legal`): nada se
+  borra ni se modifica; vale la fila más nueva. Archivos en `ASSISTANT_DOCS_DIR/<N.º SICOP>/oferta/` (entran en el
+  respaldo). Código: `app/oferta_datos.py`, `_oferta_datos.html`; pruebas: `tests/test_oferta_datos.py`.
+
+**Pendiente · Oscar:** aprobar este cambio (sustituye su tarifario y su `config/oferta.yaml` como única fuente).

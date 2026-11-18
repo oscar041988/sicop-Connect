@@ -28,6 +28,7 @@ from app.ai import asistente as ia_asistente
 from app.ai import chat as ia_chat
 from app.ai import cola as ia_cola
 from app.ai import expediente as ia_expediente
+from app.ai import oferta as ia_oferta
 from app.ai import explicacion as ia_explicacion
 from app.ai import reporte as ia_reporte
 from app.ai import resumen as ia_resumen
@@ -43,7 +44,8 @@ from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, oferta_cambios, oferta_economica, panel,
+                 expediente_descarga, exportar, fichas_panel, historial, oferta_cambios, oferta_datos,
+                 oferta_economica, panel,
                  perfil, productividad, propuesta, reintentos, resumen,
                  seguimiento, usuarios, visor)
 from app.historial import Quien
@@ -516,7 +518,8 @@ def pagina_asistente(request: Request, nro_sicop: str, pregunta: int | None = No
 
 
 def _render_asistente(request: Request, conn: sqlite3.Connection, nro_sicop: str, status_code: int = 200,
-                      ver_item: int | None = None, **asistente_extra) -> Response:
+                      ver_item: int | None = None, error_datos: tuple[str, str] | None = None,
+                      form_datos: dict | None = None, **asistente_extra) -> Response:
     if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
         return negado
     ahora = _ahora()
@@ -529,8 +532,111 @@ def _render_asistente(request: Request, conn: sqlite3.Connection, nro_sicop: str
         "error_oferta": request.session.pop("error_oferta", None),
         # Lo que saldría en rojo, antes de pedir la oferta (Ivania, 13/11). Sin IA: no gasta al abrir la página.
         "falta_oferta": propuesta.lo_que_falta(conn, load_settings(), nro_sicop, ahora),
+        "od": _datos_oferta(request, conn, nro_sicop, error_datos, form_datos),
         **_contexto_asistente(request, conn, nro_sicop, ahora, ver_item, **asistente_extra),
     }, status_code=status_code)
+
+
+# --- Lo que el asistente pide para la oferta (pedido de Ivania, 2026-11-18; app/oferta_datos.py) ---------------------
+# Precio, producto y ficha, y pliego: el encargado y los administradores (la regla del asistente). Representante:
+# solo administradores. Cada formulario vuelve a la página con su ancla (#oferta-precio, …).
+
+def _datos_oferta(request: Request, conn, nro_sicop: str, error: tuple[str, str] | None, form: dict | None) -> dict:
+    sugerido = propuesta.producto_del_cartel(conn, nro_sicop)
+    tarifa = propuesta.tarifario().get(sugerido) if sugerido else None
+    return {"precio": oferta_datos.precio(conn, nro_sicop), "ficha": oferta_datos.ficha(conn, nro_sicop),
+            "pliego": oferta_datos.pliego(conn, nro_sicop), "representante": oferta_datos.representante(conn),
+            "tiene_pliego": bool(ia_oferta.paginas_del_pliego(conn, nro_sicop)), "sugerido": sugerido,
+            "tarifa": tarifa if isinstance(tarifa, dict) else None, "PRODUCTOS": oferta_datos.PRODUCTOS,
+            "PERIODOS": oferta_datos.PERIODOS, "RUBROS": oferta_economica.RUBROS,
+            "es_admin": seguridad.es_admin(request), "error": error, "form": form or {}}
+
+
+def _volver_oferta(request: Request, nro_sicop: str, mensaje: str, ancla: str) -> Response:
+    request.session["hecho_asistente"] = mensaje
+    return RedirectResponse(f"/oportunidades/{nro_sicop}/asistente#{ancla}", status_code=303)
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/oferta/precio", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+async def guardar_precio_oferta(request: Request, nro_sicop: str) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    f = await request.form()
+    campos = {k: str(f.get(k) or "").strip() for k in ("moneda", "precio", "periodo", "iva_modo", "iva_tasa",
+                                                       "iva_exento")}
+    desglose = {k: str(f.get(f"des_{k}") or "").strip() for k in oferta_economica.RUBROS}
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            oferta_datos.guardar_precio(conn, nro_sicop, moneda=campos["moneda"], precio_unitario=campos["precio"],
+                                        periodo=campos["periodo"], iva_modo=campos["iva_modo"],
+                                        iva_tasa=campos["iva_tasa"], iva_exento=campos["iva_exento"],
+                                        desglose=desglose, quien=_quien(request), ahora=_ahora())
+        except oferta_datos.DatoInvalido as exc:
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_datos=("precio", str(exc)),
+                                     form_datos={**campos, **{f"des_{k}": v for k, v in desglose.items()}})
+    return _volver_oferta(request, nro_sicop, "Precio guardado para este cartel.", "oferta-precio")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/oferta/ficha", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def subir_ficha_oferta(request: Request, nro_sicop: str, producto: str = Form(""),
+                       archivo: UploadFile | None = File(None)) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        subido = _subido(archivo)
+        try:
+            oferta_datos.guardar_ficha(conn, settings, nro_sicop, producto, *(subido or (None, None)),
+                                       _quien(request), _ahora())
+        except (oferta_datos.DatoInvalido, expediente_archivos.ArchivoInvalido) as exc:
+            return _render_asistente(request, conn, nro_sicop, status_code=_estado_error(exc),
+                                     error_datos=("ficha", str(exc)), form_datos={"producto": producto})
+    return _volver_oferta(request, nro_sicop, "Ficha técnica guardada: va como anexo 3 de la oferta.", "oferta-ficha")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/oferta/pliego", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf)])
+def subir_pliego_oferta(request: Request, nro_sicop: str, archivo: UploadFile | None = File(None)) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    with closing(connect(settings.database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        subido = _subido(archivo)
+        try:
+            p = oferta_datos.guardar_pliego(conn, settings, nro_sicop, *(subido or (None, None)), _quien(request),
+                                            _ahora())
+        except (oferta_datos.DatoInvalido, expediente_archivos.ArchivoInvalido) as exc:
+            return _render_asistente(request, conn, nro_sicop, status_code=_estado_error(exc),
+                                     error_datos=("pliego", str(exc)))
+    return _volver_oferta(request, nro_sicop, f"Pliego guardado: {p.paginas} páginas con texto.", "oferta-pliego")
+
+
+@router.post("/oportunidades/{nro_sicop}/asistente/oferta/representante", response_class=HTMLResponse,
+             dependencies=[Depends(verificar_csrf), Depends(seguridad.exigir_admin)])
+def guardar_representante(request: Request, nro_sicop: str, nombre: str = Form(""), cedula: str = Form(""),
+                          calidades: str = Form(""), cargo: str = Form("")) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        if (negado := _asistente_permitido(request, conn, nro_sicop)) is not None:
+            return negado
+        try:
+            oferta_datos.guardar_representante(conn, nombre=nombre, cedula=cedula, calidades=calidades, cargo=cargo,
+                                               quien=_quien(request), ahora=_ahora())
+        except oferta_datos.DatoInvalido as exc:
+            return _render_asistente(request, conn, nro_sicop, status_code=400, error_datos=("representante", str(exc)),
+                                     form_datos={"nombre": nombre, "cedula": cedula, "calidades": calidades,
+                                                 "cargo": cargo})
+    return _volver_oferta(request, nro_sicop, "Representante guardado: vale para todas las ofertas.",
+                          "oferta-representante")
 
 
 def _citador(conn, nro_sicop: str, settings):

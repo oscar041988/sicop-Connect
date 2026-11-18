@@ -23,6 +23,7 @@
 <div class="asis-columnas">
   <div class="asis-principal">
     {% include "_asistente.html" %}
+    {% include "_oferta_datos.html" %}
   </div>
 
   <aside class="asis-lateral" aria-label="Avance y oferta">
@@ -47,11 +48,12 @@
       <div class="oferta-falta">
         <p><strong>Antes de pedirla: {{ falta_oferta | length }} punto{{ "s" if falta_oferta | length != 1 }} por resolver.</strong>
           Así saldría como BORRADOR.</p>
-        {# Lo que bloquea (sin pliego, asistente sin empezar) va primero y a la vista #}
+        {# Lo que no es una pregunta (pliego, precio, ficha) va primero y a la vista, con su formulario abajo (18/11) #}
         {% if bloquea %}
         <ul>
           {% for f in bloquea %}
-          <li>{{ f.texto }}{% if f.donde %} <small class="sub">· {{ f.donde }}</small>{% endif %}</li>
+          <li>{{ f.texto }}{% if f.donde %} <small class="sub">· {{ f.donde }}</small>{% endif %}
+            {% if f.ancla %}<a href="#{{ f.ancla }}">Resolver</a>{% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -72,19 +74,19 @@
         </details>
         {% endif %}
         {% endif %}
-        {# Tarifa, representante y ficha técnica: iguales en todos los carteles mientras Oscar no los resuelva #}
+        {# El representante: uno para todas las ofertas, lo llena un administrador #}
         {% if admin %}
-        <details><summary>Lo resuelve un administrador ({{ admin | length }})</summary>
-          <ul>
-            {% for f in admin %}
-            <li>{{ f.texto }} <small class="sub">· {{ f.donde }}</small></li>
-            {% endfor %}
-          </ul>
-        </details>
+        <p class="grupo">Lo resuelve un administrador ({{ admin | length }})</p>
+        <ul>
+          {% for f in admin %}
+          <li>{{ f.texto }} <small class="sub">· {{ f.donde }}</small>
+            {% if f.ancla and od.es_admin %}<a href="#{{ f.ancla }}">Resolver</a>{% endif %}</li>
+          {% endfor %}
+        </ul>
         {% endif %}
       </div>
       {% else %}
-      <p class="hecho">Según el asistente, el tarifario y los anexos, no queda nada por resolver.</p>
+      <p class="hecho">Según el asistente, el precio, la ficha y los anexos, no queda nada por resolver.</p>
       {% endif %}
       <form class="en-linea" method="post" action="/oportunidades/{{ c.nro_sicop }}/oferta">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

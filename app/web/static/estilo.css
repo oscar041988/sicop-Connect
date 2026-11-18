@@ -845,3 +845,12 @@ table.prod-personas td.azul { color: var(--azul); }
 .prod-pila i.ab { background: #C3CBD4; }
 .prod-notas { display: grid; gap: 4px; font-size: .84rem; color: var(--mut); }
 .prod-notas strong { color: var(--g9); }
+
+/* Lo que pide la oferta, en el asistente (2026-11-18): pliego, precio, ficha y representante */
+.oferta-datos { margin-top: 16px; }
+.oferta-dato { border-top: 1px solid var(--line); padding: 10px 0; }
+.oferta-dato:first-of-type { border-top: 0; }
+.oferta-dato h3 { margin: 0 0 6px; font-size: 1rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.oferta-dato details summary { cursor: pointer; font-weight: 600; color: var(--azul); }
+.oferta-dato fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 6px; }
+.oferta-dato :target, .oferta-dato:target { scroll-margin-top: 80px; }
