@@ -61,7 +61,9 @@ ACCIONES = {
     "subir_ficha_oferta": "Eligió el producto y subió su ficha técnica para la oferta",
     "subir_pliego_oferta": "Subió el pliego de un cartel para armar la oferta",
     "guardar_representante": "Guardó los datos del representante legal de las ofertas",
+    "cambiar_ia": "Cambió la IA en uso (proveedor, modelo o clave)",
 }
+DE_IA = ("cambiar_ia",)
 DE_USUARIOS = ("crear_usuario", "cambiar_nivel", "activar", "desactivar", "cambiar_contrasena", "eliminar_usuario")
 DE_DESTINATARIOS = ("agregar_destinatario", "activar_destinatario", "desactivar_destinatario")
 DE_AVISOS = ("reintentar_aviso", "confirmar_aviso")

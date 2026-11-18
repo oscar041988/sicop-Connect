@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block titulo %}IA{% endblock %}
+{% block contenido %}
+{# La IA en uso, cambiada desde el panel (pedido de Oscar, 18/11; DECISION_IA.md §11). La clave nunca se muestra:
+   solo sus últimos 4 caracteres, y nunca vuelve al formulario. #}
+<section>
+  <h1>IA de la app</h1>
+  <p class="sub">La IA que usan el Reporte de cartel, el asistente y la oferta. Al guardar, la app hace una llamada
+    corta de prueba: si no responde, no cambia nada.</p>
+  {% if hecho %}<p class="hecho">{{ hecho }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <div class="tarjeta">
+    <p><strong>En uso:</strong> {{ ia.proveedor }}{% if ia.modelo %} · modelo <code>{{ ia.modelo }}</code>{% endif %}</p>
+    {% if ia.modo != "none" %}
+    <p><strong>Clave:</strong> {% if ia.clave_final %}termina en …{{ ia.clave_final }}{% else %}sin clave{% endif %}</p>
+    <p><strong>Precio por millón de tokens:</strong>
+      {% if ia.precio_entrada and ia.precio_salida %}entrada {{ ia.precio_entrada }} USD · salida {{ ia.precio_salida }} USD
+      {% else %}sin precio (el costo sale «sin precio»){% endif %}</p>
+    {% endif %}
+    <p class="sub">{% if ia.desde_panel %}Cambiada desde este panel.{% else %}Tomada del archivo de configuración
+      (.env).{% endif %}</p>
+  </div>
+</section>
+
+<section>
+  <h2>Cambiar la IA</h2>
+  {% set modo = formulario.get("modo", ia.modo) %}
+  <form class="revision acceso" method="post" action="/ia">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Proveedor
+      <select name="modo" required>
+        {% for valor, texto in proveedores.items() %}
+        <option value="{{ valor }}" {% if modo == valor %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Modelo (tal como sale en la documentación del proveedor, por ejemplo claude-opus-5-5)
+      <input type="text" name="modelo" maxlength="100" autocomplete="off" spellcheck="false"
+             value="{{ formulario.get('modelo', ia.modelo) }}">
+    </label>
+    <label>Clave nueva (vacía: se queda la que hay{% if ia.claves.anthropic %} · Anthropic …{{ ia.claves.anthropic }}{% endif %}{% if ia.claves.openai %} · OpenAI …{{ ia.claves.openai }}{% endif %})
+      <input type="password" name="clave" maxlength="300" autocomplete="off" spellcheck="false">
+    </label>
+    <label>Precio de entrada, USD por millón de tokens (de la página oficial de precios)
+      <input type="text" name="precio_entrada" inputmode="decimal" maxlength="12"
+             value="{{ formulario.get('precio_entrada', ia.precio_entrada) }}">
+    </label>
+    <label>Precio de salida, USD por millón de tokens
+      <input type="text" name="precio_salida" inputmode="decimal" maxlength="12"
+             value="{{ formulario.get('precio_salida', ia.precio_salida) }}">
+    </label>
+    <label>Su contraseña, para confirmar
+      <input type="password" name="contrasena" required maxlength="128" autocomplete="current-password">
+    </label>
+    <button type="submit">Probar y guardar</button>
+  </form>
+  <p class="sub">La clave se guarda en el servidor, fuera de la base y de los respaldos. Nunca se muestra completa ni
+    queda en el historial.</p>
+</section>
+
+<section>
+  <h2>Historial de cambios</h2>
+  {% if historial %}
+  <ol class="historial">
+    {% for e in historial %}
+    <li>{{ acciones.get(e.accion, e.accion) }}: {{ e.detalle }} · {{ e.actor }} · {{ e.fecha | fecha }}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="vacio">Sin cambios desde el panel todavía.</p>
+  {% endif %}
+</section>
+{% endblock %}

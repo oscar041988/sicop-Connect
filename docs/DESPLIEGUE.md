@@ -281,6 +281,10 @@ GOOGLE_CLIENT_FILE=/etc/sicop-connect/google_cliente.json
 GOOGLE_TOKEN_FILE=/etc/sicop-connect/google_token.json
 ```
 
+- **IA desde el panel** (`DECISION_IA.md` §11): lo que un administrador cambia en Administración → IA se guarda en
+  `/var/lib/sicop-connect/ia.env` (la carpeta de `DATABASE_PATH`, ya de `sicop`) y **gana sobre este `app.env`**
+  para la IA. Si la IA no cambia al editar `app.env`, mirar si existe ese archivo. Sirve sin reiniciar el servicio.
+
 - `SESSION_SECRET`: el administrador lo genera **en el servidor** y lo pega en el archivo, sin mostrarlo a nadie:
   `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`.
 - `EXPORTS_DIR` y `APP_BASE_URL` no están en la lista de la guía. Hacen falta para que la vista previa no quede

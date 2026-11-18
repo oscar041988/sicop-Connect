@@ -258,7 +258,7 @@ def test_todas_las_rutas_post_exigen_el_token():
 
     assert sorted(rutas) == ["/avisos/{outbox_id}/confirmar", "/avisos/{outbox_id}/reintentar", "/ayuda/{nombre}/voto",
                              "/bitacora/consultas/{consulta_id}/revisada", "/cargar",
-                             "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/login",
+                             "/destinatarios", "/destinatarios/{destinatario_id}/estado", "/ia", "/login",
                              "/logout", "/oportunidades/{nro_sicop}/asistente/ampliar",
                              "/oportunidades/{nro_sicop}/asistente/chat",
                              "/oportunidades/{nro_sicop}/asistente/empezar",
@@ -285,7 +285,7 @@ def test_todas_las_rutas_post_exigen_el_token():
                              "/usuarios/{user_id}/estado",
                              "/usuarios/{user_id}/nivel"]
     assert all(verificar_csrf in dependencias for dependencias in rutas.values())
-    assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith(("/usuarios", "/destinatarios")))
+    assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith(("/usuarios", "/destinatarios", "/ia")))
     assert all(exigir_admin in dependencias for ruta, dependencias in rutas.items() if ruta.startswith("/perfil"))
 
 

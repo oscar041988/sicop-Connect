@@ -10,12 +10,23 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 passed** (18/11,
-17 min 17 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 18/11
+de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 passed** (18/11, con la página IA;
+14 min 15 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 18/11
 (`058f07c`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **Cambiar la IA desde el panel (2026-11-18, pedido de Oscar por Ivania; `DECISION_IA.md` §11).** Página nueva
+  Administración → IA (`/ia`, `app/ia_panel.py`, `ia.html`): proveedor (Anthropic, OpenAI o apagada), modelo
+  escrito, clave nueva (vacía = se queda la que hay) y precios. Solo administradores, con su contraseña otra vez.
+  Antes de guardar hace una llamada corta de prueba con lo nuevo; si falla, no cambia nada. Se guarda en `ia.env`,
+  junto a la base (`data/ia.env`; servidor `/var/lib/sicop-connect/ia.env`), que gana sobre `.env` y `app.env`
+  solo para esas 7 claves (`config.load_settings`); no va a la base, a los respaldos ni a Git. La clave solo se ve
+  como «termina en …xxxx»; el historial dice «clave nueva», nunca la clave. Misión de ayuda 27 (`27-ia.md`, sin
+  capturas). 18 pruebas nuevas con la IA SIMULADA (`tests/test_ia_panel.py`). Suite completa: **1172 passed**
+  (14 min 15 s), golden set 39/39.
+  **Pendiente · Oscar:** probarlo en el servidor después de unir el PR (`DESPLIEGUE.md` §9.4).
 
 - **Primera llamada real a Anthropic (2026-11-18, Ivania).** Oscar le pasó la clave a Ivania y ella la escribió en
   el `.env` real (Claude no lo lee). Modelo elegido por Oscar: **Opus 5.5** (`claude-opus-5-5`), no Sonnet 5.5 como

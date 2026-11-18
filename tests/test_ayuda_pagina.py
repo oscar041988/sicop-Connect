@@ -40,10 +40,10 @@ def clientes(db, monkeypatch):  # noqa: F811
 
 # --- Índice y misiones ------------------------------------------------------------------------------------------
 
-def test_el_indice_tiene_las_25_misiones_en_orden_y_toda_mision_se_abre(clientes):
+def test_el_indice_tiene_las_26_misiones_en_orden_y_toda_mision_se_abre(clientes):
     admin, _ = clientes
     nombres = [m.nombre for m in pagina.todas()]
-    assert len(nombres) == 25 and nombres == sorted(nombres)   # la 22 no existe; la 26 es «Productividad»
+    assert len(nombres) == 26 and nombres == sorted(nombres)   # la 22 no existe; la 26 es «Productividad», la 27 «IA»
     html = admin.get("/ayuda").text
     assert "¿Cómo se usa?" in html and 'id="glosario"' in html
     for nombre in nombres:
@@ -57,7 +57,7 @@ def test_una_encargada_no_ve_las_misiones_de_administracion(clientes):
     _, encargada = clientes
     html = encargada.get("/ayuda").text
     assert 'href="/ayuda/12-cargar-archivo"' in html             # «Cargar archivo» está en el menú de todos
-    for nombre in ("13-usuarios", "16-avisos", "18-bitacora"):
+    for nombre in ("13-usuarios", "16-avisos", "18-bitacora", "27-ia"):
         assert f'href="/ayuda/{nombre}"' not in html
         r = encargada.get(f"/ayuda/{nombre}")
         assert r.status_code == 403 and "solo para administradores" in r.text

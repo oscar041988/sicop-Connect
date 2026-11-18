@@ -44,7 +44,7 @@ from app.matching.evaluar import evaluar_base
 from app.matching.reglas import ReglasError, cargar_reglas
 from app import (asistente, aviso_encargado, avisos, calidad, competencia, cumplimiento, destinatarios, elegibilidad,
                  expediente_archivos,
-                 expediente_descarga, exportar, fichas_panel, historial, oferta_cambios, oferta_datos,
+                 expediente_descarga, exportar, fichas_panel, historial, ia_panel, oferta_cambios, oferta_datos,
                  oferta_economica, panel,
                  perfil, productividad, propuesta, reintentos, resumen,
                  seguimiento, usuarios, visor)
@@ -1438,6 +1438,47 @@ def _cambio_de_usuario(request: Request, cambio, hecho: str, formulario: dict | 
             return _render_usuarios(request, conn, 400, error=str(exc), formulario=formulario or {})
     request.session["hecho"] = mensaje
     return RedirectResponse("/usuarios", status_code=303)
+
+
+# --- IA en uso (solo administradores, con su contraseña; pedido de Oscar el 18/11, DECISION_IA.md §11) ----------
+
+def _render_ia(request: Request, conn, status_code: int = 200, **contexto) -> Response:
+    return PLANTILLAS.TemplateResponse(request, "ia.html", {
+        "seccion": "ia", "ia": ia_panel.estado(load_settings()), "proveedores": ia_panel.PROVEEDORES,
+        "historial": historial.ultimos(conn, historial.DE_IA), "acciones": historial.ACCIONES,
+        "hecho": request.session.pop("hecho", None), "formulario": {}, **contexto,
+    }, status_code=status_code)
+
+
+@router.get("/ia", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])
+def pagina_ia(request: Request) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    with closing(connect(load_settings().database_path)) as conn:
+        return _render_ia(request, conn)
+
+
+@router.post("/ia", response_class=HTMLResponse, dependencies=SOLO_ADMIN)
+def cambiar_ia(request: Request, modo: str = Form(""), modelo: str = Form(""), clave: str = Form(""),
+               precio_entrada: str = Form(""), precio_salida: str = Form(""),
+               contrasena: str = Form("")) -> Response:
+    if (error := _base_no_lista(request)) is not None:
+        return error
+    settings = load_settings()
+    # La clave y la contraseña nunca vuelven al formulario, ni siquiera si hay un error.
+    formulario = {"modo": modo, "modelo": modelo, "precio_entrada": precio_entrada, "precio_salida": precio_salida}
+    with closing(connect(settings.database_path)) as conn:
+        quien = _quien(request)
+        if usuarios.autenticar(conn, usuarios.obtener(conn, quien.user_id).email, contrasena) is None:
+            return _render_ia(request, conn, 400, error="La contraseña no es correcta: no se cambió nada.",
+                              formulario=formulario)
+        try:
+            mensaje = ia_panel.cambiar(conn, settings, modo=modo, modelo=modelo, clave=clave,
+                                       precio_entrada=precio_entrada, precio_salida=precio_salida, quien=quien)
+        except ia_panel.CambioInvalido as exc:
+            return _render_ia(request, conn, 400, error=str(exc), formulario=formulario)
+    request.session["hecho"] = mensaje
+    return RedirectResponse("/ia", status_code=303)
 
 
 @router.get("/usuarios", response_class=HTMLResponse, dependencies=[Depends(seguridad.exigir_admin)])

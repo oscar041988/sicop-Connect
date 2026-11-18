@@ -370,3 +370,25 @@ documento, en otro formato, para poder editarlo a mano si hace falta.
   pruebas (10.5: 5 USD al día), pruebas con OpenAI (10.6) y oferta también en Word (10.6 bis): Oscar, 2026-11-11.
 - [ ] Faltan: precisar «terminada» y qué se borra (10.4), dónde se guardan los documentos reales (10.4), los
   adjuntos en el Word (10.6 bis) y el modelo de Anthropic después de las pruebas (10.6).
+
+## 11. Ampliación: cambiar la IA desde el panel (pedido de Oscar, comunicado por Ivania, 2026-11-18)
+
+Oscar pidió cambiar desde el panel, sin tocar archivos, la IA en uso (Anthropic u OpenAI), su modelo y su clave.
+Esto reemplaza la regla anterior de §8 («la clave la escribe Oscar en el `.env`, en persona») para quien use el
+panel; el `.env` sigue sirviendo igual. Decidido por Ivania, 2026-11-18:
+
+- **Dónde:** Administración → IA (`/ia`). Solo administradores, y cada cambio pide otra vez su contraseña.
+- **Qué se cambia:** `AI_MODE`, `OPENAI_MODEL`/`ANTHROPIC_MODEL`, `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`,
+  `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD` (los precios cambian con el modelo). Nada más.
+- **Prueba antes de guardar:** una llamada corta, como `ia probar`, con lo nuevo (anotada en `ia_usage`). Si falla,
+  no cambia nada.
+- **Dónde se guarda:** `ia.env`, en la carpeta de la base (`data/ia.env` en desarrollo;
+  `/var/lib/sicop-connect/ia.env` en el servidor), con permisos 600. Gana sobre `.env` y sobre `app.env` de systemd,
+  solo para esas claves. No va a la base, a los respaldos ni a Git.
+- **La clave nunca se muestra:** solo sus últimos 4 caracteres; no vuelve al formulario. El historial dice
+  «Anthropic (Claude) · claude-opus-5-5 · clave nueva», quién y cuándo; nunca la clave.
+- **Modelo escrito, no de una lista:** se copia de la documentación del proveedor; un modelo nuevo no cambia el código.
+
+Estado:
+- [x] Construido (2026-11-18), con pruebas con la IA SIMULADA (`tests/test_ia_panel.py`).
+- [ ] Oscar: probarlo en el servidor después de unir el PR (`DESPLIEGUE.md` §9.4).

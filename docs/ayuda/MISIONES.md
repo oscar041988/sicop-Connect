@@ -72,6 +72,14 @@ En el menú «Administración» (Ivania, 17/11). Se lee después de la 18 (su «
 |---|---|---|---|---|
 | 26 | ¿Cómo sé si revisamos a tiempo los carteles? | Menú → Productividad | `26-productividad.md` | Borrador (2026-11-17) |
 
+## I. IA de la app (solo administradores)
+
+En el menú «Administración» (pedido de Oscar, 18/11; DECISION_IA.md §11).
+
+| # | Misión | Empieza en → termina en | Archivo | Estado |
+|---|---|---|---|---|
+| 27 | ¿Cómo cambio la IA que usa la app? | Administración → IA | `27-ia.md` | Borrador (2026-11-18), sin capturas |
+
 ## Dónde se ve la ayuda en la app
 
 - `/ayuda` («¿Cómo se usa?», enlace en el pie de cada página): tarjetas por bloque en el orden de esta lista,

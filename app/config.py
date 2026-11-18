@@ -582,4 +582,24 @@ def load_settings(
     merged = dict(DEFAULTS)
     merged.update(file_values)
     merged.update({k: v for k, v in environ.items() if k in DEFAULTS})
+    if env_file:
+        # Lo que se cambió desde el panel (Administración → IA, pedido de Oscar el 18/11) gana sobre .env y sobre
+        # app.env de systemd, solo para la IA. Vive junto a la base: fuera de Git y fuera de los respaldos.
+        merged.update(leer_ia_panel(merged["DATABASE_PATH"]))
     return Settings(raw=merged, env_file_loaded=bool(file_values))
+
+
+# Lo único que se puede cambiar desde el panel (DECISION_IA.md §11): la IA, sus modelos, sus claves y los precios.
+CLAVES_IA_PANEL = ("AI_MODE", "OPENAI_MODEL", "OPENAI_API_KEY", "ANTHROPIC_MODEL", "ANTHROPIC_API_KEY",
+                   "IA_PRECIO_ENTRADA_USD", "IA_PRECIO_SALIDA_USD")
+
+
+def ruta_ia_panel(database_path: str) -> Path:
+    """ia.env, en la carpeta de la base (data/ia.env aquí; /var/lib/sicop-connect/ia.env en el servidor)."""
+    base = Path(database_path)
+    return (base if base.is_absolute() else PROJECT_ROOT / base).parent / "ia.env"
+
+
+def leer_ia_panel(database_path: str) -> dict[str, str]:
+    """Solo las claves de la IA: cualquier otra línea de ia.env se ignora."""
+    return {k: v for k, v in parse_env_file(ruta_ia_panel(database_path)).items() if k in CLAVES_IA_PANEL}

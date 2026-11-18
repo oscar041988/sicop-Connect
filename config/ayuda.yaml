@@ -9,6 +9,7 @@ solo_admin:
   - 17-calidad
   - 18-bitacora
   - 26-productividad
+  - 27-ia
 
 # Botón «?»: qué misión abre en cada pantalla. Se revisa en orden y gana la primera que coincide.
 # «*» reemplaza cualquier parte de la dirección (p. ej. el Número SICOP). Sin coincidencia, abre /ayuda.
@@ -31,6 +32,8 @@ pantallas:
     mision: 11-competencia
   - ruta: /cargar
     mision: 12-cargar-archivo
+  - ruta: /ia
+    mision: 27-ia
   - ruta: /usuarios
     mision: 13-usuarios
   - ruta: /destinatarios
