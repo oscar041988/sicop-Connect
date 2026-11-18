@@ -1,6 +1,8 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-17 (resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
+Última actualización: 2026-11-18 (el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
+representante, también dentro del chat, migración 0048; «Resolver» abre la pregunta con el chat encendido; el mismo
+mensaje del chat no se procesa dos veces; antes, 17/11: resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
 «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas `a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
 y reporte de hasta 5 páginas, migración 0047; persona picando en estilo pixel de bloques; Bitácora: «Ver solo esas» baja a la
 lista y el aviso de FALLO o CAPTCHA solo el día del fallo; persona picando también en el cartel; antes, 13/11: hoja «De qué trata, explicado en detalle» en el reporte, el panel y el resumen, prompt v9 y migración 0046; la caja «Oferta» primero en el asistente; ayuda al día con los cambios del día; «Solo los míos» en Seguimiento; lo que falta antes de pedir la oferta; «7 de 20» en la animación de la Bitácora; base en modo WAL con `migrate`; «Último correo» arriba del panel y el resumen semanal en el panel; persona picando
@@ -8,9 +10,9 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0047 · Suite: **1136 passed** (17/11,
-con la página «Productividad»; golden set 39/39) · `desarrollo` en GitHub: al día con la
-copia local hasta el push del 17/11 (`575fa91`) ·
+de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1154 passed** (18/11,
+17 min 17 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 18/11
+(`058f07c`) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
@@ -20,7 +22,8 @@ copia local hasta el push del 17/11 (`575fa91`) ·
   contestó dos veces (dos cobros) y la respuesta «Todavía no lo sé» quedó guardada dos veces (iguales; nada se borra).
   Ahora: el botón se apaga al enviar («Enviando…», `asistente.html`) y `ai/chat.py` no acepta el mismo texto y archivo
   de la misma persona dentro de 2 minutos (`MensajeRepetido`): vuelve al chat con el aviso, sin llamar a la IA. Otro
-  texto, otra persona o pasados 2 minutos sí entran. 2 pruebas en `test_chat_asistente.py`: 31 passed.
+  texto, otra persona o pasados 2 minutos sí entran. 2 pruebas en `test_chat_asistente.py`: 31 passed. Suite
+  completa con los tres cambios del día: **1154 passed** (17 min 17 s), golden set 39/39.
 
 - **El asistente pide todo lo que le falta a la oferta (2026-11-18, pedido de Ivania).** Caja nueva «Lo que pide la
   oferta» en la página del asistente: pliego (subir el PDF si el enriquecimiento no lo trajo), precio de este cartel,
