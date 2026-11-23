@@ -1,6 +1,6 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-18 (primera llamada real a Anthropic, modelo `claude-opus-5-5`, `ia probar` ok; el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
+Última actualización: 2026-11-23 (oferta económica sobria en PDF y Word, «Resolver» probado; antes, 18/11: primera llamada real a Anthropic, modelo `claude-opus-5-5`, `ia probar` ok; el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
 representante, también dentro del chat, migración 0048; «Resolver» abre la pregunta con el chat encendido; el mismo
 mensaje del chat no se procesa dos veces; antes, 17/11: resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
 «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas `a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
@@ -11,8 +11,8 @@ escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nomb
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
 de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 passed** (18/11, con la página IA;
-14 min 15 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 18/11
-(`058f07c`) ·
+14 min 15 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 23/11
+(`be91608`, oferta económica sobria) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
