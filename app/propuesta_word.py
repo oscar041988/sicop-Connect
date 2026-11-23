@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 
 from docx import Document
-from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -117,6 +117,17 @@ def _tabla(doc, filas: int, columnas: int, anchos_mm: list[float] | None = None)
     t = doc.add_table(rows=filas, cols=columnas)
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    # Aire dentro de cada celda, como el padding del PDF (6 px × 8 px): margen de la tabla en twips (1 pt = 20).
+    margenes = OxmlElement("w:tblCellMar")
+    for lado, twips in (("top", 90), ("bottom", 90), ("left", 120), ("right", 120)):
+        m = OxmlElement(f"w:{lado}")
+        m.set(qn("w:w"), str(twips))
+        m.set(qn("w:type"), "dxa")
+        margenes.append(m)
+    t._tbl.tblPr.append(margenes)
+    for fila in t.rows:
+        for celda in fila.cells:
+            celda.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     if anchos_mm:
         for fila in t.rows:
             for celda, ancho in zip(fila.cells, anchos_mm):
@@ -152,7 +163,33 @@ def _preparar_documento() -> Document:
         p = seccion.header.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p.add_run().add_picture(str(oe.MEMBRETE_LOGO), height=Mm(oe.ALTO_LOGO_MM))
+    # Abajo a la derecha solo «Página N de M», en letra pequeña y sin franjas (Ivania, 2026-11-19).
+    pie = seccion.footer.paragraphs[0]
+    pie.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    for pieza in ("Página ", "PAGE", " de ", "NUMPAGES"):
+        if pieza in ("PAGE", "NUMPAGES"):
+            _campo(pie, pieza)
+        else:
+            pie.add_run(pieza).font.size = Pt(9)
     return doc
+
+
+def _campo(parrafo, codigo: str) -> None:
+    """Un campo de Word (PAGE, NUMPAGES): Word pone el número al abrir o imprimir."""
+    for tipo, texto in (("begin", None), (None, codigo), ("separate", None), (None, "1"), ("end", None)):
+        run = parrafo.add_run()
+        run.font.size = Pt(9)
+        if tipo:
+            marca = OxmlElement("w:fldChar")
+            marca.set(qn("w:fldCharType"), tipo)
+            run._r.append(marca)
+        elif texto == codigo:
+            instr = OxmlElement("w:instrText")
+            instr.set(qn("xml:space"), "preserve")
+            instr.text = f" {codigo} "
+            run._r.append(instr)
+        else:
+            run.text = texto
 
 
 def _portada(doc, p: Preparada) -> None:
@@ -242,8 +279,6 @@ def _economica(doc, p: Preparada) -> None:
     fecha = oe.fecha_larga(p.hoy)
     centro, derecha = WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.RIGHT
     fp = lambda m: oe.formato_punto(m, o.moneda)                       # noqa: E731
-    simbolo = oe.MONEDAS[o.moneda][2]
-    sin_simbolo = lambda m: oe.formato(m, o.moneda)[len(simbolo):]     # noqa: E731
 
     # Carta
     _parrafo(doc, f"{d.get('lugar') or 'San José'}, {fecha}.", negrita=True, alinear=derecha, antes=10, despues=30)
@@ -287,14 +322,16 @@ def _economica(doc, p: Preparada) -> None:
     else:
         periodo = ""
     t = _tabla(doc, len(o.lineas) + 6, 5, [15, 20, 66, 30, 34])   # encabezado, líneas, 3 totales, última, letras
-    for celda, texto in zip(t.rows[0].cells, ("Línea", "Cantidad", "Descripción", "Precio", "Precio")):
+    encabezados = ("Línea", "Cantidad", "Descripción", "Precio unitario",
+                   "Precio mensual" if o.meses else "Precio total")
+    for celda, texto in zip(t.rows[0].cells, encabezados):
         _celda(celda, texto, negrita=True, fondo=AZUL_HEX, alinear=centro)
     for fila, linea in zip(t.rows[1:], o.lineas):
         _celda(fila.cells[0], linea.numero, alinear=centro)
         _celda(fila.cells[1], oe.numero_corto(linea.cantidad), alinear=centro)
         _celda(fila.cells[2], linea.descripcion.upper(), alinear=centro)
-        _celda(fila.cells[3], fp(linea.precio_unitario), alinear=centro, extra="Por unidad")
-        _celda(fila.cells[4], fp(linea.monto), alinear=centro, extra="Mensual" if o.meses else "Total")
+        _celda(fila.cells[3], fp(linea.precio_unitario), alinear=centro)
+        _celda(fila.cells[4], fp(linea.monto), alinear=centro)
     iva = (("Total, IVA", "Exento") if o.iva_tasa is None
            else (f"Total, IVA ({oe.numero_corto(o.iva_tasa)} %)", fp(o.iva)))
     totales = [(f"Sub Total{periodo}", fp(o.subtotal)), iva, (f"Total{periodo}", fp(o.total))]
@@ -336,18 +373,20 @@ def _economica(doc, p: Preparada) -> None:
     _parrafo(doc, "DESGLOSE DE PRECIO", negrita=True, tam=14, alinear=centro, despues=18)
     _parrafo(doc, f"Estructura de Costos – Monto Total {fp(o.subtotal)}", negrita=True, despues=12)
     t = _tabla(doc, len(o.rubros) + 2, 3, [90, 30, 40])
-    for celda, texto in zip(t.rows[0].cells, ("Rubro", "Porcentaje", f"Monto ({simbolo})")):
-        _celda(celda, texto, negrita=True)
-    filas = [(rb.nombre, f"{oe.numero_corto(rb.porcentaje)} %", sin_simbolo(rb.monto)) for rb in o.rubros]
-    filas.append(("Total", "100 %", sin_simbolo(o.subtotal)))
-    for fila, valores in zip(t.rows[1:], filas):
-        for celda, texto in zip(fila.cells, valores):
-            _celda(celda, texto, negrita=True)
+    for celda, texto, alinear in zip(t.rows[0].cells, ("Rubro", "Porcentaje", "Monto"), (None, derecha, derecha)):
+        _celda(celda, texto, negrita=True, fondo=AZUL_HEX, alinear=alinear or WD_ALIGN_PARAGRAPH.LEFT)
+    filas = [(rb.nombre, f"{oe.numero_corto(rb.porcentaje)} %", fp(rb.monto)) for rb in o.rubros]
+    filas.append(("Total", "100 %", fp(o.subtotal)))
+    for n, (fila, valores) in enumerate(zip(t.rows[1:], filas), start=1):
+        total = n == len(filas)
+        for celda, texto, alinear in zip(fila.cells, valores, (None, derecha, derecha)):
+            _celda(celda, texto, negrita=total, fondo=AZUL_HEX if total else None,
+                   alinear=alinear or WD_ALIGN_PARAGRAPH.LEFT)
 
     # Fórmula de reajuste y firma
     _salto(doc)
-    _parrafo(doc, "Fórmula Matemática", negrita=True, tam=14, despues=14)
-    _parrafo(doc, "PV = PC { MO ( iMOtm / IMOtc ) + I ( iIti / iItc ) + GA ( iGAtg / iGAtc ) + U }", tam=13,
+    _parrafo(doc, "Fórmula Matemática", negrita=True, tam=14, alinear=centro, despues=14)
+    _parrafo(doc, "PV = PC { MO ( iMOtm / iMOtc ) + I ( iIti / iItc ) + GA ( iGAtg / iGAtc ) + U }", tam=13,
              despues=18)
     _parrafo(doc, "DONDE:", negrita=True, despues=10)
     definiciones = [("PV", "Precio Variado"), ("PC", "Precio cotización")]

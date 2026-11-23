@@ -305,13 +305,16 @@ def html(oferta: Oferta, hoy: date) -> str:
 def pdf(contenido_html: str, procedimiento: str, titulo: str = "Oferta económica", membrete: bool = True) -> bytes:
     """Imprime a PDF tamaño carta con el Chromium de Playwright, como el Reporte de cartel. Con membrete (la oferta
     económica y la oferta completa, app/propuesta.py), cada hoja lleva arriba a la izquierda el logo de Hermatix con
-    su nombre, sin franjas ni pie. Sin membrete, un pie con su título y la página."""
+    su nombre, sin franjas, y abajo solo el número de página. Sin membrete, un pie con su título y la página."""
     from playwright.sync_api import sync_playwright
 
     if membrete:
         cabecera = (f'<div style="width:100%;margin:0;padding:0 0 0 {MARGENES_MM["left"]}mm">'
                     f'<img src="{_imagen(MEMBRETE_LOGO)}" style="display:block;height:{ALTO_LOGO_MM}mm"></div>')
-        pie = "<span></span>"
+        # Solo el número de página, en letra pequeña: sin franjas ni color (Ivania, 2026-11-19).
+        pie = (f'<div style="width:100%;padding:0 {MARGENES_MM["right"]}mm 0 {MARGENES_MM["left"]}mm;text-align:right;'
+               'font-family:\'Times New Roman\',Times,serif;font-size:9pt;color:#000">'
+               'Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>')
         margen = {lado: f"{mm}mm" for lado, mm in MARGENES_MM.items()}
     else:
         cabecera = "<span></span>"

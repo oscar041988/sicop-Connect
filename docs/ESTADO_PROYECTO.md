@@ -17,6 +17,19 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 pass
 
 ## Último resultado
 
+- **Oferta económica pulida, sobria (2026-11-19, pedido de Ivania).** Misma estructura de Tarrazú, blanco y negro y
+  solo el logo arriba (Oscar, 11/11). Cambios: todo en Times (la «Fórmula Matemática» y el «DONDE» estaban en Arial);
+  encabezados «Precio unitario» y «Precio mensual» (o «Precio total») en vez de «Precio» dos veces, sin «Por unidad» /
+  «Mensual» debajo de cada monto; desglose en tabla con líneas, encabezado gris, números a la derecha y ₡ con punto
+  de miles como la tabla de precios (antes «799 920,00»); «Página N de M» abajo a la derecha, sin franjas.
+  `oferta_economica.html` y `oferta_economica.pdf`; también le llega a la oferta completa (anexo 1.1). **Lo mismo
+  en el Word** (`propuesta_word.py`, pedido de Ivania): encabezados, desglose, «Fórmula Matemática» centrada y
+  «Página N de M» con campos de Word (PAGE / NUMPAGES). Celdas con más aire en todas las tablas del Word (márgenes
+  internos como el padding del PDF y texto centrado en vertical). **Fórmula corregida en los dos:** «IMOtc» → «iMOtc», como en
+  el «DONDE». Revisado con un Word SINTÉTICO convertido a PDF con Word (scratchpad). Word, oferta, propuesta y datos
+  de la oferta: 68 passed. Un primer intento cambió el Reporte de cartel por un malentendido; se revirtió sin commit.
+  **Pendiente · Ivania:** verla en el panel. **Pendiente · Oscar:** el «Página N de M» (él pidió «sin pie» el 11/11).
+
 - **Cambiar la IA desde el panel (2026-11-18, pedido de Oscar por Ivania; `DECISION_IA.md` §11).** Página nueva
   Administración → IA (`/ia`, `app/ia_panel.py`, `ia.html`): proveedor (Anthropic, OpenAI o apagada), modelo
   escrito, clave nueva (vacía = se queda la que hay) y precios. Solo administradores, con su contraseña otra vez.
@@ -34,9 +47,10 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 pass
   el `.env` todavía decía `AI_MODE=openai`); corregido. `ia probar`: **ok** · 54 tokens de entrada, 4 de salida ·
   1.29 s · 1 intento · 0.000074 USD estimado (`ia_usage` #283). `OPENAI_API_KEY` sigue en el `.env`: volver a
   `AI_MODE=openai` deja todo como antes. Sin cambios de código.
-  **Pendiente · Ivania:** revisar que `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD` sean los de Opus 5.5 (página
+  ~~Pendiente · Ivania: revisar que `IA_PRECIO_ENTRADA_USD` e `IA_PRECIO_SALIDA_USD` sean los de Opus 5.5 (página
   oficial de Anthropic); probar con Claude el chat del asistente, el Reporte de cartel y la oferta (módulos con
-  JSON Schema); comparación en 3 carteles contra OpenAI. **Pendiente · Oscar:** el tope de gasto al día con Opus
+  JSON Schema); comparación en 3 carteles contra OpenAI~~ **hecho (Ivania, 19/11): los resultados con Claude se ven
+  iguales a los de OpenAI.** **Pendiente · Oscar:** el tope de gasto al día con Opus
   (más caro que Sonnet: los 8 USD de §10.5 eran para Sonnet).
 
 - **Chat: el mismo mensaje no se procesa dos veces (2026-11-18, visto por Ivania).** «si guarde lo que dije» llegó
@@ -79,7 +93,8 @@ de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 pass
   chat y la tarjeta no salía: el clic no hacía nada. Ahora la pregunta elegida sale en su tarjeta, con «Volver al
   chat»; al guardar, vuelve el chat. `rutas.py` (`asis.elegida`) y `_asistente.html`; sin migración. Prueba nueva en
   `tests/test_chat_asistente.py` (falló sin el cambio). Asistente, chat y oferta: 64 passed; panel, ayuda y oferta:
-  205 passed. **Pendiente · Ivania:** cerrar el panel con Ctrl+C, abrirlo de nuevo y probar «Resolver».
+  205 passed. ~~Pendiente · Ivania: cerrar el panel con Ctrl+C, abrirlo de nuevo y probar «Resolver».~~
+  **Probado por Ivania (23/11): funciona.**
 
 - **«Productividad» solo para administradores (2026-11-17, pedido de Ivania al verla).** El enlace pasó del menú
   principal a «Administración» y la ruta usa `exigir_admin`: un encargado no la ve en el menú y recibe 403 si
