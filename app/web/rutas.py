@@ -1018,6 +1018,15 @@ class ParteCarga:
     anterior: tuple | None
 
 
+BASE_OCUPADA = ("No se importó: la base está ocupada por otra tarea (por ejemplo, el ciclo diario, que tarda unos "
+                "minutos). No se guardó nada. Vuelve a subir el archivo en unos minutos.")
+
+
+def _base_ocupada(exc: sqlite3.OperationalError) -> bool:
+    """¿Otro programa tenía la escritura de la base más tiempo del que espera connect()?"""
+    return "locked" in str(exc)
+
+
 def _importar_parte(conn, reporte: str, ruta: Path, nombre: str, origen: str, raw_dir: Path) -> ParteCarga:
     resultado = IMPORTADORES[reporte](conn, ruta, origen, raw_dir)
     # Qué fue la importación anterior del mismo archivo, para que el aviso no se preste a confusión.
@@ -1076,7 +1085,7 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
     except carga.CargaInvalida as exc:
         status = 413 if isinstance(exc, carga.ArchivoMuyGrande) else 400
         return _render_carga(request, status, formulario=formulario, error=str(exc))
-    error = None
+    error, status = None, 400
     try:
         with closing(connect(settings.database_path)) as conn:
             if reporte == carga.PLIEGOS:
@@ -1085,6 +1094,12 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
                 partes = [_importar_parte(conn, reporte, ruta, archivo.filename, origen, settings.raw_data_dir)]
     except (ImportacionError, zip_pliegos.ZipInvalido) as exc:
         partes, error = [], f"No se importó: {exc}"
+    except sqlite3.OperationalError as exc:
+        # 2026-11-26: el ciclo diario corrió a las 8:10 (la PC estaba apagada a las 8:00) y tuvo la base ocupada
+        # casi 3 min; la carga esperó los 30 s de connect() y salía «Internal Server Error».
+        if not _base_ocupada(exc):
+            raise
+        partes, error, status = [], BASE_OCUPADA, 503
     if error or all(p.resultado.ya_importado is not None for p in partes):
         # Con error, o repetido (el original ya está guardado desde la primera vez): no queda en la carpeta de entrada.
         ruta.unlink(missing_ok=True)
@@ -1093,7 +1108,7 @@ def cargar(request: Request, reporte: str = Form(""), origen: str = Form(""),
         evaluacion, error_evaluacion = _evaluar_tras_cargar(settings)
     # Sin Post/Redirect/Get: el detalle de los rechazos no se guarda en la base. Si se recarga la página y se
     # reenvía el archivo, el hash lo reconoce y no se importa dos veces.
-    return _render_carga(request, 400 if error else 200, formulario=formulario, partes=partes, error=error,
+    return _render_carga(request, status if error else 200, formulario=formulario, partes=partes, error=error,
                          evaluacion=evaluacion, error_evaluacion=error_evaluacion)
 
 
@@ -1107,6 +1122,12 @@ def _evaluar_tras_cargar(settings) -> tuple[dict | None, str | None]:
             r = evaluar_base(conn, reglas, _ahora())
     except ReglasError as exc:
         return None, f"Se importó, pero no se pudo evaluar: {exc}. Avisa a una administradora."
+    except sqlite3.OperationalError as exc:
+        if not _base_ocupada(exc):
+            raise
+        return None, ("Se importó, pero no se pudo evaluar: la base está ocupada por otra tarea (por ejemplo, el "
+                      "ciclo diario). Los carteles nuevos se evalúan con el próximo ciclo o con python -m app.cli "
+                      "evaluate.")
     contar = lambda encaje: sum(c.get(encaje, 0) for c in r.por_encaje.values())  # noqa: E731
     return {"carteles": r.carteles, "alta": contar("alta"), "media": contar("media")}, None
 

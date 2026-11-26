@@ -219,6 +219,36 @@ def test_archivo_ilegible_no_da_error_500_ni_deja_el_archivo(cliente, carpetas, 
     assert not any(entrada.iterdir()) and _importaciones(db) == []
 
 
+def test_base_ocupada_no_da_error_500_ni_deja_el_archivo(cliente, carpetas, db, monkeypatch):
+    """2026-11-26: el ciclo diario tenía la base ocupada y la carga salía «Internal Server Error»."""
+    from app import database
+    entrada, _ = carpetas
+    token = token_csrf(cliente.get("/cargar").text)
+    monkeypatch.setattr(database, "_espera_s", 0.05)  # sin esperar los 30 s
+    with closing(sqlite3.connect(db, isolation_level=None)) as otro:
+        otro.execute("BEGIN IMMEDIATE")  # otro programa escribe (como el ciclo)
+        respuesta = _subir(cliente, CARTELES, "carteles_sintetico.csv", token=token)
+        otro.execute("ROLLBACK")
+
+    assert respuesta.status_code == 503 and "la base está ocupada por otra tarea" in respuesta.text
+    assert "Vuelve a subir el archivo en unos minutos" in respuesta.text
+    assert not any(entrada.iterdir()) and _importaciones(db) == []
+    assert _subir(cliente, CARTELES, "carteles_sintetico.csv").status_code == 200  # libre: ahora sí entra
+
+
+def test_base_ocupada_al_evaluar_avisa_pero_lo_importado_queda(cliente, carpetas, db, monkeypatch):
+    from app.web import rutas
+
+    def ocupada(*args, **kwargs):
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(rutas, "evaluar_base", ocupada)
+    respuesta = _subir(cliente, CARTELES, "carteles_sintetico.csv")
+
+    assert respuesta.status_code == 200 and "Se importó, pero no se pudo evaluar: la base está ocupada" in respuesta.text
+    assert _importaciones(db) != []
+
+
 def test_archivo_mas_grande_que_el_limite(cliente, carpetas, db, monkeypatch):
     entrada, _ = carpetas
     monkeypatch.setenv("UPLOAD_MAX_MB", "0.001")  # ~1 KB; el CSV sintético pesa más
