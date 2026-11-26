@@ -1,6 +1,7 @@
 # Estado de SICOP CONNECT
 
-Última actualización: 2026-11-23 (oferta económica sobria en PDF y Word, «Resolver» probado; antes, 18/11: primera llamada real a Anthropic, modelo `claude-opus-5-5`, `ia probar` ok; el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
+Última actualización: 2026-11-26 («Cargar archivo» con la base ocupada por el ciclo diario: mensaje claro en vez de
+«Internal Server Error»; antes, 23/11: oferta económica sobria en PDF y Word, «Resolver» probado; antes, 18/11: primera llamada real a Anthropic, modelo `claude-opus-5-5`, `ia probar` ok; el asistente pide todo lo que le falta a la oferta: pliego, precio, ficha y
 representante, también dentro del chat, migración 0048; «Resolver» abre la pregunta con el chat encendido; el mismo
 mensaje del chat no se procesa dos veces; antes, 17/11: resumen v10 y reporte de 5 páginas de `20261101092` revisados; exclusión
 «aislamiento termico» en rastreo_activos y conteo_pasajeros, reglas `a90bf850e7e5`; antes, 16/11: todo cartel revisado sale de «Todos» y queda en el chip de su decisión; prompt v10: «explicado en detalle» más largo, con cada característica y su cifra,
@@ -10,12 +11,24 @@ en la Bitácora mientras el enriquecimiento trabaja; antes, 12/11:
 escaneo de fallas: el gasto de la IA se anota aunque la base esté ocupada; nombres
 de todas las empresas ganadoras en Competencia; reporte de cartel con líneas desglosadas; antes, 11/11: oferta completa con un
 botón, migración 0043; borrador del asistente como chat, `DECISION_IA.md` §10, con decisiones de Oscar y estimación
-de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1172 passed** (18/11, con la página IA;
-14 min 15 s; golden set 39/39) · `desarrollo` en GitHub: al día con la copia local hasta el push del 23/11
-(`be91608`, oferta económica sobria) ·
+de costo; rama `desarrollo`) · Base local en esquema 0048 · Suite: **1174 passed** (26/11, con la base ocupada;
+14 min 45 s; golden set 39/39 el 18/11) · `desarrollo` en GitHub: al día con la copia local hasta el push del 26/11
+(`ae87daa`, base ocupada en la carga; entra en el PR #5) ·
 `main` de GitHub: `7f5c558` (sin cambios desde el 29/10; espera que Oscar una el PR)
 
 ## Último resultado
+
+- **«Cargar archivo» con la base ocupada (2026-11-26, visto por Ivania).** Al subir el ZIP de pliegos
+  (`Reporte_de_detalle_pliego_de_condiciones_34.zip`) a las 08:11:34 y 08:12:29 salió «Internal Server Error». Causa:
+  la PC estaba apagada a las 8:00 y la tarea «ciclo diario» (`StartWhenAvailable`) corrió de 08:10:46 a 08:13:31
+  con la base ocupada; la carga esperó los 30 s de `connect()` en el `BEGIN IMMEDIATE` y cayó con «database is
+  locked». No se guardó nada a medias (sin filas en `imports`; quedaron las dos subidas en `data/incoming`). El mismo
+  ZIP sobre una copia de la base entró bien (361 carteles nuevos, 2 396 líneas). Ahora (`app/web/rutas.py`): con la
+  base ocupada, la carga responde 503 con «la base está ocupada por otra tarea… Vuelve a subir el archivo en unos
+  minutos» y borra la subida; si lo ocupado es la evaluación posterior, lo importado queda y se avisa. Otros errores
+  de base siguen como error. 2 pruebas nuevas (`tests/test_carga.py`, una con la base bloqueada de verdad). Suite
+  completa: **1174 passed** (14 min 45 s). Commit `ae87daa`, push a `desarrollo`.
+  **Pendiente · Ivania:** volver a subir el ZIP del 26/11 (el ciclo ya terminó).
 
 - **Oferta económica pulida, sobria (2026-11-19, pedido de Ivania).** Misma estructura de Tarrazú, blanco y negro y
   solo el logo arriba (Oscar, 11/11). Cambios: todo en Times (la «Fórmula Matemática» y el «DONDE» estaban en Arial);
